@@ -341,6 +341,14 @@ void AlibavaClustering::findSeedClusters(TrackerDataImpl * trkdata, LCCollection
 
 	// the chip number
 	int chipnum = getChipNum(trkdata);
+	streamlog_out ( DEBUG4 )<< "Chip " << chipnum << endl;
+
+	// channel spacer
+	int dchip = 0;
+	if (chipnum == 1)
+	{
+	    dchip = 128;
+	}
 
 	// the data
 	FloatVec datavec;
@@ -635,14 +643,14 @@ void AlibavaClustering::findSeedClusters(TrackerDataImpl * trkdata, LCCollection
 						etaratio = etaleft_a/(etaleft_a+etaright_a);
 						fillEtaHisto2(etaratio);
 						fillEtaHisto2TDC(etaratio,tdc);
-						fillEtaHistoPos(etaratio,ichan);
+						fillEtaHistoPos(etaratio,ichan+dchip);
 						streamlog_out (DEBUG2) << "Eta2: left side ratio written: " << etaratio << endl; 
 					} else if (etaright_b > etaleft_a)
 					{
 						etaratio = etaleft_b/(etaleft_b+etaright_b);
 						fillEtaHisto2(etaratio);
 						fillEtaHisto2TDC(etaratio,tdc);
-						fillEtaHistoPos(etaratio,ichan);
+						fillEtaHistoPos(etaratio,ichan+dchip);
 						streamlog_out (DEBUG2) << "Eta2: right side ratio written:" << etaratio << endl;
 					} else {
 						streamlog_out (DEBUG2) << "Eta2: no eta here (" << alibavaEvent->getEventNumber()<< ") because fail! ela:" << etaleft_a << " era: " << etaright_a << " elb: "<< etaleft_b << " erb: " << etaright_b << endl;
@@ -670,10 +678,10 @@ void AlibavaClustering::findSeedClusters(TrackerDataImpl * trkdata, LCCollection
 				fillClusterHisto(clusize);
 
 				// fill the hitmap histogram
-				fillHitmapHisto(ichan, negclustersize, posclustersize);
+				fillHitmapHisto(ichan+dchip, negclustersize, posclustersize);
 
 				// fill the seed histogram
-				fillSeedHisto(ichan);
+				fillSeedHisto(ichan+dchip);
 
 				// final: move the ichan var so that we dont include a seed channel in multiple clusters
 				if ( (ichan + posclustersize + 1) < datavec.size() )
@@ -696,13 +704,9 @@ void AlibavaClustering::findSeedClusters(TrackerDataImpl * trkdata, LCCollection
 	{
 		streamlog_out(DEBUG4) << "Clusters in this event: " << nClusters << endl;
 	}
-	
-	// HACK: only first chip...
-	if (chipnum == 0)
-	{
-		fillclusterspereventhisto(nClusters,alibavaEvent->getEventNumber());
-	}
-	
+
+	fillclusterspereventhisto(nClusters,alibavaEvent->getEventNumber());
+
 	// now output the clusters we have found
 	// encoders:
 	CellIDEncoder < TrackerPulseImpl > zsDataEncoder ( eutelescope::EUTELESCOPE::PULSEDEFAULTENCODING, clusterCollection);
@@ -786,16 +790,33 @@ void AlibavaClustering::findSeedClusters(TrackerDataImpl * trkdata, LCCollection
 			}
 		}
 
+		// chip 1 gets channels inc'ed by 128
 		// select the sensor orientation, we give each "pixel" the missing coordinate on the unsensitive axis
 		if (_nonsensitiveaxis == "x")
 		{
-			Pixel.setXCoord(missingvalue);
-			Pixel.setYCoord(iPixel);
+			if ( chipnum == 0)
+			{
+			    Pixel.setXCoord(missingvalue);
+			    Pixel.setYCoord(iPixel);
+			}
+			if ( chipnum == 1)
+			{
+			    Pixel.setXCoord(missingvalue);
+			    Pixel.setYCoord(iPixel+128.0);
+			}
 		}
 		if (_nonsensitiveaxis == "y")
 		{
-			Pixel.setXCoord(iPixel);
-			Pixel.setYCoord(missingvalue);
+			if ( chipnum == 0)
+			{
+				Pixel.setXCoord(iPixel);
+				Pixel.setYCoord(missingvalue);
+			}
+			if ( chipnum == 1)
+			{
+				Pixel.setXCoord(iPixel+128.0);
+				Pixel.setYCoord(missingvalue);
+			}
 		}
 
 		// Charge times 100 to get precision, since telescope cluster charge is of type short!
@@ -844,8 +865,9 @@ void AlibavaClustering::findSeedClusters(TrackerDataImpl * trkdata, LCCollection
 
 			streamlog_out( DEBUG6 ) << "Cluster:: Cl: " << *it << ", Q: " << pixelCluster->getTotalCharge() << " , x: " << x << " , y: " << y << " , dx: " << xsize << " , dy: " << ysize << " in event: " << alibavaEvent->getEventNumber() << endl;
 
-			// for telescope hitmaker step: set sensor ID to chipnum+6, telescope should be 0-5. This assumes sensorid 6+chipnum in the gear file...
-			zsDataEncoder["sensorID"] = chipnum+6;
+			// for telescope hitmaker step: set sensor ID to 6, telescope should be 0-5. This assumes sensorid 6 in the gear file... 
+
+			zsDataEncoder["sensorID"] = 6;
 			zsDataEncoder["xSeed"] = static_cast< long >(x);
 			zsDataEncoder["ySeed"] = static_cast< long >(y);
 			zsDataEncoder["xCluSize"] = xsize;
@@ -857,7 +879,7 @@ void AlibavaClustering::findSeedClusters(TrackerDataImpl * trkdata, LCCollection
 			clusterCollection->push_back(pulseFrame);
 
 			// this assumes six telescope planes, so the first chip will be plane 6, etc.
-			idClusterEncoder["sensorID"] = chipnum+6;
+			idClusterEncoder["sensorID"] = 6;
 			
 			// set this to 1 for hitmaker
 			idClusterEncoder["sparsePixelType"] = static_cast<int>(2);
@@ -1178,7 +1200,7 @@ void AlibavaClustering::bookHistos()
 	stringstream tempHistoTitle3;
 	tempHistoTitle3 << tempHistoName3 << ";Channel;NumberofEntries";
 
-	TH1D * hitmapHisto = new TH1D (tempHistoName3.c_str(),"",128,0,127);
+	TH1D * hitmapHisto = new TH1D (tempHistoName3.c_str(),"",256,0,255);
 	_rootObjectMap.insert(make_pair(tempHistoName3, hitmapHisto));
 	string tmp_string3 = tempHistoTitle3.str();
 	hitmapHisto->SetTitle(tmp_string3.c_str());
@@ -1188,7 +1210,7 @@ void AlibavaClustering::bookHistos()
 	stringstream tempHistoTitle4;
 	tempHistoTitle4 << tempHistoName4 << ";Channel;NumberofEntries";
 
-	TH1D * seedHisto = new TH1D (tempHistoName4.c_str(),"",128,0,127);
+	TH1D * seedHisto = new TH1D (tempHistoName4.c_str(),"",256,0,255);
 	_rootObjectMap.insert(make_pair(tempHistoName4, seedHisto));
 	string tmp_string4 = tempHistoTitle4.str();
 	seedHisto->SetTitle(tmp_string4.c_str());
@@ -1266,7 +1288,7 @@ void AlibavaClustering::bookHistos()
 	etatdc->SetTitle("Eta distribution vs. Event TDC;Eta;TDC time [ns]");
 
 	// eta vs pos
-	TH2D * etapos = new TH2D ("EtaDistributionPos","",100,0,1,128,0,127);
+	TH2D * etapos = new TH2D ("EtaDistributionPos","",100,0,1,256,0,255);
 	_rootObjectMap.insert(make_pair("EtaDistributionPos", etapos));
 	etapos->SetTitle("Eta distribution vs. Seed Position;Eta;Seed Strip");
 

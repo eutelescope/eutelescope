@@ -1125,7 +1125,7 @@ void EUTelMilleGBL::getCoordinatorAlignment (LCEvent * event)
 void EUTelMilleGBL::processRunHeader( LCRunHeader * rdr )
 {
 
-	auto_ptr<EUTelRunHeaderImpl> header ( new EUTelRunHeaderImpl (rdr) );
+	auto header = std::make_unique<EUTelRunHeaderImpl>(rdr);
 	header->addProcessor( type() ) ;
 
 	// this is the right place also to check the geometry ID. This is a
@@ -2137,19 +2137,19 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 	{
 
 		int ntri = 0;
-		double xmA[99];
-		double ymA[99];
-		double zmA[99];
-		double sxA[99];
-		double syA[99];
-		double szA[99];
-		double trxA[99];
-		double tryA[99];
-		double trzA[99];
-		double pxA[99];
-		double pyA[99];
-		double pzA[99];
-		int hts[8][99]; // 6+2 planes
+		double xmA[499];
+		double ymA[499];
+		double zmA[499];
+		double sxA[499];
+		double syA[499];
+		double szA[499];
+		double trxA[499];
+		double tryA[499];
+		double trzA[499];
+		double pxA[499];
+		double pyA[499];
+		double pzA[499];
+		int hts[8][499]; // 6+2 planes
 
 		// hits in plane
 		for( size_t j0 = 0; j0 < _hitsArray[i0].size(); j0++ )
@@ -2239,7 +2239,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 
 								streamlog_out (DEBUG2) << "Passed all triplet cuts, now having "<< ntri << " triplets." << endl;
 
-								if( ntri < 99 )
+								if( ntri < 499 )
 								{
 
 									xmA[ntri] = avx;
@@ -2283,7 +2283,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 
 							streamlog_out (DEBUG2) << "Passed all triplet cuts, now having "<< ntri << " triplets." << endl;
 
-							if( ntri < 99 )
+							if( ntri < 499 )
 							{
 
 								xmA[ntri] = avx;
@@ -2321,7 +2321,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 
 		ntriHist->fill( ntri );
 
-		if( ntri >= 99 )
+		if( ntri >= 499 )
 		{
 			streamlog_out( WARNING2 ) << "Maximum number of triplet track candidates reached in event " << event->getEventNumber() << ". Maybe further tracks were skipped" << endl;
 		}
@@ -2329,17 +2329,17 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 		// driplets 3-4-5:
 
 		int ndri = 0;
-		double xmB[99];
-		double ymB[99];
-		double zmB[99];
-		double sxB[99];
-		double syB[99];
-		double trxB[99];
-		double tryB[99];
-		double trzB[99];
-		double pxB[99];
-		double pyB[99];
-		double pzB[99];
+		double xmB[499];
+		double ymB[499];
+		double zmB[499];
+		double sxB[499];
+		double syB[499];
+		double trxB[499];
+		double tryB[499];
+		double trzB[499];
+		double pxB[499];
+		double pyB[499];
+		double pzB[499];
 
 		// hits in plane
 		for( size_t j3 = 0; j3 < _hitsArray[i3].size(); j3++ )
@@ -2390,7 +2390,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 
 							streamlog_out (DEBUG2) << "Passed all driplet cuts, now having "<< ndri << " driplets." << endl;
 
-							if( ndri < 99 )
+							if( ndri < 499 )
 							{
 								xmB[ndri] = avx;
 								ymB[ndri] = avy;
@@ -2455,7 +2455,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 
 								streamlog_out (DEBUG2) << "Passed all driplet cuts, now having "<< ndri << " driplets." << endl;
 
-								if( ndri < 99 )
+								if( ndri < 499 )
 								{
 
 									xmB[ndri] = avx;
@@ -2489,7 +2489,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 
 		ndriHist->fill( ndri );
 
-		if( ndri >= 99 )
+		if( ndri >= 499 )
 		{
 			streamlog_out( WARNING2 ) << "Maximum number of driplet track candidates reached in event " << event->getEventNumber() << ". Maybe further tracks were skipped" << endl;
 		}
@@ -2505,13 +2505,13 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 		}
 
 		// i = A
-		for( int kA = 0; kA < ntri && kA < 99; ++kA )
+		for( int kA = 0; kA < ntri && kA < 499; ++kA )
 		{
 
 			int j2 = hts[indexconverter[2]][kA];
 
 			// j = B
-			for( int kB = 0; kB < ndri && kB < 99; ++kB )
+			for( int kB = 0; kB < ndri && kB < 499; ++kB )
 			{
 
 				int j3 = hts[indexconverter[4]][kB];
@@ -2666,19 +2666,9 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 					// FIXME this could be read from gear...
 					double p = _eBeam; // beam momentum
 					double X0Si = 65e-3 / 94.0; // Si + Kapton
-					double tetSi = 0.0136 * sqrt(X0Si) / p * ( 1 + 0.038*std::log(X0Si) );
 					double X0SiDUT = 350e-3 / 94.0; // Si + Kapton
-					X0SiDUT = 0.048;
-					double tetSiDUT = 0.0136 * sqrt(X0SiDUT) / p * ( 1 + 0.038*std::log(X0SiDUT) );
 					double X0Air = 1.0 / 304200.0;
-
-					TVectorD wscatSi(2);
-					wscatSi[0] = 1.0 / ( tetSi * tetSi ); //weight
-					wscatSi[1] = 1.0 / ( tetSi * tetSi );
-
-					TVectorD wscatSiDUT(2);
-					wscatSiDUT[0] = 1.0 / ( tetSiDUT * tetSiDUT ); //weight
-					wscatSiDUT[1] = 1.0 / ( tetSiDUT * tetSiDUT );
+					double accum_x0 = 0.0;
 
 					TMatrixD alDer2( 2, 2 ); // alignment derivatives
 					alDer2[0][0] = 1.0; // dx/dx GBL sign convetion
@@ -2748,9 +2738,16 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 
 							TVector3 direction(stepx,stepy,step);
 
+							double tetSiDUT = 0.0136 * sqrt(X0SiDUT) / p * ( 1 + 0.038*std::log(X0SiDUT+accum_x0) );
+
+							TVectorD wscatSiDUT(2);
+							wscatSiDUT[0] = 1.0 / ( tetSiDUT * tetSiDUT ); //weight
+							wscatSiDUT[1] = 1.0 / ( tetSiDUT * tetSiDUT );
+
 							jacPointToPoint = Jac55( step , direction , _BField );
 							gbl::GblPoint *point = new gbl::GblPoint( jacPointToPoint );
 							point->addScatterer( scat, wscatSiDUT );
+							accum_x0 += X0SiDUT;
 
 							xprev = xx;
 							yprev = yy;
@@ -2759,7 +2756,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 							sPoint.push_back( s );
 							delete point;
 
-							streamlog_out (DEBUG3) << "Adding GBL scatterer at z: " << zz << " um in Event " << event->getEventNumber() << endl;
+							streamlog_out (DEBUG3) << "Adding GBL DUT scatterer at z: " << zz << " um in Event " << event->getEventNumber() << endl;
+							streamlog_out (DEBUG3) << "Accumulated X0 is " << accum_x0*1e3 << " E-3!" << endl;
 
 							// also add air
 							// positions in um
@@ -2772,15 +2770,17 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 							zprev = zz;
 							TVectorD wscatAir(2);
 							// as x0 is in mm, airlength has to be in mm too!
-							double airlength = (0.5 * (_siPlaneZPosition[ipl+1] - _siPlaneZPosition[ipl]))/1000.0;
-							double tetAir = 0.0136 * sqrt(X0Air*airlength) / p * ( 1 + 0.038*std::log(X0Air*airlength) );
+							double airlength = (0.5 * (_siPlaneZPosition[ipl+1] - _siPlaneZPosition[ipl]));
+							double tetAir = 0.0136 * sqrt(X0Air*airlength) / p * ( 1 + 0.038*std::log(X0Air*airlength+accum_x0) );
 							wscatAir[0] = 1.0 / ( tetAir * tetAir );
 							wscatAir[1] = 1.0 / ( tetAir * tetAir );
 							point1->addScatterer( scat, wscatAir );
 							traj_points.push_back(*point1);
 							sPoint.push_back( s );
 							delete point1;
+							accum_x0 += X0Air*airlength;
 							streamlog_out (DEBUG3) << "Adding air scatterer at z: " << zz << " um in Event " << event->getEventNumber() << endl;
+							streamlog_out (DEBUG3) << "Accumulated X0 is " << accum_x0*1e3 << " E-3!" << endl;
 
 							zz = zprev + (_siPlaneZPosition[ipl+1]*1000.0 - _siPlaneZPosition[ipl]*1000.0)*0.58;
 							step = zz - zprev;
@@ -2789,11 +2789,16 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 							gbl::GblPoint *point2 = new gbl::GblPoint( jacPointToPoint );
 							s += step;
 							zprev = zz;
+							tetAir = 0.0136 * sqrt(X0Air*airlength) / p * ( 1 + 0.038*std::log(X0Air*airlength+accum_x0) );
+							wscatAir[0] = 1.0 / ( tetAir * tetAir );
+							wscatAir[1] = 1.0 / ( tetAir * tetAir );
 							point2->addScatterer( scat, wscatAir );
 							traj_points.push_back(*point2);
 							sPoint.push_back( s );
 							delete point2;
+							accum_x0 += X0Air*airlength;
 							streamlog_out (DEBUG3) << "Adding air scatterer at z: " << zz << " um in Event " << event->getEventNumber() << endl;
+							streamlog_out (DEBUG3) << "Accumulated X0 is " << accum_x0*1e3 << " E-3!" << endl;
 
 							continue;
 						}
@@ -2847,24 +2852,38 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 						meas[0] = _hitsArray[indexconverter[ipl]][jhit].measuredX - xs; // resid hit-track
 						meas[1] = _hitsArray[indexconverter[ipl]][jhit].measuredY - ys;
 
+						double tetSi = 0.0136 * sqrt(X0Si) / p * ( 1 + 0.038*std::log(X0Si+accum_x0) );
+						double tetSiDUT = 0.0136 * sqrt(X0SiDUT) / p * ( 1 + 0.038*std::log(X0SiDUT+accum_x0) );
+
+						TVectorD wscatSi(2);
+						wscatSi[0] = 1.0 / ( tetSi * tetSi ); //weight
+						wscatSi[1] = 1.0 / ( tetSi * tetSi );
+
+						TVectorD wscatSiDUT(2);
+						wscatSiDUT[0] = 1.0 / ( tetSiDUT * tetSiDUT ); //weight
+						wscatSiDUT[1] = 1.0 / ( tetSiDUT * tetSiDUT );
+
 						// catch DUT, this has a different meas precision and scattering properties
 						if (ipl == 3)
 						{
 							// measurement has correct z anyway
 							point->addMeasurement( proL2m, meas, measPrecDut );
 							point->addScatterer( scat, wscatSiDUT ); //
-
+							accum_x0 += X0SiDUT;
 						} else if (ipl == 7)
 						{
 							point->addMeasurement( proL2m, meas, measPrecRef );
 							point->addScatterer( scat, wscatSiDUT ); // don't care about scat...
+							accum_x0 += X0Si;
 						} else // assume all telescope planes are equal
 						{
 							point->addMeasurement( proL2m, meas, measPrec );
 							point->addScatterer( scat, wscatSi );
+							accum_x0 += X0Si;
 						}
 
 						streamlog_out (DEBUG3) << "Adding GBL measurement: x: " << _hitsArray[indexconverter[ipl]][jhit].measuredX << " y: " << _hitsArray[indexconverter[ipl]][jhit].measuredY << " z: " << _hitsArray[indexconverter[ipl]][jhit].measuredZ << " in Event " << event->getEventNumber() << endl;
+						streamlog_out (DEBUG3) << "Accumulated X0 is " << accum_x0*1e3 << " E-3!" << endl;
 
 						// FIXME may not work for 7?
 						// only x and y shifts
@@ -3029,15 +3048,17 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 							zprev = zz;
 							TVectorD wscatAir(2);
 							// as x0 is in mm, airlength has to be in mm too!
-							double airlength = (0.5 * (_siPlaneZPosition[ipl+1] - _siPlaneZPosition[ipl]))/1000.0;
-							double tetAir = 0.0136 * sqrt(X0Air*airlength) / p * ( 1 + 0.038*std::log(X0Air*airlength) );
+							double airlength = (0.5 * (_siPlaneZPosition[ipl+1] - _siPlaneZPosition[ipl]));
+							double tetAir = 0.0136 * sqrt(X0Air*airlength) / p * ( 1 + 0.038*std::log(X0Air*airlength+accum_x0) );
 							wscatAir[0] = 1.0 / ( tetAir * tetAir );
 							wscatAir[1] = 1.0 / ( tetAir * tetAir );
 							point1->addScatterer( scat, wscatAir );
 							traj_points.push_back(*point1);
 							sPoint.push_back( s );
 							delete point1;
+							accum_x0 += X0Air*airlength;
 							streamlog_out (DEBUG3) << "Adding air scatterer at z: " << zz << " um in Event " << event->getEventNumber() << endl;
+							streamlog_out (DEBUG3) << "Accumulated X0 is " << accum_x0*1e3 << " E-3!" << endl;
 
 							zz = zprev + (_siPlaneZPosition[ipl+1]*1000.0 - _siPlaneZPosition[ipl]*1000.0)*0.58;
 							step = zz - zprev;
@@ -3046,11 +3067,16 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 							gbl::GblPoint *point2 = new gbl::GblPoint( jacPointToPoint );
 							s += step;
 							zprev = zz;
+							tetAir = 0.0136 * sqrt(X0Air*airlength) / p * ( 1 + 0.038*std::log(X0Air*airlength+accum_x0) );
+							wscatAir[0] = 1.0 / ( tetAir * tetAir );
+							wscatAir[1] = 1.0 / ( tetAir * tetAir );
 							point2->addScatterer( scat, wscatAir );
 							traj_points.push_back(*point2);
 							sPoint.push_back( s );
 							delete point2;
+							accum_x0 += X0Air*airlength;
 							streamlog_out (DEBUG3) << "Adding air scatterer at z: " << zz << " um in Event " << event->getEventNumber() << endl;
+							streamlog_out (DEBUG3) << "Accumulated X0 is " << accum_x0*1e3 << " E-3!" << endl;
 						} // not last plane
 
 					} // loop over planes
