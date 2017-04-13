@@ -1,6 +1,6 @@
 #!/bin/bash
 INPUT=runlists/n.csv
-MAXJOBS=15
+MAXJOBS=10
 jobcount=0
 T="$(date "+%d/%m/%y %T")"
 touch logoutput_data_gbl_n.txt

@@ -18,10 +18,6 @@
 mode=gbl
 #mode=daf
 
-#select type
-#type=n
-type=p
-
 if (($mode == gbl)) ; then
 
     cp output/database/run00$1-prealignment.slcio output/database/run00$1-original-prealignment.slcio
@@ -63,15 +59,7 @@ if (($mode == gbl)) ; then
     echo "Running coordinator..."
     jobsub -c config.cfg -csv runlist.csv coordinator $1
     echo "Running tracking"
-
-
     jobsub -c config.cfg -csv runlist.csv tracking-gbl $1
-
-    #if (($type == n)) ; then
-	#jobsub -c config.cfg -csv runlist.csv tracking-gbl-rgh $1
-    #elif (($type == p)) ; then
-	#jobsub -c config.cfg -csv runlist.csv tracking-gbl $1
-    #fi
 
 elif (($mode == daf)) ; then
 
