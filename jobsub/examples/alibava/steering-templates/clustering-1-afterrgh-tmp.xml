@@ -94,7 +94,7 @@
   <!--The filename where the telescope data is stored-->
   <parameter name="TelescopeFile" type="string" value="@LcioPath@/run@TelescopeRun@-filtered.slcio"/>
   <!--The unsensitive axis of our strip sensor-->
-  <parameter name="UnsensitiveAxis" type="string" value="x"/>
+  <parameter name="UnsensitiveAxis" type="string" value="@UnsensAxis@"/>
   <!--A FIR (finite impulse response) filter can be applied to the input data to minimise crosstalk. This switches the filter on.-->
   <parameter name="UseFIRFilter" type="bool" value="true"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->

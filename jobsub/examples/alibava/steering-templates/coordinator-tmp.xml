@@ -140,7 +140,7 @@
   <!--This processor will look for a closest hits (in known coordinate) to determine if the hits are correlated. The hits will be considered as correlated if the residual is smaller than MaxResidual-->
   <parameter name="MaxResidual" type="float" value="@MaxResidual@"/>
   <!--The coordinate axis that needs to be estimated. You have to set this to either X or Y.-->
-  <parameter name="MissingCoordinate" type="string" value="X"/>
+  <parameter name="MissingCoordinate" type="string" value="@UnsensAxis@"/>
   <!--This is the list of sensorIDs that their hits will be used to estimate the missing coordinate on your DUT. You have to give exactly 2 sensorIDs. For better results use the ones that are closest to your DUT-->
   <parameter name="ReferencePlanes" type="IntVec"> 0 2 </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->

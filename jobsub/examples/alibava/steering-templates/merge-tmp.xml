@@ -71,7 +71,7 @@
   <!--The filename where the telescope data is stored-->
   <parameter name="TelescopeFile" type="string" value="@LcioPath@/run@TelescopeRun@-filtered.slcio"/>
   <!--The unsensitive axis of our strip sensor-->
-  <parameter name="UnsensitiveAxis" type="string" value="x"/>
+  <parameter name="UnsensitiveAxis" type="string" value="@UnsensAxis@"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <parameter name="Verbosity" type="string" value="DEBUG9"/>
 </processor>

@@ -70,3 +70,8 @@ RunNumber,FileExtension,PedRunNumberFormatted,Bonds,TelescopeRun,GearGeoFile,Pol
 #! 100S unirr, 0°, 100V, +20°C, simulated 
 000900,ped,000900,'$0:1-126$',000900,gear_alibava_a0_b0_c0_d100.xml,,,,,
 000908,dat,000900,'$0:1-126$',000908,gear_alibava_a0_b0_c0_d100.xml,1,10000,x,,
+
+
+0602,ped,000602,'$0:22-36$ $0:40-120$ $1:22-35$ $1:39-123$',001057,gear_alibava_atlas.xml,,,,,
+0813,dat,000602,'$0:22-36$ $0:40-120$ $1:22-35$ $1:39-123$',001057,gear_alibava_atlas.xml,-1,100000,y,,
+001057,,,,,gear_alibava_atlas.xml,,,,,
