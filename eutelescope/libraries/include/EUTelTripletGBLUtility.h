@@ -62,6 +62,8 @@
 #include "marlin/ProcessorMgr.h"
 #include "marlin/Global.h"
 
+// Eigen include
+#include <Eigen/Core>
 using namespace marlin;
 
 namespace eutelescope {
@@ -76,7 +78,7 @@ namespace eutelescope {
       EUTelTripletGBLUtility();
 
       // Calculate Point-To-Point Jacobian Transport Matrix for distance "ds"
-      TMatrixD JacobianPointToPoint( double ds );
+      Eigen::Matrix<double, 5,5> JacobianPointToPoint( double ds );
 
       // Set your parent
       void setParent(marlin::Processor * par){

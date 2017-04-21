@@ -720,16 +720,16 @@ void EUTelMilleGBL::processRunHeader( LCRunHeader * rdr ) {
 }
 
 //------------------------------------------------------------------------------
-TMatrixD Jac55( double ds ) {
+Eigen::Matrix<double,5,5> Jac55( double ds ) {
   /* for GBL:
      Jacobian for straight line track
      track = q/p, x', y', x, y
      0,   1,  2,  3, 4
      */
-  TMatrixD jac(5, 5);
-  jac.UnitMatrix();
-  jac[3][1] = ds; // x = x0 + xp * ds
-  jac[4][2] = ds; // y = y0 + yp * ds
+  Eigen::Matrix<double,5,5> jac = Eigen::Matrix<double,5,5>::Identity();
+  //jac.UnitMatrix();
+  jac(3,1) = ds; // x = x0 + xp * ds
+  jac(4,2) = ds; // y = y0 + yp * ds
   return jac;
 }
 
@@ -1211,13 +1211,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  // the arc length at the first measurement plane is 0.
 	  double s = 0;
 
-	  // transport matrix in (q/p, x', y', x, y) space
-	  TMatrixD jacPointToPoint( 5, 5 );
+	  Eigen::Matrix2d proL2m = Eigen::Matrix2d::Identity();
 
-	  TMatrixD proL2m(2,2);
-	  proL2m.UnitMatrix();
-
-	  TVectorD meas(2);
 	  // this depends on threshold, energy, dz, and number of iterations done ...
 	  // We make an accurate, heuristic  guess
 	  double resx = -1.; // [mm] telescope initial resolution for ONLY PREALIGNED t'scope! this is not 3.24 !
@@ -1266,13 +1261,12 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
           resy = resy/1000.;
 	  if(_printEventCounter < 10) streamlog_out( MESSAGE2 ) << "res x = " << resx << endl;
 
-	  TVectorD measPrec(2); // precision = 1/resolution^2
+	  Eigen::Vector2d measPrec; // precision = 1/resolution^2
 	  measPrec[0] = 1.0 / resx / resx;
 	  measPrec[1] = 1.0 / resy / resy;
 
 	  // scatter:
-	  TVectorD scat(2);
-	  scat.Zero(); //mean is zero
+	  Eigen::Vector2d scat = Eigen::Vector2d::Zero(); //mean is zero
 
 	  double epsSi = 55e-3 / 93.66 + 0.050 / 286.6; // Si + Kapton
 	  double epsAir = -1.; // define later when dz is known
@@ -1298,32 +1292,32 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  double tetAir = -1.;
 
 
-	  TVectorD wscatSi(2);
+	  Eigen::Vector2d wscatSi;
 	  wscatSi[0] = 1.0 / ( tetSi * tetSi ); //weight
 	  wscatSi[1] = 1.0 / ( tetSi * tetSi );
 
-	  TVectorD wscatAir(2);
+	  Eigen::Vector2d wscatAir;
 
 
-	  TMatrixD alDer2( 2, 2 ); // alignment derivatives
-	  alDer2[0][0] = 1.0; // dx/dx GBL sign convetion
-	  alDer2[1][0] = 0.0; // dy/dx
-	  alDer2[0][1] = 0.0; // dx/dy
-	  alDer2[1][1] = 1.0; // dy/dy
+	  Eigen::Matrix2d alDer2; // alignment derivatives
+	  alDer2(0,0) = 1.0; // dx/dx GBL sign convetion
+	  alDer2(1,0) = 0.0; // dy/dx
+	  alDer2(0,1) = 0.0; // dx/dy
+	  alDer2(1,1) = 1.0; // dy/dy
 
-	  TMatrixD alDer3( 2, 3 ); // alignment derivatives
-	  alDer3[0][0] = 1.0; // dx/dx
-	  alDer3[1][0] = 0.0; // dy/dx
-	  alDer3[0][1] = 0.0; // dx/dy
-	  alDer3[1][1] = 1.0; // dy/dy
+	  Eigen::Matrix<double,2,3> alDer3; // alignment derivatives
+	  alDer3(0,0) = 1.0; // dx/dx
+	  alDer3(1,0) = 0.0; // dy/dx
+	  alDer3(0,1) = 0.0; // dx/dy
+	  alDer3(1,1) = 1.0; // dy/dy
 
-	  TMatrixD alDer4( 2, 4 ); // alignment derivatives
-	  alDer4[0][0] = 1.0; // dx/dx
-	  alDer4[1][0] = 0.0; // dy/dx
-	  alDer4[0][1] = 0.0; // dx/dy
-	  alDer4[1][1] = 1.0; // dy/dy
-	  alDer4[0][3] = sxA[kA]; // dx/dz
-	  alDer4[1][3] = syA[kA]; // dx/dz
+	  Eigen::Matrix<double, 2,4> alDer4; // alignment derivatives
+	  alDer4(0,0) = 1.0; // dx/dx
+	  alDer4(1,0) = 0.0; // dy/dx
+	  alDer4(0,1) = 0.0; // dx/dy
+	  alDer4(1,1) = 1.0; // dy/dy
+	  alDer4(0,3) = sxA[kA]; // dx/dz
+	  alDer4(1,3) = syA[kA]; // dx/dz
 
 	  // telescope planes 0-5:
 
@@ -1347,7 +1341,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 
 	    //double step = zz - zprev;
 	    //
-	    jacPointToPoint = Jac55( step );
+	  // transport matrix in (q/p, x', y', x, y) space
+	    auto jacPointToPoint = Jac55( step );
 	    gbl::GblPoint *point = new gbl::GblPoint( jacPointToPoint );
 	    s += step;
 	    //zprev = zz;
@@ -1360,7 +1355,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 
 	    rx[ipl] = (_hitsArray[ipl][jhit].measuredX - xs); // resid hit-triplet, in micrometer ...
 	    ry[ipl] = (_hitsArray[ipl][jhit].measuredY - ys); // resid
-
+	  
+		Eigen::Vector2d meas;
 	    meas[0] = rx[ipl]; // fill meas vector for GBL
 	    meas[1] = ry[ipl];
 
@@ -1383,8 +1379,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	      globalLabels[2] = 3 + 3*ipl; // rot
 	      //alDer3[0][2] = -_hitsArray[ipl][jhit].measuredY; // dx/dphi
 	      //alDer3[1][2] =  _hitsArray[ipl][jhit].measuredX; // dy/dphi
-	      alDer3[0][2] = -ys; // dx/dphi
-	      alDer3[1][2] =  xs; // dy/dphi
+	      alDer3(0,2) = -ys; // dx/dphi
+	      alDer3(1,2) =  xs; // dy/dphi
 	      point->addGlobals( globalLabels, alDer3 ); // for MillePede alignment
 	    }
 	    else if( _alignMode == 4 ) { // with rot and z shift
@@ -1395,8 +1391,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	      globalLabels[3] = 4 + 4*ipl; // z
 	      //alDer4[0][2] = -_hitsArray[ipl][jhit].measuredY; // dx/dphi
 	      //alDer4[1][2] =  _hitsArray[ipl][jhit].measuredX; // dy/dphi
-	      alDer4[0][2] = -ys; // dx/dphi
-	      alDer4[1][2] =  xs; // dy/dphi
+	      alDer4(0,2) = -ys; // dx/dphi
+	      alDer4(1,2) =  xs; // dy/dphi
 	      point->addGlobals( globalLabels, alDer4 ); // for MillePede alignment
 	    }
 
@@ -1435,7 +1431,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	        if(_targetthick > 0.001) { // at least 1 um target
 		  double tetAlu = _kappa*0.0136 * sqrt(epsAlu) / p * ( 1 + 0.038*std::log(sumeps) );
 
-	          TVectorD wscatAlu(2);
+	          Eigen::Vector2d wscatAlu;
 	          wscatAlu[0] = 1.0 / ( tetAlu * tetAlu ); // weight
 	          wscatAlu[1] = 1.0 / ( tetAlu * tetAlu ); 
 
@@ -1561,8 +1557,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 
 	  // look at fit:
 
-	  TVectorD aCorrection(5);
-	  TMatrixDSym aCovariance(5);
+	  Eigen::VectorXd aCorrection;
+	  Eigen::MatrixXd aCovariance;
 
 	  double ax[8];
 	  double ay[8];
@@ -1571,10 +1567,10 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  // at plane 0:
           unsigned int ndata = 2;
 	  unsigned int ndim = 2;
-	  TVectorD aResiduals(ndim);
-	  TVectorD aMeasErrors(ndim);
-	  TVectorD aResErrors(ndim);
-	  TVectorD aDownWeights(ndim);
+	  Eigen::VectorXd aResiduals(ndim);
+	  Eigen::VectorXd aMeasErrors(ndim);
+	  Eigen::VectorXd aResErrors(ndim);
+	  Eigen::VectorXd aDownWeights(ndim);
 
 	  int ipos = ilab[0];
 	  traj.getResults( ipos, aCorrection, aCovariance );

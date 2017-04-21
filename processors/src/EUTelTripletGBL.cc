@@ -748,17 +748,13 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     // plane 0:
     double s = 0;
 
-    TMatrixD proL2m(2,2);
-    proL2m.UnitMatrix();
-
-    TVectorD meas(2);
+    Eigen::Matrix2d proL2m = Eigen::Matrix2d::Identity();
 
     //double res = 3.42E-3; // [mm] Anemone telescope intrinsic resolution
     //res = 4.5E-3; // EUDET
 
     // scatter:
-    TVectorD scat(2);
-    scat.Zero(); //mean is zero
+    Eigen::Vector2d scat = Eigen::Vector2d::Zero(); //mean is zero
 
     double p = _eBeam; // beam momentum
     double epsSi = -1;
@@ -769,8 +765,6 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     double tetAir = -1.;
 
 
-    TVectorD wscatSi(2);
-    TVectorD wscatAir(2);
 
     TMatrixD alDer( 2, 3 ); // alignment derivatives
     alDer[0][0] = 1.0; // dx/dx
@@ -859,6 +853,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
       gbl::GblPoint * point = new gbl::GblPoint( gblutil.JacobianPointToPoint( step ) );
 
+      Eigen::Vector2d meas;
       meas[0] = rx[ipl];
       meas[1] = ry[ipl];
       //meas[0] = trackhit.x;
@@ -867,10 +862,10 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       epsSi = _thickness[ipl]/93.66 + 0.050 / 286.6; // Si + Kapton (Kapton ist 2 * 25  = 50 um thick, but has 1/3 rad length = 17 um)
       tetSi = _kappa * 0.0136 * sqrt(epsSi) / p * ( 1 + 0.038*std::log(sumeps) );
 
+      Eigen::Vector2d wscatSi;
       wscatSi[0] = 1.0 / ( tetSi * tetSi ); //weight
       wscatSi[1] = 1.0 / ( tetSi * tetSi );
 
-      TVectorD measPrec(2); // precision = 1/resolution^2
       //measPrec[0] = 1.0 / _resolution[ipl] / _resolution[ipl];
       //measPrec[1] = 1.0 / _resolution[ipl] / _resolution[ipl];
       double _resolution_tmp = -1.0;
@@ -882,7 +877,8 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       if(trackhit.clustersize == 6) _resolution_tmp = _resolution[6];
       if(trackhit.clustersize >  6) _resolution_tmp = _resolution[7];
       //_resolution_tmp = 3.24*1e-3;
-
+      
+	  Eigen::Vector2d measPrec; // precision = 1/resolution^2
       measPrec[0] = 1.0 / _resolution_tmp / _resolution_tmp;
       measPrec[1] = 1.0 / _resolution_tmp / _resolution_tmp;
 
@@ -914,6 +910,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 	epsAir =   0.5*distplane  / 304200.; 
 	tetAir = _kappa * 0.0136 * sqrt(epsAir) / p * ( 1 + 0.038*std::log(sumeps) );
 
+    Eigen::Vector2d wscatAir;
 	wscatAir[0] = 1.0 / ( tetAir * tetAir ); // weight
 	wscatAir[1] = 1.0 / ( tetAir * tetAir ); 
 
@@ -1050,8 +1047,8 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       
       _ngbl++;
 
-      TVectorD aCorrection(5);
-      TMatrixDSym aCovariance(5);
+      Eigen::VectorXd aCorrection(2);
+      Eigen::MatrixXd aCovariance(5,5);
 
       double ax[8];
       // double ay[8];
@@ -1059,16 +1056,16 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
 
       unsigned int ndim = 2;
-      TVectorD aResiduals(ndim);
-      TVectorD aMeasErrors(ndim);
-      TVectorD aResErrors(ndim);
-      TVectorD aDownWeights(ndim);
+      Eigen::VectorXd aResiduals(ndim);
+      Eigen::VectorXd aMeasErrors(ndim);
+      Eigen::VectorXd aResErrors(ndim);
+      Eigen::VectorXd aDownWeights(ndim);
 
 
-      TVectorD aKinks(ndim);
-      TVectorD aKinkErrors(ndim);
-      TVectorD kResErrors(ndim);
-      TVectorD kDownWeights(ndim);
+      Eigen::VectorXd aKinks(ndim);
+      Eigen::VectorXd aKinkErrors(ndim);
+      Eigen::VectorXd kResErrors(ndim);
+      Eigen::VectorXd kDownWeights(ndim);
 
       double pixel_size = 18.4e-3;
 
