@@ -58,6 +58,9 @@
 #include <map>
 #include <deque>
 
+//Eigen
+#include <Eigen/Core>
+
 namespace eutelescope {
 
   class EUTelTripletGBL : public marlin::Processor {

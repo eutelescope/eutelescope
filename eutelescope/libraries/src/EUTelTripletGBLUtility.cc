@@ -44,16 +44,15 @@ using namespace marlin;
 
 EUTelTripletGBLUtility::EUTelTripletGBLUtility(){}
 
-TMatrixD EUTelTripletGBLUtility::JacobianPointToPoint( double ds ) {
+Eigen::Matrix<double, 5,5> EUTelTripletGBLUtility::JacobianPointToPoint( double ds ) {
   /* for GBL:
      Jacobian for straight line track
      track = q/p, x', y', x, y
      0,   1,  2,  3, 4
      */
-  TMatrixD jac( 5, 5 );
-  jac.UnitMatrix();
-  jac[3][1] = ds; // x = x0 + xp * ds
-  jac[4][2] = ds; // y = y0 + yp * ds
+  Eigen::Matrix<double, 5,5> jac = Eigen::Matrix<double, 5,5>::Identity();
+  jac(3,1) = ds; // x = x0 + xp * ds
+  jac(4,2) = ds; // y = y0 + yp * ds
   return jac;
 }
 
