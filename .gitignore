@@ -44,3 +44,9 @@ external/*
 
 # ignore python byte code
 *.pyc
+
+#ignore vi backup files 
+*.swp
+
+#ignore runfolders
+/jobsub/examples/*/*/run*
