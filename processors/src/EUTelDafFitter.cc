@@ -103,8 +103,16 @@ using namespace lcio;
 using namespace marlin;
 using namespace eutelescope;
 
+<<<<<<< HEAD:processors/src/EUTelDafFitter.cc
 EUTelDafFitter::EUTelDafFitter() : EUTelDafBase("EUTelDafFitter") {
   // Child spesific params and description
+=======
+
+EUTelDafFitter::EUTelDafFitter () 
+: EUTelDafBase("EUTelDafFitter")
+{
+    //Child spesific params and description
+>>>>>>> simon/scattering_legacy:src/EUTelDafFitter.cc
   dafParams();
 }
 
@@ -112,6 +120,7 @@ void EUTelDafFitter::dafParams() {
   _description = "This processor preforms track reconstruction. The tracks are "
                  "as final track fit for analysis.";
 
+<<<<<<< HEAD:processors/src/EUTelDafFitter.cc
   // Tracker system options
   registerOptionalParameter("AddToLCIO", "Should plots be made and filled?",
                             _addToLCIO, static_cast<bool>(true));
@@ -131,6 +140,24 @@ void EUTelDafFitter::dafInit() {
       if (find(_dutPlanes.begin(), _dutPlanes.end(),
                _system.planes.at(ii).getSensorID()) != _dutPlanes.end()) {
         _system.planes.at(ii).include();
+=======
+  //Tracker system options
+  registerOptionalParameter("AddToLCIO", "Should plots be made and filled?", _addToLCIO, static_cast<bool>(true));
+  registerOptionalParameter("FitDuts","Set this to true if you want DUTs to be included in the track fit", _fitDuts, static_cast<bool>(false)); 
+  //Track fitter options
+  registerOutputCollection(LCIO::TRACK,"TrackCollectionName", "Collection name for fitted tracks", _trackCollectionName, string ("fittracks"));
+  //registerOutputCollection(LCIO::TRACKERHIT,"OutputHitCollectionName",
+  //                       "Collection name for fitted particle hits (positions)",
+  //                       _outputHitColName, string ("testfithits"));
+}
+
+void EUTelDafFitter::dafInit() {
+  streamlog_out(DEBUG4) << " --- dafINIT --- " << std::endl;
+  if(_fitDuts){
+    for( size_t ii = 0; ii< _system.planes.size(); ii++){
+      if( find(_dutPlanes.begin(), _dutPlanes.end(), _system.planes.at(ii).getSensorID()) != _dutPlanes.end()){ 
+	_system.planes.at(ii).include(); 
+>>>>>>> simon/scattering_legacy:src/EUTelDafFitter.cc
       }
     }
   }
@@ -148,10 +175,18 @@ void EUTelDafFitter::dafEvent(LCEvent *event) {
     flag.setBit(LCIO::TRBIT_HITS);
     _fittrackvec->setFlag(flag.getFlag());
   }
+<<<<<<< HEAD:processors/src/EUTelDafFitter.cc
 
   // Check found tracks
   for (size_t ii = 0; ii < _system.getNtracks(); ii++) {
     // run track fitte
+=======
+  
+  //Check found tracks
+  streamlog_out(DEBUG5) << " --- getNtracks = " << _system.getNtracks() << " ---" << std::endl;
+  for(size_t ii = 0; ii < _system.getNtracks(); ii++ ){
+    //run track fitte
+>>>>>>> simon/scattering_legacy:src/EUTelDafFitter.cc
     _nCandidates++;
     // Prepare track for DAF fit
     _system.fitPlanesInfoDaf(_system.tracks.at(ii));
@@ -173,24 +208,58 @@ void EUTelDafFitter::dafEvent(LCEvent *event) {
     if (_addToLCIO) {
       addToLCIO(_system.tracks.at(ii), _fitpointvec);
     }
+<<<<<<< HEAD:processors/src/EUTelDafFitter.cc
+=======
+    //Dump to LCIO
+    
+    streamlog_out(DEBUG5) << " --- _addToLCIO = " << _addToLCIO << " ---" << std::endl;
+    if( _addToLCIO) { addToLCIO(_system.tracks.at(ii), _fitpointvec); }
+>>>>>>> simon/scattering_legacy:src/EUTelDafFitter.cc
     _nTracks++;
+    streamlog_out(DEBUG5) << " --- !! track added !! ---" << std::endl;
   }
 
+<<<<<<< HEAD:processors/src/EUTelDafFitter.cc
   // Add track collection
   if (_addToLCIO) {
     event->addCollection(_fittrackvec, _trackCollectionName);
     std::string sfitpoints = "";
+=======
+ //Add track collection
+  if(_addToLCIO)
+  { 
+    streamlog_out(DEBUG5) << " --- add _fittrackvec to collection ---" << std::endl;
+    event->addCollection(_fittrackvec,_trackCollectionName); 
+    std::string  sfitpoints = "" ;  
+>>>>>>> simon/scattering_legacy:src/EUTelDafFitter.cc
 
     for (int i = 0; i < 2000; i++) // TODO (Phillip Hamnett) Why is this hard
                                    // coded to 1000? Ric changed to 2000.
     {
+<<<<<<< HEAD:processors/src/EUTelDafFitter.cc
       sfitpoints = "fitpoints" + i;
       try {
         dynamic_cast<LCCollectionVec *>(event->getCollection(sfitpoints));
       } catch (...) {
+=======
+      streamlog_out(DEBUG5) << " --- Loop " << i  << std::endl;
+      sfitpoints = "fithits" ;  
+      std::ostringstream oss;
+      oss << i;
+      sfitpoints += oss.str();
+      streamlog_out(DEBUG5) << " --- trying to getColl " << sfitpoints  << std::endl;
+      try
+      {
+       dynamic_cast < LCCollectionVec * > ( event->getCollection( sfitpoints ) )  ;
+      }
+      catch(...)
+      {
+	  streamlog_out(DEBUG5) << " --- breaking --- " << sfitpoints  << std::endl;
+>>>>>>> simon/scattering_legacy:src/EUTelDafFitter.cc
         break;
       }
     }
+<<<<<<< HEAD:processors/src/EUTelDafFitter.cc
     event->addCollection(_fitpointvec, sfitpoints);
   }
 }
@@ -198,6 +267,16 @@ void EUTelDafFitter::dafEvent(LCEvent *event) {
 void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float, 4> &track,
                                LCCollectionVec *lcvec) {
   TrackImpl *fittrack = new TrackImpl();
+=======
+    streamlog_out(DEBUG5) << " --- add _fitpointvec to collection ---" << std::endl;
+    event->addCollection(_fitpointvec, sfitpoints );
+  }
+}
+
+void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float,4>& track, LCCollectionVec *lcvec){
+
+  TrackImpl * fittrack = new TrackImpl();
+>>>>>>> simon/scattering_legacy:src/EUTelDafFitter.cc
   // Impact parameters are useless and set to 0
   fittrack->setD0(0.);        // impact paramter of the track in (r-phi)
   fittrack->setZ0(0.);        // impact paramter of the track in (r-z)
@@ -215,11 +294,14 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float, 4> &track,
   CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, lcvec);
 
   float refpoint[3];
+  
+  streamlog_out(DEBUG5) << " --- Loop over planes. planes.size is " << _system.planes.size() << " ---" << std::endl;
 
-  for (size_t plane = 0; plane < _system.planes.size(); plane++) {
-    daffitter::FitPlane<float> &pl = _system.planes.at(plane);
-    daffitter::TrackEstimate<float, 4> &estim = track.estimates.at(plane);
-    TrackerHitImpl *fitpoint = new TrackerHitImpl();
+  for(size_t plane = 0; plane < _system.planes.size(); plane++){
+    daffitter::FitPlane<float>& pl = _system.planes.at(plane);
+    daffitter::TrackEstimate<float,4>& estim = track.estimates.at( plane );
+
+    TrackerHitImpl * fitpoint = new TrackerHitImpl();
     // encode and store sensorID
     int sensorID = _system.planes.at(plane).getSensorID();
     idHitEncoder["sensorID"] = sensorID;
