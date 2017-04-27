@@ -107,6 +107,14 @@ namespace eutelescope {
         _rotMatrix = Utility::rotationMatrixFromAngles(alpha, beta, gamma);
       }
 
+      void setRotationDeg(double alpha, double beta, double gamma) {
+		auto alphaRad = alpha*Utility::PI/180;
+		auto betaRad = beta*Utility::PI/180;
+		auto gammaRad = gamma*Utility::PI/180;
+        _angleVector = Eigen::Vector3d(alphaRad, betaRad, gammaRad);
+        _rotMatrix = Utility::rotationMatrixFromAngles(alphaRad, betaRad, gammaRad);
+      }
+
       void setPositionUnc(double xUnc, double yUnc, double zUnc) {
         _posUncVector = Eigen::Vector3d(xUnc, yUnc, zUnc);
       }
@@ -146,10 +154,8 @@ namespace eutelescope {
       Eigen::Vector3d _offVector;
       Eigen::Vector3d _deltaRotAnglesVector;
       Eigen::Matrix3d _deltaRotMatrix;
-
       Eigen::Vector3d _totalPosVector;
       Eigen::Matrix3d _totalRotMatrix;
-
       Eigen::Vector3d _globalRotationAngles;
 
     public:
@@ -220,6 +226,8 @@ namespace eutelescope {
         _deltaRotAnglesVector = Eigen::Vector3d(0, 0, 0);
         _deltaRotMatrix = Eigen::Matrix3d::Identity();
         _totalRotMatrix = globalRotMat;
+        _globalRotationAngles =
+            Utility::getRotationAnglesFromMatrix(_totalRotMatrix);
       }
     };
 

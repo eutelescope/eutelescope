@@ -169,7 +169,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 		auto alpha	= _siPlanesLayerLayout->getLayerRotationZY(iPlane);
 		auto beta	= _siPlanesLayerLayout->getLayerRotationZX(iPlane);
 		auto gamma	= _siPlanesLayerLayout->getLayerRotationXY(iPlane);
-		thisLayer->setRotation(alpha, beta, gamma);	
+		thisLayer->setRotationDeg(alpha, beta, gamma);	
 
 		auto f1	= _siPlanesLayerLayout->getSensitiveRotation1(iPlane);
 		auto f2	= _siPlanesLayerLayout->getSensitiveRotation2(iPlane);
