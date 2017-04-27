@@ -17,11 +17,9 @@
 
    <execute>
       <processor name="MyAIDAProcessor"/>
-      <!--processor name="Zero"/-->
       <processor name="HitLocalToGlobal"/>
       <processor name="PedeToGEAR"/>
       <processor name="MyEUTelMilleGBL"/>
-      <!--processor name="Save"/-->
    </execute>
 
    <global>
@@ -32,31 +30,6 @@
       <parameter name="SupressCheck" value="false"/>
       <parameter name="Verbosity" value="MESSAGE0"/>
    </global>
-
-
- <processor name="Save" type="EUTelOutputProcessor">
- <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
-  <!--drops the named collections from the event-->
-  <parameter name="DropCollectionNames" type="StringVec"> zsdata_m26 cluster_m26 filteredcluster zsdata refilteredcluster filtered_cluster_m26 </parameter>
-  <!--drops all collections of the given type from the event-->
-  <!--parameter name="DropCollectionTypes" type="StringVec"> SimTrackerHit SimCalorimeterHit </parameter-->
-  <!-- write complete objects in subset collections to the file (i.e. ignore subset flag)-->
-  <!--parameter name="FullSubsetCollections" type="StringVec" value="MCParticlesSkimmed"/-->
-  <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
-  <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
-  <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@FilePrefix@-align2.slcio"/>
-  <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
-  <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
-  <!--Set it to true to remove intermediate EORE in merged runs-->
-  <parameter name="SkipIntermediateEORE" type="bool" value="true"/>
-  <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
-  <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
-</processor>
-
-
 
  <processor name="MyAIDAProcessor" type="AIDAProcessor">
  <!--Processor that handles AIDA files. Creates on directory per processor.  Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
@@ -70,14 +43,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="Zero" type="EUTelProcessorMCHits">
- <!--EUTelLocaltoGlobalHitMaker is responsible to change local coordinates to global. This is done using the EUTelGeometryClass-->
-  <!--Global output hit collection name-->
-  <parameter name="hitCollectionNameOutput" type="string" lcioOutType="TrackerHit"> mc_hit </parameter>
-  <!--Set to true to undo the alignment instead-->
-</processor>
-
- <processor name="HitLocalToGlobal" type="EUTelProcessorCoordinateTransformHits">
+<processor name="HitLocalToGlobal" type="EUTelProcessorCoordinateTransformHits">
  <!--EUTelLocaltoGlobalHitMaker is responsible to change local coordinates to global. This is done using the EUTelGeometryClass-->
   <!--Local input hit collection name-->
   <parameter name="hitCollectionNameInput" type="string" lcioInType="TrackerHit"> local_hit </parameter>
@@ -89,7 +55,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="PedeToGEAR" type="EUTelPedeGEAR">
+<processor name="PedeToGEAR" type="EUTelPedeGEAR">
  <!--EUTelPedeGEAR calls PEDE to process a MILLE binary file and create an updated GEAR file with the updated MILLEPEDE II alignment constants.-->
   <!--Number of alignment constants used. Available mode are: 
 1 - shifts in the X and Y directions and a rotation around the Z axis,
@@ -101,9 +67,9 @@
   <!--Fix sensor planes in the fit according to their sensor ids.-->
   <parameter name="FixedPlanes" type="IntVec" value="@FixedPlanes@"/>
   <!--Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file-->
-  <parameter name="NewGEARSuffix" type="string" value="_gbl1"/>
+  <parameter name="NewGEARSuffix" type="string" value="@GEARSuffix@"/>
   <!--Name of the steering file for the pede program.-->
-  <parameter name="PedeSteerfileName" type="string" value="@LcioPath@/@FilePrefix@-pede-steer.txt"/>
+  <parameter name="PedeSteerfileName" type="string" value="@PedeSteerFile@"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -120,11 +86,11 @@
   <!--This is the name of the alignment collection to be saved into the slcio file-->
   <!--parameter name="AlignmentConstantCollectionName" type="string" value="alignment"/-->
   <!--This is the name of the LCIO file name with the output alignmentconstants (add .slcio)-->
-  <parameter name="AlignmentConstantLCIOFile" type="string" value="@DatabasePath@/@FilePrefix@-alignmentGBL_newGBL.slcio"/> 
+  <parameter name="AlignmentConstantLCIOFile" type="string" value=""/> 
   <!--Set how many hits (=planes) can be missing on a track candidate.-->
   <!--parameter name="AllowedMissingHits" type="int" value="0"/-->
   <!--Name of the Millepede binary file.-->
-  <parameter name="BinaryFilename" type="string" value="@LcioPath@/@FilePrefix@-aligngbl-mille.bin"/>
+  <parameter name="BinaryFilename" type="string" value="@MilleBinaryFile@"/>
   <!--Maximal allowed distance between hits entering the fit per 10 cm space between the planes.-->
   <parameter name="triCut" type="float" value="@TripletCut@"/>
   <parameter name="driCut" type="float" value="@DripletCut@"/>
@@ -160,7 +126,7 @@
   <!--Use only events with one track candidate.-->
   <!--parameter name="OnlySingleTrackEvents" type="int" value="0"/-->
   <!--Name of the steering file for the pede program.-->
-  <parameter name="PedeSteerfileName" type="string" value="@LcioPath@/@FilePrefix@-pede-steer.txt"/>
+  <parameter name="PedeSteerfileName" type="string" value="@PedeSteerFile@"/>
   <!--Start values for the alignment for the angle alpha.-->
   <!--parameter name="PedeUserStartValuesAlpha" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
   <!--Start values for the alignment for the angle beta.-->
@@ -186,7 +152,6 @@
   <!--parameter name="TestModeSensorResolution" type="float" value="3"/-->
   <!--Z positions of the sensors in test mode.-->
   <!--parameter name="TestModeSensorZPositions" type="FloatVec"> 20000 40000 60000 80000 100000 120000 </parameter-->
-w
   <!--Width of the track slope distribution in the x direction-->
   <!--parameter name="TestModeXTrackSlope" type="float" value="0.0005"/-->
   <!--Width of the track slope distribution in the y direction-->
