@@ -1169,7 +1169,7 @@ void EUTelMille::findMatchedHits(int &_ntrack, Track *TrackHere) {
   std::vector<EVENT::TrackerHit *> TrackHitsHere = TrackHere->getTrackerHits();
 
   // check for a hit in every plane
-  streamlog_out(MESSAGE1) << "track " << _ntrack << " has "
+  streamlog_out(DEBUG9) << "track " << _ntrack << " has "
                           << TrackHitsHere.size() << " hits " << endl;
 
   // assume hits are ordered in z! start counting from 0
@@ -1188,7 +1188,7 @@ void EUTelMille::findMatchedHits(int &_ntrack, Track *TrackHere) {
     int sensorID = Utility::getSensorIDfromHit(HitHere);
 
     // check if this is a measured hit or a fitted hit, want measured hit
-    streamlog_out(MESSAGE0)
+    streamlog_out(DEBUG9)
         << "hit on plane [" << sensorID << "] properties : "
         << (hitCellDecoder(HitHere)["properties"] & kFittedHit) << std::endl;
 
@@ -1207,12 +1207,12 @@ void EUTelMille::findMatchedHits(int &_ntrack, Track *TrackHere) {
        ihit != hit.end(); ihit++) {
     int hitID = Utility::getSensorIDfromHit((*ihit));
 
-    streamlog_out(MESSAGE1) << "hit: @ " << hitID << " " << std::endl;
+    streamlog_out(DEBUG9) << "hit: @ " << hitID << " " << std::endl;
 
     for (std::vector<TrackerHit *>::iterator ifit = fit.begin();
          ifit != fit.end(); ifit++) {
       int fitID = Utility::getSensorIDfromHit((*ifit));
-      streamlog_out(MESSAGE1) << "fit: @ " << fitID << " " << std::endl;
+      streamlog_out(DEBUG9) << "fit: @ " << fitID << " " << std::endl;
       if (fitID != hitID)
         continue;
 
@@ -1232,15 +1232,15 @@ void EUTelMille::findMatchedHits(int &_ntrack, Track *TrackHere) {
       _trackResidZ[_ntrack][nPlaneHere] =
           (fitPosition[2] - hitPosition[2]) * 1000.;
 
-      streamlog_out(MESSAGE1)
+      streamlog_out(DEBUG9)
           << "hit: @ " << hitID << " " << _xPos[_ntrack][nPlaneHere] << " "
           << _yPos[_ntrack][nPlaneHere] << " " << _zPos[_ntrack][nPlaneHere]
           << " type: " << (*ihit)->getType();
 
-      streamlog_out(MESSAGE1) << "res " << _trackResidX[_ntrack][nPlaneHere]
+      streamlog_out(DEBUG9) << "res " << _trackResidX[_ntrack][nPlaneHere]
                               << " " << _trackResidY[_ntrack][nPlaneHere] << " "
                               << _trackResidZ[_ntrack][nPlaneHere];
-      streamlog_out(MESSAGE1) << endl;
+      streamlog_out(DEBUG9) << endl;
 
       nPlaneHere++;
     }
@@ -1460,7 +1460,7 @@ void EUTelMille::processEvent(LCEvent *event) {
 
     } // end loop over all tracks
 
-    streamlog_out(MESSAGE1)
+    streamlog_out(DEBUG9)
         << "Number of tracks available in track collection: " << nTracksHere
         << " tracks selected for Mille: " << _nTracks << std::endl;
 
@@ -1520,7 +1520,7 @@ void EUTelMille::processEvent(LCEvent *event) {
                 1000. * hit->getPosition()[2]));
 
             double measuredz = hit->getPosition()[2];
-            streamlog_out(MESSAGE1) << " hitsplane : " << hitsplane.size()
+            streamlog_out(DEBUG9) << " hitsplane : " << hitsplane.size()
                                     << " z : " << measuredz << std::endl;
 
             // setup cellIdDecoder to decode the hit properties
@@ -1544,7 +1544,7 @@ void EUTelMille::processEvent(LCEvent *event) {
               //                      ) > 5.0 /* mm */)
               {
                 // test if this is a fitted hit
-                streamlog_out(MESSAGE0)
+                streamlog_out(DEBUG9)
                     << "fit hit properties : "
                     << (hitCellDecoder(HitHere)["properties"] & kFittedHit)
                     << std::endl;
@@ -1574,7 +1574,7 @@ void EUTelMille::processEvent(LCEvent *event) {
         // end of the loop
       } else {
 
-        streamlog_out(MESSAGE1)
+        streamlog_out(DEBUG9)
             << "Dropping track " << nTracksEvent
             << " because there is not a hit in every plane assigned to it."
             << endl;
@@ -1584,13 +1584,13 @@ void EUTelMille::processEvent(LCEvent *event) {
   }
 
   if (_inputMode != 1) {
-    streamlog_out(MESSAGE1) << "Number of hits in the individual planes: ";
+    streamlog_out(DEBUG9) << "Number of hits in the individual planes: ";
     for (size_t i = 0; i < _allHitsArray.size(); i++)
-      streamlog_out(MESSAGE1) << _allHitsArray[i].size() << " ";
-    streamlog_out(MESSAGE1) << endl;
+      streamlog_out(DEBUG9) << _allHitsArray[i].size() << " ";
+    streamlog_out(DEBUG9) << endl;
   }
 
-  streamlog_out(MESSAGE1) << "Number of track candidates found: " << _iEvt
+  streamlog_out(DEBUG9) << "Number of track candidates found: " << _iEvt
                           << ": " << _nTracks << endl;
 
   // Perform fit for all found track candidates
@@ -1629,7 +1629,7 @@ void EUTelMille::processEvent(LCEvent *event) {
       Chiquare[0] = 0.0;
       Chiquare[1] = 0.0;
 
-      streamlog_out(MESSAGE1)
+      streamlog_out(DEBUG9)
           << "Adding track using the following coordinates: ";
 
       // loop over all planes
@@ -1646,22 +1646,22 @@ void EUTelMille::processEvent(LCEvent *event) {
         }
 
         if (excluded == 0) {
-          streamlog_out(MESSAGE1) << std::endl
+          streamlog_out(DEBUG9) << std::endl
                                   << " not Excluded @ " << help << "["
                                   << _nPlanes << "] " << _xPosHere[help] << " "
                                   << _yPosHere[help] << " " << _zPosHere[help];
         }
-        streamlog_out(MESSAGE1) << std::endl;
+        streamlog_out(DEBUG9) << std::endl;
 
       } // end loop over all planes
 
-      streamlog_out(MESSAGE1) << endl;
+      streamlog_out(DEBUG9) << endl;
 
       //    if( _inputMode == 1 ) {
       //    }else
       {
         if (_alignMode == 3) {
-          streamlog_out(MESSAGE1) << " AlignMode = " << _alignMode
+          streamlog_out(DEBUG9) << " AlignMode = " << _alignMode
                                   << " _inputMode = " << _inputMode
                                   << std::endl;
 
@@ -1694,7 +1694,7 @@ void EUTelMille::processEvent(LCEvent *event) {
             }
             const double xresid = x0 - x;
             const double yresid = y0 - y;
-            streamlog_out(MESSAGE1) << " x0 = " << x0 << " x= " << x
+            streamlog_out(DEBUG9) << " x0 = " << x0 << " x= " << x
                                     << " ;; y0 = " << y0 << " y = " << y
                                     << std::endl;
 
@@ -1736,7 +1736,7 @@ void EUTelMille::processEvent(LCEvent *event) {
           mean_y = mean_y / static_cast<double>(mean_n);
 
           int diff_mean = _nPlanes - mean_n;
-          streamlog_out(MESSAGE0) << " diff_mean: " << diff_mean
+          streamlog_out(DEBUG9) << " diff_mean: " << diff_mean
                                   << " _nPlanes = " << _nPlanes
                                   << " mean_n = " << mean_n << std::endl;
 
@@ -1896,7 +1896,7 @@ void EUTelMille::processEvent(LCEvent *event) {
           }
           delete gMinuit;
         } else {
-          streamlog_out(MESSAGE1) << " AlignMode = " << _alignMode
+          streamlog_out(DEBUG9) << " AlignMode = " << _alignMode
                                   << " _inputMode = " << _inputMode
                                   << std::endl;
           // Calculate residuals
@@ -1906,29 +1906,29 @@ void EUTelMille::processEvent(LCEvent *event) {
         }
       }
 
-      streamlog_out(MESSAGE1) << "Residuals X: ";
+      streamlog_out(DEBUG9) << "Residuals X: ";
 
       for (unsigned int help = 0; help < _nPlanes; help++) {
-        streamlog_out(MESSAGE1) << _waferResidX[help] << " ";
+        streamlog_out(DEBUG9) << _waferResidX[help] << " ";
       }
 
-      streamlog_out(MESSAGE1) << endl;
+      streamlog_out(DEBUG9) << endl;
 
-      streamlog_out(MESSAGE1) << "Residuals Y: ";
+      streamlog_out(DEBUG9) << "Residuals Y: ";
 
       for (unsigned int help = 0; help < _nPlanes; help++) {
-        streamlog_out(MESSAGE1) << _waferResidY[help] << " ";
+        streamlog_out(DEBUG9) << _waferResidY[help] << " ";
       }
 
-      streamlog_out(MESSAGE1) << endl;
+      streamlog_out(DEBUG9) << endl;
 
-      streamlog_out(MESSAGE1) << "Residuals Z: ";
+      streamlog_out(DEBUG9) << "Residuals Z: ";
 
       for (unsigned int help = 0; help < _nPlanes; help++) {
-        streamlog_out(MESSAGE1) << _waferResidZ[help] << " ";
+        streamlog_out(DEBUG9) << _waferResidZ[help] << " ";
       }
 
-      streamlog_out(MESSAGE1) << endl;
+      streamlog_out(DEBUG9) << endl;
 
       int residualsXOkay = 1;
       int residualsYOkay = 1;
@@ -1963,7 +1963,7 @@ void EUTelMille::processEvent(LCEvent *event) {
 
       if (_useResidualCuts != 0 &&
           (residualsXOkay == 0 || residualsYOkay == 0)) {
-        streamlog_out(MESSAGE1) << "Track did not pass the residual cuts."
+        streamlog_out(DEBUG9) << "Track did not pass the residual cuts."
                                 << endl;
       }
 
@@ -2496,7 +2496,7 @@ void EUTelMille::processEvent(LCEvent *event) {
 
   } // end if only one track or no single track event
 
-  streamlog_out(MESSAGE1) << "Finished fitting tracks in event " << _iEvt
+  streamlog_out(DEBUG9) << "Finished fitting tracks in event " << _iEvt
                           << endl;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -3218,7 +3218,7 @@ void EUTelMille::end() {
               constant->setSensorID(_orderedSensorID.at(counter));
               ++counter;
               constantsCollection->push_back(constant);
-              streamlog_out(MESSAGE0) << (*constant) << endl;
+              streamlog_out(DEBUG9) << (*constant) << endl;
             } else
               delete constant;
           }
