@@ -126,7 +126,7 @@ namespace eutelescope {
 
       /** Map containing plane path (string) and corresponding planeID */
       std::map<int, std::string> _planePath;
-
+	  std::map<int, TGeoMatrix*> _TGeoMatrixMap;
       /** */
       static unsigned _counter;
 
