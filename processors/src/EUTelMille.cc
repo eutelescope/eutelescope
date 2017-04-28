@@ -255,11 +255,10 @@ EUTelMille::EUTelMille() : Processor("EUTelMille") {
   registerOptionalParameter(
       "AlignMode",
       "Number of alignment constants used. Available mode are: "
-      "\n1 - shifts in the X and Y directions and a rotation around the Z axis,"
-      "\n2 - only shifts in the X and Y directions"
-      "\n3 - (EXPERIMENTAL) shifts in the X,Y and Z directions and rotations "
-      "around all three axis",
-      _alignMode, static_cast<int>(1));
+      "\nXYShiftsRotZ - shifts in the X and Y directions and a rotation around the Z axis,"
+      "\nXYShifts - only shifts in the X and Y directions"
+      "\nXYShiftsAllRot - shifts in the X,Y and Z directions and rotations around all three axis",
+      _alignModeString, std::string("XYShiftsRotZ"));
 
   registerOptionalParameter(
       "UseResidualCuts",
@@ -460,6 +459,18 @@ void EUTelMille::init() {
   geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME,
                                              EUTELESCOPE::DUMPGEOROOT);
 
+
+  if(_alignModeString.compare("XYShiftsRotZ") == 0 ) {
+	_alignMode = Utility::alignMode::XYShiftsRotZ;
+  } else if( _alignModeString.compare("XYShifts") == 0 ) {
+	_alignMode = Utility::alignMode::XYShifts;
+  } else if( _alignModeString.compare("XYShiftsAllRot") == 0 ) {
+	_alignMode = Utility::alignMode::XYShiftsAllRot;
+  } else {
+	streamlog_out(ERROR) << "The chosen AlignMode: '" << _alignModeString << "' is invalid. Please correct your steering template and retry!" << std::endl;
+	throw InvalidParameterException("AlignMode");
+  }
+
   _sensorIDVec.clear();
   _sensorIDVecMap.clear();
   // TODO: get this directly
@@ -601,7 +612,7 @@ void EUTelMille::init() {
   _telescopeResolZ = new double[_nPlanes];
 
   // check the consistency of the resolution parameters
-  if (_alignMode == 3) {
+  if (_alignMode == Utility::alignMode::XYShiftsAllRot) {
     if (_resolutionX.size() != _resolutionY.size()) {
       throw InvalidParameterException(
           "WARNING, length of resolution X and Y is not the same \n");
@@ -658,7 +669,7 @@ void EUTelMille::init() {
     }
   }
 
-  if (_alignMode == 3) {
+  if (_alignMode == Utility::alignMode::XYShiftsAllRot) {
     //       number_of_datapoints = _nPlanes -_nExcludePlanes;
     number_of_datapoints = _nPlanes;
     hitsarray = new hit[number_of_datapoints];
@@ -1660,8 +1671,8 @@ void EUTelMille::processEvent(LCEvent *event) {
       //    if( _inputMode == 1 ) {
       //    }else
       {
-        if (_alignMode == 3) {
-          streamlog_out(DEBUG9) << " AlignMode = " << _alignMode
+        if (_alignMode == Utility::alignMode::XYShiftsAllRot) {
+          streamlog_out(DEBUG9) << " AlignMode = " << static_cast<int>(_alignMode)
                                   << " _inputMode = " << _inputMode
                                   << std::endl;
 
@@ -1896,7 +1907,7 @@ void EUTelMille::processEvent(LCEvent *event) {
           }
           delete gMinuit;
         } else {
-          streamlog_out(DEBUG9) << " AlignMode = " << _alignMode
+          streamlog_out(DEBUG9) << " AlignMode = " << static_cast<int>(_alignMode)
                                   << " _inputMode = " << _inputMode
                                   << std::endl;
           // Calculate residuals
@@ -1975,7 +1986,7 @@ void EUTelMille::processEvent(LCEvent *event) {
         // ---------------------------
 
         // Easy case: consider only shifts
-        if (_alignMode == 2) {
+        if (_alignMode == Utility::alignMode::XYShifts) {
 
           const int nLC = 4; // number of local parameters
           const int nGL =
@@ -2064,7 +2075,7 @@ void EUTelMille::processEvent(LCEvent *event) {
           delete[] label;
 
           // Slightly more complicated: add rotation around the z axis
-        } else if (_alignMode == 1) {
+        } else if (_alignMode == Utility::alignMode::XYShiftsRotZ) {
 
           const int nLC = 4;            // number of local parameters
           const int nGL = _nPlanes * 3; // number of global parameters
@@ -2155,7 +2166,7 @@ void EUTelMille::processEvent(LCEvent *event) {
           delete[] derGL;
           delete[] label;
 
-        } else if (_alignMode == 3) {
+        } else if (_alignMode == Utility::alignMode::XYShiftsAllRot) {
           if (validminuittrack || _inputMode == 1) {
             const int nLC = 4;            // number of local parameters
             const int nGL = _nPlanes * 6; // number of global parameters
@@ -2328,9 +2339,7 @@ void EUTelMille::processEvent(LCEvent *event) {
           }
         } else {
 
-          streamlog_out(ERROR2)
-              << _alignMode << " is not a valid mode. Please choose 1,2 or 3."
-              << endl;
+          streamlog_out(ERROR2) << static_cast<int>(_alignMode) << " is not a valid mode." << endl;
         }
 
         _nGoodTracks++;
@@ -2643,7 +2652,7 @@ void EUTelMille::end() {
   delete[] _waferResidX;
   delete[] _waferResidZ;
 
-  if (_alignMode == 3) {
+  if (_alignMode == Utility::alignMode::XYShiftsAllRot) {
     delete[] hitsarray;
   }
 
@@ -2781,14 +2790,14 @@ void EUTelMille::end() {
 
           if (fixed || (_FixedPlanes.empty() &&
                         (help == firstnotexcl || help == lastnotexcl))) {
-            if (_alignMode == 1) {
+            if (_alignMode == Utility::alignMode::XYShiftsRotZ) {
               steerFile << (counter * 3 + 1) << " 0.0 -1.0" << endl;
               steerFile << (counter * 3 + 2) << " 0.0 -1.0" << endl;
               steerFile << (counter * 3 + 3) << " 0.0 -1.0" << endl;
-            } else if (_alignMode == 2) {
+            } else if (_alignMode == Utility::alignMode::XYShifts) {
               steerFile << (counter * 2 + 1) << " 0.0 -1.0" << endl;
               steerFile << (counter * 2 + 2) << " 0.0 -1.0" << endl;
-            } else if (_alignMode == 3) {
+            } else if (_alignMode == Utility::alignMode::XYShiftsAllRot) {
               steerFile << (counter * 6 + 1) << " 0.0 -1.0" << endl;
               steerFile << (counter * 6 + 2) << " 0.0 -1.0" << endl;
               steerFile << (counter * 6 + 3) << " 0.0 -1.0" << endl;
@@ -2799,7 +2808,7 @@ void EUTelMille::end() {
 
           } else {
 
-            if (_alignMode == 1) {
+            if (_alignMode == Utility::alignMode::XYShiftsRotZ) {
 
               if (_usePedeUserStartValues == 0) {
                 steerFile << (counter * 3 + 1) << " "
@@ -2817,7 +2826,7 @@ void EUTelMille::end() {
                           << _pedeUserStartValuesGamma[help] << " 0.0" << endl;
               }
 
-            } else if (_alignMode == 2) {
+            } else if (_alignMode == Utility::alignMode::XYShifts) {
 
               if (_usePedeUserStartValues == 0) {
                 steerFile << (counter * 2 + 1) << " "
@@ -2831,7 +2840,7 @@ void EUTelMille::end() {
                           << _pedeUserStartValuesY[help] << " 0.0" << endl;
               }
 
-            } else if (_alignMode == 3) {
+            } else if (_alignMode == Utility::alignMode::XYShiftsAllRot) {
               if (_usePedeUserStartValues == 0) {
                 if (_FixParameter[help] & (1 << 0))
                   steerFile << (counter * 6 + 1) << " 0.0 -1.0" << endl;
@@ -3131,7 +3140,7 @@ void EUTelMille::end() {
 
             bool goodLine = true;
             unsigned int numpars = 0;
-            if (_alignMode != 3)
+            if (_alignMode != Utility::alignMode::XYShiftsAllRot)
               numpars = 3;
             else
               numpars = 6;
@@ -3161,7 +3170,7 @@ void EUTelMille::end() {
                 goodLine = false;
 
               bool isFixed = (tokens.size() == 3);
-              if (_alignMode != 3) {
+              if (_alignMode != Utility::alignMode::XYShiftsAllRot) {
                 if (iParam == 0) {
                   constant->setXOffset(tokens[1] / 1000.);
                   if (!isFixed)

@@ -39,6 +39,8 @@ namespace eutelescope {
 
   namespace Utility {
 
+	enum class alignMode { XYShiftsRotZ, XYShifts, XYShiftsAllRot, XYZShiftsRotZ };
+
     const long double PI = 3.141592653589793238L;
 
     TMatrixD setPrecision(TMatrixD mat, double mod);

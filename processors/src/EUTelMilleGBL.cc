@@ -342,10 +342,10 @@ EUTelMilleGBL::EUTelMilleGBL(): Processor("EUTelMilleGBL") {
   //registerOptionalParameter("OnlySingleTrackEvents","Use only events with one track candidate.",_onlySingleTrackEvents, static_cast <int> (0));
 
   registerOptionalParameter("AlignMode","Number of alignment constants used. Available mode are: "
-      "\n2 - shifts in X and Y"
-      "\n3 - shifts in X and Y and rotation around the Z axis,"
-      "\n4 - shifts in X,Y and Z and rotation around the Z axis",
-      _alignMode, static_cast <int> (3));
+      "\nXYZShifts - shifts in X and Y"
+      "\nXYShiftsRotZ - shifts in X and Y and rotation around the Z axis,"
+      "\nXYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis",
+      _alignModeString, std::string("XYShiftsRotZ"));
 
   // not used anymore
   //registerOptionalParameter("UseResidualCuts","Use cuts on the residuals to reduce the combinatorial background. 0 for off (default), 1 for on",_useResidualCuts,
@@ -676,6 +676,18 @@ void EUTelMilleGBL::init() {
     _driCut = _driCut*6./_eBeam;
     _sixCut = _sixCut*6./_eBeam;
   }
+
+  if(_alignModeString.compare("XYShiftsRotZ") == 0 ) {
+	_alignMode = Utility::alignMode::XYShiftsRotZ;
+  } else if( _alignModeString.compare("XYShifts") == 0 ) {
+	_alignMode = Utility::alignMode::XYShifts;
+  } else if( _alignModeString.compare("XYZShiftsRotZ") == 0 ) {
+	_alignMode = Utility::alignMode::XYZShiftsRotZ;
+  } else {
+	streamlog_out(ERROR) << "The chosen AlignMode: '" << _alignModeString << "' is invalid. Please correct your steering template and retry!" << std::endl;
+	throw InvalidParameterException("AlignMode");
+  }
+
 
   streamlog_out( MESSAGE2 ) << "end of init" << endl;
 }
@@ -1365,14 +1377,14 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	    point->addScatterer( scat, wscatSi );
 
 
-	    if( _alignMode == 2 ) { // only x and y shifts
+	    if( _alignMode == Utility::alignMode::XYShifts ) { // only x and y shifts
 	      // global labels for MP:
 	      std::vector<int> globalLabels(2);
 	      globalLabels[0] = 1 + 2*ipl;
 	      globalLabels[1] = 2 + 2*ipl;
 	      point->addGlobals( globalLabels, alDer2 ); // for MillePede alignment
 	    }
-	    else if( _alignMode == 3 ) { // with rot
+	    else if( _alignMode == Utility::alignMode::XYShiftsRotZ ) { // with rot
 	      std::vector<int> globalLabels(3);
 	      globalLabels[0] = 1 + 3*ipl; // x
 	      globalLabels[1] = 2 + 3*ipl; // y
@@ -1383,7 +1395,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	      alDer3(1,2) =  xs; // dy/dphi
 	      point->addGlobals( globalLabels, alDer3 ); // for MillePede alignment
 	    }
-	    else if( _alignMode == 4 ) { // with rot and z shift
+	    else if( _alignMode == Utility::alignMode::XYZShiftsRotZ ) { // with rot and z shift
 	      std::vector<int> globalLabels(4);
 	      globalLabels[0] = 1 + 4*ipl;
 	      globalLabels[1] = 2 + 4*ipl;
@@ -1757,16 +1769,16 @@ void EUTelMilleGBL::end() {
 
 	  if( fixed || (_FixedPlanes.size() == 0 && (ipl == firstnotexcl || ipl == lastnotexcl) ) ) {
 	    nfix++;
-	    if( _alignMode == 2 ) {
+	    if( _alignMode == Utility::alignMode::XYShifts ) {
 	      steerFile << (counter * 2 + 1) << "  0.0 -1.0" << endl;
 	      steerFile << (counter * 2 + 2) << "  0.0 -1.0" << endl;
 	    }
-	    if( _alignMode == 3 ) {
+	    if( _alignMode == Utility::alignMode::XYShiftsRotZ ) {
 	      steerFile << (counter * 3 + 1) << "  0.0 -1.0" << endl; // fix x
 	      steerFile << (counter * 3 + 2) << "  0.0 -1.0" << endl; // fix y
 	      steerFile << (counter * 3 + 3) << "  0.0 -1.0" << endl; // fix rot
 	    }
-	    if( _alignMode == 4 ) {
+	    if( _alignMode == Utility::alignMode::XYZShiftsRotZ ) {
 	      steerFile << (counter * 4 + 1) << "  0.0 -1.0" << endl;
 	      steerFile << (counter * 4 + 2) << "  0.0 -1.0" << endl;
 	      steerFile << (counter * 4 + 3) << "  0.0 -1.0" << endl;
@@ -1775,18 +1787,18 @@ void EUTelMilleGBL::end() {
 
 	  else {
 
-	    if( _alignMode == 2 ) {
+	    if( _alignMode == Utility::alignMode::XYShifts ) {
 	      steerFile << (counter * 2 + 1) << "  0.0  0.0" << endl;
 	      steerFile << (counter * 2 + 2) << "  0.0  0.0" << endl;
 	    }
 
-	    if( _alignMode == 3 ) {
+	    if( _alignMode == Utility::alignMode::XYShiftsRotZ ) {
 	      steerFile << (counter * 3 + 1) << "  0.0  0.0" << endl;
 	      steerFile << (counter * 3 + 2) << "  0.0  0.0" << endl;
 	      steerFile << (counter * 3 + 3) << "  0.0  0.0" << endl;
 	    }
 
-	    if( _alignMode == 4 ) {
+	    if( _alignMode == Utility::alignMode::XYZShiftsRotZ ) {
 	      steerFile << (counter * 4 + 1) << "  0.0  0.0" << endl;
 	      steerFile << (counter * 4 + 2) << "  0.0  0.0" << endl;
 	      steerFile << (counter * 4 + 3) << "  0.0  0.0" << endl;
@@ -1796,7 +1808,7 @@ void EUTelMilleGBL::end() {
 
 	  // special for z shift:
 
-	  if( _alignMode == 4 ) {
+	  if( _alignMode == Utility::alignMode::XYZShiftsRotZ ) {
 	    if( ipl == 1 )
 	      steerFile << (counter * 4 + 4) << "  0.0 -1.0" << endl;
 	    else if( ipl == 4 )
@@ -1813,7 +1825,7 @@ void EUTelMilleGBL::end() {
 
       if( nfix < 2 ) {
 
-	if( _alignMode == 2 ) {
+	if( _alignMode == Utility::alignMode::XYShifts ) {
 
 	  steerFile << "Constraint 0 ! sum dx = 0" << endl;
 	  steerFile << " 1  1.0" << endl;
@@ -1832,7 +1844,7 @@ void EUTelMilleGBL::end() {
 	  steerFile << "12  1.0" << endl;
 	}
 
-	if( _alignMode == 3 ) {
+	if( _alignMode == Utility::alignMode::XYShiftsRotZ ) {
 
 	  steerFile << "Constraint 0 ! sum dx = 0" << endl;
 	  steerFile << " 1  1.0" << endl;
@@ -1859,7 +1871,7 @@ void EUTelMilleGBL::end() {
 	  steerFile << "18  1.0" << endl;
 	}
 
-	if( _alignMode == 4 ) {
+	if( _alignMode == Utility::alignMode::XYZShiftsRotZ ) {
 
 	  steerFile << "Constraint 0 ! sum dx = 0" << endl;
 	  steerFile << " 1  1.0" << endl;
@@ -2033,9 +2045,9 @@ void EUTelMilleGBL::end() {
 	    bool goodLine = true;
 
 	    unsigned int numpars = 2; // align pars per plane in Pede
-	    if(      _alignMode == 3 )
+	    if(      _alignMode == Utility::alignMode::XYShiftsRotZ )
 	      numpars = 3;
-	    else if( _alignMode == 4 )
+	    else if( _alignMode == Utility::alignMode::XYZShiftsRotZ )
 	      numpars = 4;
 
 	    for( unsigned int iParam = 0; iParam < numpars; ++iParam ) {
