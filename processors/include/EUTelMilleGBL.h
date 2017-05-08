@@ -31,6 +31,8 @@
 #include <IMPL/TrackerHitImpl.h>
 
 
+#include "EUTelUtility.h"
+
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
@@ -401,7 +403,8 @@ namespace eutelescope {
     float _telescopeResolution;
     int _onlySingleHitEvents;
     int _onlySingleTrackEvents;
-    int _alignMode;
+    Utility::alignMode _alignMode;
+    std::string _alignModeString;
     int _useResidualCuts;
 
     std::vector<float > _residualsXMin;

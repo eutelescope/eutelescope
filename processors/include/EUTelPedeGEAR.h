@@ -95,22 +95,24 @@ namespace eutelescope {
      *  This vector is containing the sensorID sorted according to the
      *  same rule.
      */
-    IntVec _orderedSensorID;
-    IntVec _orderedSensorID_wo_excluded;
+    std::vector<int> _orderedSensorID;
+    std::vector<int> _orderedSensorID_wo_excluded;
 
-    //! Sensor ID vector
-    int _alignMode;
-    DoubleVec _siPlaneZPosition;
+    Utility::alignMode _alignMode;
+	std::string _alignModeString;
+    std::vector<double> _siPlaneZPosition;
 
     // parameters
     std::vector<unsigned int> _excludePlanes; // only for internal usage
-    IntVec _excludePlanes_sensorIDs;          // this is going to be
+    std::vector<int> _excludePlanes_sensorIDs;          // this is going to be
     // set by the user.
-    IntVec _FixedPlanes;           // only for internal usage
-    IntVec _FixedPlanes_sensorIDs; // this is going to be
+    std::vector<int> _FixedPlanes;           // only for internal usage
+    std::vector<int> _FixedPlanes_sensorIDs; // this is going to be
     // set by the user.
-
     std::string _pedeSteerfileName;
+
+	int _offsetScaleFactor;
+	bool _rotateOldOffsetVec;
 
   private:
     //! Run number

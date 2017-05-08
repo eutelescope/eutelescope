@@ -399,7 +399,8 @@ namespace eutelescope {
     float _telescopeResolution;
     bool _onlySingleHitEvents;
     bool _onlySingleTrackEvents;
-    int _alignMode;
+    std::string _alignModeString;
+    Utility::alignMode _alignMode;
     bool _useResidualCuts;
 
     FloatVec _residualsXMin;

@@ -56,11 +56,10 @@ EUTelPedeGEAR::EUTelPedeGEAR() : Processor("EUTelPedeGEAR") {
   registerOptionalParameter(
       "AlignMode",
       "Number of alignment constants used. Available mode are: "
-      "\n1 - shifts in the X and Y directions and a rotation around the Z axis,"
-      "\n2 - only shifts in the X and Y directions"
-      "\n3 - (EXPERIMENTAL) shifts in the X,Y and Z directions and rotations "
-      "around all three axis",
-      _alignMode, static_cast<int>(1));
+      "\n\t\tXYShiftsRotZ - shifts in the X and Y directions and a rotation around the Z axis,"
+      "\n\t\tXYShifts - only shifts in the X and Y directions"
+      "\n\t\tXYShiftsAllRot - shifts in the X,Y and Z directions and rotations around all three axis",
+      _alignModeString, std::string("XYShiftsRotZ"));
 
   registerOptionalParameter("PedeSteerfileName",
                             "Name of the steering file for the pede program.",
@@ -70,6 +69,16 @@ EUTelPedeGEAR::EUTelPedeGEAR() : Processor("EUTelPedeGEAR") {
                             "Suffix for the new GEAR file, set to empty string "
                             "(this is not default!) to overwrite old GEAR file",
                             _GEARFileSuffix, std::string("_aligned"));
+
+  registerOptionalParameter("OffsetScaleFactor",
+                            "Offset scale factor.",
+                            _offsetScaleFactor, int(1000));
+
+  registerOptionalParameter("RotateOffsetVec",
+                            "Apply the obtained rotation to the preexisting offset vector or not..",
+                            _rotateOldOffsetVec, bool(false));
+
+
 }
 
 void EUTelPedeGEAR::init() {
@@ -85,13 +94,17 @@ void EUTelPedeGEAR::init() {
   geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME,
                                              EUTELESCOPE::DUMPGEOROOT);
 
-  // check if the GEAR manager pointer is not null!
-  if (Global::GEAR == 0x0) {
-    streamlog_out(ERROR2)
-        << "The GearMgr is not available, for an unknown reason." << std::endl;
-    throw InvalidGeometryException("GEAR manager is not initialised");
-  }
-
+  if(_alignModeString.compare("XYShiftsRotZ") == 0 ) {
+	_alignMode = Utility::alignMode::XYShiftsRotZ;
+  } else if( _alignModeString.compare("XYShifts") == 0 ) {
+	_alignMode = Utility::alignMode::XYShifts;
+  } else if( _alignModeString.compare("XYShiftsAllRot") == 0 ) {
+	_alignMode = Utility::alignMode::XYShiftsAllRot;
+  } else {
+	streamlog_out(ERROR) << "The chosen AlignMode: '" << _alignModeString << "' is invalid. Please correct your steering template and retry!" << std::endl;
+	throw InvalidParameterException("AlignMode");
+  }		
+  	
   // the number of planes is got from the GEAR description and is
   // the sum of the telescope reference planes and the DUT (if any)
   _nPlanes = geo::gGeometry().nPlanes();
@@ -347,7 +360,7 @@ void EUTelPedeGEAR::end() {
         bool goodLine = true;
         unsigned int numpars = 0;
 
-        if (_alignMode != 3) {
+        if (_alignMode != Utility::alignMode::XYShiftsAllRot) {
           numpars = 3;
         } else {
           numpars = 6;
@@ -393,47 +406,47 @@ void EUTelPedeGEAR::end() {
           // Remove comments to read in uncertainty
           //	bool isFixed = (tokens.size() == 3);
 
-          if (_alignMode != 3) {
+          if (_alignMode != Utility::alignMode::XYShiftsAllRot) {
             if (iParam == 0) {
-              xOff = tokens[1] / 1000.;
+              xOff = tokens[1] / _offsetScaleFactor;
               //			if(!isFixed) xOffErr	=
               //tokens[4]/1000.;
             }
             if (iParam == 1) {
-              yOff = tokens[1] / 1000.;
+              yOff = tokens[1] / _offsetScaleFactor;
               //			if(!isFixed) yOffErr	=
               //tokens[4]/1000.;
             }
             if (iParam == 2) {
-              gamma = tokens[1];
+              gamma = -tokens[1];
               //			if(!isFixed) gammaErr	= tokens[4];
             }
           } else {
             if (iParam == 0) {
-              xOff = tokens[1] / 1000.;
+              xOff = tokens[1] / _offsetScaleFactor;
               //			if(!isFixed) xOffErr	=
               //tokens[4]/1000.;
             }
             if (iParam == 1) {
-              yOff = tokens[1] / 1000.;
+              yOff = tokens[1] / _offsetScaleFactor;
               //			if(!isFixed) yOffErr	=
               //tokens[4]/1000.;
             }
             if (iParam == 2) {
-              zOff = tokens[1] / 1000.;
+              zOff = tokens[1] / _offsetScaleFactor;
               //			if(!isFixed) zOffErr	=
               //tokens[4]/1000.;
             }
             if (iParam == 3) {
-              alpha = tokens[1];
+              alpha = -tokens[1];
               //			if(!isFixed) alphaErr	= tokens[4];
             }
             if (iParam == 4) {
-              beta = tokens[1];
+              beta = -tokens[1];
               //			if(!isFixed) betaErr	= tokens[4];
             }
             if (iParam == 5) {
-              gamma = tokens[1];
+              gamma = -tokens[1];
               //			if(!isFixed) gammaErr	= tokens[4];
             }
           }
@@ -448,17 +461,14 @@ void EUTelPedeGEAR::end() {
                     << ", beta: " << beta << ", gamma: " << gamma << std::endl;
 
           // The old rotation matrix is well defined by GEAR file
-          Eigen::Matrix3d rotOld =
-              geo::gGeometry().rotationMatrixFromAngles(sensorID);
+          Eigen::Matrix3d rotOld = geo::gGeometry().rotationMatrixFromAngles(sensorID);
           // The new rotation matrix is obtained via the alpha, beta, gamma from
           // MillepedeII
-          Eigen::Matrix3d rotAlign =
-              Utility::rotationMatrixFromAngles(-alpha, -beta, -gamma);
+          Eigen::Matrix3d rotAlign = Utility::rotationMatrixFromAngles(alpha, beta, gamma);
           // The corrected rotation is given by: rotAlign*rotOld, from this
           // rotation we can extract the
           // updated alpha', beta' and gamma'
-          Eigen::Vector3d newCoeff =
-              Utility::getRotationAnglesFromMatrix(rotAlign * rotOld);
+          Eigen::Vector3d newCoeff = Utility::getRotationAnglesFromMatrix(rotAlign * rotOld);
 
           // std::cout << "Old rotation matrix: " << rotOld << std::endl;
           // std::cout << "Align rotation matrix: " << rotAlign << std::endl;
@@ -473,8 +483,10 @@ void EUTelPedeGEAR::end() {
           oldOffset << geo::gGeometry().siPlaneXPosition(sensorID),
               geo::gGeometry().siPlaneYPosition(sensorID),
               geo::gGeometry().siPlaneZPosition(sensorID);
-          // Eigen::Vector3d newOffset = rotAlign*oldOffset;
-
+		
+		if(_rotateOldOffsetVec) {
+			oldOffset = rotAlign*oldOffset;          
+		}
           geo::gGeometry().alignGlobalPos(sensorID, oldOffset[0] - xOff,
                                           oldOffset[1] - yOff,
                                           oldOffset[2] - zOff);

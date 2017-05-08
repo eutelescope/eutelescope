@@ -126,7 +126,7 @@ namespace eutelescope {
 
       /** Map containing plane path (string) and corresponding planeID */
       std::map<int, std::string> _planePath;
-
+	  std::map<int, TGeoMatrix*> _TGeoMatrixMap;
       /** */
       static unsigned _counter;
 
@@ -300,35 +300,32 @@ namespace eutelescope {
 
       /** Rotation around X axis of the global coordinate frame */
       double siPlaneXRotation(int sensorID) {
-        return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(0);
+        return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(0)*DEG;
       };
 
       /** Rotation around Y axis of global coordinate frame */
       double siPlaneYRotation(int sensorID) {
-        return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(1);
+        return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(1)*DEG;
       };
 
       /** Rotation around Z axis of global coordinate frame */
       double siPlaneZRotation(int sensorID) {
-        return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(2);
+        return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(2)*DEG;
       };
 
       /** Rotation around X axis of the global coordinate frame */
       double siPlaneXRotationRadians(int sensorID) {
-        return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(0) *
-               RADIAN;
+        return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(0);
       };
 
       /** Rotation around Y axis of global coordinate frame */
       double siPlaneYRotationRadians(int sensorID) {
-        return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(1) *
-               RADIAN;
+        return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(1);
       };
 
       /** Rotation around Z axis of global coordinate frame */
       double siPlaneZRotationRadians(int sensorID) {
-        return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(2) *
-               RADIAN;
+        return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(2);
       };
 
       /** Sensor X side size */

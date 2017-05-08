@@ -169,7 +169,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 		auto alpha	= _siPlanesLayerLayout->getLayerRotationZY(iPlane);
 		auto beta	= _siPlanesLayerLayout->getLayerRotationZX(iPlane);
 		auto gamma	= _siPlanesLayerLayout->getLayerRotationXY(iPlane);
-		thisLayer->setRotation(alpha, beta, gamma);	
+		thisLayer->setRotationDeg(alpha, beta, gamma);	
 
 		auto f1	= _siPlanesLayerLayout->getSensitiveRotation1(iPlane);
 		auto f2	= _siPlanesLayerLayout->getSensitiveRotation2(iPlane);
@@ -511,6 +511,7 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	//We have to ensure that we retain a right handed coordinate system, i.e. if we only flip the x or y axis, we have to also flip the z-axis. If we flip both we have to flip twice.	
 	double integerRotationsAndReflections[9]={rotRef1,rotRef2,0,rotRef3,rotRef4,0,0,0, determinant};
 	pMatrixRotRefCombined->SetMatrix(integerRotationsAndReflections);
+	std::cout << "Rotating plane " << SensorId << " to gamma: " << gamma << std::endl;
 	pMatrixRotRefCombined->RotateZ(gamma);//Z Rotation (degrees)//This will again rotate a vector around z axis usign the right hand rule.  
 	pMatrixRotRefCombined->RotateX(alpha);//X Rotations (degrees)//This will rotate a vector usign the right hand rule round the x-axis
 	pMatrixRotRefCombined->RotateY(beta);//Y Rotations (degrees)//Same again for Y axis
@@ -668,10 +669,19 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
    for ( itrPlaneId = _sensorIDVec.begin(); itrPlaneId != _sensorIDVec.end(); ++itrPlaneId ) {
        translateSiPlane2TGeo(pvolumeWorld, *itrPlaneId );
    }
+ 
     _geoManager->CloseGeometry();
     _isGeoInitialized = true;
     // Dump ROOT TGeo object into file
     if ( dumpRoot ) _geoManager->Export( geomName.c_str() );
+
+   for(auto& mapEntry: _planePath) {
+		auto pathName = mapEntry.second;
+		auto sensorID = mapEntry.first;
+    	_geoManager->cd( pathName.c_str() );
+		_TGeoMatrixMap[sensorID] = _geoManager->GetCurrentNode()->GetMatrix();
+	} 
+
     return;
 }
 
@@ -712,8 +722,7 @@ Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::getFlipMatrix(int sensorID
  * @param globalPos (x,y,z) in global coordinate system
  */
 void EUTelGeometryTelescopeGeoDescription::local2Master( int sensorID, const double localPos[], double globalPos[] ) {
-    _geoManager->cd( _planePath[sensorID].c_str() );
-    _geoManager->GetCurrentNode()->LocalToMaster( localPos, globalPos );
+	_TGeoMatrixMap[sensorID]->LocalToMaster(localPos, globalPos);
 }
 
 /**
@@ -725,8 +734,7 @@ void EUTelGeometryTelescopeGeoDescription::local2Master( int sensorID, const dou
  * @param localPos (x,y,z) in local coordinate system
  */
 void EUTelGeometryTelescopeGeoDescription::master2Local(int sensorID, const double globalPos[], double localPos[] ) {
-    _geoManager->cd( _planePath[sensorID].c_str() );
-    _geoManager->GetCurrentNode()->MasterToLocal( globalPos, localPos );
+	_TGeoMatrixMap[sensorID]->MasterToLocal(globalPos, localPos);
 }
 
 /**
@@ -737,8 +745,7 @@ void EUTelGeometryTelescopeGeoDescription::master2Local(int sensorID, const doub
  * @param localVec (x,y,z) in local coordinate system
  */
 void EUTelGeometryTelescopeGeoDescription::local2MasterVec( int sensorID, const double localVec[], double globalVec[] ) {
-    _geoManager->cd( _planePath[sensorID].c_str() );
-    _geoManager->GetCurrentNode()->LocalToMasterVect( localVec, globalVec );
+	_TGeoMatrixMap[sensorID]->LocalToMasterVect(localVec, globalVec);
 }
 
 /**
@@ -749,8 +756,7 @@ void EUTelGeometryTelescopeGeoDescription::local2MasterVec( int sensorID, const 
  * @param localVec (x,y,z) in local coordinate system
  */
 void EUTelGeometryTelescopeGeoDescription::master2LocalVec( int sensorID, const double globalVec[], double localVec[] ) {
-    _geoManager->cd( _planePath[sensorID].c_str() );
-    _geoManager->GetCurrentNode()->MasterToLocalVect( globalVec, localVec );
+	_TGeoMatrixMap[sensorID]->MasterToLocalVect(globalVec, localVec);
 }
 
 void EUTelGeometryTelescopeGeoDescription::local2Master( int sensorID, std::array<double,3> const & localPos, std::array<double,3>& globalPos) {
@@ -884,6 +890,8 @@ void EUTelGeometryTelescopeGeoDescription::updateSiPlanesLayout() {
 	// create an array with the z positions of each layer
 	for(size_t iPlane = 0; iPlane < nPlanes; iPlane++) {
 		int sensorID =  _sensorIDVec.at(iPlane);
+
+		std::cout << "Set layer " << sensorID << " gamma to: " <<  siPlaneZRotation(sensorID) << std::endl;
 
 		siplanesLayerLayout->setLayerPositionX( iPlane, siPlaneXPosition(sensorID) );
 		siplanesLayerLayout->setLayerPositionY(  iPlane, siPlaneYPosition(sensorID) );

@@ -255,11 +255,10 @@ EUTelMille::EUTelMille() : Processor("EUTelMille") {
   registerOptionalParameter(
       "AlignMode",
       "Number of alignment constants used. Available mode are: "
-      "\n1 - shifts in the X and Y directions and a rotation around the Z axis,"
-      "\n2 - only shifts in the X and Y directions"
-      "\n3 - (EXPERIMENTAL) shifts in the X,Y and Z directions and rotations "
-      "around all three axis",
-      _alignMode, static_cast<int>(1));
+      "\nXYShiftsRotZ - shifts in the X and Y directions and a rotation around the Z axis,"
+      "\nXYShifts - only shifts in the X and Y directions"
+      "\nXYShiftsAllRot - shifts in the X,Y and Z directions and rotations around all three axis",
+      _alignModeString, std::string("XYShiftsRotZ"));
 
   registerOptionalParameter(
       "UseResidualCuts",
@@ -460,6 +459,18 @@ void EUTelMille::init() {
   geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME,
                                              EUTELESCOPE::DUMPGEOROOT);
 
+
+  if(_alignModeString.compare("XYShiftsRotZ") == 0 ) {
+	_alignMode = Utility::alignMode::XYShiftsRotZ;
+  } else if( _alignModeString.compare("XYShifts") == 0 ) {
+	_alignMode = Utility::alignMode::XYShifts;
+  } else if( _alignModeString.compare("XYShiftsAllRot") == 0 ) {
+	_alignMode = Utility::alignMode::XYShiftsAllRot;
+  } else {
+	streamlog_out(ERROR) << "The chosen AlignMode: '" << _alignModeString << "' is invalid. Please correct your steering template and retry!" << std::endl;
+	throw InvalidParameterException("AlignMode");
+  }
+
   _sensorIDVec.clear();
   _sensorIDVecMap.clear();
   // TODO: get this directly
@@ -601,7 +612,7 @@ void EUTelMille::init() {
   _telescopeResolZ = new double[_nPlanes];
 
   // check the consistency of the resolution parameters
-  if (_alignMode == 3) {
+  if (_alignMode == Utility::alignMode::XYShiftsAllRot) {
     if (_resolutionX.size() != _resolutionY.size()) {
       throw InvalidParameterException(
           "WARNING, length of resolution X and Y is not the same \n");
@@ -658,7 +669,7 @@ void EUTelMille::init() {
     }
   }
 
-  if (_alignMode == 3) {
+  if (_alignMode == Utility::alignMode::XYShiftsAllRot) {
     //       number_of_datapoints = _nPlanes -_nExcludePlanes;
     number_of_datapoints = _nPlanes;
     hitsarray = new hit[number_of_datapoints];
@@ -1169,7 +1180,7 @@ void EUTelMille::findMatchedHits(int &_ntrack, Track *TrackHere) {
   std::vector<EVENT::TrackerHit *> TrackHitsHere = TrackHere->getTrackerHits();
 
   // check for a hit in every plane
-  streamlog_out(MESSAGE1) << "track " << _ntrack << " has "
+  streamlog_out(DEBUG9) << "track " << _ntrack << " has "
                           << TrackHitsHere.size() << " hits " << endl;
 
   // assume hits are ordered in z! start counting from 0
@@ -1188,7 +1199,7 @@ void EUTelMille::findMatchedHits(int &_ntrack, Track *TrackHere) {
     int sensorID = Utility::getSensorIDfromHit(HitHere);
 
     // check if this is a measured hit or a fitted hit, want measured hit
-    streamlog_out(MESSAGE0)
+    streamlog_out(DEBUG9)
         << "hit on plane [" << sensorID << "] properties : "
         << (hitCellDecoder(HitHere)["properties"] & kFittedHit) << std::endl;
 
@@ -1207,12 +1218,12 @@ void EUTelMille::findMatchedHits(int &_ntrack, Track *TrackHere) {
        ihit != hit.end(); ihit++) {
     int hitID = Utility::getSensorIDfromHit((*ihit));
 
-    streamlog_out(MESSAGE1) << "hit: @ " << hitID << " " << std::endl;
+    streamlog_out(DEBUG9) << "hit: @ " << hitID << " " << std::endl;
 
     for (std::vector<TrackerHit *>::iterator ifit = fit.begin();
          ifit != fit.end(); ifit++) {
       int fitID = Utility::getSensorIDfromHit((*ifit));
-      streamlog_out(MESSAGE1) << "fit: @ " << fitID << " " << std::endl;
+      streamlog_out(DEBUG9) << "fit: @ " << fitID << " " << std::endl;
       if (fitID != hitID)
         continue;
 
@@ -1232,15 +1243,15 @@ void EUTelMille::findMatchedHits(int &_ntrack, Track *TrackHere) {
       _trackResidZ[_ntrack][nPlaneHere] =
           (fitPosition[2] - hitPosition[2]) * 1000.;
 
-      streamlog_out(MESSAGE1)
+      streamlog_out(DEBUG9)
           << "hit: @ " << hitID << " " << _xPos[_ntrack][nPlaneHere] << " "
           << _yPos[_ntrack][nPlaneHere] << " " << _zPos[_ntrack][nPlaneHere]
           << " type: " << (*ihit)->getType();
 
-      streamlog_out(MESSAGE1) << "res " << _trackResidX[_ntrack][nPlaneHere]
+      streamlog_out(DEBUG9) << "res " << _trackResidX[_ntrack][nPlaneHere]
                               << " " << _trackResidY[_ntrack][nPlaneHere] << " "
                               << _trackResidZ[_ntrack][nPlaneHere];
-      streamlog_out(MESSAGE1) << endl;
+      streamlog_out(DEBUG9) << endl;
 
       nPlaneHere++;
     }
@@ -1460,7 +1471,7 @@ void EUTelMille::processEvent(LCEvent *event) {
 
     } // end loop over all tracks
 
-    streamlog_out(MESSAGE1)
+    streamlog_out(DEBUG9)
         << "Number of tracks available in track collection: " << nTracksHere
         << " tracks selected for Mille: " << _nTracks << std::endl;
 
@@ -1520,7 +1531,7 @@ void EUTelMille::processEvent(LCEvent *event) {
                 1000. * hit->getPosition()[2]));
 
             double measuredz = hit->getPosition()[2];
-            streamlog_out(MESSAGE1) << " hitsplane : " << hitsplane.size()
+            streamlog_out(DEBUG9) << " hitsplane : " << hitsplane.size()
                                     << " z : " << measuredz << std::endl;
 
             // setup cellIdDecoder to decode the hit properties
@@ -1544,7 +1555,7 @@ void EUTelMille::processEvent(LCEvent *event) {
               //                      ) > 5.0 /* mm */)
               {
                 // test if this is a fitted hit
-                streamlog_out(MESSAGE0)
+                streamlog_out(DEBUG9)
                     << "fit hit properties : "
                     << (hitCellDecoder(HitHere)["properties"] & kFittedHit)
                     << std::endl;
@@ -1574,7 +1585,7 @@ void EUTelMille::processEvent(LCEvent *event) {
         // end of the loop
       } else {
 
-        streamlog_out(MESSAGE1)
+        streamlog_out(DEBUG9)
             << "Dropping track " << nTracksEvent
             << " because there is not a hit in every plane assigned to it."
             << endl;
@@ -1584,13 +1595,13 @@ void EUTelMille::processEvent(LCEvent *event) {
   }
 
   if (_inputMode != 1) {
-    streamlog_out(MESSAGE1) << "Number of hits in the individual planes: ";
+    streamlog_out(DEBUG9) << "Number of hits in the individual planes: ";
     for (size_t i = 0; i < _allHitsArray.size(); i++)
-      streamlog_out(MESSAGE1) << _allHitsArray[i].size() << " ";
-    streamlog_out(MESSAGE1) << endl;
+      streamlog_out(DEBUG9) << _allHitsArray[i].size() << " ";
+    streamlog_out(DEBUG9) << endl;
   }
 
-  streamlog_out(MESSAGE1) << "Number of track candidates found: " << _iEvt
+  streamlog_out(DEBUG9) << "Number of track candidates found: " << _iEvt
                           << ": " << _nTracks << endl;
 
   // Perform fit for all found track candidates
@@ -1629,7 +1640,7 @@ void EUTelMille::processEvent(LCEvent *event) {
       Chiquare[0] = 0.0;
       Chiquare[1] = 0.0;
 
-      streamlog_out(MESSAGE1)
+      streamlog_out(DEBUG9)
           << "Adding track using the following coordinates: ";
 
       // loop over all planes
@@ -1646,22 +1657,22 @@ void EUTelMille::processEvent(LCEvent *event) {
         }
 
         if (excluded == 0) {
-          streamlog_out(MESSAGE1) << std::endl
+          streamlog_out(DEBUG9) << std::endl
                                   << " not Excluded @ " << help << "["
                                   << _nPlanes << "] " << _xPosHere[help] << " "
                                   << _yPosHere[help] << " " << _zPosHere[help];
         }
-        streamlog_out(MESSAGE1) << std::endl;
+        streamlog_out(DEBUG9) << std::endl;
 
       } // end loop over all planes
 
-      streamlog_out(MESSAGE1) << endl;
+      streamlog_out(DEBUG9) << endl;
 
       //    if( _inputMode == 1 ) {
       //    }else
       {
-        if (_alignMode == 3) {
-          streamlog_out(MESSAGE1) << " AlignMode = " << _alignMode
+        if (_alignMode == Utility::alignMode::XYShiftsAllRot) {
+          streamlog_out(DEBUG9) << " AlignMode = " << static_cast<int>(_alignMode)
                                   << " _inputMode = " << _inputMode
                                   << std::endl;
 
@@ -1694,7 +1705,7 @@ void EUTelMille::processEvent(LCEvent *event) {
             }
             const double xresid = x0 - x;
             const double yresid = y0 - y;
-            streamlog_out(MESSAGE1) << " x0 = " << x0 << " x= " << x
+            streamlog_out(DEBUG9) << " x0 = " << x0 << " x= " << x
                                     << " ;; y0 = " << y0 << " y = " << y
                                     << std::endl;
 
@@ -1736,7 +1747,7 @@ void EUTelMille::processEvent(LCEvent *event) {
           mean_y = mean_y / static_cast<double>(mean_n);
 
           int diff_mean = _nPlanes - mean_n;
-          streamlog_out(MESSAGE0) << " diff_mean: " << diff_mean
+          streamlog_out(DEBUG9) << " diff_mean: " << diff_mean
                                   << " _nPlanes = " << _nPlanes
                                   << " mean_n = " << mean_n << std::endl;
 
@@ -1896,7 +1907,7 @@ void EUTelMille::processEvent(LCEvent *event) {
           }
           delete gMinuit;
         } else {
-          streamlog_out(MESSAGE1) << " AlignMode = " << _alignMode
+          streamlog_out(DEBUG9) << " AlignMode = " << static_cast<int>(_alignMode)
                                   << " _inputMode = " << _inputMode
                                   << std::endl;
           // Calculate residuals
@@ -1906,29 +1917,29 @@ void EUTelMille::processEvent(LCEvent *event) {
         }
       }
 
-      streamlog_out(MESSAGE1) << "Residuals X: ";
+      streamlog_out(DEBUG9) << "Residuals X: ";
 
       for (unsigned int help = 0; help < _nPlanes; help++) {
-        streamlog_out(MESSAGE1) << _waferResidX[help] << " ";
+        streamlog_out(DEBUG9) << _waferResidX[help] << " ";
       }
 
-      streamlog_out(MESSAGE1) << endl;
+      streamlog_out(DEBUG9) << endl;
 
-      streamlog_out(MESSAGE1) << "Residuals Y: ";
+      streamlog_out(DEBUG9) << "Residuals Y: ";
 
       for (unsigned int help = 0; help < _nPlanes; help++) {
-        streamlog_out(MESSAGE1) << _waferResidY[help] << " ";
+        streamlog_out(DEBUG9) << _waferResidY[help] << " ";
       }
 
-      streamlog_out(MESSAGE1) << endl;
+      streamlog_out(DEBUG9) << endl;
 
-      streamlog_out(MESSAGE1) << "Residuals Z: ";
+      streamlog_out(DEBUG9) << "Residuals Z: ";
 
       for (unsigned int help = 0; help < _nPlanes; help++) {
-        streamlog_out(MESSAGE1) << _waferResidZ[help] << " ";
+        streamlog_out(DEBUG9) << _waferResidZ[help] << " ";
       }
 
-      streamlog_out(MESSAGE1) << endl;
+      streamlog_out(DEBUG9) << endl;
 
       int residualsXOkay = 1;
       int residualsYOkay = 1;
@@ -1963,7 +1974,7 @@ void EUTelMille::processEvent(LCEvent *event) {
 
       if (_useResidualCuts != 0 &&
           (residualsXOkay == 0 || residualsYOkay == 0)) {
-        streamlog_out(MESSAGE1) << "Track did not pass the residual cuts."
+        streamlog_out(DEBUG9) << "Track did not pass the residual cuts."
                                 << endl;
       }
 
@@ -1975,7 +1986,7 @@ void EUTelMille::processEvent(LCEvent *event) {
         // ---------------------------
 
         // Easy case: consider only shifts
-        if (_alignMode == 2) {
+        if (_alignMode == Utility::alignMode::XYShifts) {
 
           const int nLC = 4; // number of local parameters
           const int nGL =
@@ -2064,7 +2075,7 @@ void EUTelMille::processEvent(LCEvent *event) {
           delete[] label;
 
           // Slightly more complicated: add rotation around the z axis
-        } else if (_alignMode == 1) {
+        } else if (_alignMode == Utility::alignMode::XYShiftsRotZ) {
 
           const int nLC = 4;            // number of local parameters
           const int nGL = _nPlanes * 3; // number of global parameters
@@ -2155,7 +2166,7 @@ void EUTelMille::processEvent(LCEvent *event) {
           delete[] derGL;
           delete[] label;
 
-        } else if (_alignMode == 3) {
+        } else if (_alignMode == Utility::alignMode::XYShiftsAllRot) {
           if (validminuittrack || _inputMode == 1) {
             const int nLC = 4;            // number of local parameters
             const int nGL = _nPlanes * 6; // number of global parameters
@@ -2328,9 +2339,7 @@ void EUTelMille::processEvent(LCEvent *event) {
           }
         } else {
 
-          streamlog_out(ERROR2)
-              << _alignMode << " is not a valid mode. Please choose 1,2 or 3."
-              << endl;
+          streamlog_out(ERROR2) << static_cast<int>(_alignMode) << " is not a valid mode." << endl;
         }
 
         _nGoodTracks++;
@@ -2496,7 +2505,7 @@ void EUTelMille::processEvent(LCEvent *event) {
 
   } // end if only one track or no single track event
 
-  streamlog_out(MESSAGE1) << "Finished fitting tracks in event " << _iEvt
+  streamlog_out(DEBUG9) << "Finished fitting tracks in event " << _iEvt
                           << endl;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -2643,7 +2652,7 @@ void EUTelMille::end() {
   delete[] _waferResidX;
   delete[] _waferResidZ;
 
-  if (_alignMode == 3) {
+  if (_alignMode == Utility::alignMode::XYShiftsAllRot) {
     delete[] hitsarray;
   }
 
@@ -2781,14 +2790,14 @@ void EUTelMille::end() {
 
           if (fixed || (_FixedPlanes.empty() &&
                         (help == firstnotexcl || help == lastnotexcl))) {
-            if (_alignMode == 1) {
+            if (_alignMode == Utility::alignMode::XYShiftsRotZ) {
               steerFile << (counter * 3 + 1) << " 0.0 -1.0" << endl;
               steerFile << (counter * 3 + 2) << " 0.0 -1.0" << endl;
               steerFile << (counter * 3 + 3) << " 0.0 -1.0" << endl;
-            } else if (_alignMode == 2) {
+            } else if (_alignMode == Utility::alignMode::XYShifts) {
               steerFile << (counter * 2 + 1) << " 0.0 -1.0" << endl;
               steerFile << (counter * 2 + 2) << " 0.0 -1.0" << endl;
-            } else if (_alignMode == 3) {
+            } else if (_alignMode == Utility::alignMode::XYShiftsAllRot) {
               steerFile << (counter * 6 + 1) << " 0.0 -1.0" << endl;
               steerFile << (counter * 6 + 2) << " 0.0 -1.0" << endl;
               steerFile << (counter * 6 + 3) << " 0.0 -1.0" << endl;
@@ -2799,7 +2808,7 @@ void EUTelMille::end() {
 
           } else {
 
-            if (_alignMode == 1) {
+            if (_alignMode == Utility::alignMode::XYShiftsRotZ) {
 
               if (_usePedeUserStartValues == 0) {
                 steerFile << (counter * 3 + 1) << " "
@@ -2817,7 +2826,7 @@ void EUTelMille::end() {
                           << _pedeUserStartValuesGamma[help] << " 0.0" << endl;
               }
 
-            } else if (_alignMode == 2) {
+            } else if (_alignMode == Utility::alignMode::XYShifts) {
 
               if (_usePedeUserStartValues == 0) {
                 steerFile << (counter * 2 + 1) << " "
@@ -2831,7 +2840,7 @@ void EUTelMille::end() {
                           << _pedeUserStartValuesY[help] << " 0.0" << endl;
               }
 
-            } else if (_alignMode == 3) {
+            } else if (_alignMode == Utility::alignMode::XYShiftsAllRot) {
               if (_usePedeUserStartValues == 0) {
                 if (_FixParameter[help] & (1 << 0))
                   steerFile << (counter * 6 + 1) << " 0.0 -1.0" << endl;
@@ -3131,7 +3140,7 @@ void EUTelMille::end() {
 
             bool goodLine = true;
             unsigned int numpars = 0;
-            if (_alignMode != 3)
+            if (_alignMode != Utility::alignMode::XYShiftsAllRot)
               numpars = 3;
             else
               numpars = 6;
@@ -3161,7 +3170,7 @@ void EUTelMille::end() {
                 goodLine = false;
 
               bool isFixed = (tokens.size() == 3);
-              if (_alignMode != 3) {
+              if (_alignMode != Utility::alignMode::XYShiftsAllRot) {
                 if (iParam == 0) {
                   constant->setXOffset(tokens[1] / 1000.);
                   if (!isFixed)
@@ -3218,7 +3227,7 @@ void EUTelMille::end() {
               constant->setSensorID(_orderedSensorID.at(counter));
               ++counter;
               constantsCollection->push_back(constant);
-              streamlog_out(MESSAGE0) << (*constant) << endl;
+              streamlog_out(DEBUG9) << (*constant) << endl;
             } else
               delete constant;
           }
