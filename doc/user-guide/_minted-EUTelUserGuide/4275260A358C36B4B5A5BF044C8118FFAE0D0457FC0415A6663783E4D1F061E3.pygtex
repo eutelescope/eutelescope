@@ -1,0 +1,3 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+./ilcsoft\PYGZhy{}install \PYGZhy{}i examples/eutelescope/release\PYGZhy{}standalone.cfg
+\end{Verbatim}

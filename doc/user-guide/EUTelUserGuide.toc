@@ -1,0 +1,201 @@
+\contentsline {section}{\numberline {1}Introduction}{4}{section.1}
+\contentsline {paragraph}{}{4}{section*.2}
+\contentsline {paragraph}{}{4}{section*.3}
+\contentsline {subsection}{\numberline {1.1}Overview}{4}{subsection.1.1}
+\contentsline {paragraph}{•}{4}{section*.4}
+\contentsline {paragraph}{•}{4}{section*.5}
+\contentsline {paragraph}{•}{4}{section*.6}
+\contentsline {paragraph}{•}{4}{section*.7}
+\contentsline {subsection}{\numberline {1.2}Software}{5}{subsection.1.2}
+\contentsline {subsubsection}{\numberline {1.2.1}LCIO}{5}{subsubsection.1.2.1}
+\contentsline {paragraph}{}{5}{section*.8}
+\contentsline {subsubsection}{\numberline {1.2.2}ILCSoft[7]}{6}{subsubsection.1.2.2}
+\contentsline {paragraph}{}{6}{section*.9}
+\contentsline {subsubsection}{\numberline {1.2.3}Marlin[8]}{6}{subsubsection.1.2.3}
+\contentsline {paragraph}{}{6}{section*.10}
+\contentsline {paragraph}{}{6}{section*.11}
+\contentsline {subsubsection}{\numberline {1.2.4}The RAIDA Processor[2]}{7}{subsubsection.1.2.4}
+\contentsline {paragraph}{}{7}{section*.12}
+\contentsline {paragraph}{}{7}{section*.13}
+\contentsline {subsection}{\numberline {1.3}File Formats}{7}{subsection.1.3}
+\contentsline {subsubsection}{\numberline {1.3.1}LCIO Data Format[3]}{7}{subsubsection.1.3.1}
+\contentsline {paragraph}{}{7}{section*.14}
+\contentsline {paragraph}{}{7}{section*.15}
+\contentsline {paragraph}{}{7}{section*.16}
+\contentsline {paragraph}{}{8}{section*.17}
+\contentsline {subsubsection}{\numberline {1.3.2}GEAR - Telescope Geometry Description[4]}{8}{subsubsection.1.3.2}
+\contentsline {paragraph}{}{8}{section*.18}
+\contentsline {paragraph}{}{8}{section*.19}
+\contentsline {paragraph}{}{8}{section*.20}
+\contentsline {section}{\numberline {2}Installation[5]}{8}{section.2}
+\contentsline {paragraph}{}{8}{section*.21}
+\contentsline {paragraph}{Please note...}{9}{section*.22}
+\contentsline {subsection}{\numberline {2.1}System Requirements}{9}{subsection.2.1}
+\contentsline {paragraph}{}{9}{section*.23}
+\contentsline {paragraph}{}{9}{section*.24}
+\contentsline {subsection}{\numberline {2.2}Support Operating Systems and Architectures}{9}{subsection.2.2}
+\contentsline {paragraph}{}{9}{section*.25}
+\contentsline {paragraph}{}{9}{section*.26}
+\contentsline {subsection}{\numberline {2.3}Standalone Installation}{9}{subsection.2.3}
+\contentsline {paragraph}{}{9}{section*.27}
+\contentsline {subsubsection}{\numberline {2.3.1}Prerequisites I: packet installation}{10}{subsubsection.2.3.1}
+\contentsline {paragraph}{}{10}{section*.28}
+\contentsline {paragraph}{Scientific Linux 5.8 (Boron)}{10}{section*.29}
+\contentsline {paragraph}{Ubuntu 12.04 LTS (Precise)}{10}{section*.30}
+\contentsline {paragraph}{}{10}{section*.31}
+\contentsline {subsubsection}{\numberline {2.3.2}Prerequisites II: prepare installation path and download installer}{10}{subsubsection.2.3.2}
+\contentsline {paragraph}{}{10}{section*.32}
+\contentsline {paragraph}{}{10}{section*.33}
+\contentsline {paragraph}{}{11}{section*.34}
+\contentsline {paragraph}{Prerequisites III: Check the version of EUTelescope (and EUDAQ) to be installed}{11}{section*.35}
+\contentsline {paragraph}{}{11}{section*.36}
+\contentsline {paragraph}{Run the installation}{11}{section*.37}
+\contentsline {paragraph}{}{11}{section*.38}
+\contentsline {paragraph}{}{11}{section*.39}
+\contentsline {subsection}{\numberline {2.4}Alternative installation (for ITk strips users)}{12}{subsection.2.4}
+\contentsline {paragraph}{}{12}{section*.40}
+\contentsline {paragraph}{Step 1}{12}{section*.41}
+\contentsline {paragraph}{Step 2 - EUTelescope repository checkout}{12}{section*.42}
+\contentsline {paragraph}{Step 3 - EUDAQ checkout}{12}{section*.43}
+\contentsline {paragraph}{}{12}{section*.44}
+\contentsline {paragraph}{}{13}{section*.45}
+\contentsline {paragraph}{}{13}{section*.46}
+\contentsline {paragraph}{Step 4 - Building EUDAQ}{13}{section*.47}
+\contentsline {paragraph}{}{13}{section*.48}
+\contentsline {paragraph}{}{14}{section*.49}
+\contentsline {paragraph}{Step 5 - Building EUDAQ v1.6.0 and v1.7-dev}{14}{section*.50}
+\contentsline {paragraph}{}{14}{section*.51}
+\contentsline {subsection}{\numberline {2.5}Installation for Fedora systems}{14}{subsection.2.5}
+\contentsline {paragraph}{}{14}{section*.52}
+\contentsline {paragraph}{}{14}{section*.53}
+\contentsline {paragraph}{}{15}{section*.54}
+\contentsline {section}{\numberline {3}Operation}{15}{section.3}
+\contentsline {subsection}{\numberline {3.1}Setting the EUTelescope Environment[5]}{15}{subsection.3.1}
+\contentsline {paragraph}{}{15}{section*.55}
+\contentsline {paragraph}{}{15}{section*.56}
+\contentsline {paragraph}{}{15}{section*.57}
+\contentsline {subsection}{\numberline {3.2}Processors}{16}{subsection.3.2}
+\contentsline {paragraph}{}{16}{section*.58}
+\contentsline {subsection}{\numberline {3.3}Steering files[6]}{16}{subsection.3.3}
+\contentsline {paragraph}{}{16}{section*.59}
+\contentsline {paragraph}{}{16}{section*.60}
+\contentsline {paragraph}{}{16}{section*.61}
+\contentsline {paragraph}{How to generate an example steering file}{16}{section*.62}
+\contentsline {paragraph}{}{16}{section*.63}
+\contentsline {paragraph}{Creating a steering file from the example file}{16}{section*.64}
+\contentsline {paragraph}{}{16}{section*.65}
+\contentsline {paragraph}{}{16}{section*.66}
+\contentsline {subsection}{\numberline {3.4}Job submission with \textit {jobsub}[9]}{17}{subsection.3.4}
+\contentsline {paragraph}{}{17}{section*.67}
+\contentsline {subsubsection}{\numberline {3.4.1}Usage and list of available \textit {jobsub} arguments}{17}{subsubsection.3.4.1}
+\contentsline {paragraph}{}{17}{section*.68}
+\contentsline {paragraph}{}{17}{section*.69}
+\contentsline {subsubsection}{\numberline {3.4.2}Steering files and \textit {jobsub}}{18}{subsubsection.3.4.2}
+\contentsline {paragraph}{}{18}{section*.70}
+\contentsline {subsubsection}{\numberline {3.4.3}\textit {jobsub} configuration - config files}{19}{subsubsection.3.4.3}
+\contentsline {paragraph}{}{19}{section*.71}
+\contentsline {paragraph}{}{19}{section*.72}
+\contentsline {paragraph}{Key things to note about config files}{19}{section*.73}
+\contentsline {paragraph}{}{19}{section*.74}
+\contentsline {subsubsection}{\numberline {3.4.4}\textit {jobsub} configuration - tables}{19}{subsubsection.3.4.4}
+\contentsline {paragraph}{}{19}{section*.75}
+\contentsline {paragraph}{Key points for the creation of tables}{19}{section*.76}
+\contentsline {paragraph}{}{20}{section*.77}
+\contentsline {subsubsection}{\numberline {3.4.5}\textit {jobsub} configuration - concatenation}{20}{subsubsection.3.4.5}
+\contentsline {paragraph}{}{20}{section*.78}
+\contentsline {paragraph}{}{20}{section*.79}
+\contentsline {paragraph}{}{20}{section*.80}
+\contentsline {paragraph}{}{20}{section*.81}
+\contentsline {paragraph}{}{20}{section*.82}
+\contentsline {paragraph}{}{20}{section*.83}
+\contentsline {subsection}{\numberline {3.5}Dumpevent}{21}{subsection.3.5}
+\contentsline {paragraph}{}{21}{section*.84}
+\contentsline {paragraph}{Usage of Dumpevent}{21}{section*.85}
+\contentsline {paragraph}{}{21}{section*.86}
+\contentsline {subsection}{\numberline {3.6}Anajob and lcio\_event\_counter}{22}{subsection.3.6}
+\contentsline {paragraph}{}{22}{section*.87}
+\contentsline {paragraph}{\textit {anajob} usage}{22}{section*.88}
+\contentsline {paragraph}{}{22}{section*.89}
+\contentsline {paragraph}{lcio\_event\_counter usage}{23}{section*.90}
+\contentsline {section}{\numberline {4}Worked Examples}{23}{section.4}
+\contentsline {paragraph}{}{23}{section*.91}
+\contentsline {paragraph}{}{23}{section*.92}
+\contentsline {paragraph}{}{24}{section*.93}
+\contentsline {subsection}{\numberline {4.1}Aconite4Chip-local}{24}{subsection.4.1}
+\contentsline {paragraph}{}{24}{section*.94}
+\contentsline {paragraph}{}{24}{section*.95}
+\contentsline {paragraph}{}{24}{section*.96}
+\contentsline {paragraph}{}{24}{section*.97}
+\contentsline {paragraph}{}{25}{section*.98}
+\contentsline {paragraph}{}{25}{section*.99}
+\contentsline {paragraph}{Converter}{25}{section*.100}
+\contentsline {paragraph}{}{25}{section*.101}
+\contentsline {paragraph}{}{25}{section*.102}
+\contentsline {paragraph}{}{25}{section*.103}
+\contentsline {paragraph}{}{26}{section*.104}
+\contentsline {paragraph}{}{26}{section*.105}
+\contentsline {paragraph}{Clustering}{26}{section*.106}
+\contentsline {paragraph}{}{26}{section*.107}
+\contentsline {paragraph}{}{26}{section*.108}
+\contentsline {paragraph}{}{26}{section*.109}
+\contentsline {paragraph}{}{27}{section*.110}
+\contentsline {paragraph}{}{28}{section*.111}
+\contentsline {paragraph}{Hitmaker}{28}{section*.112}
+\contentsline {paragraph}{}{28}{section*.113}
+\contentsline {paragraph}{}{28}{section*.114}
+\contentsline {paragraph}{}{28}{section*.115}
+\contentsline {paragraph}{}{29}{section*.116}
+\contentsline {paragraph}{Alignment}{30}{section*.117}
+\contentsline {paragraph}{}{30}{section*.118}
+\contentsline {paragraph}{Fitter}{30}{section*.119}
+\contentsline {paragraph}{}{30}{section*.120}
+\contentsline {paragraph}{}{30}{section*.121}
+\contentsline {paragraph}{}{30}{section*.122}
+\contentsline {paragraph}{}{30}{section*.123}
+\contentsline {subsection}{\numberline {4.2}datura-noDUT}{30}{subsection.4.2}
+\contentsline {paragraph}{}{30}{section*.124}
+\contentsline {paragraph}{}{31}{section*.125}
+\contentsline {paragraph}{}{31}{section*.126}
+\contentsline {paragraph}{}{31}{section*.127}
+\contentsline {paragraph}{}{31}{section*.128}
+\contentsline {paragraph}{}{31}{section*.129}
+\contentsline {section}{\numberline {5}EUTelescope Virtual Machines}{31}{section.5}
+\contentsline {paragraph}{}{31}{section*.130}
+\contentsline {paragraph}{}{31}{section*.131}
+\contentsline {subsection}{\numberline {5.1}Installing VirtualBox}{32}{subsection.5.1}
+\contentsline {paragraph}{}{32}{section*.132}
+\contentsline {subsection}{\numberline {5.2}Retrieval of the VirtualBox VM folder}{32}{subsection.5.2}
+\contentsline {paragraph}{}{32}{section*.133}
+\contentsline {paragraph}{}{32}{section*.134}
+\contentsline {subsection}{\numberline {5.3}Adding the VM to VirtualBox and booting up}{32}{subsection.5.3}
+\contentsline {paragraph}{}{32}{section*.135}
+\contentsline {paragraph}{}{32}{section*.136}
+\contentsline {subsection}{\numberline {5.4}Creating a new machine from an existing .vdi file}{33}{subsection.5.4}
+\contentsline {paragraph}{}{33}{section*.137}
+\contentsline {paragraph}{Creating a new machine}{33}{section*.138}
+\contentsline {paragraph}{}{33}{section*.139}
+\contentsline {paragraph}{}{34}{section*.140}
+\contentsline {paragraph}{}{34}{section*.141}
+\contentsline {subsection}{\numberline {5.5}User and root credentials}{35}{subsection.5.5}
+\contentsline {paragraph}{}{35}{section*.142}
+\contentsline {paragraph}{}{35}{section*.143}
+\contentsline {paragraph}{}{35}{section*.144}
+\contentsline {paragraph}{}{36}{section*.145}
+\contentsline {subsection}{\numberline {5.6}Enabling bidirectional copy and paste}{36}{subsection.5.6}
+\contentsline {paragraph}{}{36}{section*.146}
+\contentsline {subsection}{\numberline {5.7}CMake v3.5.2 - EUTel\_Strips only}{37}{subsection.5.7}
+\contentsline {paragraph}{}{37}{section*.147}
+\contentsline {section}{\numberline {6}Docker}{37}{section.6}
+\contentsline {paragraph}{Coming soon...}{37}{section*.148}
+\contentsline {section}{\numberline {7}Miscellaneous Tips}{37}{section.7}
+\contentsline {paragraph}{Seeing all available processors}{37}{section*.149}
+\contentsline {paragraph}{Issues with memory leaks in GBLTrackFit Processor}{37}{section*.150}
+\contentsline {section}{\numberline {8}Troubleshooting}{38}{section.8}
+\contentsline {subsection}{\numberline {8.1}Common Problems}{38}{subsection.8.1}
+\contentsline {paragraph}{GSL Errors}{38}{section*.151}
+\contentsline {paragraph}{Failed to download ROOT source}{38}{section*.152}
+\contentsline {paragraph}{}{38}{section*.153}
+\contentsline {paragraph}{}{38}{section*.154}
+\contentsline {subsection}{\numberline {8.2}Support}{38}{subsection.8.2}
+\contentsline {paragraph}{}{38}{section*.155}
+\contentsline {paragraph}{}{38}{section*.156}

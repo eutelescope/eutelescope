@@ -1,0 +1,3 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n+nb}{export} \PYG{n+nv}{COMPILER\PYGZus{}LOC}\PYG{o}{=}/opt/rh/devtoolset\PYGZhy{}2/root/usr/bin
+\end{Verbatim}

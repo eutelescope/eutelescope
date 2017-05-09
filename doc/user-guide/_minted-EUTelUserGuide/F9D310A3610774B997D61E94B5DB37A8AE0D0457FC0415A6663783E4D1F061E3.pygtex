@@ -1,0 +1,3 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+dnf \PYGZhy{}y install wget automake
+\end{Verbatim}

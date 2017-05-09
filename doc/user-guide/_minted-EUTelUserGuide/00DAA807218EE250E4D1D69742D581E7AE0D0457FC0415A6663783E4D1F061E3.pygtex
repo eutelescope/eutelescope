@@ -1,0 +1,5 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+/path/to/your/CMake/v3.5.2/installation/bin/cmake \PYGZhy{}DCMAKE\PYGZus{}CXX\PYGZus{}COMPILER\PYG{o}{=}\PYG{n+nv}{\PYGZdl{}COMPILER\PYGZus{}LOC}/g++ \PYGZhy{}DCMAKE\PYGZus{}CC\PYGZus{}COMPILER\PYG{o}{=}\PYG{n+nv}{\PYGZdl{}COMPILER\PYGZus{}LOC}/gcc \PYGZhy{}DUSE\PYGZus{}LCIO\PYG{o}{=}ON \PYGZhy{}DBUILD\PYGZus{}nreader\PYG{o}{=}ON ..
+
+make install
+\end{Verbatim}

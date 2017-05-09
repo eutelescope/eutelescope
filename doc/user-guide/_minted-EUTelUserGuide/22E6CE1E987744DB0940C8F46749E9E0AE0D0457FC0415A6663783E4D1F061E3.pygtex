@@ -1,0 +1,4 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYGZlt{}parameter \PYG{n+nv}{name}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}FileName\PYGZdq{}} \PYG{n+nv}{type}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}string\PYGZdq{}} \PYG{n+nv}{value}\PYG{o}{=} /my/path/to/data/1234.lcio
+        /my/path/to/data/1235.lcio /my/path/to/data/1236.lcio /my/path/to/data/1237.lcio/\PYGZgt{}
+\end{Verbatim}

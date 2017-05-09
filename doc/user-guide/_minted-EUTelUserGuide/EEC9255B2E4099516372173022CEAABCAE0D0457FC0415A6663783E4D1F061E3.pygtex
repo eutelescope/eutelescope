@@ -1,0 +1,4 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+git branch \PYGZhy{}r //This will show the branches that are available on the remote
+git checkout \PYGZhy{}b local\PYGZus{}branch\PYGZus{}name origin/branch\PYGZus{}name
+\end{Verbatim}

@@ -1,0 +1,3 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+dnf \PYGZhy{}y install gcc\PYGZhy{}c++ gcc\PYGZhy{}gfortran subversion java\PYGZhy{}1.8.0\PYGZhy{}openjdk\PYGZhy{}devel libX11\PYGZhy{}devel libXpm\PYGZhy{}devel libXft\PYGZhy{}devel libXext\PYGZhy{}devel python\PYGZhy{}devel tar make cmake which git
+\end{Verbatim}

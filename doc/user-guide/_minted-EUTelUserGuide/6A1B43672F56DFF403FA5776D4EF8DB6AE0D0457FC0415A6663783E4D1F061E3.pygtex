@@ -1,0 +1,7 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+git clone https://github.com/eudaq/eudaq.git v1.4.5
+\PYG{n+nb}{cd} v1.4.5
+git tag \PYGZhy{}l  	//To view what tags are available
+git checkout tags/v1.4.5
+git checkout \PYGZhy{}b v1.4.5\PYGZus{}local
+\end{Verbatim}

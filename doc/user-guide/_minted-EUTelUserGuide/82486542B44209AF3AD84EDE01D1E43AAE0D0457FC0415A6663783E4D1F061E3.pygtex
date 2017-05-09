@@ -1,0 +1,4 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+sudo apt\PYGZhy{}get install build\PYGZhy{}essential gfortran cmake subversion default\PYGZhy{}jdk libgsl0\PYGZhy{}dev libxpm\PYGZhy{}dev \PYG{l+s+se}{\PYGZbs{}}
+      libxft\PYGZhy{}dev libx11\PYGZhy{}dev libxext\PYGZhy{}dev python\PYGZhy{}dev
+\end{Verbatim}

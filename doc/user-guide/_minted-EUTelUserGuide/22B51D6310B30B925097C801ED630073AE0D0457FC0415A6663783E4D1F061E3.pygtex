@@ -1,0 +1,4 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+mkdir \PYGZhy{}p database histograms lcio logs
+\PYG{n+nb}{cd} ../
+\end{Verbatim}

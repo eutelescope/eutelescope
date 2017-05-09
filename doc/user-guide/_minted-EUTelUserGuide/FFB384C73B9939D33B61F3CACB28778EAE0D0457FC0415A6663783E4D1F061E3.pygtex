@@ -1,0 +1,3 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+jobsub \PYGZhy{}c config.cfg \PYGZhy{}csv runlist.csv hitmaker 1085
+\end{Verbatim}
