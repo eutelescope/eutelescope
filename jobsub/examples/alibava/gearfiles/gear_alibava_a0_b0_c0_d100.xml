@@ -1,6 +1,8 @@
 <gear>
-	<!-- GEAR file for a Telescope in DESY TB - Nov. 2013 -->
-	<!-- A DUT read out by an ALiBaVa was placed in the center -->
+	<!-- GEAR file for a Telescope in the DESY TB - Nov. 2013 -->
+	<!-- A strip sensor DUT read out by an ALiBaVa system was placed in the center -->
+	<!-- The strip sensor unsensitive coordinate is x -->
+	<!-- The strip sensor is 100um thick and not rotated -->
 	<!--global detectorName=" "/-->
 	<BField type="ConstantBField" x="0.0" y="0.0" z="0.0"/>
 	<detectors>
