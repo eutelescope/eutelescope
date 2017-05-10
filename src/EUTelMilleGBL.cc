@@ -545,7 +545,7 @@ EUTelMilleGBL::EUTelMilleGBL(): Processor("EUTelMilleGBL")
 
 	registerOptionalParameter ( "CoordinatorPreAlignmentCollectionName", "The Coordinator PreAlignment to be loaded", _coordinatorPreAlignmentCollectionName, static_cast< string > ("coordinatorprealignment") );
 
-	registerOptionalParameter( "DoDUTAlignment","Do DUT Alignment? 1 = a, 2 = b, 3 = g, 0 = no", _doDUTAlignment, 0 );
+	registerOptionalParameter( "DoDUTAlignment","Do DUT Alignment? 1 = a, 2 = b, 3 = g with x unsensitive, 4 = g with y unsensitive, 0 = no", _doDUTAlignment, 0 );
 
 	registerOptionalParameter( "DoPreAlignment","Do Prealignment? 1 = yes, 0 = no, 2 = yes, with zero Prealignment", _doPreAlignment, 0 );
 
@@ -4583,7 +4583,6 @@ void EUTelMilleGBL::end()
 		streamlog_out( MESSAGE2 ) << "Doing DUT rotation alignment" << endl;
 		double additionalrot[3] = {0.0};
 
-		// FIXME for now only y info...
 		if (_doDUTAlignment == 1)
 		{
 			streamlog_out( MESSAGE2 ) << "Angle is alpha!" << endl;
@@ -4656,7 +4655,7 @@ void EUTelMilleGBL::end()
 		}
 		if (_doDUTAlignment == 3)
 		{
-			streamlog_out( MESSAGE2 ) << "Angle is gamma!" << endl;
+			streamlog_out( MESSAGE2 ) << "Angle is gamma, unsensitive coordinate is x!" << endl;
 			// find the limits of the plot, so that we don't include the edges of the sensor...
 			double lowbin = 0;
 			double hibin = 150;
@@ -4684,6 +4683,41 @@ void EUTelMilleGBL::end()
 			streamlog_out ( DEBUG5 ) << "Lower bin: " << lowbin << " , upper bin: " << hibin << " !" << endl;
 			streamlog_out ( DEBUG5 ) << "Lower pos: " << x_min << " , upper pos: " << x_max << " !" << endl;
 			dutryxProf->Fit(profilefitgamma,"QR");
+
+			// get an additional XY rotation for alignment, /1000 for um->mm:
+			additionalrot[2] = atan((profilefitgamma->GetParameter(1))/1000.0);
+			streamlog_out ( MESSAGE2 ) << "Gamma rotation is: " << additionalrot[2] << " rad!" << endl;
+		}
+		if (_doDUTAlignment == 4)
+		{
+			streamlog_out( MESSAGE2 ) << "Angle is gamma, unsensitive coordinate is y!" << endl;
+			// find the limits of the plot, so that we don't include the edges of the sensor...
+			double lowbin = 0;
+			double hibin = 150;
+			for (int i=0;i<150;i++)
+			{
+				if (fabs(dutrxyProf->GetBinContent(i))>0 && dutrxyProf->GetBinEntries(i) >= 7)
+				{
+					hibin = i;
+				}
+			}
+			for (int i=149;i>=0;i--)
+			{
+				if (fabs(dutrxyProf->GetBinContent(i))>0 && fabs(dutrxyProf->GetBinContent(i))<100.0 && dutrxyProf->GetBinEntries(i) >= 7)
+				{
+					lowbin = i;
+				}
+			}
+			// -15.0 for the histo range, / 5.0 for the bin per um
+			double x_min = -15.0 + lowbin / 5.0;
+			double x_max = -15.0 + hibin / 5.0;
+			double range = x_max - x_min;
+			x_min += (range/5.0);
+			x_max -= (range/5.0);
+			profilefitgamma->SetRange(x_min,x_max);
+			streamlog_out ( DEBUG5 ) << "Lower bin: " << lowbin << " , upper bin: " << hibin << " !" << endl;
+			streamlog_out ( DEBUG5 ) << "Lower pos: " << x_min << " , upper pos: " << x_max << " !" << endl;
+			dutrxyProf->Fit(profilefitgamma,"QR");
 
 			// get an additional XY rotation for alignment, /1000 for um->mm:
 			additionalrot[2] = atan((profilefitgamma->GetParameter(1))/1000.0);
