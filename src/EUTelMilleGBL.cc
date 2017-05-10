@@ -4619,6 +4619,41 @@ void EUTelMilleGBL::end()
 			additionalrot[0] = atan((profilefitalpha->GetParameter(1))/1000.0);
 			streamlog_out ( MESSAGE2 ) << "Alpha rotation is: " << additionalrot[0] << " rad!" << endl;
 		}
+		if (_doDUTAlignment == 2)
+		{
+			streamlog_out( MESSAGE2 ) << "Angle is beta!" << endl;
+			// find the limits of the plot, so that we don't include the edges of the sensor...
+			double lowbin = 0;
+			double hibin = 150;
+			for (int i=0;i<150;i++)
+			{
+				if (fabs(dutrxxProf->GetBinContent(i))>0 && dutrxxProf->GetBinEntries(i) >= 7)
+				{
+					hibin = i;
+				}
+			}
+			for (int i=149;i>=0;i--)
+			{
+				if (fabs(dutrxxProf->GetBinContent(i))>0 && fabs(dutrxxProf->GetBinContent(i))<100.0 && dutrxxProf->GetBinEntries(i) >= 7)
+				{
+					lowbin = i;
+				}
+			}
+			// -15.0 for the histo range, / 5.0 for the bin per um
+			double x_min = -15.0 + lowbin / 5.0;
+			double x_max = -15.0 + hibin / 5.0;
+			double range = x_max - x_min;
+			x_min += (range/5.0);
+			x_max -= (range/5.0);
+			profilefitbeta->SetRange(x_min,x_max);
+			streamlog_out ( DEBUG5 ) << "Lower bin: " << lowbin << " , upper bin: " << hibin << " !" << endl;
+			streamlog_out ( DEBUG5 ) << "Lower pos: " << x_min << " , upper pos: " << x_max << " !" << endl;
+			dutrxxProf->Fit(profilefitbeta,"QR");
+
+			// get an additional XY rotation for alignment, /1000 for um->mm:
+			additionalrot[1] = atan((profilefitbeta->GetParameter(1))/1000.0);
+			streamlog_out ( MESSAGE2 ) << "Beta rotation is: " << additionalrot[1] << " rad!" << endl;
+		}
 		if (_doDUTAlignment == 3)
 		{
 			streamlog_out( MESSAGE2 ) << "Angle is gamma!" << endl;

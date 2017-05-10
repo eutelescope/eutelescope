@@ -18,9 +18,12 @@
 // marlin includes ".h"
 #include "marlin/Processor.h"
 #include "marlin/Global.h"
+#include "marlin/AIDAProcessor.h"
 
 // gear includes <.h>
 
+#include <AIDA/IHistogramFactory.h>
+#include <AIDA/IHistogram2D.h>
 
 // lcio includes <.h>
 #include <IMPL/LCCollectionVec.h>
@@ -43,6 +46,9 @@ using namespace gear;
 using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
+AIDA::IHistogram2D * hitmaphisto;
+AIDA::IHistogram2D * failhitmaphisto;
+AIDA::IHistogram2D * pointhitmaphisto;
 
 EUTelMissingCoordinateEstimator::EUTelMissingCoordinateEstimator () : Processor("EUTelMissingCoordinateEstimator"),
 _inputHitCollectionName(),
@@ -82,6 +88,8 @@ void EUTelMissingCoordinateEstimator::init() {
     // this method is called only once even when the rewind is active
     // usually a good idea to
     printParameters ();
+    
+    bookHistos();
     
     // set to zero the run and event counters
     _iRun = 0;
@@ -258,6 +266,8 @@ void EUTelMissingCoordinateEstimator::processEvent (LCEvent * event) {
                 
                 // find the known coordinate value correcponds to that z on the line
                 double knownHitPosOnLine = refHit1Pos[_knownHitPos] + (refHit2Pos[_knownHitPos] - refHit1Pos[_knownHitPos]) * t;
+
+pointhitmaphisto->fill((refHit1Pos[0] + (refHit2Pos[0] - refHit1Pos[0]) * t),(refHit1Pos[1] + (refHit2Pos[1] - refHit1Pos[1]) * t));
                 
                 // if knownHitPosOnLine is close to the knownHitPos
                 if ( fabs( knownHitPosOnLine - dutHitPos[_knownHitPos] ) < _maxResidual) {
@@ -277,6 +287,8 @@ void EUTelMissingCoordinateEstimator::processEvent (LCEvent * event) {
 			const double* hitpos = newDutHitPos;
                     newHit->setPosition( &hitpos[0] );
                     outputHitCollection->push_back(newHit);
+		    //streamlog_out (MESSAGE5) << " x " << newDutHitPos[0] << " y " << newDutHitPos[1] << endl;
+		    hitmaphisto->fill(newDutHitPos[0],newDutHitPos[1]);
 
                     // count new created hits
                     _nDutHitsCreated++;
@@ -284,6 +296,10 @@ void EUTelMissingCoordinateEstimator::processEvent (LCEvent * event) {
 		    // increase the created DUT hits
 		    countCreatedDutHits[iDutHit] ++;
                 }
+                else
+		{
+		    failhitmaphisto->fill(dutHitPos[0],dutHitPos[1]);
+		}
                 
             } // end of loop over first dut plane hits
             
@@ -368,5 +384,12 @@ void EUTelMissingCoordinateEstimator::end()
 
 void EUTelMissingCoordinateEstimator::bookHistos() {
     
-    // nothing to book
+    hitmaphisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( "hitmap", 1000, -20, 20, 1000, -20, 20 );
+    hitmaphisto->setTitle( "Created Hitmap;X [mm];Y [mm]" );
+
+    failhitmaphisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( "failhitmap", 1000, -20, 20, 1000, -20, 20 );
+    failhitmaphisto->setTitle( "Hitmap where no hit was created;X [mm];Y [mm]" );
+
+    pointhitmaphisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( "pointhitmap", 1000, -20, 20, 1000, -20, 20 );
+    pointhitmaphisto->setTitle( "Hitmap of points;X [mm];Y [mm]" );
 }

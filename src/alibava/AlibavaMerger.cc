@@ -108,6 +108,8 @@ AlibavaBaseProcessor("AlibavaMerger")
 
 	registerProcessorParameter ("EventdifferenceAlibava", "The event count the Alibava is behind (read: earlier than) the Telescope. 1 means alibava event 1 == telescope event 0, etc.", _eventdifferenceAlibava, int(0));
 
+	registerProcessorParameter ("PlaneShiftTelescope", "Option to decrement/increment the telescope plane sensor id", _teleplaneshift, int(0));
+
 }
 
 
@@ -324,7 +326,7 @@ void AlibavaMerger::processEvent (LCEvent * anEvent)
 	
 		unsigned int noOfClusters;
 		// go through input clusters and copy them to output cluster collection
-	
+
 		noOfClusters = telescopeCollectionVec2->getNumberOfElements();
 		for ( size_t i = 0; i < noOfClusters; ++i )
 		{
@@ -335,7 +337,7 @@ void AlibavaMerger::processEvent (LCEvent * anEvent)
 			TrackerDataImpl* inputSparseFrame = dynamic_cast<TrackerDataImpl*>(inputPulseFrame->getTrackerData());
 		
 			// set Cell ID for sparse collection
-			outputSparseColEncoder["sensorID"] = static_cast<int>(inputSparseColDecoder(inputSparseFrame) ["sensorID"]);
+			outputSparseColEncoder["sensorID"] = static_cast<int>(inputSparseColDecoder(inputSparseFrame) ["sensorID"] - _teleplaneshift);
 			outputSparseColEncoder["sparsePixelType"] =static_cast<int>(inputSparseColDecoder(inputSparseFrame)["sparsePixelType"]);
 			outputSparseColEncoder["quality"] = static_cast<int>(inputSparseColDecoder(inputSparseFrame)["quality"]);
 			outputSparseColEncoder.setCellID( outputSparseFrame );
@@ -346,7 +348,7 @@ void AlibavaMerger::processEvent (LCEvent * anEvent)
 			outputTrackerDataVec->push_back( outputSparseFrame );
 
 			// prepare a pulse for this cluster
-			outputPulseColEncoder["sensorID"] = static_cast<int> (inputPulseColDecoder(inputPulseFrame) ["sensorID"]);
+			outputPulseColEncoder["sensorID"] = static_cast<int> (inputPulseColDecoder(inputPulseFrame) ["sensorID"] - _teleplaneshift);
 			outputPulseColEncoder["type"] = static_cast<int>(inputPulseColDecoder(inputPulseFrame) ["type"]);
 			outputPulseColEncoder.setCellID( outputPulseFrame );
 
