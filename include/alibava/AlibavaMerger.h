@@ -164,6 +164,9 @@ namespace alibava {
 		//! How do we want to output?
 		int _outputmode;
 
+		//! Move telescope sensor id?
+		int _teleplaneshift;
+
 		//! The reading instance
 		LCReader* lcReader;
 
