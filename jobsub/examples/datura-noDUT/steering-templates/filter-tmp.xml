@@ -38,7 +38,7 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-filter"/>
+  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-filter2"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -121,7 +121,7 @@ One floating number for each detector. Write a negative number to disable the cu
   <parameter name="MaxClusterNoise" type="FloatVec"> -1 -1 -1 -1 -1 -1 </parameter>
   <!--This is the maximum allowed number of cluster per plane.
  One integer number for each detector. Write a negative number to disable the cut-->
-  <parameter name="MaxClusterPerPlane" type="IntVec"> 100 100 100 100 100 100 </parameter>
+  <parameter name="MaxClusterPerPlane" type="IntVec"> 1000 1000 1000 1000 1000 1000 </parameter>
   <!--This is the minimum required number of cluster per plane.
 One integer number for each detector. Write 0 to disable the cut-->
   <parameter name="MinClusterPerPlane" type="IntVec"> 0 0 0 0 0 0 </parameter>

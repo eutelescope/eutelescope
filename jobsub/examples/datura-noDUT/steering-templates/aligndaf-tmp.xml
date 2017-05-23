@@ -130,7 +130,7 @@
 </processor>
 
  <processor name="DafFitter" type="EUTelDafFitter">
- <!--This processor preforms track reconstruction. The tracks are as final track fit for analysis.-->
+ <!--This processor preforms track reconstruction. Used for alignment, not final tracks-->
   <!--Collection name for fitted tracks-->
   <parameter name="TrackCollectionName" type="string" lcioOutType="Track"> tracks </parameter>
   <!--Should plots be made and filled?-->
@@ -138,7 +138,7 @@
   <!--Names of alignment collections, should be in same order as application-->
   <parameter name="AlignmentCollectionNames" type="StringVec" value="prealign"/>
   <!--DAF fitter: The cutoff value for a measurement to be included in the fit.-->
-  <parameter name="Chi2Cutoff" type="float" value="1000"/>
+  <parameter name="Chi2Cutoff" type="float" value="100"/>
   <!--List of sensor IDs for the DUT planes. Used to make the decision on whether ro accept the track or not. These planes are not used in track finder, and not in the track fitter unless option 'useDutsInFit' is set.-->
   <!--parameter name="DutPlanes" type="IntVec"> </parameter-->
   <!--Sigma of telescope resolution in the global X plane,-->
@@ -148,7 +148,7 @@
   <!--Beam energy [GeV], used to calculate amount of scatter-->
   <parameter name="Ebeam" type="float" value="@BeamEnergy@"/>
   <!--Track finding: The maximum allowed distance between to hits in the xy plane for inclusion in track candidate-->
-  <parameter name="FinderRadius" type="float" value="1500"/>
+  <parameter name="FinderRadius" type="float" value="@FinderRadius@"/>
   <!--Set this to true if you want DUTs to be included in the track fit-->
   <parameter name="FitDuts" type="bool" value="false"/>
   <!--Names of input hit collections-->
@@ -156,7 +156,7 @@
   <!--Should plots be made and filled?-->
   <parameter name="MakePlots" type="bool" value="true"/>
   <!--Maximum allowed global chi2/ndof-->
-  <parameter name="MaxChi2OverNdof" type="float" value="100"/>
+  <parameter name="MaxChi2OverNdof" type="float" value="10"/>
   <!--How many DUT hits do we need in order to accept track?-->
   <parameter name="NDutHits" type="int" value="0"/>
   <!--dx/dz assumed by track finder-->
@@ -172,9 +172,9 @@
   <!--Scale thickness of DUT planes-->
   <!--parameter name="ScaleScattering" type="float" value="1"/-->
   <!--Sigma of telescope resolution in the global X plane,-->
-  <parameter name="TelResolutionX" type="float" value="140"/>
+  <parameter name="TelResolutionX" type="float" value="14"/>
   <!--Sigma of telescope resolution in the global Y plane,-->
-  <parameter name="TelResolutionY" type="float" value="140"/>
+  <parameter name="TelResolutionY" type="float" value="14"/>
   <!--List of sensor IDs for the telescope planes. These planes are used for the track finder, and track fitter.-->
   <parameter name="TelescopePlanes" type="IntVec"> 0 1 2 3 4 5 </parameter>
   <!--Filename for fitted tracks-->
@@ -227,7 +227,7 @@
 3 - Mixture of a track collection from the telescope and hit collections for the DUT (only one DUT layer can be used unfortunately)-->
   <parameter name="InputMode" type="int" value="1"/>
   <!--Maximal number of track candidates in a event.-->
-  <parameter name="MaxTrackCandidates" type="int" value="200000"/>
+  <parameter name="MaxTrackCandidates" type="int" value="20000"/>
   <!--Stop processor after this maximum number of track candidates (Total) is reached.-->
   <parameter name="MaxTrackCandidatesTotal" type="int" value="200000"/>
   <!--Remove Mimosa26 clusters with a charge (i.e. number of fired pixels in cluster) below or equal to this value-->
@@ -263,9 +263,9 @@
   <!--Minimal values of the hit residuals in the Y direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
   <parameter name="ResidualsYMin" type="FloatVec" value="@ResidualYMin@"/>
   <!--X resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResolutionX" type="FloatVec"> 18 18 18 18 18 18 </parameter>
+  <parameter name="ResolutionX" type="FloatVec" value="@ResolutionX@"/>
   <!--Y resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResolutionY" type="FloatVec"> 18 18 18 18 18 18 </parameter>
+  <parameter name="ResolutionY" type="FloatVec" value="@ResolutionY@"/>
   <!--Z resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
   <parameter name="ResolutionZ" type="FloatVec"> 1000 1000 1000 1000 1000 1000 </parameter>
   <!--Execute the pede program using the generated steering file.-->

@@ -325,6 +325,9 @@ private:
     //! Map for pointer to Event multiplicity histogram 
     std::map<int,AIDA::IBaseHistogram*> _eventMultiplicityHistos;
 
+    //! Map for pointer to Event multiplicity histogram
+    std::map<int,AIDA::IBaseHistogram*> _hitpixelHistos;
+
     //! Map for pointer to total cluster size histogram 
     std::map<int,AIDA::IBaseHistogram*>_clusterSizeTotalHistos;
 #endif
