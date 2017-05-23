@@ -279,6 +279,13 @@ namespace eutelescope {
      */
     std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
 
+    //! Cluster size histogram base name.
+    /*! This is the name of the cluster size histogram. To this
+     *  name, the detector number is added in order to make it
+     *  unique. This is used also for the other cluster spectra.
+     */
+    static std::string _clusterSizeHistoName;
+
     //! Cluster signal histogram base name.
     /*! This is the name of the cluster signal histogram. To this
      *  name, the detector number is added in order to make it

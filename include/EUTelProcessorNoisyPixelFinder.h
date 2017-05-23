@@ -203,6 +203,19 @@ protected:
      */
     std::map<int, std::vector<EUTelGenericSparsePixel>> _noisyPixelMap;
 
+    //! Map for storing lines to be masked 
+    /*! The key is once again the sensorID.
+     */
+    std::map<int, std::vector<int>> _maskedLinesMap;
+
+    //! Vectors for storing lines to be masked per sensor
+    std::vector<int> _maskedLinesVec0;
+    std::vector<int> _maskedLinesVec1;
+    std::vector<int> _maskedLinesVec2;
+    std::vector<int> _maskedLinesVec3;
+    std::vector<int> _maskedLinesVec4;
+    std::vector<int> _maskedLinesVec5;
+
     //! Current run number.
     /*! This number is used to store the current run number
      */
