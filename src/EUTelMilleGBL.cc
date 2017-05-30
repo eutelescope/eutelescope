@@ -853,24 +853,24 @@ void EUTelMilleGBL::init()
 
 
 	// allocate arrays for alignment constants of the dut
-	_dut_align_x = new double[_alignmentCollectionName.size()];
-	_dut_align_y = new double[_alignmentCollectionName.size()];
-	_dut_align_z = new double[_alignmentCollectionName.size()];
-	_dut_align_a = new double[_alignmentCollectionName.size()];
-	_dut_align_b = new double[_alignmentCollectionName.size()];
-	_dut_align_c = new double[_alignmentCollectionName.size()];
-	_dut_align_x_error = new double[_alignmentCollectionName.size()];
-	_dut_align_y_error = new double[_alignmentCollectionName.size()];
-	_dut_align_z_error = new double[_alignmentCollectionName.size()];
-	_dut_align_a_error = new double[_alignmentCollectionName.size()];
-	_dut_align_b_error = new double[_alignmentCollectionName.size()];
-	_dut_align_c_error = new double[_alignmentCollectionName.size()];
-	_dut_pre_align_x = new double[_pre_alignmentCollectionName.size()];
-	_dut_pre_align_y = new double[_pre_alignmentCollectionName.size()];
-	_dut_pre_align_z = new double[_pre_alignmentCollectionName.size()];
-	_dut_pre_align_a = new double[_pre_alignmentCollectionName.size()];
-	_dut_pre_align_b = new double[_pre_alignmentCollectionName.size()];
-	_dut_pre_align_c = new double[_pre_alignmentCollectionName.size()];
+	_dut_align_x = new double[_alignmentCollectionName.size()]();
+	_dut_align_y = new double[_alignmentCollectionName.size()]();
+	_dut_align_z = new double[_alignmentCollectionName.size()]();
+	_dut_align_a = new double[_alignmentCollectionName.size()]();
+	_dut_align_b = new double[_alignmentCollectionName.size()]();
+	_dut_align_c = new double[_alignmentCollectionName.size()]();
+	_dut_align_x_error = new double[_alignmentCollectionName.size()]();
+	_dut_align_y_error = new double[_alignmentCollectionName.size()]();
+	_dut_align_z_error = new double[_alignmentCollectionName.size()]();
+	_dut_align_a_error = new double[_alignmentCollectionName.size()]();
+	_dut_align_b_error = new double[_alignmentCollectionName.size()]();
+	_dut_align_c_error = new double[_alignmentCollectionName.size()]();
+	_dut_pre_align_x = new double[_pre_alignmentCollectionName.size()]();
+	_dut_pre_align_y = new double[_pre_alignmentCollectionName.size()]();
+	_dut_pre_align_z = new double[_pre_alignmentCollectionName.size()]();
+	_dut_pre_align_a = new double[_pre_alignmentCollectionName.size()]();
+	_dut_pre_align_b = new double[_pre_alignmentCollectionName.size()]();
+	_dut_pre_align_c = new double[_pre_alignmentCollectionName.size()]();
 
 	_Xaxis[0] = 1.0;
 	_Xaxis[1] = 0.0;
@@ -1093,6 +1093,10 @@ void EUTelMilleGBL::getCoordinatorAlignment (LCEvent * event)
 
 	// Get the alignment from file
 	// assumes rotations in rad!
+    
+	_coordinator_x = 0.0;
+	_coordinator_y = 0.0;
+	_coordinator_z = 0.0;
 
 	LCCollectionVec * coordinatorCollection;
 
@@ -1365,6 +1369,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 				indexconverter[i] = 7;
 			}
 		}
+		streamlog_out ( DEBUG0 ) << "Indexconverter " << i << " " << indexconverter[i] << endl;
 	}
 
 	// mode 0: read hits, do track finding
@@ -1409,11 +1414,14 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 							for (size_t j = 0; j< _pre_alignmentCollectionName.size(); j++)
 							{
 							    totalshift += _dut_pre_align_z[j];
+							    streamlog_out ( DEBUG0 )  << "Prealignment at " << j << " " << _dut_pre_align_z[j]<< endl;
 							}
 							for (size_t j = 0; j< _alignmentCollectionName.size(); j++)
 							{
 							    totalshift += _dut_align_z[j];
+							    streamlog_out ( DEBUG0 )  << "Alignment at " << j << " " << _dut_align_z[j] << endl;
 							}
+							streamlog_out ( DEBUG0 )  << "Total DUT shift " << totalshift << endl;
 						}
 						double distance = std::abs( hitPosition[2] - _siPlaneZPosition[i] + totalshift );
 						if( distance < minDistance )
