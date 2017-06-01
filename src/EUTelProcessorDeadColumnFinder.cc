@@ -74,12 +74,12 @@ void EUTelProcessorDeadColumnFinder::processEvent(LCEvent *evt)
     auto sparseData = std::make_unique< EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
     for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
     {
-      EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
+      auto sparsePixel =  std::make_unique<EUTelGenericSparsePixel>();
       sparseData->getSparsePixelAt( iPixel, sparsePixel );
       hitMap[iDetector]->Fill(sparsePixel->getXCoord(),sparsePixel->getYCoord());
       if (iPixel != sparseData->size()-1)
       {
-        EUTelGenericSparsePixel *sparsePixel2 =  new EUTelGenericSparsePixel() ;
+        auto sparsePixel2 = std::make_unique<EUTelGenericSparsePixel>();
         sparseData->getSparsePixelAt( iPixel+1, sparsePixel2 );
         if (sparsePixel->getXCoord() == sparsePixel2->getXCoord() && sparsePixel->getYCoord() == sparsePixel2->getYCoord())
         {
@@ -88,9 +88,7 @@ void EUTelProcessorDeadColumnFinder::processEvent(LCEvent *evt)
           else isDead[iDetector][sparsePixel->getXCoord()-1] = true;
         }
 //          cerr << "Same pixel (" << sparsePixel->getXCoord() << ", " << sparsePixel->getYCoord() << ") appearing twice in event " << evt->getEventNumber() << endl;
-        delete sparsePixel2;
       }
-      delete sparsePixel;
     }
   }
 }
@@ -190,12 +188,11 @@ void EUTelProcessorDeadColumnFinder::end()
       {
         for (int y=0; y<_yPixel[iLayer]; y++)
         {
-          EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel();
-          sparsePixel->setXCoord(x);
-          sparsePixel->setYCoord(y);
-          sparsePixel->setSignal(1);
+          EUTelGenericSparsePixel sparsePixel;
+          sparsePixel.setXCoord(x);
+          sparsePixel.setYCoord(y);
+          sparsePixel.setSignal(1);
           sparseFrame->addSparsePixel(sparsePixel);
-          delete sparsePixel;
          }
          streamlog_out ( MESSAGE5 ) << "Dead double column found in layer " << iLayer << " at X=" << x << endl;
        }

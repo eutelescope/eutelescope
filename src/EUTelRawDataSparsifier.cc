@@ -213,7 +213,7 @@ void EUTelRawDataSparsifier::processEvent (LCEvent * event) {
               sparsePixel->setYCoord( matrixDecoder.getYFromIndex(iPixel) );
               sparsePixel->setSignal( static_cast<short> ( data ) );
               streamlog_out ( DEBUG0 ) << (*sparsePixel.get()) << endl;
-              sparseData.addSparsePixel( sparsePixel.get() );
+              sparseData.addSparsePixel( *sparsePixel.get() );
             }
           }
           ++rawIter;

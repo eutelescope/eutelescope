@@ -171,7 +171,7 @@ void EUTelProcessorApplyAlign::processEvent (LCEvent * event) {
           ( alignmentCollectionVec->getElementAt( positionIter->second ) );
 	// Rotations
         double xPlaneCenter    = geo::gGeometry().siPlaneXPosition( sensorID );
-        double yPlaneCenter    = geo::gGeometry().siPlaneXPosition( sensorID );
+        double yPlaneCenter    = geo::gGeometry().siPlaneYPosition( sensorID );
         double zPlaneThickness = geo::gGeometry().siPlaneZSize(sensorID) ;
         double zPlaneCenter    = geo::gGeometry().siPlaneZPosition( sensorID ) + zPlaneThickness / 2.;
 

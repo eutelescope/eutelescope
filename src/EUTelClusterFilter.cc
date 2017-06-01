@@ -926,8 +926,7 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
                 {
                     cluster = new EUTelSparseClusterImpl<EUTelGenericSparsePixel > ( static_cast<TrackerDataImpl* > (pulse->getTrackerData() ));
 
-                    EUTelSparseClusterImpl<EUTelGenericSparsePixel > * recasted =
-                    dynamic_cast<EUTelSparseClusterImpl<EUTelGenericSparsePixel > *> ( cluster );
+                    auto recasted = dynamic_cast<EUTelSparseClusterImpl<EUTelGenericSparsePixel>*>( cluster );
 
                     if ( _noiseRelatedCuts )
                     {
@@ -944,18 +943,15 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
                             TrackerDataImpl    * noiseMatrix = dynamic_cast<TrackerDataImpl *> ( noiseCollectionVec->getElementAt( detectorPos ));
                             EUTelMatrixDecoder   noiseMatrixDecoder( noiseDecoder, noiseMatrix ) ;
 
-                            std::unique_ptr<EUTelGenericSparsePixel> sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
+			    auto& pixelVec = recasted->getPixels();
+
                             vector<float > noiseValues;
-                            for ( unsigned int iPixel = 0 ; iPixel < recasted->size() ; iPixel++ )
-                            {
-                                recasted->getSparsePixelAt( iPixel, sparsePixel.get() ) ;
-                                int index = noiseMatrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
+                            for(auto& sparsePixel: pixelVec) {
+                                int index = noiseMatrixDecoder.getIndexFromXY( sparsePixel.getXCoord(), sparsePixel.getYCoord() );
                                 noiseValues.push_back( noiseMatrix->getChargeValues()[ index ] );
                             }
                             cluster->setNoiseValues( noiseValues ) ;
-                        }
-                        catch ( lcio::Exception&  e )
-                        {
+                        } catch ( lcio::Exception&  e ) {
                             streamlog_out ( ERROR1 )  << e.what() << "\n" << "Continuing without noise based cuts" << endl;
                             _noiseRelatedCuts = false;
                         }

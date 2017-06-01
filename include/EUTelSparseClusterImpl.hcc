@@ -12,7 +12,7 @@
 
 #include <UTIL/CellIDDecoder.h>
 #include "EUTELESCOPE.h"
-#include "EUTelTrackerDataInterfacerImpl.h"
+#include "EUTelClusterDataInterfacer.h"
 
 namespace eutelescope {
 
@@ -33,10 +33,10 @@ namespace eutelescope {
    */
 
   template<class PixelType>
-  class EUTelSparseClusterImpl : public EUTelVirtualCluster {
+  class EUTelSparseClusterImpl : public EUTelVirtualCluster, public EUTelClusterDataInterfacer<PixelType> {
   public:
     //! Default constructor
-    EUTelSparseClusterImpl(IMPL::TrackerDataImpl * data);
+    EUTelSparseClusterImpl(IMPL::TrackerDataImpl*  data);
 
     //! Destructor
     virtual ~EUTelSparseClusterImpl() { /* NOOP */ ; }
@@ -311,15 +311,6 @@ namespace eutelescope {
     //                                                    //
     ////////////////////////////////////////////////////////
 
-    //! Get the number of sparse pixels in the collection
-    /*! This utility can be used to know how many pixels are contained
-     *  in the TrackerData.
-     *
-     *  @return the size of TrackerData measured in sparse
-     *  pixels. 
-     */ 
-    unsigned int size() const ;
-    
     //! Get the type of sparsified pixel
     /*! This method is used to get the type of sparsified pixel
      *  contained in the cluster. 
@@ -337,34 +328,7 @@ namespace eutelescope {
         return static_cast<SparsePixelType>( static_cast<lcio::long64>(cellDecoder(_trackerData)["sparsePixelType"]) );
 	}
 
-    //! Get one of the sparse pixel
-    /*! This method is used to get one of the sparse pixel contained
-     *  into the TrackerData. Not mutant version.
-     *
-     *  @param index Index of the sparse pixel within the collection
-     *  @param pixel A pointer to the retrieved pixel.
-     *  @return A pointer to the retrieved pixel same as @c pixel
-     */ 
-
-    PixelType* getSparsePixelAt(unsigned int index, PixelType* pixel) const
-    {
-	return _rawDataInterfacer.getSparsePixelAt(index, pixel);
-    }
-
-    //! Add a sparse pixel
-    /*! This method is used to add to the current TrackerDataImpl a
-     *  new sparse pixel with all the pieces of information.
-     */
-    void addSparsePixel(PixelType* pixel)
-    {
-	_rawDataInterfacer.addSparsePixel(pixel);
-    }
-
   protected:
-    
-    //! The interfacer to the raw data
-    EUTelTrackerDataInterfacerImpl<PixelType> _rawDataInterfacer;
-     
     //! The number of elements in the data structure
     unsigned int _nElement;
 
@@ -384,6 +348,7 @@ namespace eutelescope {
      *  crosschecks have been passed.
      */
     bool _noiseSetSwitch;
+
   };
 } //namespace
 #endif
