@@ -174,6 +174,7 @@ void AlibavaSimConverter::processEvent (LCEvent * anEvent)
 			FloatVec pixel_time;
 
 			// only sensible if there is a charge in this event
+			streamlog_out ( DEBUG0 ) << "Simulated charges in event " << anEvent->getEventNumber() << " : " << datavec.size()/8 << endl;
 			if (datavec.size() > 0)
 			{
 				// data is x,y,q,t
@@ -222,19 +223,19 @@ void AlibavaSimConverter::processEvent (LCEvent * anEvent)
 					double noise = 0.0;
 					noise = gRandom->Gaus(_noisemean, _noisesigma);
 					background += noise;
-					streamlog_out ( DEBUG2 ) << "Output chanel "<< j << " noise is " << noise << endl;
+					streamlog_out ( DEBUG2 ) << "Output chip " << k << " chanel "<< j << " noise is " << noise << endl;
 				}
 
 				// add the charge, if any
 				if (pixel_y.size() > 0)
 				{
-					if (pixel_y[point]==j)
+					if (pixel_y[point]==(j+k*128))
 					{
 						double signal = 0.0;
 						signal = pixel_charge[point];
 						background += signal;
 						point++;
-						streamlog_out ( DEBUG2 ) << "Output chanel "<< j << " signal is " << signal << endl;
+						streamlog_out ( DEBUG2 ) << "Output chip " << k << " chanel "<< j << " signal is " << signal << endl;
 					}
 				}
 
@@ -243,7 +244,7 @@ void AlibavaSimConverter::processEvent (LCEvent * anEvent)
 
 				// push back this channel
 				outputvec.push_back(background);
-				streamlog_out ( DEBUG3 ) << "Output chanel "<< j << " final signal is " << background << endl;
+				streamlog_out ( DEBUG3 ) << "Output chip " << k << " chanel "<< j << " final signal is " << background << endl;
 			}
 
 			// and let there be output
