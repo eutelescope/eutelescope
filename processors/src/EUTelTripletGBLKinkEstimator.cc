@@ -82,22 +82,13 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
-#include <cmath>
 #include <sstream>
 #include <memory>
-#include <string.h>
 #include <map>
-#include <cstdlib>
-#include <limits>
 
 // ROOT includes ".h"
 #include <TMath.h>
-#include <TVectorD.h>
-#include <TF1.h>
-#include <TMatrixD.h>
-#include <TVector3.h>
 #include <TRotation.h>
-#include "TH1D.h"
 
 using namespace std;
 using namespace lcio;
@@ -401,7 +392,7 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
     float charge = 0.;
 
     TrackerDataImpl* clusterVector = static_cast<TrackerDataImpl*>( meshit->getRawHits()[0]);
-    EUTelSimpleVirtualCluster * cluster=0;
+    EUTelSimpleVirtualCluster* cluster = nullptr;
 
     float locx = -1;
     float locy = -1;
@@ -649,20 +640,14 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
     // plane 0:
     double s = 0.0;
 
-    TMatrixD proL2m(4,4);
-    proL2m.UnitMatrix();
-
-    TMatrixD addDer(2,4);
-    addDer.Zero();
-
-    TVectorD meas(2);
+    Eigen::Matrix2d proL2m = Eigen::Matrix2d::Identity();
+    Eigen::Matrix<double,2,4> addDer = Eigen::Matrix<double,2,4>::Zero();
 
     //double res = 3.42E-3; // [mm] Anemone telescope intrinsic resolution
     //res = 4.5E-3; // EUDET
 
     // scatter:
-    TVectorD scat(2);
-    scat.Zero(); //mean is zero
+    Eigen::Vector2d scat = Eigen::Vector2d::Zero(); //mean is zero
 
     double p = _eBeam; // beam momentum
     double epsSi = -1;
@@ -673,10 +658,6 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
     double sumeps = 0.0;
     double tetSi = -1;
     double tetAir = -1.;
-
-
-    TVectorD wscatSi(2);
-    TVectorD wscatAir(2);
 
     std::vector<unsigned int> ilab; // 0-5 = telescope
 
@@ -768,6 +749,7 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 
 	gbl::GblPoint * point = new gbl::GblPoint( gblutil.JacobianPointToPoint( step ) );
 
+    Eigen::Vector2d meas(2);
 	meas[0] = rx[ipl];
 	meas[1] = ry[ipl];
 	//meas[0] = trackhit.x;
@@ -776,12 +758,10 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 	epsSi = _thickness[iplprime]/93.66 + 0.050 / 286.6; // Si + Kapton (Kapton ist 2 * 25  = 50 um thick, but has 1/3 rad length = 17 um)
 	tetSi = _kappa * 0.0136 * sqrt(epsSi) / p * ( 1 + 0.038*std::log(sumeps) );
 
+    Eigen::Vector2d wscatSi(2);
 	wscatSi[0] = 1.0 / ( tetSi * tetSi ); //weight
 	wscatSi[1] = 1.0 / ( tetSi * tetSi );
 
-	TVectorD measPrec(2); // precision = 1/resolution^2
-	//measPrec[0] = 1.0 / _resolution[ipl] / _resolution[ipl];
-	//measPrec[1] = 1.0 / _resolution[ipl] / _resolution[ipl];
 	double _resolution_tmp = -1.0;
 	if(trackhit.clustersize == 1) _resolution_tmp = _resolution[1];
 	if(trackhit.clustersize == 2) _resolution_tmp = _resolution[2];
@@ -791,7 +771,8 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 	if(trackhit.clustersize == 6) _resolution_tmp = _resolution[6];
 	if(trackhit.clustersize >  6) _resolution_tmp = _resolution[7];
 	//_resolution_tmp = 3.24*1e-3;
-
+ 
+	Eigen::Vector2d measPrec; // precision = 1/resolution^2
 	measPrec[0] = 1.0 / _resolution_tmp / _resolution_tmp;
 	measPrec[1] = 1.0 / _resolution_tmp / _resolution_tmp;
 
@@ -810,10 +791,10 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 	//  x    s-s1           0         s-s2       0
 	//  y     0            s-s1        0        s-s2
 	if(sDUT > 0){
-	  addDer[0][0] = (s - (sDUT + _targetthick/sqrt(12))); // First scatterer in target
-	  addDer[1][1] = (s - (sDUT + _targetthick/sqrt(12))); //
-	  addDer[0][2] = (s - (sDUT - _targetthick/sqrt(12))); // second scatterer in target
-	  addDer[1][3] = (s - (sDUT - _targetthick/sqrt(12))); //
+	  addDer(0,0) = (s - (sDUT + _targetthick/sqrt(12))); // First scatterer in target
+	  addDer(1,1) = (s - (sDUT + _targetthick/sqrt(12))); //
+	  addDer(0,2) = (s - (sDUT - _targetthick/sqrt(12))); // second scatterer in target
+	  addDer(1,3) = (s - (sDUT - _targetthick/sqrt(12))); //
 	  streamlog_out(DEBUG3) << " lever arm left DUT-point = " << (s - (sDUT + _targetthick/sqrt(12))) << " and right DUT-point = " << (s - (sDUT - _targetthick/sqrt(12))) << std::endl;
 
 	  point->addLocals(addDer);
@@ -864,6 +845,7 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 	epsAir =   0.5*distplane  / 304200.; 
 	tetAir = _kappa * 0.0136 * sqrt(epsAir) / p * ( 1 + 0.038*std::log(sumeps) ); 
 
+    Eigen::Vector2d wscatAir(2);
 	wscatAir[0] = 1.0 / ( tetAir * tetAir ); // weight
 	wscatAir[1] = 1.0 / ( tetAir * tetAir ); 
 
@@ -992,27 +974,24 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 
       _ngbl++;
 
-      TVectorD aCorrection(9);
-      TMatrixDSym aCovariance(9);
-      //TVectorD aCorrection(5);
-      //TMatrixDSym aCovariance(5);
+      Eigen::VectorXd aCorrection(9);
+      Eigen::MatrixXd aCovariance(9,9);
       
       double ax[8];
       // double ay[8];
       unsigned int k = 0;
 
 
-      unsigned int ndim = 2;
-      TVectorD aResiduals(ndim);
-      TVectorD aMeasErrors(ndim);
-      TVectorD aResErrors(ndim);
-      TVectorD aDownWeights(ndim);
+      Eigen::VectorXd aResiduals;
+      Eigen::VectorXd aMeasErrors;
+      Eigen::VectorXd aResErrors;
+      Eigen::VectorXd aDownWeights;
 
 
-      TVectorD aKinks(ndim);
-      TVectorD aKinkErrors(ndim);
-      TVectorD kResErrors(ndim);
-      TVectorD kDownWeights(ndim);
+      Eigen::VectorXd aKinks;
+      Eigen::VectorXd aKinkErrors;
+      Eigen::VectorXd kResErrors;
+      Eigen::VectorXd kDownWeights;
 
       unsigned int ndata = 2;
       //track = q/p, x', y', x, y
