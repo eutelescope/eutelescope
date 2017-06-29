@@ -155,7 +155,8 @@ ADD_DEFINITIONS("-DDO_TESTING")
 # include directories
 include_directories(SYSTEM ./external)
 INCLUDE_DIRECTORIES( ./eutelescope/libraries/include )
-INCLUDE_DIRECTORIES( ./eutelescope/interfaces/include )
+INCLUDE_DIRECTORIES( ./eutelescope/interfaces/pixel/include )
+INCLUDE_DIRECTORIES( ./eutelescope/interfaces/cluster/include )
 INCLUDE_DIRECTORIES( ./processors/include )
 INCLUDE_DIRECTORIES( ./datasources/include )
 INCLUDE_DIRECTORIES( ./processors/include/alibava )
@@ -176,7 +177,8 @@ SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -fdiagnostics-show-option -Weffc++ -W
 # Main EUTelescope Library
 SET( libname ${PROJECT_NAME} )
 AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/eutelescope/libraries/src library_sources )
-AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/eutelescope/interfaces/src library_sources )
+AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/eutelescope/interfaces/pixel/src library_sources )
+AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/eutelescope/interfaces/cluster/src library_sources )
 ADD_SHARED_LIBRARY( ${libname} ${library_sources} )
 INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
 
