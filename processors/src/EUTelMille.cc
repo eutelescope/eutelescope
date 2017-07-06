@@ -36,7 +36,7 @@
 #include "marlin/Processor.h"
 
 // marlin util includes
-#include "mille/Mille.h"
+#include "Mille.h"
 
 // aida includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)

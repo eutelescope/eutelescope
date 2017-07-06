@@ -18,7 +18,7 @@
 #include "marlin/Processor.h"
 
 // marlin util includes
-#include "mille/Mille.h"
+#include "Mille.h"
 #include "include/MilleBinary.h"
 
 // gear includes <.h>

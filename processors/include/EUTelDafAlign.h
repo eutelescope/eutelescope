@@ -14,7 +14,7 @@
 #include "marlin/Processor.h"
 
 // marlin util includes
-#include "mille/Mille.h"
+#include "Mille.h"
 
 // gear includes <.h>
 #include <gear/SiPlanesLayerLayout.h>
