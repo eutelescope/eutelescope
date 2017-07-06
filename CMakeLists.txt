@@ -66,7 +66,6 @@ INCLUDE_DIRECTORIES( SYSTEM ${EIGEN2_INCLUDE_DIR} )
 # 
 # General Broken Line track fitter as shared lib:
  FIND_PACKAGE( GBL )
-
 FOREACH( pkg Marlin MarlinUtil GSL AIDA ROOT LCCD GBL XERCESC G4 ALLPIX )
     IF( ${pkg}_FOUND )
         # include as "system" libraries: gcc will be less verbose w.r.t. warnings
@@ -160,7 +159,7 @@ INCLUDE_DIRECTORIES( ./processors/include )
 INCLUDE_DIRECTORIES( ./datasources/include )
 INCLUDE_DIRECTORIES( ./processors/include/alibava )
 INCLUDE_DIRECTORIES( ./geometries/include/ )
-
+INCLUDE_DIRECTORIES( ./external/millepede2/$ENV{MILLEPEDEII_VERSION} )
  
 # definitions to pass to the compiler
 ADD_DEFINITIONS( "-Wno-effc++ -Wall -std=c++11 -pedantic -Wextra" )
