@@ -19,7 +19,7 @@
     ${G4_DIR}/include/Geant4/
   )  
 
- message ( "${G4_INCLUDE_DIRS}" )  
+# message ( "${G4_INCLUDE_DIRS}" )  
  FILE( GLOB G4_LIBRARIES "${G4_DIR}/lib*/libG4*.so" )
 
 # ---------- final checking ---------------------------------------------------
