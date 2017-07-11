@@ -65,7 +65,7 @@
   <!--The verbosity of the merged hits: 0 to only write events where we have a hit in both systems, 1 for events where we at least have one alibava hit, 2 for events where we at least have one telescope hit and 3 for writing out all events, even if there are no hits in them-->
   <parameter name="OutputMode" type="int" value="3"/>
   <!--Option to decrement/increment the telescope plane sensor id-->
-  <parameter name="PlaneShiftTelescope" type="int" value="1"/>
+  <parameter name="PlaneShiftTelescope" type="int" value="0"/>
   <!--The name of the telescope collection we want to merge-->
   <parameter name="TelescopeCollectionName" type="string" value="original_zsdata"/>
   <!--The name of the secondary telescope collection we want to merge-->
