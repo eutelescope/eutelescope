@@ -81,11 +81,6 @@ AlibavaConstantCommonModeCutProcessor::AlibavaConstantCommonModeCutProcessor()
       _commonModeCutMax, float(10.0));
 
   registerProcessorParameter(
-      "CommonModeCutMax",
-      "The maximum common mode noise that is acceptable to use that Event",
-      _commonModeCutMax, float(10.0));
-
-  registerProcessorParameter(
       "MaskIfAnyChipsCommonModeIsNotInRange",
       "If MaskIfAnyChipsCommonModeIsNotInRange variable is set to \"true\", "
       "the whole event will be masked even if only one chip has common mode "

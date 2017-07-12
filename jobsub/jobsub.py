@@ -317,7 +317,13 @@ def submitNAF(filenamebase, jobtask, qsubfile, runnr):
 
     # Add qsub parameters:
     #qsub -@ qsubParams.txt BIN
-    cmd = cmd+" -@ "+qsubfile+" -N \"Run"+runnr+"\" "
+    qsub_options_str=''
+    for line in open(qsubfile):
+        li=line.strip()
+        if not li.startswith("#"):
+            qsub_options_str+=(str(line.rstrip())+' ')
+
+    cmd = cmd+" "+qsub_options_str+" -N \"Run"+runnr+"\" "
     
     # check for Marlin executable
     marlin = check_program("Marlin")

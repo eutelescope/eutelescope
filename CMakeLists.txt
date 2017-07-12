@@ -43,9 +43,9 @@ FIND_PACKAGE( ROOT COMPONENTS Minuit Geom )
 FIND_PACKAGE( LCCD  REQUIRED )               
 
 # search for Eigen (linear algebra) library
-FIND_PACKAGE( Eigen2 REQUIRED)
+FIND_PACKAGE( Eigen3 REQUIRED)
 # include them as SYSTEM include directories, this will supress all warnings from them
-INCLUDE_DIRECTORIES( SYSTEM ${EIGEN2_INCLUDE_DIR} )
+INCLUDE_DIRECTORIES( SYSTEM ${EIGEN3_INCLUDE_DIR} )
 
 # development mode:
 

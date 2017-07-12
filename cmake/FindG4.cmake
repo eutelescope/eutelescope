@@ -13,15 +13,14 @@
 ########################################################################
 
   SET ( G4_DIR "$ENV{G4INSTALL}" )
+  
+  find_path(G4_INCLUDE_DIRS NAMES G4Cache.hh 
+    PATHS
+    ${G4_DIR}/include/Geant4/
+  )  
 
-  EXECUTE_PROCESS(
-      COMMAND test -d ${G4_DIR}/include/Geant4/
-      OUTPUT_VARIABLE G4_INCLUDE_DIRS
-      RESULT_VARIABLE _exit_code
-  )
-
-  FILE( GLOB G4_LIBRARIES "${G4_DIR}/lib/libG4*.so" )
-
+# message ( "${G4_INCLUDE_DIRS}" )  
+ FILE( GLOB G4_LIBRARIES "${G4_DIR}/lib*/libG4*.so" )
 
 # ---------- final checking ---------------------------------------------------
 
