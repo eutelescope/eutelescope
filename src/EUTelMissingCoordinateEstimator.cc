@@ -189,8 +189,6 @@ void EUTelMissingCoordinateEstimator::processEvent ( LCEvent * event )
     // prepare an encoder for the hit collection
     CellIDEncoder < TrackerHitImpl > outputCellIDEncoder ( EUTELESCOPE::HITENCODING, outputHitCollection );
 
-    CellIDDecoder < TrackerHitImpl > inputCellIDDecoder ( inputHitCollection );
-
     vector < int > referencePlaneHits1;
     vector < int > referencePlaneHits2;
     vector < int > dutPlaneHits;
@@ -198,6 +196,8 @@ void EUTelMissingCoordinateEstimator::processEvent ( LCEvent * event )
     // identify which hits come from the reference planes or the DUT
     for ( int i = 0; i < inputHitCollection -> getNumberOfElements ( ); i++ )
     {
+	CellIDDecoder < TrackerHitImpl > inputCellIDDecoder ( inputHitCollection );
+	
 	TrackerHitImpl * inputHit = dynamic_cast < TrackerHitImpl* > ( inputHitCollection -> getElementAt ( i ) );
 	int sensorID = inputCellIDDecoder ( inputHit ) ["sensorID"];
 
