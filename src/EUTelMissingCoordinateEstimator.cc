@@ -53,33 +53,33 @@ AIDA::IHistogram1D * faildistancehisto;
 AIDA::IHistogram2D * pointhitmaphisto;
 
 EUTelMissingCoordinateEstimator::EUTelMissingCoordinateEstimator ( ) : Processor ( "EUTelMissingCoordinateEstimator" ),
-_inputHitCollectionName(),
-_outputHitCollectionName(),
-_referencePlanes(),
-_dutPlanes(),
-_missingCoordinate(),
-_maxResidual(0),
-_missingHitPos(0),
-_knownHitPos(0),
-_nDutHits(0),
-_nDutHitsCreated(0),
-_maxExpectedCreatedHitPerDUTHit(10)
+_inputHitCollectionName ( ),
+_outputHitCollectionName ( ),
+_referencePlanes ( ),
+_dutPlanes ( ),
+_missingCoordinate ( ),
+_maxResidual ( 0 ),
+_missingHitPos ( 0 ),
+_knownHitPos ( 0 ),
+_nDutHits ( 0 ),
+_nDutHitsCreated ( 0 ),
+_maxExpectedCreatedHitPerDUTHit ( 10 )
 {
     // modify processor description
-    _description =  "EUTelMissingCoordinateEstimator As the name suggest this processor is finds the position of the missing coordinate on your How it works is simple, it gets the hits from specified two finds the closest hit pairs, make a straight line out of it and the estimated position in one axis on your sensor you want. No promises that this will work with tilted sensors and/or with magnetic field. One needs to used this with merged hits and after pre-alignment";
-    
-    registerInputCollection(LCIO::TRACKERHIT,"InputHitCollectionName", "Input hit collection name. Hits should be in global coordinates and pre-aligned", _inputHitCollectionName, std::string(""));
-    
-    registerOutputCollection(LCIO::TRACKERHIT,"OutputHitCollectionName", "Output hit collection name", _outputHitCollectionName, std::string(""));
-    
-    registerProcessorParameter("ReferencePlanes","This is the list of sensorIDs that their hits will be used to estimate the missing coordinate on your DUT. You have to give exactly 2 sensorIDs. For better results use the ones that are closest to your DUT", _referencePlanes, EVENT::IntVec() );
-    
-    registerProcessorParameter("DUTPlanes","This is the list of sensorIDs that missing coordinate of their hits needs to be found. Notice that if the specified coordinate already exists it will be overwritten", _dutPlanes, EVENT::IntVec() );
-    
-    registerProcessorParameter("MissingCoordinate","The coordinate axis that needs to be estimated. You have to set this to either X or Y.", _missingCoordinate, string("X") );
-    
-    registerProcessorParameter("MaxResidual","This processor will look for a closest hits (in known coordinate) to determine if the hits are correlated. The hits will be considered as correlated if the residual is smaller than MaxResidual", _maxResidual, float(0) );
-    
+    _description =  "EUTelMissingCoordinateEstimator:This processor estimates the missing coordinate on a strip sensor by extrapolating a straight line from two reference planes. No promises that this will work with tilted sensors and/or with magnetic fields. The merged input hits should be pre aligned for better results.";
+
+    registerInputCollection ( LCIO::TRACKERHIT, "InputHitCollectionName", "Input hit collection name. Hits should be in global coordinates and pre-aligned", _inputHitCollectionName, std::string ( "" ) );
+
+    registerOutputCollection ( LCIO::TRACKERHIT, "OutputHitCollectionName", "Output hit collection name", _outputHitCollectionName, std::string ( "" ) );
+
+    registerProcessorParameter ( "ReferencePlanes","List of sensorIDs of which hits will be used to estimate the missing coordinate on the DUT. You have to give exactly 2 sensorIDs. For better results use the ones that are closest to your DUT", _referencePlanes, EVENT::IntVec ( ) );
+
+    registerProcessorParameter ( "DUTPlanes", "List of sensorIDs with a missing coordinate to be found. Note that if the specified coordinate already exists it will be overwritten", _dutPlanes, EVENT::IntVec ( ) );
+
+    registerProcessorParameter ( "MissingCoordinate", "The coordinate axis that needs to be estimated. You have to set this to either X or Y.", _missingCoordinate, string ( "X" ) );
+
+    registerProcessorParameter ( "MaxResidual", "This processor will look for hits in the known coordinate to determine if the hits are correlated. The hits will be considered as correlated if the residual is smaller than MaxResidual", _maxResidual, float ( 10.0 ) );
+
 }
 
 
@@ -242,7 +242,7 @@ void EUTelMissingCoordinateEstimator::processEvent ( LCEvent * event )
     // loop over DUT hits
     for ( unsigned int k = 0; k < dutPlaneHits.size ( ); k++ )
     {
-	TrackerHitImpl * dutHit = dynamic_cast < TrackerHitImpl* > ( inputHitCollection -> getElementAt( dutPlaneHits[k] ) );
+	TrackerHitImpl * dutHit = dynamic_cast < TrackerHitImpl* > ( inputHitCollection -> getElementAt ( dutPlaneHits[k] ) );
 	const double* dutHitPos = dutHit -> getPosition ( );
 	double newDutHitPos[3];
 
@@ -259,8 +259,6 @@ void EUTelMissingCoordinateEstimator::processEvent ( LCEvent * event )
 	    {
 		TrackerHitImpl * refHit2 = dynamic_cast < TrackerHitImpl* > ( inputHitCollection -> getElementAt ( referencePlaneHits2[j] ) );
 		const double* refHit2Pos = refHit2 -> getPosition ( );
-
-
 
 		// t = (z-z1)/(z2-z1)
 		double t = ( dutHitPos[2] - refHit1Pos[2] ) / ( refHit2Pos[2] - refHit1Pos[2] );
@@ -298,8 +296,10 @@ void EUTelMissingCoordinateEstimator::processEvent ( LCEvent * event )
 		}
 		else
 		{
+		    streamlog_out ( DEBUG0 ) << "Failing residual cut!" << endl;
 		    failhitmaphisto -> fill ( dutHitPos[0], dutHitPos[1] );
 		    faildistancehisto -> fill ( knownHitPosOnLine - dutHitPos[_knownHitPos] );
+		    _nResidualFailCount++;
 		}
 
 	    } // end of loop over second reference plane hits
