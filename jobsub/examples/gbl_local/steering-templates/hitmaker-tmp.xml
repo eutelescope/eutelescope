@@ -70,6 +70,47 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
+ <processor name="PreAligner" type="EUTelPreAlign">
+ <!--Apply alignment constants to hit collection-->
+  <!--The name of the input hit collection-->
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
+  <!--Name of LCIO db file where alignment constantds will be stored-->
+  <!--parameter name="AlignmentConstantLCIOFile" type="string" value="alignment.slcio"/-->
+  <!--Dump alignment into GEAR file instead of prealignment database-->
+  <parameter name="DumpGEAR" type="bool" value="true"/>
+  <!--How many events should be used for an approximation to the X,Y shifts (pre-alignment)? (default=50000)-->
+  <parameter name="Events" type="int" value="@PreAlignEvents@"/>
+  <!--The list of sensor IDs that shall be excluded.-->
+  <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
+  <!--The list of sensor IDs for which the X coordinate shall be excluded.-->
+  <!--parameter name="ExcludedPlanesXCoord" type="IntVec"> </parameter-->
+  <!--The list of sensor IDs for which the Y coordinate  shall be excluded.-->
+  <!--parameter name="ExcludedPlanesYCoord" type="IntVec"> </parameter-->
+  <!--SensorID of fixed plane-->
+  <!--parameter name="FixedPlane" type="int" value="0"/-->
+  <!--Switch on or off the histogram filling-->
+  <!--parameter name="HistogramFilling" type="bool" value="true"/-->
+  <!--This is the name of the hot pixel collection that clusters should be checked against (optional).-->
+  <!--parameter name="HotPixelCollectionName" type="string" value=""/-->
+  <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
+  <!--parameter name="MinNumberOfCorrelatedHits" type="int" value="5"/-->
+  <!--Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file-->
+  <parameter name="NewGEARSuffix" type="string" value="@RunNumber@_pre"/>
+  <!--Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <parameter name="ResidualsXMax" type="FloatVec" value="@PreAlignResidualsXMax@"/>
+  <!--Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <parameter name="ResidualsXMin" type="FloatVec" value="@PreAlignResidualsXMin@"/>
+  <!--Maximal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <parameter name="ResidualsYMax" type="FloatVec" value="@PreAlignResidualsYMax@"/>
+  <!--Minimal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <parameter name="ResidualsYMin" type="FloatVec" value="@PreAlignResidualsYMin@"/>
+  <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
+  <parameter name="UseReferenceCollection" value="false"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+</processor>
+
+
  <processor name="Correlator" type="EUTelCorrelator">
  <!--EUTelCorrelator fills histograms with correlation plots-->
   <!--Hit collection name-->
