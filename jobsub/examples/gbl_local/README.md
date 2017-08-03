@@ -25,9 +25,7 @@ You can set the variables for your working directory here as well as input param
 
 
 
-You should be able to run the analysis now. For this, execute the following commands one after another and check for each of the processors to "successfully finish".
-
-Every step creates a ROOT file containing a set of histograms, which you can find at output/histograms/ after runtime.
+You should be able to run the analysis now. For this, execute the following commands one after another and check for each of the processors to successfully finish.
 
 jobsub -c config.cfg -csv runlist.csv --subdir converter 117
 jobsub -c config.cfg -csv runlist.csv --subdir clustering 117
@@ -36,3 +34,5 @@ jobsub -c config.cfg -csv runlist.csv --subdir aligngbl 117
 jobsub -c config.cfg -csv runlist.csv --subdir aligngbl2 117
 jobsub -c config.cfg -csv runlist.csv --subdir aligngbl3 117
 jobsub -c config.cfg -csv runlist.csv --subdir trackgbltriplet 117
+
+At every step a ROOT file is created, containing a set of histograms, which you can find at output/histograms/ after completion.
