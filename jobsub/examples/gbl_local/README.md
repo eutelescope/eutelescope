@@ -28,13 +28,13 @@ You can set the variables for your working directory here as well as input param
 You should be able to run the analysis now. For this, execute the following commands one after another and check for each of the processors to successfully finish.
 
 ```
-jobsub -c config.cfg -csv runlist.csv --subdir converter 117
-jobsub -c config.cfg -csv runlist.csv --subdir clustering 117
-jobsub -c config.cfg -csv runlist.csv --subdir hitmaker 117
-jobsub -c config.cfg -csv runlist.csv --subdir aligngbl 117
-jobsub -c config.cfg -csv runlist.csv --subdir aligngbl2 117
-jobsub -c config.cfg -csv runlist.csv --subdir aligngbl3 117
-jobsub -c config.cfg -csv runlist.csv --subdir trackgbltriplet 117
+jobsub -c config.cfg -csv runlist.csv -g --subdir converter 117
+jobsub -c config.cfg -csv runlist.csv -g --subdir clustering 117
+jobsub -c config.cfg -csv runlist.csv -g --subdir hitmaker 117
+jobsub -c config.cfg -csv runlist.csv -g --subdir aligngbl 117
+jobsub -c config.cfg -csv runlist.csv -g --subdir aligngbl2 117
+jobsub -c config.cfg -csv runlist.csv -g --subdir aligngbl3 117
+jobsub -c config.cfg -csv runlist.csv -g --subdir trackgbltriplet 117
 ```
 
 
