@@ -49,7 +49,6 @@
 #include "EUTELESCOPE.h"
 #include "EUTelEventImpl.h"
 #include "EUTelExceptions.h"
-#include "EUTelReferenceHit.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelVirtualCluster.h"
@@ -131,15 +130,6 @@ EUTelDafBase::EUTelDafBase(std::string name) : marlin::Processor(name) {
       "AlignmentCollectionNames",
       "Names of alignment collections, should be in same order as application",
       _alignColNames, std::vector<std::string>());
-
-  // Reference collection
-  registerOptionalParameter(
-      "ReferenceCollection", "reference hit collection name ",
-      _referenceHitCollectionName, static_cast<string>("referenceHit"));
-  registerOptionalParameter(
-      "UseReferenceCollection", "Do you want the reference hit collection to "
-                                "be used for coordinate transformations?",
-      _useReferenceHitCollection, static_cast<bool>(true));
 
   // Tracker system options
   registerOptionalParameter("MakePlots", "Should plots be made and filled?",
@@ -779,18 +769,6 @@ void EUTelDafBase::processEvent(LCEvent *event) {
     }
     for (size_t ii = 0; ii < nResolutions; ii++) {
       _system.planes.at(ii).setSigmas(_sigmaX.at(ii), _sigmaY.at(ii));
-    }
-  }
-
-  if (_useReferenceHitCollection) {
-    try {
-      _referenceHitVec = dynamic_cast<LCCollectionVec *>(
-          event->getCollection(_referenceHitCollectionName));
-    } catch (...) {
-      streamlog_out(ERROR5)
-          << "Reference Hit Collection " << _referenceHitCollectionName.c_str()
-          << " could not be retrieved for event " << event->getEventNumber()
-          << "! Please check your steering files! " << endl;
     }
   }
 

@@ -317,21 +317,8 @@ namespace eutelescope {
      */
     std::string _hitCollectionName;
 
-    //! reference HitCollection name
-    /*!
-     */
-    std::string _referenceHitCollectionName;
-
-    //! reference HitCollection
-    /*!
-     */
-    LCCollectionVec *_referenceHitCollectionVec;
-
     //! Coordinates reference frame switch
     bool _wantLocalCoordinates;
-
-    //! Reference Hit file
-    std::string _referenceHitLCIOFile;
 
   private:
     //! Run number
