@@ -8,7 +8,7 @@ services:
 compiler: gcc
 
 before_install:
- - docker pull merualhemio/eutel 
+ - docker pull merualhemio/eutel-fedora26 
 
 script:
  - echo "TRAVIS_PULL_REQUEST $TRAVIS_PULL_REQUEST"
