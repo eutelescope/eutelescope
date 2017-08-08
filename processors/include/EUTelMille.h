@@ -337,13 +337,6 @@ namespace eutelescope {
     IntVec _orderedSensorID;
     IntVec _orderedSensorID_wo_excluded;
 
-    //! reference HitCollection name
-    /*!
-     */
-    std::string _referenceHitCollectionName;
-    bool _useReferenceHitCollection;
-    LCCollectionVec *_referenceHitVec;
-
     //! TrackerHit collection name
     /*! Input collection with hits.
      */
