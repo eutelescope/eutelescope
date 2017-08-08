@@ -1,0 +1,18 @@
+language: cpp
+
+sudo: required
+
+services:
+    - docker
+
+compiler: gcc
+
+before_install:
+ - docker pull merualhemio/eutel 
+
+script:
+ - echo "TRAVIS_PULL_REQUEST $TRAVIS_PULL_REQUEST"
+ - echo "TRAVIS_PULL_REQUEST_BRANCH $TRAVIS_PULL_REQUEST_BRANCH"
+ - echo "TRAVIS_REPO_SLUG $TRAVIS_REPO_SLUG"
+ - echo "TRAVIS_COMMIT $TRAVIS_COMMIT"
+ - docker run -e PR_NO=$TRAVIS_PULL_REQUEST merualhemio/eutel 

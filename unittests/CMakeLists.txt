@@ -25,7 +25,7 @@ add_library(eutelgeotest_lib eutelgeotest.cpp)
 # Testing
 ################################
 # This adds another subdirectory, which has 'project(gtest)'.
-add_subdirectory(gtest-1.7.0)
+add_subdirectory(googletest)
 
 enable_testing()
 

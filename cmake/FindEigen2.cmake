@@ -62,8 +62,6 @@ else (EIGEN2_INCLUDE_DIR)
 
 find_path(EIGEN2_INCLUDE_DIR NAMES Eigen/Core
      PATHS
-     ${PROJECT_SOURCE_DIR}/external/Eigen
-     ENV{EUTELESCOPE}/external/Eigen     
      ${INCLUDE_INSTALL_DIR}
      ${KDE4_INCLUDE_DIR}
      PATH_SUFFIXES eigen2

@@ -36,16 +36,16 @@ LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 
 
 FIND_PACKAGE( Marlin 1.0 REQUIRED )
-FIND_PACKAGE( MarlinUtil 1.2 REQUIRED )
+#FIND_PACKAGE( MarlinUtil 1.2 REQUIRED )
 FIND_PACKAGE( GSL )
 FIND_PACKAGE( AIDA )
 FIND_PACKAGE( ROOT COMPONENTS Minuit Geom )
 FIND_PACKAGE( LCCD  REQUIRED )               
 
 # search for Eigen (linear algebra) library
-FIND_PACKAGE( Eigen2 REQUIRED)
+FIND_PACKAGE( Eigen3 REQUIRED)
 # include them as SYSTEM include directories, this will supress all warnings from them
-INCLUDE_DIRECTORIES( SYSTEM ${EIGEN2_INCLUDE_DIR} )
+INCLUDE_DIRECTORIES( SYSTEM ${EIGEN3_INCLUDE_DIR} )
 
 # development mode:
 
@@ -66,7 +66,6 @@ INCLUDE_DIRECTORIES( SYSTEM ${EIGEN2_INCLUDE_DIR} )
 # 
 # General Broken Line track fitter as shared lib:
  FIND_PACKAGE( GBL )
-
 FOREACH( pkg Marlin MarlinUtil GSL AIDA ROOT LCCD GBL XERCESC G4 ALLPIX )
     IF( ${pkg}_FOUND )
         # include as "system" libraries: gcc will be less verbose w.r.t. warnings
@@ -154,13 +153,17 @@ ADD_DEFINITIONS("-DDO_TESTING")
 
 # include directories
 include_directories(SYSTEM ./external)
-INCLUDE_DIRECTORIES( ./include )
-INCLUDE_DIRECTORIES( ./include/alibava )
-INCLUDE_DIRECTORIES( ./pixgeo/include/ )
-
+INCLUDE_DIRECTORIES( ./eutelescope/libraries/include )
+INCLUDE_DIRECTORIES( ./eutelescope/interfaces/pixel/include )
+INCLUDE_DIRECTORIES( ./eutelescope/interfaces/cluster/include )
+INCLUDE_DIRECTORIES( ./processors/include )
+INCLUDE_DIRECTORIES( ./datasources/include )
+INCLUDE_DIRECTORIES( ./processors/include/alibava )
+INCLUDE_DIRECTORIES( ./geometries/include/ )
+INCLUDE_DIRECTORIES( ./external/millepede2/$ENV{MILLEPEDEII_VERSION} )
  
 # definitions to pass to the compiler
-ADD_DEFINITIONS( "-Wall -std=c++11 -pedantic -Wextra" )
+ADD_DEFINITIONS( "-Wno-effc++ -Wall -std=c++11 -pedantic -Wextra" )
 ADD_DEFINITIONS( "-Wno-long-long" )
 
 # debuging warnings and switches - only active if  CMAKE_BUILD_TYPE  is set to debug
@@ -168,16 +171,36 @@ SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -fno-inline -fdiagnostics-show-option -Weffc++
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -fdiagnostics-show-option -Weffc++ -Wcast-align -Wcast-qual -Wdisabled-optimization -Winit-self -Wmissing-include-dirs -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef"  CACHE STRING "Debug options." FORCE )
 # also useful: -Wshadow (however, GCC 4.1 uses this even for system libraries, causing many warnings from Marlin & co)
 
-# add library
-SET( libname ${PROJECT_NAME} )
-AUX_SOURCE_DIRECTORY( ./src library_sources )
-AUX_SOURCE_DIRECTORY( ./src/alibava library_sources )
-ADD_SHARED_LIBRARY( ${libname} ${library_sources} )
-INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
-#INSTALL_SHARED_LIBRARY( GBL DESTINATION lib )
+############ Add libraries ########################################
 
-#Pixel Geometry Shared Libraries
-FILE(GLOB IMPL_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/pixgeo/src/*.cc)
+# Main EUTelescope Library
+SET( libname ${PROJECT_NAME})
+AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/eutelescope/libraries/src library_sources )
+AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/eutelescope/interfaces/pixel/src library_sources )
+AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/eutelescope/interfaces/cluster/src library_sources )
+
+ADD_SHARED_LIBRARY( ${libname} ${library_sources} ${CMAKE_CURRENT_SOURCE_DIR}/external/millepede2/$ENV{MILLEPEDEII_VERSION}/Mille.cc )
+INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
+
+OPTION(BUILD_PROCESSORS "Build the EUTelescope Marlin Processors" ON)
+
+IF(BUILD_PROCESSORS)
+  # Datasource Processor Library
+  SET( readers EutelReaders )
+  AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/datasources/src reader_sources )
+  ADD_SHARED_LIBRARY( ${readers} ${reader_sources} )
+  INSTALL_SHARED_LIBRARY( ${readers} DESTINATION lib )
+
+  # Processor Library
+  SET( processors EutelProcessors )
+  AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/processors/src processor_sources )
+  AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/processors/src/alibava processor_sources )
+  ADD_SHARED_LIBRARY( ${processors} ${processor_sources} )
+  INSTALL_SHARED_LIBRARY( ${processors} DESTINATION lib )
+ENDIF(BUILD_PROCESSORS)
+
+# Pixel Geometry Shared Libraries
+FILE(GLOB IMPL_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/geometries/src/*.cc)
 
 FOREACH(impl_src ${IMPL_SRCS})
     # Extract FileName from FileName.cc
@@ -185,12 +208,6 @@ FOREACH(impl_src ${IMPL_SRCS})
     ADD_LIBRARY( ${basename} SHARED ${impl_src} )
 	INSTALL_SHARED_LIBRARY( ${basename} DESTINATION lib )
 ENDFOREACH()  
-
-# Properly add the CMSPixelDecoder external dependency:
-ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/external/CMSPixelDecoder)
-# ..and link it to libEUTelescope:
-TARGET_LINK_LIBRARIES( ${libname} CMSPixelDecoder )
-
 
 # used for alignment if Eutelescope was build with ROOT support
 IF( ROOT_FOUND AND ROOT_MINUIT_FOUND )
@@ -202,7 +219,7 @@ IF( ROOT_FOUND AND ROOT_GEOM_FOUND )
 ENDIF()
 
 MACRO( ADD_EUTELESCOPE_TOOL _name )
-    ADD_EXECUTABLE( ${_name} src/exec/${_name}.cxx )
+    ADD_EXECUTABLE( ${_name} eutelescope/tools/${_name}.cxx )
     TARGET_LINK_LIBRARIES( ${_name} ${libname} )
     INSTALL( TARGETS ${_name} DESTINATION bin )
 ENDMACRO()
@@ -214,6 +231,7 @@ ADD_EUTELESCOPE_TOOL( pedestalmerge )
 
 # !RELEASE: REMOVE FOR RELEASE VERSIONS
 # electric fence
+OPTION( USE_EFENCE "Use the Electric Fence linrary" OFF)
  FIND_LIBRARY(EFENCE_LIBRARY
      NAMES efence
      DOC "The electric fence library"
@@ -223,10 +241,12 @@ ADD_EUTELESCOPE_TOOL( pedestalmerge )
          /usr/efence/lib
          /usr/share/efence/lib
      )
- IF(EFENCE_LIBRARY)
+ IF(EFENCE_LIBRARY AND USE_EFENCE)
    MESSAGE("Electric Fence library was found and will be linked against ${PROJECT_NAME}")
    target_link_libraries(${libname} ${EFENCE_LIBRARY})
- ENDIF()
+ELSE()
+   MESSAGE(STATUS "Not linking Electric Fence library.")
+ENDIF()
 
 # display some variables and write them to cache
 DISPLAY_STD_VARIABLES()

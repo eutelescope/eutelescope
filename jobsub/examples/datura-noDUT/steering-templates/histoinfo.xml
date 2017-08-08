@@ -35,7 +35,7 @@
     <histo name="CommonMode"        type="H1D" xBin="100"  xMin="-2"      xMax="2" />
 
     <!-- EUTelHistogramMaker and EUTelClusteringProcessor -->
-    <histo name="clusterSignal"     type="H1D" xBin="500" xMin="0"        xMax="1000"/>
+    <histo name="clusterSignal"     type="H1D" xBin="1000" xMin="0"        xMax="1000"/>
     <histo name="clusterNoise"      type="H1D" xBin="70"  xMin="0"        xMax="50"/>
     <histo name="seedSignal"        type="H1D" xBin="500" xMin="0"        xMax="300"/>
     <histo name="seedSNR"           type="H1D" xBin="150" xMin="0"        xMax="100"/>

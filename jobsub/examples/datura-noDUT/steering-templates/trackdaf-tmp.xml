@@ -20,6 +20,7 @@
       <processor name="LoadDB"/>
       <processor name="ApplyPreAlignment"/>
       <processor name="ApplyAlignment"/>
+      <!--processor name ="MyEUTelDafFitter"/-->
       <group name="TelDUTFitter"/>
       <group name="TelDUTTransferToLocalCoordinates"/>
       <group name="TelDUTHistos"/>
@@ -41,7 +42,7 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-fitter"/>
+  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-daffitter-alignGBL"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -73,7 +74,9 @@
   <parameter name="SimpleFileHandler" type="StringVec"> refhit51 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
   <parameter name="SimpleFileHandler" type="StringVec"> refhit52 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
   <parameter name="SimpleFileHandler" type="StringVec"> prealign  @DatabasePath@/@FilePrefix@-prealignment.slcio alignment </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> align @DatabasePath@/@FilePrefix@-alignment.slcio alignment </parameter>
+  <!--parameter name="SimpleFileHandler" type="StringVec" default="prealign  @DatabasePath@/@FilePrefix@-prealignment.slcio alignment"> overwritePreAlign@</parameter-->
+  <parameter name="SimpleFileHandler" type="StringVec"> align  @DatabasePath@/@FilePrefix@-alignmentGBL.slcio alignment </parameter>
+  <!--parameter name="SimpleFileHandler" type="StringVec" default="align @DatabasePath@/@FilePrefix@-alignment.slcio alignment"> overwriteAlign@</parameter-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -182,13 +185,73 @@
   <parameter name="refhitCollectionNames" type="StringVec" value="hitCollectionNames"/>
 </processor>
 
+<processor name="MyEUTelDafFitter" type="EUTelDafFitter">
+ <!--This processor preforms track reconstruction. The tracks are as final track fit for analysis.-->
+  <!--Should plots be made and filled?-->
+  <!--parameter name="AddToLCIO" type="bool">true </parameter-->
+  <!--Names of alignment collections, should be in same order as application-->
+  <parameter name="AlignmentCollectionNames" type="StringVec"> prealign align</parameter>
+  <!--DAF fitter: The cutoff value for a measurement to be included in the fit.-->
+  <!--parameter name="Chi2Cutoff" type="float">300 </parameter-->
+  <!--cluster collection name -->
+  <!--parameter name="ClusterCollection" type="string">cluster_m26 </parameter-->
+  <!--List of sensor IDs for the DUT planes. Used to make the decision on whether ro accept the track or not. These planes are not used in track finder, and not in the track fitter unless option 'useDutsInFit' is set.-->
+  <!--parameter name="DutPlanes" type="IntVec"> </parameter-->
+  <!--Sigma of telescope resolution in the global X plane,-->
+  <!--parameter name="DutResolutionX" type="float"> 3.4 </parameter-->
+  <!--Sigma of telescope resolution in the global Y plane,-->
+  <!--parameter name="DutResolutionY" type="float"> 3.4 </parameter-->
+  <!--Beam energy [GeV], used to calculate amount of scatter-->
+  <!--parameter name="Ebeam" type="float"> @BeamEnergy@ </parameter-->
+  <!--Track finding: The maximum allowed distance between to hits in the xy plane for inclusion in track candidate-->
+  <!--parameter name="FinderRadius" type="float">300 </parameter-->
+  <!--Set this to true if you want DUTs to be included in the track fit-->
+  <parameter name="FitDuts" type="bool">false </parameter>
+  <!--Names of input hit collections-->
+  <!--parameter name="HitCollectionName" type="StringVec"> alignedHit</parameter-->
+  <!--Should plots be made and filled?-->
+  <parameter name="MakePlots" type="bool">true </parameter>
+  <!--Maximum allowed global chi2/ndof-->
+  <!--parameter name="MaxChi2OverNdof" type="float">9999 </parameter-->
+  <!--How many DUT hits do we need in order to accept track?-->
+  <!--parameter name="NDutHits" type="int">0 </parameter-->
+  <!--dx/dz assumed by track finder-->
+  <!--parameter name="NominalDxdz" type="float">0 </parameter-->
+  <!--dy/dz assumed by track finder-->
+  <!--parameter name="NominalDydz" type="float">0 </parameter-->
+  <!--Radiation lengths of planes.-->
+  <!--parameter name="RadiationLengths" type="FloatVec"> </parameter-->
+  <!--reference hit collection name -->
+  <parameter name="ReferenceCollection" type="string"> refhit </parameter>
+  <!--How many telescope planes do we require to be included in the fit?-->
+  <parameter name="RequireNTelPlanes" type="float">5 </parameter>
+  <!--Scale thickness of DUT planes-->
+  <!--parameter name="ScaleScattering" type="float">1 </parameter-->
+  <!--Sigma of telescope resolution in the global X plane,-->
+  <!--parameter name="TelResolutionX" type="float">5.3 </parameter-->
+  <!--Sigma of telescope resolution in the global Y plane,-->
+  <!--parameter name="TelResolutionY" type="float">5.3 </parameter-->
+  <!--List of sensor IDs for the telescope planes. These planes are used for the track finder, and track fitter.-->
+  <parameter name="TelescopePlanes" type="IntVec"> 1 2 3 4 5 </parameter>
+  <!--Filename for fitted tracks-->
+  <!--parameter name="TrackAsciiName" type="string">tracks.txt </parameter-->
+  <!--Collection name for fitted tracks-->
+  <parameter name="TrackCollectionName" type="string" lcioOutType="Track"> track0 </parameter>
+  <!--Do you want the reference hit collection to be used for coordinate transformations?-->
+  <!--parameter name="UseReferenceCollection" type="bool">true </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <parameter name="Verbosity" type="string">DEBUG0 </parameter>
+  <!--List of hit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
+  <!--parameter name="mccollections" type="StringVec"> alignedHit </parameter-->
+</processor>
+
 <group name="TelDUTFitter" >
   <!--Should plots be made and filled?-->
-  <!--parameter name="AddToLCIO" type="bool" value="true"/-->
+  <parameter name="AddToLCIO" type="bool" value="@AddToLCIO@"/>
   <!--Names of alignment collections, should be in same order as application-->
   <parameter name="AlignmentCollectionNames" type="StringVec" value="prealign align"/>
   <!--DAF fitter: The cutoff value for a measurement to be included in the fit.-->
-  <parameter name="Chi2Cutoff" type="float" value="1000"/>
+  <parameter name="Chi2Cutoff" type="float" value="@Chi2Cutoff@"/>
   <!--List of sensor IDs for the DUT planes. Used to make the decision on whether ro accept the track or not. These planes are not used in track finder, and not in the track fitter unless option 'useDutsInFit' is set.-->
   <!--parameter name="DutPlanes" type="IntVec"> </parameter-->
   <!--Sigma of telescope resolution in the global X plane,-->
@@ -198,15 +261,16 @@
   <!--Beam energy [GeV], used to calculate amount of scatter-->
   <parameter name="Ebeam" type="float" value="@BeamEnergy@"/>
   <!--Track finding: The maximum allowed distance between to hits in the xy plane for inclusion in track candidate-->
-  <parameter name="FinderRadius" type="float" value="500"/>
+  <parameter name="FinderRadius" type="float" value="@FinderRadius@"/>
   <!--Set this to true if you want DUTs to be included in the track fit-->
-  <parameter name="FitDuts" type="bool" value="false"/>
+  <parameter name="FitDuts" type="bool" value="@FitDuts@"/>
   <!--Names of input hit collections-->
   <parameter name="HitCollectionName" type="StringVec" value="alignedHit"/>
+  <!--parameter name="TrackCollectionName" type="string" lcioInType="Track"> track </parameter-->
   <!--Should plots be made and filled?-->
-  <parameter name="MakePlots" type="bool" value="true"/>
+  <parameter name="MakePlots" type="bool" value="@MakePlots@"/>
   <!--Maximum allowed global chi2/ndof-->
-  <parameter name="MaxChi2OverNdof" type="float" value="100"/>
+  <parameter name="MaxChi2OverNdof" type="float" value="@MaxChi2OverNdof@"/>
   <!--How many DUT hits do we need in order to accept track?-->
   <parameter name="NDutHits" type="int" value="0"/>
   <!--dx/dz assumed by track finder-->
@@ -227,6 +291,9 @@
   <parameter name="TelResolutionY" type="float" value="3"/>
   <!--List of sensor IDs for the telescope planes. These planes are used for the track finder, and track fitter.-->
   <parameter name="TelescopePlanes" type="IntVec">  </parameter>
+  <!--parameter name="mccollections" type="StringVec"> alignedHit </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value="DEBUG4"/-->
 
   <processor name="Fitter00" type="EUTelDafFitter">
    <parameter name="TrackCollectionName" type="string" lcioOutType="Track"> track0 </parameter>
@@ -303,7 +370,7 @@
   <!--This is the name of the reference hit collection-->
   <parameter name="ReferenceCollection" type="string"> refhit refhit </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
+  <!--parameter name="Verbosity" type="string" value="DEBUG4"/-->
   <!--List of alignment collections that were applied to the DUT-->
   <parameter name="alignmentCollectionNames" type="StringVec"> prealign align </parameter>
 
@@ -371,7 +438,7 @@
   <!--Do you want the reference hit collection to be used for coordinate transformations?-->
   <!--parameter name="UseReferenceCollection" type="bool" value="true"/-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
+  <!--parameter name="Verbosity" type="string" value="DEBUG4"/-->
   <!--cluster size X cut -->
   <!--parameter name="cluSizeXCut" type="int" value="-1"/-->
   <!--cluster size Y cut -->

@@ -1,0 +1,2 @@
+RunNumber,BeamEnergy,Threshold,GearGeoFile,SIavg,SI1,SI2,SI3,SI4,SI5,SI6,SIg6,kappaValue
+117,6.0,6.0,gear_desy2012_20mm,0.003240,0.00360,0.00316,0.002855,0.00340,0.00253,0.00270,0.00417,0.755000
