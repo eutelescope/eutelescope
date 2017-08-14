@@ -4,20 +4,13 @@ sudo: required
 
 services:
     - docker
-
-compiler: gcc
-
-before_install:
- - docker pull merualhemio/eutel-fedora26
- - docker pull merualhemio/eutel-slc6
- - docker pull merualhemio/eutel-ubuntu17
-
 env:
  - DOCKER_IMG=merualhemio/eutel-fedora26
  - DOCKER_IMG=merualhemio/eutel-slc6
  - DOCKER_IMG=merualhemio/eutel-ubuntu17
 
 script:
+ - docker pull $DOCKER_IMG
  - echo "TRAVIS_PULL_REQUEST $TRAVIS_PULL_REQUEST"
  - echo "TRAVIS_PULL_REQUEST_BRANCH $TRAVIS_PULL_REQUEST_BRANCH"
  - echo "TRAVIS_REPO_SLUG $TRAVIS_REPO_SLUG"
