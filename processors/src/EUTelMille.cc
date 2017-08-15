@@ -24,7 +24,6 @@
 #include "EUTelFFClusterImpl.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
 #include "EUTelPStream.h"
-#include "EUTelReferenceHit.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelVirtualCluster.h"
@@ -323,14 +322,6 @@ EUTelMille::EUTelMille() : Processor("EUTelMille") {
                      "sensors and NOT according to the sensor id.",
       _resolutionZ, FloatVec(static_cast<int>(6), 10.));
 
-  registerOptionalParameter(
-      "ReferenceCollection", "reference hit collection name ",
-      _referenceHitCollectionName, static_cast<string>("referenceHit"));
-
-  registerOptionalParameter(
-      "UseReferenceCollection", "Do you want the reference hit collection to "
-                                "be used for coordinate transformations?",
-      _useReferenceHitCollection, static_cast<bool>(true));
 
   registerOptionalParameter(
       "FixParameter",
@@ -487,7 +478,6 @@ void EUTelMille::init() {
   }
 
   _histogramSwitch = true;
-  _referenceHitVec = NULL;
 
   // lets guess the number of planes
   if (_inputMode == 0 || _inputMode == 2) {
@@ -1268,18 +1258,6 @@ void EUTelMille::processEvent(LCEvent *event) {
 
   CellIDDecoder<TrackerHit> hitDecoder(EUTELESCOPE::HITENCODING);
 
-  if (_useReferenceHitCollection) {
-    try {
-      _referenceHitVec = dynamic_cast<LCCollectionVec *>(
-          event->getCollection(_referenceHitCollectionName));
-    } catch (...) {
-      streamlog_out(ERROR5)
-          << "Reference Hit Collection " << _referenceHitCollectionName.c_str()
-          << " could not be retrieved for event " << event->getEventNumber()
-          << "! Please check your steering files! " << endl;
-    }
-  }
-
   if (_iEvt % 1000 == 0) {
     streamlog_out(MESSAGE5) << "Currently having " << _nMilleDataPoints
                             << " data points in " << _nMilleTracks << " tracks "
@@ -1870,17 +1848,7 @@ void EUTelMille::processEvent(LCEvent *event) {
               const double la = -1.0 * b0 * c0 - b1 * c1 + c0 * x + c1 * y +
                                 sqrt(1 - c0 * c0 - c1 * c1) * z;
               lambda.push_back(la);
-              /*
-                                if (_referenceHitVec == 0){
-                                //determine the residuals without reference
-                 vector
-                                _waferResidX[help] = b0 + la*c0 - x;
-                                _waferResidY[help] = b1 + la*c1 - y;
-                                _waferResidZ[help] = la*sqrt(1.0 - c0*c0 -
-                 c1*c1) - z;
 
-                                } else {
-              */
               // use reference vector
               TVector3 vpoint(b0, b1, 0.);
               TVector3 vvector(c0, c1, c2);
@@ -2229,26 +2197,13 @@ void EUTelMille::processEvent(LCEvent *event) {
                 double y_sensor = 0.;
                 double z_sensor = 0.;
 
-                if (_referenceHitVec != 0) {
-                  for (int ii = 0; ii < _referenceHitVec->getNumberOfElements();
-                       ii++) {
-                    EUTelReferenceHit *refhit =
-                        static_cast<EUTelReferenceHit *>(
-                            _referenceHitVec->getElementAt(ii));
-                    if (_sensorIDVec[help] == refhit->getSensorID()) {
-                      x_sensor = refhit->getXOffset();
-                      y_sensor = refhit->getYOffset();
-                      z_sensor = refhit->getZOffset();
-                    }
-                  }
-                } else {
-                  int sensorID = _sensorIDVec[help];
-                  x_sensor = geo::gGeometry().siPlaneXPosition(sensorID);
-                  y_sensor = geo::gGeometry().siPlaneYPosition(sensorID);
-                  z_sensor = geo::gGeometry().siPlaneZPosition(sensorID);
-                  // std::cout << "Retrived: " << x_sensor << ", " << y_sensor
-                  // << ", " << z_sensor << std::endl;
-                }
+                int sensorID = _sensorIDVec[help];
+                x_sensor = geo::gGeometry().siPlaneXPosition(sensorID);
+                y_sensor = geo::gGeometry().siPlaneYPosition(sensorID);
+                z_sensor = geo::gGeometry().siPlaneZPosition(sensorID);
+                
+		// std::cout << "Retrived: " << x_sensor << ", " << y_sensor
+                // << ", " << z_sensor << std::endl;
                 x_sensor *= 1000.;
                 y_sensor *= 1000.;
                 z_sensor *= 1000.;
@@ -2541,7 +2496,6 @@ TVector3 EUTelMille::Line2Plane(int iplane, const TVector3 &lpoint,
   TVector3 hitInPlane;
   TVector3 norm2Plane;
 
-  if (_referenceHitVec == 0) {
     int sensorID = _orderedSensorID[iplane];
     hitInPlane.SetXYZ(geo::gGeometry().siPlaneXPosition(sensorID) * 1000,
                       geo::gGeometry().siPlaneYPosition(sensorID) * 1000,
@@ -2552,14 +2506,7 @@ TVector3 EUTelMille::Line2Plane(int iplane, const TVector3 &lpoint,
     // ", " << hitInPlane(1) << ", " << hitInPlane(2) << std::endl;
     // std::cout << "Retrived (angle): "<< sensorID  << ":" << norm2Plane(0) <<
     // ", " << norm2Plane(1) << ", " << norm2Plane(2) << std::endl;
-  } else {
-    EUTelReferenceHit *refhit = static_cast<EUTelReferenceHit *>(
-        _referenceHitVec->getElementAt(iplane));
-    hitInPlane.SetXYZ(refhit->getXOffset() * 1000, refhit->getYOffset() * 1000,
-                      refhit->getZOffset() * 1000);
-    norm2Plane.SetXYZ(refhit->getAlpha(), refhit->getBeta(),
-                      refhit->getGamma());
-  }
+
 
   TVector3 point(1., 1., 1.);
 

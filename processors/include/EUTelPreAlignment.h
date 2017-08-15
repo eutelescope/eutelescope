@@ -9,9 +9,6 @@
 #ifndef EUTELPREALIGNMENT_H
 #define EUTELPREALIGNMENT_H
 
-// eutelescope includes ".h"
-#include "EUTelReferenceHit.h"
-
 // ROOT includes
 #include "TVector3.h"
 

@@ -154,12 +154,6 @@ namespace eutelescope {
     DISALLOW_COPY_AND_ASSIGN(EUTelDUTHistograms)
 
   protected:
-    //! reference HitCollection name
-    /*!
-     */
-    std::string _referenceHitCollectionName;
-    bool _useReferenceHitCollection;
-    LCCollectionVec *_referenceHitVec;
 
     //! Silicon planes parameters as described in GEAR
     /*! This structure actually contains the following:

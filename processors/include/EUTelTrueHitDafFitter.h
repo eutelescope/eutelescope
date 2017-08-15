@@ -55,8 +55,6 @@ namespace eutelescope {
     virtual void end();
     bool defineSystemFromData();
 
-    virtual inline bool ReferenceHitVecIsSet() { return _referenceHitVec == 0; }
-
     enum DafTrackFinder { simpleCluster, combinatorialKF };
 
   protected:
@@ -142,10 +140,7 @@ namespace eutelescope {
         n_passedIsnan;
 
     // Reference HitCollection name
-    std::string _referenceHitCollectionName;
     std::string _clusterCollectionName;
-    bool _useReferenceHitCollection;
-    LCCollectionVec *_referenceHitVec;
     LCCollectionVec *_clusterVec;
 
     // Silicon planes parameters as described in GEAR

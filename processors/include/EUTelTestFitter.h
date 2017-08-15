@@ -494,13 +494,6 @@ namespace eutelescope {
     std::vector<float> _resolutionY;
     std::vector<float> _resolutionZ;
 
-    //! reference HitCollection name
-    /*!
-     */
-    std::string _referenceHitCollectionName;
-    bool _useReferenceHitCollection;
-    LCCollectionVec *_referenceHitVec;
-
     // Parameters of hit selection algorithm
 
     int _allowMissingHits;
