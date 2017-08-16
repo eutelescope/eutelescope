@@ -1,13 +1,12 @@
-FROM fedora:26
+FROM cern/cc7-base 
+
+RUN yum -y install eigen3-devel gsl gsl-devel wget automake gcc-c++ gcc-gfortran subversion java-1.8.0-openjdk-devel libX11-devel libXpm-devel libXft-devel libXext-devel python-devel tar make cmake which devtoolset-6-gcc-c++ rh-git29 
 
 ENV ILCSOFT /ilcsoft
 
-RUN dnf -y install eigen3-devel gsl gsl-devel wget automake gcc-c++ gcc-gfortran subversion java-1.8.0-openjdk-devel libX11-devel libXpm-devel libXft-devel libXext-devel python-devel tar make cmake git 
-RUN mkdir -p $ILCSOFT
-
-RUN git clone -b dev-base https://github.com/eutelescope/ilcinstall $ILCSOFT/ilcinstall
-RUN cd $ILCSOFT/ilcinstall && git status
-RUN $ILCSOFT/ilcinstall/ilcsoft-install -i -v $ILCSOFT/ilcinstall/examples/eutelescope/release-standalone.cfg
+RUN ["/bin/bash", "-c", "source /opt/rh/rh-git29/enable && git clone -b dev-base https://github.com/eutelescope/ilcinstall $ILCSOFT/ilcinstall"]
+RUN ["/bin/bash", "-c", "source /opt/rh/rh-git29/enable && cd $ILCSOFT/ilcinstall && git status"]
+RUN ["/bin/bash", "-c", "source /opt/rh/rh-git29/enable && source /opt/rh/devtoolset-6/enable && $ILCSOFT/ilcinstall/ilcsoft-install -i -v $ILCSOFT/ilcinstall/examples/eutelescope/release-standalone.cfg"]
 
 ENV EUTELESCOPE /ilcsoft/v01-19-02/Eutelescope/master/
 ENV EUDAQ /ilcsoft/v01-19-02/Eutelescope/master/external/eudaq/v1.7-dev/
@@ -24,8 +23,8 @@ ENV LD_LIBRARY_PATH ${EUTELESCOPE}/lib:${ROOTSYS}/lib:${EUDAQ}/lib:${GEAR}/lib:$
 
 WORKDIR ${EUTELESCOPE}/jobsub/examples/aconite-4chipLocal/
 
-#RUN mkdir -p output/lcio output/logs output/histograms output/database
-#RUN mkdir -p /afs/
+RUN mkdir -p output/lcio output/logs output/histograms output/database
+RUN mkdir -p /afs/
 #CMD jobsub -c config.cfg -csv runlist.csv -g converter 1085
 CMD /bin/bash -c "echo $PR_NO; git fetch origin refs/pull/$PR_NO/merge; git checkout FETCH_HEAD; cd $EUTELESCOPE/build; cmake ..; make install -j 4"
 
