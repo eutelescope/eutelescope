@@ -8,6 +8,7 @@ env:
  - DOCKER_IMG=merualhemio/eutel-fedora26
  - DOCKER_IMG=merualhemio/eutel-slc6
  - DOCKER_IMG=merualhemio/eutel-ubuntu17
+ - DOCKER_IMG=merualhemio/eutel-cerncentos7
 
 script:
  - docker pull $DOCKER_IMG
