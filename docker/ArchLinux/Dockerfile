@@ -1,12 +1,15 @@
-FROM fedora:26
+FROM base/archlinux
 
 ENV ILCSOFT /ilcsoft
 
-RUN dnf -y install eigen3-devel gsl gsl-devel wget automake gcc-c++ gcc-gfortran subversion java-1.8.0-openjdk-devel libX11-devel libXpm-devel libXft-devel libXext-devel python-devel tar make cmake git 
-RUN mkdir -p $ILCSOFT
+RUN pacman -Syu --noconfirm
+RUN pacman -S core/gcc extra/eigen extra/gsl extra/wget core/automake core/gcc-fortran extra/subversion extra/git extra/jdk8-openjdk extra/libx11 extra/libxpm extra/libxft extra/libxext extra/python2 extra/cmake core/which core/make core/tar --needed --noconfirm
 
-RUN git clone -b dev-base https://github.com/eutelescope/ilcinstall $ILCSOFT/ilcinstall
+RUN mkdir -p $ILCSOFT
+RUN cd /usr/bin && ln -sf python2 python
+RUN git clone -b dev-nocmake https://github.com/eutelescope/ilcinstall $ILCSOFT/ilcinstall
 RUN cd $ILCSOFT/ilcinstall && git status
+
 RUN $ILCSOFT/ilcinstall/ilcsoft-install -i -v $ILCSOFT/ilcinstall/examples/eutelescope/release-standalone.cfg
 
 ENV EUTELESCOPE /ilcsoft/v01-19-02/Eutelescope/master/
@@ -25,3 +28,8 @@ ENV LD_LIBRARY_PATH ${EUTELESCOPE}/lib:${ROOTSYS}/lib:${EUDAQ}/lib:${GEAR}/lib:$
 WORKDIR ${EUTELESCOPE}/build/
 RUN make clean
 CMD /bin/bash -c "echo $PR_NO; git fetch origin refs/pull/$PR_NO/merge; git checkout FETCH_HEAD; cmake ..; make install -j 4"
+
+#RUN mkdir -p output/lcio output/logs output/histograms output/database
+#RUN mkdir -p /afs/
+#CMD jobsub -c config.cfg -csv runlist.csv -g converter 1085
+

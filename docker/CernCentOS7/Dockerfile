@@ -18,13 +18,10 @@ ENV MARLIN /ilcsoft/v01-19-02/Marlin/v01-09
 ENV MARLIN_DLL ${EUTELESCOPE}/lib/libEutelescope.so:${EUTELESCOPE}/lib/libEutelProcessors.so:${EUTELESCOPE}/lib/libEutelReaders.so:${EUDAQ}/lib/libNativeReader.so:${MARLIN_DLL}
 ENV ROOTSYS /ilcsoft/v01-19-02/root/6.10.04
 ENV GBL /ilcsoft/v01-19-02/GBL/V02-01-02
-ENV PATH ${ROOTSYS}/bin:${MARLIN}/bin:${MILLEPEDEII}:${EUTELESCOPE}/bin:${GEAR}/tools:${GEAR}/bin:${PATH}
+ENV CMAKE /ilcsoft/v01-19-02/CMake/3.6.3
+ENV PATH ${CMAKE}/bin:${ROOTSYS}/bin:${MARLIN}/bin:${MILLEPEDEII}:${EUTELESCOPE}/bin:${GEAR}/tools:${GEAR}/bin:${PATH}
 ENV LD_LIBRARY_PATH ${EUTELESCOPE}/lib:${ROOTSYS}/lib:${EUDAQ}/lib:${GEAR}/lib:${GBL}/lib:${LD_LIBRARY_PATH}
 
-WORKDIR ${EUTELESCOPE}/jobsub/examples/aconite-4chipLocal/
-
-RUN mkdir -p output/lcio output/logs output/histograms output/database
-RUN mkdir -p /afs/
-#CMD jobsub -c config.cfg -csv runlist.csv -g converter 1085
-CMD /bin/bash -c "echo $PR_NO; git fetch origin refs/pull/$PR_NO/merge; git checkout FETCH_HEAD; cd $EUTELESCOPE/build; cmake ..; make install -j 4"
-
+WORKDIR ${EUTELESCOPE}/build/
+RUN make clean
+CMD /bin/bash -c "source /opt/rh/rh-git29/enable && source /opt/rh/devtoolset-6/enable && echo $PR_NO; git fetch origin refs/pull/$PR_NO/merge; git checkout FETCH_HEAD; cmake ..; make install -j 4"
