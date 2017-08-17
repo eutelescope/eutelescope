@@ -18,7 +18,8 @@ ENV MARLIN /ilcsoft/v01-19-02/Marlin/v01-09
 ENV MARLIN_DLL ${EUTELESCOPE}/lib/libEutelescope.so:${EUTELESCOPE}/lib/libEutelProcessors.so:${EUTELESCOPE}/lib/libEutelReaders.so:${EUDAQ}/lib/libNativeReader.so:${MARLIN_DLL}
 ENV ROOTSYS /ilcsoft/v01-19-02/root/6.10.04
 ENV GBL /ilcsoft/v01-19-02/GBL/V02-01-02
-ENV PATH ${ROOTSYS}/bin:${MARLIN}/bin:${MILLEPEDEII}:${EUTELESCOPE}/bin:${GEAR}/tools:${GEAR}/bin:${PATH}
+ENV CMAKE /ilcsoft/v01-19-02/CMake/3.6.3
+ENV PATH ${CMAKE}/bin:${ROOTSYS}/bin:${MARLIN}/bin:${MILLEPEDEII}:${EUTELESCOPE}/bin:${GEAR}/tools:${GEAR}/bin:${PATH}
 ENV LD_LIBRARY_PATH ${EUTELESCOPE}/lib:${ROOTSYS}/lib:${EUDAQ}/lib:${GEAR}/lib:${GBL}/lib:${LD_LIBRARY_PATH}
 
 WORKDIR ${EUTELESCOPE}/build/
