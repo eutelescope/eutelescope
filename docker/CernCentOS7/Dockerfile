@@ -23,4 +23,4 @@ ENV LD_LIBRARY_PATH ${EUTELESCOPE}/lib:${ROOTSYS}/lib:${EUDAQ}/lib:${GEAR}/lib:$
 
 WORKDIR ${EUTELESCOPE}/build/
 RUN make clean
-CMD /bin/bash -c "echo $PR_NO; git fetch origin refs/pull/$PR_NO/merge; git checkout FETCH_HEAD; cmake ..; make install -j 4"
+CMD /bin/bash -c "source /opt/rh/rh-git29/enable && source /opt/rh/devtoolset-6/enable && echo $PR_NO; git fetch origin refs/pull/$PR_NO/merge; git checkout FETCH_HEAD; cmake ..; make install -j 4"
