@@ -9,7 +9,8 @@ env:
  - DOCKER_IMG=merualhemio/eutel-slc6
  - DOCKER_IMG=merualhemio/eutel-ubuntu17
  - DOCKER_IMG=merualhemio/eutel-cerncentos7
-
+ - DOCKER_IMG=merualhemio/eutel-archlinux
+ 
 script:
  - docker pull $DOCKER_IMG
  - echo "TRAVIS_PULL_REQUEST $TRAVIS_PULL_REQUEST"
