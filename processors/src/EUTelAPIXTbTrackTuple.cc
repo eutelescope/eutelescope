@@ -5,6 +5,8 @@
 #include "EUTelExceptions.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelTrackerDataInterfacerImpl.h"
+#include "EUTelExternalTrigger.h"
+#include "EUTelTrackerDataTriggerInterfacer.h"
 
 // eutelescope geometry
 #include "EUTelGenericPixGeoDescr.h"
@@ -30,9 +32,11 @@ EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple()
       _nTrackParams(0), _xPos(NULL), _yPos(NULL), _dxdz(NULL), _dydz(NULL),
       _trackIden(NULL), _trackNum(NULL), _chi2(NULL), _ndof(NULL),
       _zstree(NULL), _nPixHits(0), p_col(NULL), p_row(NULL), p_tot(NULL),
-      p_iden(NULL), p_lv1(NULL), p_hitTime(NULL), p_frameTime(NULL),
+      p_iden(NULL), p_lv1(NULL), p_hitTime(NULL), p_frameTime(NULL), p_TLU(NULL),
       _euhits(NULL), _nHits(0), _hitXPos(NULL), _hitYPos(NULL), _hitZPos(NULL),
-      _hitSensorId(NULL) {
+      _hitSensorId(NULL), _triggers(NULL), _nTriggers(0), _nTLUTriggers(0), _nExtTriggers(0),
+      _TLUTrigTime(NULL), _ExtTrigTime(NULL), _tots(NULL), _nToTs(0), _ToTTime(NULL), _ToTLength(NULL)
+ {
   // processor description
   _description = "Prepare tbtrack style n-tuple with track fit results";
 
@@ -120,6 +124,17 @@ void EUTelAPIXTbTrackTuple::processEvent(LCEvent *event) {
   if (!readTracks(event)) {
     return;
   }
+
+  // read in triggers
+  if( readTriggers(_triggerColName, event) ) {
+    _triggers->Fill();
+  }
+
+  // read in tots
+  if( readToTs(_totColName, event) ) {
+    _tots->Fill();
+  }
+
 
   // fill the trees
   _zstree->Fill();
@@ -297,6 +312,10 @@ bool EUTelAPIXTbTrackTuple::readZsHits(std::string colName, LCEvent *event) {
         p_col->push_back(binaryPixel.getXCoord());
         p_hitTime->push_back(binaryPixel.getHitTime());
         p_frameTime->push_back(binaryPixel.getFrameTime());
+	if ( _TLUTrigTime->size() != 0) 
+	  p_TLU->push_back( _TLUTrigTime->at(0) );
+	else 
+	  p_TLU->push_back( 0 );
       }
     } else {
       throw UnknownDataTypeException("Unknown sparsified pixel");
@@ -304,6 +323,88 @@ bool EUTelAPIXTbTrackTuple::readZsHits(std::string colName, LCEvent *event) {
   }
   return true;
 }
+
+//Read in external triggers TrackerData(Impl) to later dump
+bool EUTelAPIXTbTrackTuple::readTriggers( std::string colName, LCEvent* event)
+{
+  LCCollectionVec* triggerInputCollectionVec = NULL;
+  
+  try
+    {
+      triggerInputCollectionVec = dynamic_cast<LCCollectionVec*>( event->getCollection(colName) );
+    }
+  catch(DataNotAvailableException& e)
+    {
+      streamlog_out( DEBUG2 ) << "External trigger collection " << colName << " not found in event " << event->getEventNumber()  << "!" << std::endl;
+      return false;
+    }
+  
+  UTIL::CellIDDecoder<TrackerDataImpl> cellDecoder( triggerInputCollectionVec );
+  
+  TrackerDataImpl* triggerData = dynamic_cast< TrackerDataImpl * > ( triggerInputCollectionVec->getElementAt( 0 ) );
+  std::auto_ptr<EUTelTrackerDataTriggerInterfacer> sparseData = std::auto_ptr<EUTelTrackerDataTriggerInterfacer>( );
+  sparseData =  std::auto_ptr<EUTelTrackerDataTriggerInterfacer>( new EUTelTrackerDataTriggerInterfacer(triggerData) );
+  
+  EUTelExternalTrigger trigger;
+  for( unsigned int iTrigger = 0; iTrigger < sparseData->size(); iTrigger++ ) 
+    {
+      sparseData->getExternalTriggerAt( iTrigger, &trigger);
+      _nTriggers++;
+      if ( trigger.getLabel() == 0x1 ) // TLU trigger
+	{
+	  // save in tree as unsigned int because long unsigned int is not registered as ROOT branch
+	  _TLUTrigTime->push_back( (unsigned int)(trigger.getTimestamp() & 0xFFFFFFFF));
+	  _nTLUTriggers++;
+	}
+      else if ( trigger.getLabel() == 0xBA ) {  // coincidence trigger
+	_ExtTrigTime->push_back( (unsigned int)(trigger.getTimestamp() & 0xFFFFFFFF ));
+	_nExtTriggers++;
+      }
+      else
+	throw UnknownDataTypeException("Unknown trigger label");
+    }
+  
+  return true;
+} 
+
+// Read in ToTs saved as external trigger TrackerData 
+bool EUTelAPIXTbTrackTuple::readToTs( std::string colName, LCEvent* event)
+{
+	LCCollectionVec* triggerInputCollectionVec = NULL;
+ 
+	try
+	{
+		triggerInputCollectionVec = dynamic_cast<LCCollectionVec*>( event->getCollection(colName) );
+  	}
+       	catch(DataNotAvailableException& e)
+	{
+		streamlog_out( DEBUG2 ) << "Tot collection " << colName << " not found in event " << event->getEventNumber()  << "!" << std::endl;
+    		return false;
+  	}
+	
+	UTIL::CellIDDecoder<TrackerDataImpl> cellDecoder( triggerInputCollectionVec );
+		
+	TrackerDataImpl* triggerData = dynamic_cast< TrackerDataImpl * > ( triggerInputCollectionVec->getElementAt( 0 ) );
+	std::auto_ptr<EUTelTrackerDataTriggerInterfacer> sparseData = std::auto_ptr<EUTelTrackerDataTriggerInterfacer>( );
+	sparseData =  std::auto_ptr<EUTelTrackerDataTriggerInterfacer>( new EUTelTrackerDataTriggerInterfacer(triggerData) );
+
+	EUTelExternalTrigger trigger;
+	for( unsigned int iTrigger = 0; iTrigger < sparseData->size(); iTrigger++ ) 
+	  {
+	    sparseData->getExternalTriggerAt( iTrigger, &trigger);
+	    _nToTs++;
+	    if ( trigger.getLabel() == 0x2 ) // ToT information encoded as ExternalTrigger
+	      {
+		// save in tree as unsigned int because long unsigned int is not registered as ROOT branch
+		_ToTTime->push_back( (unsigned int)( (trigger.getTimestamp() >> 8) & 0xFFFFFFFF ) );
+		_ToTLength->push_back( (unsigned int) ( trigger. getTimestamp() & 0xFF ) );
+	      }
+	    else
+	      throw UnknownDataTypeException("Unknown trigger / tot label");
+	  }
+
+	return true;
+} 
 
 void EUTelAPIXTbTrackTuple::clear() {
   /* Clear zsdata */
@@ -314,6 +415,7 @@ void EUTelAPIXTbTrackTuple::clear() {
   p_lv1->clear();
   p_hitTime->clear();
   p_frameTime->clear();
+  p_TLU->clear();
   _nPixHits = 0;
   /* Clear hittrack */
   _xPos->clear();
@@ -329,6 +431,15 @@ void EUTelAPIXTbTrackTuple::clear() {
   _hitYPos->clear();
   _hitZPos->clear();
   _hitSensorId->clear();
+  // Clear triggers
+  _nTriggers = 0;
+  _nTLUTriggers = 0;
+  _nExtTriggers = 0;
+  _TLUTrigTime->clear();
+  _ExtTrigTime->clear();
+  _ToTTime->clear();
+  _ToTLength->clear();
+  _nToTs = 0;
 }
 
 void EUTelAPIXTbTrackTuple::prepareTree() {
@@ -345,17 +456,23 @@ void EUTelAPIXTbTrackTuple::prepareTree() {
 
   p_col = new std::vector<int>();
   p_row = new std::vector<int>();
-  p_tot = new std::vector<int>();
+  p_tot = new std::vector<double>();
   p_iden = new std::vector<int>();
   p_lv1 = new std::vector<int>();
   p_hitTime = new std::vector<int>();
   p_frameTime = new std::vector<double>();
+  p_TLU = new std::vector<unsigned int>();
 
   _hitXPos = new std::vector<double>();
   _hitYPos = new std::vector<double>();
   _hitZPos = new std::vector<double>();
   _hitSensorId = new std::vector<int>();
 
+  _TLUTrigTime = new std::vector<unsigned int>();
+  _ExtTrigTime = new std::vector<unsigned int>();
+  _ToTTime = new std::vector<unsigned int>();
+  _ToTLength = new std::vector<unsigned int>();
+  
   _versionNo = new std::vector<double>();
   _versionTree = new TTree("version", "version");
   _versionTree->Branch("no", &_versionNo);
@@ -380,6 +497,7 @@ void EUTelAPIXTbTrackTuple::prepareTree() {
   _zstree->Branch("iden", &p_iden);
   _zstree->Branch("hitTime", &p_hitTime);
   _zstree->Branch("frameTime", &p_frameTime);
+  _zstree->Branch("TLU",&p_TLU);
 
   // Tree for storing all track param info
   _eutracks = new TTree("tracks", "tracks");
@@ -395,6 +513,24 @@ void EUTelAPIXTbTrackTuple::prepareTree() {
   _eutracks->Branch("chi2", &_chi2);
   _eutracks->Branch("ndof", &_ndof);
 
+  //Tree for storing external triggers
+  _triggers = new TTree("triggers","triggers");
+  _triggers->SetAutoSave(1000000000);
+  _triggers->Branch("nTriggers", &_nTriggers);
+  _triggers->Branch("nTLUTriggers", &_nTLUTriggers);
+  _triggers->Branch("nExtTriggers", &_nExtTriggers);
+  _triggers->Branch("TLUTrigTime", "std::vector<unsigned int>", &_TLUTrigTime);
+  _triggers->Branch("ExtTrigTime", "std::vector<unsigned int>", &_ExtTrigTime);
+
+  // Tree for storing ToTs
+  _tots = new TTree("tots","tots");
+  _tots->SetAutoSave(1000000000);
+  _tots->Branch("nToTs", &_nToTs);
+  _tots->Branch("ToTTime","std::vector<unsigned int>", &_ToTTime);
+  _tots->Branch("ToTLength","std::vector<unsigned int>", &_ToTLength);
+
   _euhits->AddFriend(_zstree);
   _euhits->AddFriend(_eutracks);
+  _euhits->AddFriend(_triggers);
+  _euhits->AddFriend(_tots);
 }

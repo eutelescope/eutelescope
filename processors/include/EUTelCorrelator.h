@@ -372,6 +372,8 @@ namespace eutelescope {
 
     static std::string _hitXCorrelationHistoName;
     static std::string _hitYCorrelationHistoName;
+    static std::string _hitXYCorrelationHistoName;
+    static std::string _hitYXCorrelationHistoName;
     static std::string _hitXCorrShiftHistoName;
     static std::string _hitYCorrShiftHistoName;
     static std::string _hitXCorrShiftProjectionHistoName;

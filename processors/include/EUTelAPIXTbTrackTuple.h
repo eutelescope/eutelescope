@@ -29,9 +29,11 @@ namespace eutelescope {
     void prepareTree();
     void clear();
 
-    bool readZsHits(std::string colName, LCEvent *event);
-    bool readTracks(LCEvent *event);
-    bool readHits(std::string hitColName, LCEvent *event);
+    bool readZsHits(std::string colName, LCEvent* event);
+    bool readTracks(LCEvent* event);
+    bool readHits( std::string hitColName, LCEvent* event );
+    bool readTriggers( std::string triggerColName, LCEvent* event );
+    bool readToTs( std::string totColName, LCEvent* event );
 
     std::string _inputTrackColName;
     std::string _inputTrackerHitColName;
@@ -39,6 +41,8 @@ namespace eutelescope {
     std::string _inputDutPulseCollectionName;
     std::string _telZsColName;
     std::string _dutZsColName;
+    std::string _triggerColName;
+    std::string _totColName;
 
     std::string _path2file;
 
@@ -72,12 +76,13 @@ namespace eutelescope {
     int _nPixHits;
     std::vector<int> *p_col;
     std::vector<int> *p_row;
-    std::vector<int> *p_tot;
+    std::vector<double> *p_tot;
     std::vector<int> *p_iden;
     std::vector<int> *p_lv1;
     std::vector<int> *p_chip;
     std::vector<int> *p_hitTime;
     std::vector<double> *p_frameTime;
+    std::vector<unsigned int> *p_TLU;
 
     TTree *_euhits;
     int _nHits;
@@ -86,8 +91,20 @@ namespace eutelescope {
     std::vector<double> *_hitZPos;
     std::vector<int> *_hitSensorId;
 
-    TTree *_versionTree;
-    std::vector<double> *_versionNo;
+    TTree* _triggers;
+    int _nTriggers;
+    int _nTLUTriggers;
+    int _nExtTriggers;
+    std::vector<unsigned int> *_TLUTrigTime;
+    std::vector<unsigned int> *_ExtTrigTime;
+
+    TTree* _tots;
+    int _nToTs;
+    std::vector<unsigned int> *_ToTTime;
+    std::vector<unsigned int> *_ToTLength;
+
+    TTree* _versionTree;
+    std::vector<double>* _versionNo;
   };
 
   //! A global instance of the processor.
