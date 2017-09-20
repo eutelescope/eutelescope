@@ -1,6 +1,8 @@
 #ifndef EUTELEXTERNALTRIGGER_H
 #define EUTELEXTERNALTRIGGER_H
 
+#include "EUTELESCOPE.h"
+
 namespace eutelescope {
 
   /* Basic class for external triggers provided 
@@ -16,7 +18,7 @@ namespace eutelescope {
     EUTelExternalTrigger(long long unsigned timestamp, short label);
     
     // Default constructor without arguments
-    EUTelExternalTrigger();
+    EUTelExternalTrigger() = default;
 
     // Default destructor
     ~EUTelExternalTrigger() { ; }
@@ -25,27 +27,27 @@ namespace eutelescope {
       Get time stamp of trigger
      */
     
-    long long unsigned getTimestamp() const { return _timestamp; }
+    long long unsigned getTimestamp() const; 
     
     /*
       Get trigger label
      */
-    short getLabel() const { return _label; }
+    short getLabel() const;
 
     /*
       Set time stamp of trigger
      */
-    void setTimestamp(long long unsigned timestamp) { _timestamp = timestamp; }
+    void setTimestamp(long long unsigned timestamp);
     
     /*
       Set trigger label
      */
-    void setLabel(short label) { _label = label; }
+    void setLabel(short label);
 
     /*
       Get number of elements in lcio data structure
      */
-    unsigned int GetNoOfElements() const { return _nElement; }
+    unsigned int GetNoOfElements() const;
 
     
   private:

@@ -179,6 +179,7 @@ SET( libname ${PROJECT_NAME})
 AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/eutelescope/libraries/src library_sources )
 AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/eutelescope/interfaces/pixel/src library_sources )
 AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/eutelescope/interfaces/cluster/src library_sources )
+AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/eutelescope/interfaces/trigger/src library_sources )
 
 ADD_SHARED_LIBRARY( ${libname} ${library_sources} ${CMAKE_CURRENT_SOURCE_DIR}/external/millepede2/$ENV{MILLEPEDEII_VERSION}/Mille.cc )
 INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
