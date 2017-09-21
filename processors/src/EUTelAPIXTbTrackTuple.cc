@@ -26,7 +26,8 @@ using namespace eutelescope;
 EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple()
     : Processor("EUTelAPIXTbTrackTuple"), _inputTrackColName(""),
       _inputTrackerHitColName(""), _inputTelPulseCollectionName(""),
-      _inputDutPulseCollectionName(""), _telZsColName(""), _dutZsColName(""),
+      _inputDutPulseCollectionName(""), _telZsColName(""), _triggerColName(""), 
+      _totColName(""), _dutZsColName(""),
       _path2file(""), _DUTIDs(std::vector<int>()), _nRun(0), _nEvt(0),
       _runNr(0), _evtNr(0), _isFirstEvent(false), _file(NULL), _eutracks(NULL),
       _nTrackParams(0), _xPos(NULL), _yPos(NULL), _dxdz(NULL), _dydz(NULL),
@@ -51,6 +52,12 @@ EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple()
   registerProcessorParameter("DutZsColName",
                              "DUT zero surpressed data colection name",
                              _dutZsColName, std::string("zsdata_apix"));
+
+  registerProcessorParameter ("TriggerColName", "External trigger data colection name",
+			      _triggerColName, std::string("eudet_triggers"));
+
+  registerProcessorParameter ("ToTColName", "Tot data colection name",
+			      _totColName, std::string("eudet_tots"));
 
   registerProcessorParameter("OutputPath",
                              "Path/File where root-file should be stored",
@@ -352,9 +359,11 @@ bool EUTelAPIXTbTrackTuple::readTriggers( std::string colName, LCEvent* event)
       _nTriggers++;
       if ( trigger.getLabel() == 0x1 ) // TLU trigger
 	{
+	  //std::cout << "trigger label = " << std::hex << trigger.getLabel() << std::endl;
 	  // save in tree as unsigned int because long unsigned int is not registered as ROOT branch
 	  _TLUTrigTime->push_back( (unsigned int)(trigger.getTimestamp() & 0xFFFFFFFF));
 	  _nTLUTriggers++;
+	  //std::cout << "n TLU triggers = " << _nTLUTriggers << std::endl;
 	}
       else if ( trigger.getLabel() == 0xBA ) {  // coincidence trigger
 	_ExtTrigTime->push_back( (unsigned int)(trigger.getTimestamp() & 0xFFFFFFFF ));
