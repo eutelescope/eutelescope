@@ -18,7 +18,7 @@ namespace eutelescope {
     EUTelExternalTrigger(long long unsigned timestamp, short label);
     
     // Default constructor without arguments
-    EUTelExternalTrigger() = default;
+    EUTelExternalTrigger();
 
     // Default destructor
     ~EUTelExternalTrigger() { ; }
