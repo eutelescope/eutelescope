@@ -19,7 +19,6 @@
       <processor name="AIDA"/>
       <processor name="MyAlibavaConverter"/>
       <processor name="Save"/>
-      <!--processor name="MyAlibavaTimeCutProcessor"/-->
    </execute>
 
    <global>
@@ -83,16 +82,6 @@
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
   <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
-</processor>
-
- <processor name="MyAlibavaTimeCutProcessor" type="AlibavaTimeCutProcessor">
- <!--AlibavaTimeCutProcessor masks the events if their TDC time value is not in the range specified by TimeCutMin and TimeCutMax -->
-  <!--The maximum tdc time that is acceptable to use that Event-->
-  <parameter name="TimeCutMax" type="float" value="55.0"/>
-  <!--The minimum tdc time that is acceptable to use that Event-->
-  <parameter name="TimeCutMin" type="float" value="35.0"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
