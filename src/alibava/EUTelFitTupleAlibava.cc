@@ -1650,72 +1650,74 @@ void EUTelFitTupleAlibava::processEvent( LCEvent * event )
 					LCCollectionVec * alibavaCollection;
 					try {
 						alibavaCollection = dynamic_cast< LCCollectionVec * > ( event->getCollection( _alibavaCollectionName ) );
-					} catch (lcio::DataNotAvailableException& e) {
-						streamlog_out( DEBUG5 ) << "No alibava collection with name " << _alibavaCollectionName << " ! Event " << event->getEventNumber() << " might be masked!" << endl;
-						return;
-					}
+					
 
-					// debug: also look at the unfiltered collection
-					LCCollectionVec * alibavaCollection2;
-					alibavaCollection2 = dynamic_cast< LCCollectionVec * > ( event->getCollection( _alibavaUnfilteredCollectionName ) );
+						// debug: also look at the unfiltered collection
+						LCCollectionVec * alibavaCollection2;
+						alibavaCollection2 = dynamic_cast< LCCollectionVec * > ( event->getCollection( _alibavaUnfilteredCollectionName ) );
 
-					int noOfDetector = alibavaCollection->getNumberOfElements();
-					for ( int i = 0; i < noOfDetector; ++i ) 
-					{
-
-						TrackerDataImpl * trkdata = dynamic_cast< TrackerDataImpl * > ( alibavaCollection->getElementAt( i ) ) ;
-						FloatVec datavec;
-						datavec = trkdata->getChargeValues();
-						AlibavaEventImpl * alibavaEvent = static_cast<AlibavaEventImpl*> (event);
-						float tdctime = alibavaEvent->getEventTime();
-
-						// track eta plot: fill a histogram with the charge of two strips left and right of the track pointer
-						// this charge is also used for filling duthitq...
-						// FIXME: only one dut...
-						if (_foundDUTHit == true)
+						int noOfDetector = alibavaCollection->getNumberOfElements();
+						for ( int i = 0; i < noOfDetector; ++i ) 
 						{
-							if (_unsensitiveaxis == "x" && i==0)
+
+							TrackerDataImpl * trkdata = dynamic_cast< TrackerDataImpl * > ( alibavaCollection->getElementAt( i ) ) ;
+							FloatVec datavec;
+							datavec = trkdata->getChargeValues();
+							AlibavaEventImpl * alibavaEvent = static_cast<AlibavaEventImpl*> (event);
+							float tdctime = alibavaEvent->getEventTime();
+
+							// track eta plot: fill a histogram with the charge of two strips left and right of the track pointer
+							// this charge is also used for filling duthitq...
+							// FIXME: only one dut...
+							if (_foundDUTHit == true)
+							{
+								if (_unsensitiveaxis == "x" && i==0)
+								{
+									double tempvar = dutTrackY_local_pix;
+									int tempvar2 = static_cast <float>(tempvar);
+
+									if (tempvar2 > 1 && tempvar2 < 125)
+									{
+										fillEtaHisto(datavec[tempvar2],datavec[tempvar2+1],datavec[tempvar2-1],datavec[tempvar2+2],datavec[tempvar2-2],datavec[tempvar2+3],dutTrackY_local_pix,_evtNr,tdctime);
+
+										//dutHitQ = datavec[tempvar2]+datavec[tempvar2+1]+datavec[tempvar2-1]+datavec[tempvar2+2]+datavec[tempvar2-2]+datavec[tempvar2+3];
+
+									}
+
+								} else if (_unsensitiveaxis == "y"  && i==0 ) {
+
+									double tempvar = dutTrackX_local_pix;
+									int tempvar2 = static_cast <float>(tempvar);
+
+									if (tempvar2 > 1 && tempvar2 < 125)
+									{
+										fillEtaHisto(datavec[tempvar2],datavec[tempvar2+1],datavec[tempvar2-1],datavec[tempvar2+2],datavec[tempvar2-2],datavec[tempvar2+3],dutTrackX_local_pix,_evtNr,tdctime);
+
+										//dutHitQ = datavec[tempvar2]+datavec[tempvar2+1]+datavec[tempvar2-1]+datavec[tempvar2+2]+datavec[tempvar2-2]+datavec[tempvar2+3];
+									}
+
+								}
+
+								fillTDCResHisto(_measuredX[_iDUT], _measuredY[_iDUT], dutTrackX_global, dutTrackY_global,tdctime);
+							}
+
+							// debug: the unfiltered collection
+							TrackerDataImpl * trkdata2 = dynamic_cast< TrackerDataImpl * > ( alibavaCollection2->getElementAt( i ) ) ;
+							FloatVec datavec2;
+							datavec2 = trkdata2->getChargeValues();
+							if (fabs(locdisty) < 0.1 && fabs(locdisty) > 0.0)
 							{
 								double tempvar = dutTrackY_local_pix;
 								int tempvar2 = static_cast <float>(tempvar);
-
-								if (tempvar2 > 1 && tempvar2 < 125)
-								{
-									fillEtaHisto(datavec[tempvar2],datavec[tempvar2+1],datavec[tempvar2-1],datavec[tempvar2+2],datavec[tempvar2-2],datavec[tempvar2+3],dutTrackY_local_pix,_evtNr,tdctime);
-
-									//dutHitQ = datavec[tempvar2]+datavec[tempvar2+1]+datavec[tempvar2-1]+datavec[tempvar2+2]+datavec[tempvar2-2]+datavec[tempvar2+3];
-
-								}
-
-							} else if (_unsensitiveaxis == "y"  && i==0 ) {
-
-								double tempvar = dutTrackX_local_pix;
-								int tempvar2 = static_cast <float>(tempvar);
-
-								if (tempvar2 > 1 && tempvar2 < 125)
-								{
-									fillEtaHisto(datavec[tempvar2],datavec[tempvar2+1],datavec[tempvar2-1],datavec[tempvar2+2],datavec[tempvar2-2],datavec[tempvar2+3],dutTrackX_local_pix,_evtNr,tdctime);
-
-									//dutHitQ = datavec[tempvar2]+datavec[tempvar2+1]+datavec[tempvar2-1]+datavec[tempvar2+2]+datavec[tempvar2-2]+datavec[tempvar2+3];
-								}
-
+								fillEtaDebug(datavec2[tempvar2],datavec2[tempvar2+1],datavec2[tempvar2-1],datavec2[tempvar2+2],datavec2[tempvar2-2],datavec2[tempvar2+3],dutTrackY_local_pix,locdisty);
 							}
 
-							fillTDCResHisto(_measuredX[_iDUT], _measuredY[_iDUT], dutTrackX_global, dutTrackY_global,tdctime);
-						}
+						} // end noOfDetector loop
 
-						// debug: the unfiltered collection
-						TrackerDataImpl * trkdata2 = dynamic_cast< TrackerDataImpl * > ( alibavaCollection2->getElementAt( i ) ) ;
-						FloatVec datavec2;
-						datavec2 = trkdata2->getChargeValues();
-						if (fabs(locdisty) < 0.1 && fabs(locdisty) > 0.0)
-						{
-							double tempvar = dutTrackY_local_pix;
-							int tempvar2 = static_cast <float>(tempvar);
-							fillEtaDebug(datavec2[tempvar2],datavec2[tempvar2+1],datavec2[tempvar2-1],datavec2[tempvar2+2],datavec2[tempvar2-2],datavec2[tempvar2+3],dutTrackY_local_pix,locdisty);
-						}
-
-					} // end noOfDetector loop
+					} catch (lcio::DataNotAvailableException& e) {
+						streamlog_out( DEBUG5 ) << "No alibava collection with name " << _alibavaCollectionName << " ! Event " << event->getEventNumber() << " might be masked!" << endl;
+						continue;
+					}
 
 				} // end of if alibava
 
@@ -1741,36 +1743,37 @@ void EUTelFitTupleAlibava::processEvent( LCEvent * event )
 				LCCollectionVec * alibavaCollection;
 				try {
 					alibavaCollection = dynamic_cast< LCCollectionVec * > ( event->getCollection( _alibavaCollectionName ) );
+
+
+					// header: tdc and temperature
+					AlibavaEventImpl * alibavaEvent = static_cast<AlibavaEventImpl*> (event);
+					float tdctime = alibavaEvent->getEventTime();
+					float temperature = alibavaEvent->getEventTemp();
+					_FitTuple->fill(icol++,tdctime);
+					_FitTuple->fill(icol++,temperature);
+
+					// loop over detectors
+					// FIXME: this has not been tested for two detectors!
+					int noOfDetector = alibavaCollection->getNumberOfElements();
+					for ( int i = 0; i < noOfDetector; ++i ) 
+					{
+						TrackerDataImpl * trkdata = dynamic_cast< TrackerDataImpl * > ( alibavaCollection->getElementAt( i ) ) ;
+						FloatVec datavec;
+						datavec = trkdata->getChargeValues();
+
+						// channel loop
+						for (size_t ichan=0; ichan<datavec.size();ichan++)
+						{
+							double alidata = 0.0;
+							alidata = datavec[ichan];
+							_FitTuple->fill(icol++,alidata);
+							streamlog_out (DEBUG0) << "Filling alibava channel " << ichan << " with reconstructed data: " << alidata << " ADCs" << endl;
+						}
+
+					}
 				} catch (lcio::DataNotAvailableException& e) {
 					streamlog_out( DEBUG5 ) << "No alibava collection with name " << _alibavaCollectionName << " ! Event " << event->getEventNumber() << " might be masked!" << endl;
-					return;
-				}
-
-				// header: tdc and temperature
-				AlibavaEventImpl * alibavaEvent = static_cast<AlibavaEventImpl*> (event);
-				float tdctime = alibavaEvent->getEventTime();
-				float temperature = alibavaEvent->getEventTemp();
-				_FitTuple->fill(icol++,tdctime);
-				_FitTuple->fill(icol++,temperature);
-
-				// loop over detectors
-				// FIXME: this has not been tested for two detectors!
-				int noOfDetector = alibavaCollection->getNumberOfElements();
-				for ( int i = 0; i < noOfDetector; ++i ) 
-				{
-					TrackerDataImpl * trkdata = dynamic_cast< TrackerDataImpl * > ( alibavaCollection->getElementAt( i ) ) ;
-					FloatVec datavec;
-					datavec = trkdata->getChargeValues();
-
-					// channel loop
-					for (size_t ichan=0; ichan<datavec.size();ichan++)
-					{
-						double alidata = 0.0;
-						alidata = datavec[ichan];
-						_FitTuple->fill(icol++,alidata);
-						streamlog_out (DEBUG0) << "Filling alibava channel " << ichan << " with reconstructed data: " << alidata << " ADCs" << endl;
-					}
-
+					continue;
 				}
 
 			} // end of if Alibava
