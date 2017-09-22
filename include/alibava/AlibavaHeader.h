@@ -1,9 +1,10 @@
 /*
  * Created by Thomas Eichhorn
- *  (2014 DESY)
+ *  (2014, 2017 DESY)
  *
- *  email:thomas.eichhorn@cern.ch
+ *  email:thomas.eichhorn@desy.de
  */
+
 
 #ifndef AlibavaHeader_H
 #define AlibavaHeader_H 1
@@ -26,51 +27,44 @@
 #include <list>
 
 
-namespace alibava {
+namespace alibava
+{
 
-	//! Example Alibava processor for Marlin.
-
-	class AlibavaHeader:public alibava::AlibavaBaseProcessor   {
+    class AlibavaHeader:public alibava::AlibavaBaseProcessor
+    {
 
 	public:
 
-		virtual Processor * newProcessor () { return new AlibavaHeader; }
+	    virtual Processor * newProcessor ( )
+	    {
+		return new AlibavaHeader;
+	    }
 
-		AlibavaHeader ();
+	    AlibavaHeader ( );
 
-		virtual void init ();
+	    virtual void init ( );
 
-		virtual void processRunHeader (LCRunHeader * run);
+	    virtual void processRunHeader ( LCRunHeader * run );
 
-		virtual void processEvent (LCEvent * evt);
+	    virtual void processEvent ( LCEvent * evt );
 
-		virtual void check (LCEvent * evt);
+	    virtual void check ( LCEvent * evt );
 
-		void bookHistos();
+	    void bookHistos ( );
 
-		void fillHistos(TrackerDataImpl * trkdata,TrackerDataImpl * trkdata2);
-
-		virtual void end();
-
-		std::string getChanDataHistoName(unsigned int ichan);
-
-		std::string getChanDataFitName(unsigned int ichan);
-
-		void calculateHeaderNoise();
-
-		void correlateLastHeader(TrackerDataImpl * trkdata, TrackerDataImpl * trkdata2);
-
-		std::string _rawdatacollection;
-
-		float _pedestal14;
-
-		float _pedestal15;
-
-		float _firstpedestal;
-
-		std::string _filterFileName;
+	    virtual void end ( );
 
 	protected:
+
+	    bool _coefffile;
+
+	    void fillHistos ( TrackerDataImpl * headerdata, TrackerDataImpl * channeldata, int ichip );
+
+	    void correlateLastHeader ( TrackerDataImpl * headerdata, TrackerDataImpl * channeldata, unsigned int ichip );
+
+	    std::string _filterFileName;
+
+	    std::string _rawdatacollection;
 
 	};
 
