@@ -24,7 +24,7 @@ do
     let jobcount+=1
     T="$(date "+%d/%m/%y %T")"
     echo "Running pedestal converter on run $runnumber at $T!" >> logoutput_pedestal.txt
-    jobsub.py -c config.cfg -csv runlist.csv convert-ped $runnumber &
+    jobsub.py -c config.cfg -csv runlist.csv converter $runnumber &
   ;; esac
 done < $INPUT
 IFS=$OLDIFS
