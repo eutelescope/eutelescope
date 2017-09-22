@@ -405,6 +405,8 @@ EVENT::FloatVec AlibavaConstantCommonModeProcessor::getCommonModeErrorVec(){
 
 void AlibavaConstantCommonModeProcessor::bookHistos(){
 
+	AIDAProcessor::tree(this)->cd(this->name());
+
 	string tempHistoName;
 
 	// a histogram showing the corrected signals
