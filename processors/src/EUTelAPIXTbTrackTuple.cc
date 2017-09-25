@@ -122,6 +122,11 @@ void EUTelAPIXTbTrackTuple::processEvent(LCEvent *event) {
     return;
   }
 
+  // read in triggers
+  if( readTriggers(_triggerColName, event) ) {
+    _triggers->Fill();
+  }
+
   // read in raw data
   if (!readZsHits(_dutZsColName, event)) {
     return;
@@ -130,11 +135,6 @@ void EUTelAPIXTbTrackTuple::processEvent(LCEvent *event) {
   // read in tracks
   if (!readTracks(event)) {
     return;
-  }
-
-  // read in triggers
-  if( readTriggers(_triggerColName, event) ) {
-    _triggers->Fill();
   }
 
   // read in tots
