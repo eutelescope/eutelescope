@@ -15,11 +15,13 @@ using namespace eutelescope;
 EUTelExternalTrigger::EUTelExternalTrigger(long long unsigned timestamp, short label){ 
   _timestamp = timestamp;
   _label = label;
+  _nElement = 3;
 }
 
 EUTelExternalTrigger::EUTelExternalTrigger(){ 
   _timestamp = 0;
   _label = 0;
+  _nElement = 3;
 }
 
 long long unsigned EUTelExternalTrigger::getTimestamp() const { 

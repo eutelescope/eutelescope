@@ -33,8 +33,8 @@ namespace eutelescope{
     	 _trackerData->chargeValues().push_back( *( (float*)&first_32bits ) );
 	 _trackerData->chargeValues().push_back( *( (float*)&last_32bits ) );
 	 _trackerData->chargeValues().push_back( static_cast<float>(trigger->getLabel()) );
-	//add trigger to local trigger vector
-		_triggerVec.push_back(EUTelExternalTrigger(
+         //add trigger to local trigger vector
+	       _triggerVec.push_back(EUTelExternalTrigger(
 			static_cast<long long unsigned>(trigger->getTimestamp()),
 			static_cast<short>(trigger->getLabel() )
 		) );
@@ -50,13 +50,12 @@ namespace eutelescope{
      */
     EUTelExternalTrigger* getExternalTriggerAt(unsigned int index, EUTelExternalTrigger* trigger) const 
     {
-	if ( index * _nElement + 2 > _trackerData->getChargeValues().size() )
-    return 0x0;
+	if ( index * _nElement + 2 > _trackerData->getChargeValues().size() )	
+    return 0x0;	   
         uint32_t first_32bits =  *( (uint32_t*)&(_trackerData->getChargeValues()[index * _nElement]) );
     	uint32_t last_32bits =   *( (uint32_t*)&(_trackerData->getChargeValues()[index * _nElement + 1]) );
     	trigger->setTimestamp( (uint64_t)( (uint64_t)last_32bits << 32 | first_32bits  ) );
-    	trigger->setLabel(static_cast<short>(_trackerData->getChargeValues()[index * _nElement + 2] ) );
-           
+        trigger->setLabel(static_cast<short>(_trackerData->getChargeValues()[index * _nElement + 2] ) );
     	return trigger;
     }
 

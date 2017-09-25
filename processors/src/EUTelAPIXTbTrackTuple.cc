@@ -359,11 +359,8 @@ bool EUTelAPIXTbTrackTuple::readTriggers( std::string colName, LCEvent* event)
       _nTriggers++;
       if ( trigger.getLabel() == 0x1 ) // TLU trigger
 	{
-	  //std::cout << "trigger label = " << std::hex << trigger.getLabel() << std::endl;
-	  // save in tree as unsigned int because long unsigned int is not registered as ROOT branch
 	  _TLUTrigTime->push_back( (unsigned int)(trigger.getTimestamp() & 0xFFFFFFFF));
 	  _nTLUTriggers++;
-	  //std::cout << "n TLU triggers = " << _nTLUTriggers << std::endl;
 	}
       else if ( trigger.getLabel() == 0xBA ) {  // coincidence trigger
 	_ExtTrigTime->push_back( (unsigned int)(trigger.getTimestamp() & 0xFFFFFFFF ));
