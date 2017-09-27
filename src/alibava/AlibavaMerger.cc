@@ -225,6 +225,9 @@ void AlibavaMerger::processEvent (LCEvent * anEvent)
 	float telescope_y = 0.0;
 	float telescope_z = 0.0;
 
+	std::vector < double > ali_corr;
+	std::vector < double > tele_corr;
+
 	// here we have to merge two collections: the trackerdata and the trackerpulse. We also keep the zsdata for reference -> 3 collections in total
 
 	// out output collections
@@ -289,6 +292,16 @@ void AlibavaMerger::processEvent (LCEvent * anEvent)
 			alibava_x += inputPulseColDecoder2(inputPulseFrame)["xSeed"];
 			alibava_y += inputPulseColDecoder2(inputPulseFrame)["ySeed"];
 			alibava_z += 0.0;
+
+			if ( _nonsensitiveaxis == "x" )
+			{
+			    ali_corr.push_back ( inputPulseColDecoder2(inputPulseFrame)["ySeed"] );
+			}
+
+			if ( _nonsensitiveaxis == "y" )
+			{
+			    ali_corr.push_back ( inputPulseColDecoder2(inputPulseFrame)["xSeed"] );
+			}
 
 		}
 	} catch ( lcio::DataNotAvailableException )
@@ -369,6 +382,16 @@ void AlibavaMerger::processEvent (LCEvent * anEvent)
 			telescope_z = 0.0;
 			delete tempCluster;
 
+			if ( _nonsensitiveaxis == "x" )
+			{
+			    tele_corr.push_back ( tempy );
+			}
+
+			if ( _nonsensitiveaxis == "y" )
+			{
+			    tele_corr.push_back ( tempx );
+			}
+
 		} // end of loop over input clusters
 
 		// one more loop over the telescope, now the third collection
@@ -397,6 +420,18 @@ void AlibavaMerger::processEvent (LCEvent * anEvent)
 		{
 			addCorrelation((alibava_x/alibavasize),(alibava_y/alibavasize),(alibava_z/alibavasize),(telescope_x/telescopesize),(telescope_y/telescopesize),(telescope_z/telescopesize),anEvent->getEventNumber());
 			streamlog_out( DEBUG0 ) << "Filling histogram with: Ali_X: " << (alibava_x/alibavasize) << " Ali_Y: " << (alibava_y/alibavasize) << " Ali_Z: " << (alibava_z/alibavasize) << " Tele_X: " << (telescope_x/telescopesize) << " Tele_Y: " << (telescope_y/telescopesize) << " Tele_Z: " << (telescope_z/telescopesize) << endl;
+
+			for ( size_t i = 0; i < ali_corr.size ( ); i ++ )
+			{
+			    for ( size_t j = 0; j < tele_corr.size ( ); j++ )
+			    {
+				if ( TH2D * histo = dynamic_cast < TH2D* > ( _rootObjectMap["Correlation"] ) )
+				{
+				    histo -> Fill ( ali_corr.at ( i ), tele_corr.at ( j ) );
+				}
+			    }
+			}
+			
 		}
 
 		// Now the output. Usually the telescope will have more events...
@@ -465,6 +500,10 @@ void AlibavaMerger::bookHistos()
 		TH2D * signalHisto = new TH2D ("Correlation_X","",1152,0,1151,1152,0,1151);
 		_rootObjectMap.insert(make_pair("Correlation_X", signalHisto));
 		signalHisto->SetTitle("Correlation in X;Alibava Average Channel;Telescope Average Pixel");
+
+		TH2D * correlation = new TH2D ("Correlation","",256,0,255,576,0,575);
+		_rootObjectMap.insert(make_pair("Correlation", correlation));
+		correlation->SetTitle("Correlation in Y;Alibava Channel;Telescope Pixel");
 	} else {
 		TH2D * signalHisto = new TH2D ("Correlation_X","",256,0,255,1152,0,1151);
 		_rootObjectMap.insert(make_pair("Correlation_X", signalHisto));
@@ -476,6 +515,10 @@ void AlibavaMerger::bookHistos()
 		TH2D * signalHisto2 = new TH2D ("Correlation_Y","",576,0,575,576,0,575);
 		_rootObjectMap.insert(make_pair("Correlation_Y", signalHisto2));
 		signalHisto2->SetTitle("Correlation in Y;Alibava Average Channel;Telescope Average Pixel");
+
+		TH2D * correlation = new TH2D ("Correlation","",256,0,255,1152,0,1151);
+		_rootObjectMap.insert(make_pair("Correlation", correlation));
+		correlation->SetTitle("Correlation in X;Alibava Channel;Telescope Pixel");
 	} else {
 		TH2D * signalHisto2 = new TH2D ("Correlation_Y","",256,0,255,576,0,575);
 		_rootObjectMap.insert(make_pair("Correlation_Y", signalHisto2));
@@ -493,6 +536,8 @@ void AlibavaMerger::bookHistos()
 	TH3D * multihisto = new TH3D ("Correlation_All","",50,-1,1,50,-1,1,1000,0,500000);
 	_rootObjectMap.insert(make_pair("Correlation_All", multihisto));
 	multihisto->SetTitle("Correlation over Events;Average Distance in X;Average Distance in Y;Event Nr.");
+
+
 
 	streamlog_out ( MESSAGE4 )  << "End of Booking histograms. " << endl;
 }
