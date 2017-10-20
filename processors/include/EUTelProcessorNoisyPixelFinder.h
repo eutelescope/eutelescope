@@ -196,7 +196,7 @@ namespace eutelescope {
      *  is no real overhead with using std::vectors instead of
      * arrays.
      */
-    std::map<int, std::vector<std::vector<int>>> _hitVecMap;
+    std::map<int, std::vector<std::vector<long int>>> _hitVecMap;
 
     //! Map for storing the hot pixels in a std::vector as a value
     /*! The key is once again the sensorID.
@@ -207,6 +207,8 @@ namespace eutelescope {
     /*! The key is once again the sensorID.
      */
     std::map<int, std::vector<int>> _maskedLinesMap;
+
+	std::map<int, std::vector<long double>> _firingFreqForAllPixels;
 
     //! Vectors for storing lines to be masked per sensor
     std::vector<int> _maskedLinesVec0;
@@ -241,6 +243,9 @@ namespace eutelescope {
 
     //! Flag which will be set once we're done finding noisy pixels
     bool _finished;
+
+    double _noisyPixelVsCutHistUpperLimit;
+    int _noisyPixelVsCutHistBins;
   };
 
   //! A global instance of the processor
