@@ -16,14 +16,7 @@ Folder contents:
 
 /gearfiles:
 
-  Contains gear files for various setup scenarios. gear_alibava_aA_bB_cC_dD.xml 
-is a setup with the strip sensor DUT of thickness D at a rotation angle alpha 
-of A, rotation angle beta of B and rotation angle gamma of C. All included 
-files have the same telescope setup, but this can be changed to your needs. 
-gear_alibava_eda.xml is for a scenario where the sensitive DUT coordinate is 
-rotated by 90 degrees (here: along the x-axis). gear_alibava_ref.xml and 
-gear_alibava_ref_38.xml are for scenarios where a reference plane is used. 
-gear_telescope.xml is for the DUT-free case.
+  Contains gear files for various setup scenarios. 
 
 /output:
 
