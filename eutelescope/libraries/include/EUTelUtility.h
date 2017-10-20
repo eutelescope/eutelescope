@@ -226,6 +226,8 @@ namespace eutelescope {
     /** */
     void copyLCCollectionTrackVec(LCCollectionVec *, LCCollectionVec *);
 
+	void copyLCCollectionParameters(LCCollectionVec*, LCCollectionVec const * const);
+ 
     /**  type conversion  */
     float DoubleToFloat(double a);
     float *DoubleToFloatN(double *a, int N);
