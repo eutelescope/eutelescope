@@ -54,7 +54,11 @@ namespace eutelescope
 
 	    std::string _nonsensitiveaxis;
 
+	    int _chancount;
+
 	    int _outputSensorID;
+
+	    int _zsmode;
 
 	protected:
 
