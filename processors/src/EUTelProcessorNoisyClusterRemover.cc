@@ -13,6 +13,7 @@
 // eutelescope includes ".h"
 #include "EUTelProcessorNoisyClusterRemover.h"
 #include "EUTELESCOPE.h"
+#include "EUTelUtility.h"
 #include "EUTelTrackerDataInterfacerImpl.h"
 
 // marlin includes ".h"
@@ -95,16 +96,18 @@ namespace eutelescope {
     // now prepare output collection
     LCCollectionVec *outputCollection = nullptr;
     bool outputCollectionExists = false;
-    _initialOutputCollectionSize = 0;
+    _initialOutputCollectionSize = -1;
 
     try {
       outputCollection = dynamic_cast<LCCollectionVec *>(
-          event->getCollection(_outputCollectionName));
+      event->getCollection(_outputCollectionName));
       outputCollectionExists = true;
       _initialOutputCollectionSize = outputCollection->size();
     } catch (lcio::DataNotAvailableException &e) {
       outputCollection = new LCCollectionVec(LCIO::TRACKERPULSE);
     }
+
+	Utility::copyLCCollectionParameters(outputCollection, pulseInputCollectionVec);
 
     // read the encoding std::string from the input collection
     std::string encodingString =
