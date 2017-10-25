@@ -124,46 +124,46 @@ namespace eutelescope {
 	  bool linked_dut;
 	  //bool linked_ref;
 
-	  hit getpoint_at(double z);
+	  hit getpoint_at(double z) const;
 
 
 	  // Returns x coordinate of the triplet at given z:
-	  double getx_at(double z);
+	  double getx_at(double z) const;
 
 	  // Return dx = (x_end - x_start) for the full triplet:
-	  double getdx();
+	  double getdx() const;
 
 	  // Returns dx = (x_measure - x_triplet) in the given plane ipl:
-	  double getdx(int ipl);
+	  double getdx(int ipl) const;
 
 	  // Returns dx for a given point:
-	  double getdx(hit point);
+	  double getdx(hit point) const;
 
 
 	  // Returns y coordinate of the triplet at given z:
-	  double gety_at(double z);
+	  double gety_at(double z) const;
 
 	  // Return dy = (y_end - y_start) for the full triplet:
-	  double getdy();
+	  double getdy() const;
 
 	  // Returns dy = (y_measure - y_triplet) in the given plane ipl:
-	  double getdy(int ipl);
+	  double getdy(int ipl) const;
 
 	  // Returns dy for a given point:
-	  double getdy(hit point);
+	  double getdy(hit point) const;
 
 
 	  // Return dz = (z_end - z_start) for the full triplet:
-	  double getdz();
+	  double getdz() const;
 
 	  // Returning the hit for the given plane ID
-	  hit gethit(int plane);
+	  hit gethit(int plane) const;
 
 	  //! Returning the center point of the triplet:
-	  hit base();
+	  hit base() const;
 
 	  //! Returning the slope of the triplet (x,y):
-	  hit slope();
+	  hit slope() const;
 
 	  friend std::ostream& operator << (std::ostream& out, triplet trip)
 	  {
@@ -225,13 +225,13 @@ namespace eutelescope {
        *
        * @return a vector of found triplets among the given set of hits.
        */
-      void FindTriplets(std::vector<EUTelTripletGBLUtility::hit> &hits, unsigned int plane0, unsigned int plane1, unsigned int plane2, double trip_res_cut, double trip_slope_cut, std::vector<EUTelTripletGBLUtility::triplet> &trip);
+      void FindTriplets(std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int plane0, unsigned int plane1, unsigned int plane2, double trip_res_cut, double trip_slope_cut, std::vector<EUTelTripletGBLUtility::triplet> &trip);
 
       //! Match the upstream and downstream triplets to tracks
-      void MatchTriplets(std::vector<EUTelTripletGBLUtility::triplet> &up, std::vector<EUTelTripletGBLUtility::triplet> &down, double z_match, double trip_matching_cut, std::vector<EUTelTripletGBLUtility::track> &track);
+      void MatchTriplets(std::vector<EUTelTripletGBLUtility::triplet> const & up, std::vector<EUTelTripletGBLUtility::triplet> const & down, double z_match, double trip_matching_cut, std::vector<EUTelTripletGBLUtility::track> &track);
 
       //! Check isolation of triplet within vector of triplets
-      bool IsTripletIsolated(std::vector<EUTelTripletGBLUtility::triplet>::iterator it, std::vector<EUTelTripletGBLUtility::triplet> &trip, double z_match, double isolation = 0.3);
+      bool IsTripletIsolated(EUTelTripletGBLUtility::triplet const & it, std::vector<EUTelTripletGBLUtility::triplet> const &trip, double z_match, double isolation = 0.3);
 
       //! Calculate efficiency of plane
       /*! This creates non-standard triplets and driplets (use only 5 planes to contruct them) and looks for matching hit on plane under test
