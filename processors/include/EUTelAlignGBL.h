@@ -507,7 +507,7 @@ namespace eutelescope {
     // Partly outdated GEAR readings:
     int * _planeSort;
     int * _planeID;
-    double * _planePosition;
+    std::vector<double>  _planePosition;
     double * _planeThickness;
     double * _planeX0;
     double * _planeResolution;
@@ -552,6 +552,7 @@ namespace eutelescope {
     double * _yFitPos;
 
     std::vector<double> _siPlaneZPosition;
+	std::vector<int> _sensorIDVec;
 
     //! Fill histogram switch
     /*! Only for debug reason

@@ -23,14 +23,9 @@
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
 #include "EUTELESCOPE.h"
-#include "EUTelVirtualCluster.h"
-#include "EUTelFFClusterImpl.h"
-#include "EUTelDFFClusterImpl.h"
-#include "EUTelBrickedClusterImpl.h"
-#include "EUTelSparseClusterImpl.h"
 #include "EUTelExceptions.h"
 #include "EUTelPStream.h" // process streams redi::ipstream
-#include "EUTelAlignmentConstant.h"
+#include "EUTelGeometryTelescopeGeoDescription.h"
 
 // GBL:
 #include "include/GblTrajectory.h"
@@ -44,10 +39,6 @@
 
 // marlin util includes
 #include "Mille.h"
-
-// gear includes <.h>
-#include <gear/GearMgr.h>
-#include <gear/SiPlanesParameters.h>
 
 // aida includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -321,12 +312,6 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelAlignGBL") {
       "\nXYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis",
       _alignModeString, std::string("XYShiftsRotZ"));
 
-  registerOptionalParameter("AlignmentConstantLCIOFile","This is the name of the LCIO file name with the output alignment"
-      "constants (add .slcio)",_alignmentConstantLCIOFile, static_cast< string > ( "alignment.slcio" ) );
-
-  registerOptionalParameter("AlignmentConstantCollectionName", "This is the name of the alignment collection to be saved into the slcio file",
-      _alignmentConstantCollectionName, static_cast< string > ( "alignment" ));
-
   registerOptionalParameter( "triCut", "Upstream triplet residual cut [um]", _triCut, 0.30 );
   registerOptionalParameter( "driCut", "Downstream triplet residual cut [um]", _driCut, 0.40 );
   registerOptionalParameter( "sixCut", "Upstream-Downstream Track matching cut [um]", _sixCut, 0.60 );
@@ -348,133 +333,41 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelAlignGBL") {
 
 //------------------------------------------------------------------------------
 void EUTelAlignGBL::init() {
-  // check if Marlin was built with GEAR support or not
-#ifndef USE_GEAR
 
-  streamlog_out( ERROR2 ) << "Marlin was not built with GEAR support." << endl;
-  streamlog_out( ERROR2 ) << "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue." << endl;
 
-  exit(-1);
 
-#else
+  geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME,
+                                             EUTELESCOPE::DUMPGEOROOT);
 
-  // check if the GEAR manager pointer is not null!
-  if( Global::GEAR == 0x0 ) {
-    streamlog_out( ERROR2) << "The GearMgr is not available, for an unknown reason." << endl;
-    exit(-1);
-  }
-
-  _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
-  _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
-
+  //This is the vector of sensorIDs ordered alogn the gloabl z-axis, 
+  //this is guranteed by the framework 
+  _sensorIDVec = geo::gGeometry().sensorIDsVec();
   _histogramSwitch = true;
+  _nPlanes = _sensorIDVec.size();
+  _planePosition.reserve(_nPlanes);
 
-  // Take all layers defined in GEAR geometry
-  _nTelPlanes = _siPlanesLayerLayout->getNLayers();
-
-  _planePosition = new double[_nTelPlanes]; // z pos
-
-  for(int i = 0; i < _nTelPlanes; i++) {
-
-    //_planeID[i]=_siPlanesLayerLayout->getID(i);
-    _planePosition[i]=_siPlanesLayerLayout->getLayerPositionZ(i);
-    //_planeThickness[i]=_siPlanesLayerLayout->getLayerThickness(i);
-    //_planeX0[i]=_siPlanesLayerLayout->getLayerRadLength(i);
-    //_planeResolution[i] = _siPlanesLayerLayout->getSensitiveResolution(i);
+  for(auto& sensorID: _sensorIDVec) {
+    _planePosition.emplace_back( geo::gGeometry().siPlaneZPosition(sensorID) );
   }
 
   streamlog_out(MESSAGE4) << "assumed beam energy " << _eBeam << " GeV" <<  endl;
-  //lets guess the number of planes
 
-    // the number of planes is got from the GEAR description and is
-    // the sum of the telescope reference planes and the DUT (if
-    // any)
-    _nPlanes = _siPlanesParameters->getSiPlanesNumber();
-    if( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) {
-      ++_nPlanes;
-    }
-
-  // an associative map for getting also the sensorID ordered
-  map< double, int > sensorIDMap;
-
-  //lets create an array with the z positions of each layer
-  for(  int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) {
-    _siPlaneZPosition.push_back(_siPlanesLayerLayout->getLayerPositionZ(iPlane));
-    sensorIDMap.insert( make_pair( _siPlanesLayerLayout->getLayerPositionZ(iPlane), _siPlanesLayerLayout->getID(iPlane) ) );
-  }
-
-  if  ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) {
-    _siPlaneZPosition.push_back(_siPlanesLayerLayout->getDUTPositionZ());
-    sensorIDMap.insert( make_pair( _siPlanesLayerLayout->getDUTPositionZ(),  _siPlanesLayerLayout->getDUTID() ) ) ;
-  }
-
-  //lets sort the array with increasing z
-  sort(_siPlaneZPosition.begin(), _siPlaneZPosition.end());
-
-  cout << "planes sorted along z:" << endl;
-  for( size_t i = 0; i < _siPlaneZPosition.size(); i++ ) {
-    cout << i << "  z " << _siPlaneZPosition[i] << endl;
-  }
-  // the user is giving sensor ids for the planes to be excluded.
+  // the user is giving sensor ids for the planes to be fixed.
   // These sensor ids have to be converted to a local index
-  // according to the planes positions along the z axis.
-
+  // according to the planes positions along the z axis, i.e. we
+  // need to fill _FixedPlanes with the z-position which corresponds
+  // to the postion in _sensorIDVec
   cout << "FixedPlanes " << _FixedPlanes_sensorIDs.size() << endl;
-
-  for( size_t i = 0; i < _FixedPlanes_sensorIDs.size(); i++ ) {
-    cout << "plane " << _FixedPlanes_sensorIDs[i] << " fixed\n";
-    map< double, int >::iterator iter = sensorIDMap.begin();
-    int counter = 0;
-    while ( iter != sensorIDMap.end() ) {
-      if( iter->second == _FixedPlanes_sensorIDs[i] ) {
-	_FixedPlanes.push_back(counter);
-	break;
-      }
-      ++iter;
-      ++counter;
-    }
+  for(auto& fixedPlaneID: _FixedPlanes_sensorIDs) {
+	auto planeIt = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), fixedPlaneID); 
+	_FixedPlanes.emplace_back( planeIt - _sensorIDVec.begin() );
   }
 
+  // same for excluded planes
   cout << "ExcludedPlanes " << _excludePlanes_sensorIDs.size() << endl;
-  for( size_t i = 0; i < _excludePlanes_sensorIDs.size(); i++ ) {
-    cout << "plane " << _excludePlanes_sensorIDs[i] << " excluded\n";
-    map< double, int >::iterator iter = sensorIDMap.begin();
-    int counter = 0;
-    while ( iter != sensorIDMap.end() ) {
-      if( iter->second == _excludePlanes_sensorIDs[i]) {
-	_excludePlanes.push_back(counter);
-	break;
-      }
-      ++iter;
-      ++counter;
-    }
-  }
-
-  // strip from the map the sensor id already sorted.
-  map< double, int >::iterator iter = sensorIDMap.begin();
-  int counter = 0;
-  while ( iter != sensorIDMap.end() ) {
-    bool excluded = false;
-    for( size_t i = 0; i < _excludePlanes.size(); i++) {
-      if(_excludePlanes[i] == counter) {
-	// printf("excludePlanes %2d of %2d (%2d) \n", i, _excludePlanes_sensorIDs.size(), counter );
-	excluded = true;
-	break;
-      }
-    }
-    if(!excluded)
-      _orderedSensorID_wo_excluded.push_back( iter->second );
-
-    _orderedSensorID.push_back( iter->second );
-
-    ++iter;
-    ++counter;
-  }
-
-  //consistency
-  if( (int)_siPlaneZPosition.size() != _nPlanes ) {
-    streamlog_out( ERROR2 ) << "the number of detected planes is " << _nPlanes << " but only " << _siPlaneZPosition.size() << " layer z positions were found!"  << endl;
-    exit(-1);
+  for(auto& excludedPlaneID: _excludePlanes_sensorIDs) {
+	auto planeIt = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), excludedPlaneID);
+	_excludePlanes.emplace_back( planeIt - _sensorIDVec.begin() );
   }
 
 #endif
@@ -2201,28 +2094,8 @@ void EUTelAlignGBL::bookHistos() {
   }//try
   catch( lcio::Exception& e ) {
 
-#ifdef EUTEL_INTERACTIVE
-    streamlog_out( ERROR2 ) << "No AIDAProcessor initialized. Type q to exit or c to continue without histogramming" << endl;
-    string answer;
-    while ( true ) {
-      streamlog_out( ERROR2 ) << "[q]/[c]" << endl;
-      cin >> answer;
-      transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
-      if( answer == "q" ) {
-	exit(-1);
-      }
-      else if( answer == "c" )
-	_histogramSwitch = false;
-      break;
-    }
-#else
-    streamlog_out( WARNING2 ) << "No AIDAProcessor initialized. Continue without histogramming" << endl;
-
-#endif
-
   }
 #endif
 
 }
 
-#endif // USE_GEAR
