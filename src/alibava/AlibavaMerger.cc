@@ -76,76 +76,79 @@ using namespace IMPL;
 using namespace eutelescope;
 
 
-AlibavaMerger::AlibavaMerger () :
-AlibavaBaseProcessor("AlibavaMerger")
+AlibavaMerger::AlibavaMerger ( ) : AlibavaBaseProcessor ( "AlibavaMerger" )
 {
 
-	_description = "AlibavaMerger merges the Alibava cluster data stream with the telescope data stream.";
+    _description = "AlibavaMerger merges the Alibava cluster data stream with the telescope data stream.";
 
-	registerProcessorParameter ("AlibavaFile", "The filename where the alibava data is stored", _alibavaFile , string("alibava.slcio"));
+    registerProcessorParameter ( "AlibavaCollectionName", "The name of the alibava collection we want to merge", _alibavaCollectionName, string ( "original_zsdata" ) );
 
-	registerProcessorParameter ("TelescopeFile", "The filename where the telescope data is stored", _telescopeFile , string("telescope.slcio"));
-	
-	registerProcessorParameter ("AlibavaCollectionName", "The name of the alibava collection we want to merge", _alibavaCollectionName , string("original_zsdata"));
-	
-	registerProcessorParameter ("TelescopeCollectionName", "The name of the telescope collection we want to merge", _telescopeCollectionName , string("original_zsdata"));
-	
-	registerProcessorParameter ("AlibavaCollectionName2", "The name of the secondary alibava collection we want to merge", _alibavaCollectionName2 , string("clusters"));
-	
-	registerProcessorParameter ("TelescopeCollectionName2", "The name of the secondary telescope collection we want to merge", _telescopeCollectionName2 , string("cluster_m26"));
-	
-	registerProcessorParameter ("OutputCollectionName", "The name of the output collection we want to create", _outputCollectionName , string("original_zsdata"));
+    registerProcessorParameter ( "AlibavaCollectionName2", "The name of the secondary alibava collection we want to merge", _alibavaCollectionName2, string ( "clusters" ) );
 
-	registerProcessorParameter ("OutputCollectionName2", "The name of the secondary output collection we want to create", _outputCollectionName2 , string("combinedcluster"));
-	
-	registerProcessorParameter ("OutputCollectionName3", "The name of the tertiary output collection we want to create", _outputCollectionName3 , string("zsdata_m26"));
-	
-	registerProcessorParameter ("OutputMode", "The verbosity of the merged hits: 0 to only write events where we have a hit in both systems, 1 for events where we at least have one alibava hit, 2 for events where we at least have one telescope hit and 3 for writing out all events, even if there are no hits in them", _outputmode, int(0));
+    registerProcessorParameter ( "AlibavaFile", "The filename where the alibava data is stored", _alibavaFile, string ( "alibava.slcio" ) );
 
-	registerProcessorParameter ("UnsensitiveAxis", "The unsensitive axis of our strip sensor", _nonsensitiveaxis, string ("x"));
+    registerProcessorParameter ( "EventdifferenceAlibava", "The event count the Alibava is behind (read: earlier than) the Telescope. 1 means alibava event 1 == telescope event 0, etc.", _eventdifferenceAlibava, int ( 0 ) );
 
-	registerProcessorParameter ("EventdifferenceTelescope", "The event count the telescope is behind (read: earlier than) the Alibava. 1 means alibava event 0 == telescope event 1, etc.", _eventdifferenceTelescope, int(0));
+    registerProcessorParameter ( "EventdifferenceTelescope", "The event count the telescope is behind (read: earlier than) the Alibava. 1 means alibava event 0 == telescope event 1, etc.", _eventdifferenceTelescope, int ( 0 ) );
 
-	registerProcessorParameter ("EventdifferenceAlibava", "The event count the Alibava is behind (read: earlier than) the Telescope. 1 means alibava event 1 == telescope event 0, etc.", _eventdifferenceAlibava, int(0));
+    registerProcessorParameter ( "OutputCollectionName", "The name of the output collection we want to create", _outputCollectionName, string ( "original_zsdata" ) );
 
-	registerProcessorParameter ("PlaneShiftTelescope", "Option to decrement/increment the telescope plane sensor id", _teleplaneshift, int(0));
+    registerProcessorParameter ( "OutputCollectionName2", "The name of the secondary output collection we want to create", _outputCollectionName2, string ( "combinedcluster" ) );
+
+    registerProcessorParameter ( "OutputCollectionName3", "The name of the tertiary output collection we want to create", _outputCollectionName3, string ( "zsdata_m26" ) );
+
+    registerProcessorParameter ( "OutputMode", "The verbosity of the merged hits: 0 to only write events where we have a hit in both systems, 1 for events where we at least have one alibava hit, 2 for events where we at least have one telescope hit and 3 for writing out all events, even if there are no hits in them", _outputmode, int ( 0 ) );
+
+    registerProcessorParameter ( "PlaneShiftTelescope", "Option to decrement/increment the telescope plane sensor id", _teleplaneshift, int ( 0 ) );
+
+    registerProcessorParameter ( "TelescopeCollectionName", "The name of the telescope collection we want to merge", _telescopeCollectionName, string ( "original_zsdata" ) );
+
+    registerProcessorParameter ( "TelescopeCollectionName2", "The name of the secondary telescope collection we want to merge", _telescopeCollectionName2, string ( "cluster_m26" ) );
+
+    registerProcessorParameter ( "TelescopeFile", "The filename where the telescope data is stored", _telescopeFile , string ( "telescope.slcio" ) );
+
+    registerProcessorParameter ( "UnsensitiveAxis", "The unsensitive axis of our strip sensor", _nonsensitiveaxis, string ( "x" ) );
 
 }
 
 
-void AlibavaMerger::init () {
-	streamlog_out ( MESSAGE4 ) << "Running init" << endl;
+void AlibavaMerger::init ( )
+{
+    streamlog_out ( MESSAGE4 ) << "Running init" << endl;
 
-	// this method is called only once even when the rewind is active
-	// usually a good idea to
-	printParameters ();
+    // this method is called only once even when the rewind is active
+    // usually a good idea to
+    printParameters ( );
 }
 
-void AlibavaMerger::processRunHeader (LCRunHeader * rdr) {
-	streamlog_out ( MESSAGE4 ) << "Running processRunHeader" << endl;
 
-	auto arunHeader = std::make_unique<AlibavaRunHeaderImpl>(rdr);
-	arunHeader->addProcessor(type());
+void AlibavaMerger::processRunHeader ( LCRunHeader * rdr )
+{
+    streamlog_out ( MESSAGE4 ) << "Running processRunHeader" << endl;
 
-	// so we only open the telescope file once...
-	_telescopeopen = false;
+    auto arunHeader = std::make_unique < AlibavaRunHeaderImpl > ( rdr );
+    arunHeader -> addProcessor ( type ( ) );
 
-	bookHistos();
+    // so we only open the telescope file once...
+    _telescopeopen = false;
 
-	for (int i=0;i<_eventdifferenceTelescope;i++)
-	{
-		LCEvent *evt = readTelescope();
-		streamlog_out ( MESSAGE4 ) << "Skipped " << i+1 << " telescope events!" << endl;
-		streamlog_out ( DEBUG0 ) << "Event skipped was " << evt->getEventNumber() << endl;
-	}
+    bookHistos ( );
+
+    for ( int i = 0; i < _eventdifferenceTelescope; i++ )
+    {
+	LCEvent *evt = readTelescope ( );
+	streamlog_out ( MESSAGE4 ) << "Skipped " << i + 1 << " telescope events!" << endl;
+	streamlog_out ( MESSAGE4 ) << "Event skipped was " << evt -> getEventNumber ( ) << endl;
+    }
 }
+
 
 // the telescope file is read here:
-LCEvent *AlibavaMerger::readTelescope ()
+LCEvent *AlibavaMerger::readTelescope ( )
 {
 	if (_telescopeopen == false)
 	{
-		lcReader = LCFactory::getInstance()->createLCReader( IO::LCReader::directAccess ) ;
+		lcReader = LCFactory::getInstance ( )->createLCReader( IO::LCReader::directAccess ) ;
 		try
 		{
 			lcReader->open( _telescopeFile ) ;
@@ -153,24 +156,24 @@ LCEvent *AlibavaMerger::readTelescope ()
 		}
 		catch( IOException& e )
 		{
-			streamlog_out ( ERROR1 ) << "Can't open the telescope file: " << e.what() << endl ;
+			streamlog_out ( ERROR1 ) << "Can't open the telescope file: " << e.what ( ) << endl ;
 		}
 	}
 
 	try
 	{
-		LCEvent *evt = lcReader->readNextEvent();
+		LCEvent *evt = lcReader->readNextEvent ( );
 		if (evt == NULL)
 		{
-		  return(0);
+		  return( 0 );
 		  streamlog_out ( ERROR1 ) << "FAIL: " << endl ;
 		}
 		return(evt);
 	}
 	catch ( IOException& e )
 	{
-		streamlog_out ( ERROR1 ) << "FAIL: " << e.what() << endl ;
-		return(0);
+		streamlog_out ( ERROR1 ) << "FAIL: " << e.what ( ) << endl ;
+		return( 0 );
 	}
 }
 
@@ -190,20 +193,20 @@ void AlibavaMerger::addCorrelation(float ali_x, float ali_y, float ali_z, float 
 	}
 	if ( TH2D * signalHisto4 = dynamic_cast<TH2D*> (_rootObjectMap["Correlation_Event"]) )
 	{
-		if (_nonsensitiveaxis == "x")
+		if (_nonsensitiveaxis == "x" )
 		{
-			signalHisto4->Fill(event,(tele_y/1152.0 - ali_y/256.0));
-			streamlog_out(DEBUG4) << "Correlation distance in x, event : " << event << " " << tele_y/1152.0 - ali_y/256.0 << endl;
+			signalHisto4->Fill(event,(tele_y/1152.0 - ali_y/256.0 ) );
+			streamlog_out (DEBUG4) << "Correlation distance in x, event : " << event << " " << tele_y/1152.0 - ali_y/256.0 << endl;
 		}
-		if (_nonsensitiveaxis == "y")
+		if (_nonsensitiveaxis == "y" )
 		{
-			signalHisto4->Fill(event,(tele_x/1152.0 - ali_x/256.0));
-			streamlog_out(DEBUG4) << "Correlation distance in y, event : " << event << " " << tele_x/1152.0 - ali_x/256.0 << endl;
+			signalHisto4->Fill(event,(tele_x/1152.0 - ali_x/256.0 ) );
+			streamlog_out (DEBUG4) << "Correlation distance in y, event : " << event << " " << tele_x/1152.0 - ali_x/256.0 << endl;
 		}
 	}
 	if ( TH3D * multihisto = dynamic_cast<TH3D*> (_rootObjectMap["Correlation_All"]) )
 	{
-		multihisto->Fill((tele_x/1152.0 - ali_x/1152.0),(tele_y/1152.0 - ali_y/256.0),event);
+		multihisto->Fill((tele_x/1152.0 - ali_x/1152.0 ),(tele_y/1152.0 - ali_y/256.0 ),event);
 	}
 }
 
@@ -255,7 +258,7 @@ void AlibavaMerger::processEvent (LCEvent * anEvent)
 	{
 		// the alibava data is passed from the event
 		alibavaCollectionVec = dynamic_cast< LCCollectionVec * > ( alibavaEvent->getCollection( _alibavaCollectionName ) ) ;
-		alibavasize = alibavaCollectionVec->getNumberOfElements();
+		alibavasize = alibavaCollectionVec->getNumberOfElements( );
 		streamlog_out ( DEBUG1 ) << alibavasize << " Elements in Alibava event!" << endl;
 
 		// so is the secondary collection of the same size (we hope)
@@ -268,23 +271,23 @@ void AlibavaMerger::processEvent (LCEvent * anEvent)
 		for (int i = 0; i<alibavasize; i++)
 		{
 			streamlog_out ( DEBUG1 ) << "Reading alibava..." << endl;
-			lcio::TrackerDataImpl * input  = dynamic_cast< lcio::TrackerDataImpl * > ( alibavaCollectionVec->getElementAt( i ) ) ;
+			lcio::TrackerDataImpl * input  = dynamic_cast< lcio::TrackerDataImpl * > ( alibavaCollectionVec->getElementAt ( i ) ) ;
 			lcio::TrackerDataImpl * output = new lcio::TrackerDataImpl;
-			output->setChargeValues ( input->getChargeValues() ) ;
-			output->setCellID0 ( input->getCellID0() ) ;
-			output->setCellID1 ( input->getCellID1() ) ;
-			output->setTime ( input->getTime() ) ;
-			outputTrackerDataVec->addElement(output);
+			output->setChargeValues ( input->getChargeValues( ) ) ;
+			output->setCellID0 ( input->getCellID0( ) ) ;
+			output->setCellID1 ( input->getCellID1( ) ) ;
+			output->setTime ( input->getTime ( ) ) ;
+			outputTrackerDataVec->addElement (output);
 
-			lcio::TrackerPulseImpl * inputPulseFrame  = dynamic_cast< lcio::TrackerPulseImpl * > ( alibavaCollectionVec2->getElementAt( i ) ) ;
+			lcio::TrackerPulseImpl * inputPulseFrame  = dynamic_cast< lcio::TrackerPulseImpl * > ( alibavaCollectionVec2->getElementAt ( i ) ) ;
 			lcio::TrackerPulseImpl * outputPulseFrame = new lcio::TrackerPulseImpl;
-			outputPulseFrame->setCellID0 ( inputPulseFrame->getCellID0() ) ;
-			outputPulseFrame->setCellID1 ( inputPulseFrame->getCellID1() ) ;
-			outputPulseFrame->setTime ( inputPulseFrame->getTime() ) ;
-			outputPulseFrame->setCharge ( inputPulseFrame->getCharge() ) ;
-			outputPulseFrame->setQuality ( inputPulseFrame->getQuality() ) ;
-			outputPulseFrame->setTrackerData ( inputPulseFrame->getTrackerData() ) ;
-			outputTrackerPulseVec->addElement(outputPulseFrame);
+			outputPulseFrame->setCellID0 ( inputPulseFrame->getCellID0( ) ) ;
+			outputPulseFrame->setCellID1 ( inputPulseFrame->getCellID1( ) ) ;
+			outputPulseFrame->setTime ( inputPulseFrame->getTime ( ) ) ;
+			outputPulseFrame->setCharge ( inputPulseFrame->getCharge ( ) ) ;
+			outputPulseFrame->setQuality ( inputPulseFrame->getQuality( ) ) ;
+			outputPulseFrame->setTrackerData ( inputPulseFrame->getTrackerData( ) ) ;
+			outputTrackerPulseVec->addElement (outputPulseFrame);
 
 			streamlog_out ( DEBUG1 ) << "Wrote alibava..." << endl;
 
@@ -306,26 +309,29 @@ void AlibavaMerger::processEvent (LCEvent * anEvent)
 		}
 	} catch ( lcio::DataNotAvailableException )
 	{
-		streamlog_out( DEBUG5 ) << "Collection "<<_alibavaCollectionName<<" not found in event " << anEvent->getEventNumber() << endl;
+		streamlog_out ( DEBUG5 ) << "Collection "<<_alibavaCollectionName<<" not found in event " << anEvent->getEventNumber( ) << endl;
 	}
 
 	try
 	{
+	    
+	    if ( _eventdifferenceAlibava == 0 )
+	    {
 
 		// the telescope is read by the function
-		LCEvent* evt = readTelescope();
+		LCEvent* evt = readTelescope ( );
 		telescopeCollectionVec = dynamic_cast< LCCollectionVec * > ( evt->getCollection( _telescopeCollectionName ) ) ;
-		telescopesize = telescopeCollectionVec->getNumberOfElements();
+		telescopesize = telescopeCollectionVec->getNumberOfElements( );
 		streamlog_out ( DEBUG1 ) << telescopesize << " Elements in Telescope event!" << endl;
 
 		// and the secondary collections
 		telescopeCollectionVec2 = dynamic_cast< LCCollectionVec * > ( evt->getCollection( _telescopeCollectionName2 ) ) ;
-		telescopesize2 = telescopeCollectionVec2->getNumberOfElements();
+		telescopesize2 = telescopeCollectionVec2->getNumberOfElements( );
 		streamlog_out ( DEBUG1 ) << telescopesize2 << " Elements in Telescope event - Collection 2!" << endl;
 
 		// this guy can have less events and is not merged, but copied
 		telescopeCollectionVec3 = dynamic_cast< LCCollectionVec * > ( evt->getCollection( _outputCollectionName3 ) ) ;
-		telescopesize3 = telescopeCollectionVec3->getNumberOfElements();
+		telescopesize3 = telescopeCollectionVec3->getNumberOfElements( );
 		streamlog_out ( DEBUG1 ) << telescopesize3 << " Elements in Telescope event - Collection 3!" << endl;
 
 		CellIDDecoder<TrackerPulseImpl> inputPulseColDecoder(telescopeCollectionVec2);
@@ -340,14 +346,14 @@ void AlibavaMerger::processEvent (LCEvent * anEvent)
 		unsigned int noOfClusters;
 		// go through input clusters and copy them to output cluster collection
 
-		noOfClusters = telescopeCollectionVec2->getNumberOfElements();
+		noOfClusters = telescopeCollectionVec2->getNumberOfElements( );
 		for ( size_t i = 0; i < noOfClusters; ++i )
 		{
-			TrackerPulseImpl * outputPulseFrame = new TrackerPulseImpl();
-			TrackerDataImpl * outputSparseFrame = new TrackerDataImpl();
+			TrackerPulseImpl * outputPulseFrame = new TrackerPulseImpl( );
+			TrackerDataImpl * outputSparseFrame = new TrackerDataImpl( );
 
-			TrackerPulseImpl* inputPulseFrame = dynamic_cast<TrackerPulseImpl*>(telescopeCollectionVec2->getElementAt(i));
-			TrackerDataImpl* inputSparseFrame = dynamic_cast<TrackerDataImpl*>(inputPulseFrame->getTrackerData());
+			TrackerPulseImpl* inputPulseFrame = dynamic_cast<TrackerPulseImpl*>(telescopeCollectionVec2->getElementAt (i) );
+			TrackerDataImpl* inputSparseFrame = dynamic_cast<TrackerDataImpl*>(inputPulseFrame->getTrackerData( ) );
 		
 			// set Cell ID for sparse collection
 			outputSparseColEncoder["sensorID"] = static_cast<int>(inputSparseColDecoder(inputSparseFrame) ["sensorID"] - _teleplaneshift);
@@ -356,7 +362,7 @@ void AlibavaMerger::processEvent (LCEvent * anEvent)
 			outputSparseColEncoder.setCellID( outputSparseFrame );
 
 			// copy tracker data
-			outputSparseFrame->setChargeValues(inputSparseFrame->getChargeValues());
+			outputSparseFrame->setChargeValues(inputSparseFrame->getChargeValues( ) );
 			// add it to the cluster collection
 			outputTrackerDataVec->push_back( outputSparseFrame );
 
@@ -365,13 +371,13 @@ void AlibavaMerger::processEvent (LCEvent * anEvent)
 			outputPulseColEncoder["type"] = static_cast<int>(inputPulseColDecoder(inputPulseFrame) ["type"]);
 			outputPulseColEncoder.setCellID( outputPulseFrame );
 
-			outputPulseFrame->setCharge( inputPulseFrame->getCharge() );
+			outputPulseFrame->setCharge ( inputPulseFrame->getCharge ( ) );
 			outputPulseFrame->setTrackerData( outputSparseFrame);
 			outputTrackerPulseVec->push_back( outputPulseFrame );
 
 			// get these for the correlation plots
 			EUTelVirtualCluster * tempCluster;
-			tempCluster = new EUTelSparseClusterImpl < EUTelGenericSparsePixel > ( static_cast<TrackerDataImpl *> ( inputPulseFrame->getTrackerData() ) );
+			tempCluster = new EUTelSparseClusterImpl < EUTelGenericSparsePixel > ( static_cast<TrackerDataImpl *> ( inputPulseFrame->getTrackerData( ) ) );
 			float tempx =0.0;
 			float tempy =0.0;
 			tempCluster->getCenterOfGravity( tempx, tempy ) ;
@@ -399,27 +405,28 @@ void AlibavaMerger::processEvent (LCEvent * anEvent)
 		for (int k = 0; k<telescopesize3; k++)
 		{
 			streamlog_out ( DEBUG1 ) << "Reading telescope again..." << endl;
-			lcio::TrackerDataImpl * input  = dynamic_cast< lcio::TrackerDataImpl * > ( telescopeCollectionVec3->getElementAt( k ) ) ;
+			lcio::TrackerDataImpl * input  = dynamic_cast< lcio::TrackerDataImpl * > ( telescopeCollectionVec3->getElementAt ( k ) ) ;
 			lcio::TrackerDataImpl * output = new lcio::TrackerDataImpl;
-			output->setChargeValues ( input->getChargeValues() ) ;
-			output->setCellID0 ( input->getCellID0() ) ;
-			output->setCellID1 ( input->getCellID1() ) ;
-			output->setTime ( input->getTime() ) ;
-			outputTrackerDataVec2->addElement(output);
+			output->setChargeValues ( input->getChargeValues( ) ) ;
+			output->setCellID0 ( input->getCellID0( ) ) ;
+			output->setCellID1 ( input->getCellID1( ) ) ;
+			output->setTime ( input->getTime ( ) ) ;
+			outputTrackerDataVec2->addElement (output);
 			streamlog_out ( DEBUG1 ) << "Wrote telescope again..." << endl;
 		}
+	    }
 
 	}
 	catch ( lcio::DataNotAvailableException )
 	{
-		streamlog_out( DEBUG5 ) << "Collection "<<_telescopeCollectionName<<" not found in event " << anEvent->getEventNumber() << endl;
+		streamlog_out ( DEBUG5 ) << "Collection "<<_telescopeCollectionName<<" not found in event " << anEvent->getEventNumber( ) << endl;
 	}
 
 		// correlation plot. Only makes sense if we have an event in both systems
-		if (alibavasize > 0 && telescopesize > 0)
+		if (alibavasize > 0 && telescopesize > 0 )
 		{
-			addCorrelation((alibava_x/alibavasize),(alibava_y/alibavasize),(alibava_z/alibavasize),(telescope_x/telescopesize),(telescope_y/telescopesize),(telescope_z/telescopesize),anEvent->getEventNumber());
-			streamlog_out( DEBUG0 ) << "Filling histogram with: Ali_X: " << (alibava_x/alibavasize) << " Ali_Y: " << (alibava_y/alibavasize) << " Ali_Z: " << (alibava_z/alibavasize) << " Tele_X: " << (telescope_x/telescopesize) << " Tele_Y: " << (telescope_y/telescopesize) << " Tele_Z: " << (telescope_z/telescopesize) << endl;
+			addCorrelation((alibava_x/alibavasize),(alibava_y/alibavasize),(alibava_z/alibavasize),(telescope_x/telescopesize),(telescope_y/telescopesize),(telescope_z/telescopesize),anEvent->getEventNumber( ) );
+			streamlog_out ( DEBUG0 ) << "Filling histogram with: Ali_X: " << (alibava_x/alibavasize) << " Ali_Y: " << (alibava_y/alibavasize) << " Ali_Z: " << (alibava_z/alibavasize) << " Tele_X: " << (telescope_x/telescopesize) << " Tele_Y: " << (telescope_y/telescopesize) << " Tele_Z: " << (telescope_z/telescopesize) << endl;
 
 			for ( size_t i = 0; i < ali_corr.size ( ); i ++ )
 			{
@@ -435,11 +442,11 @@ void AlibavaMerger::processEvent (LCEvent * anEvent)
 		}
 
 		// Now the output. Usually the telescope will have more events...
-		if (_outputmode == 0)
+		if (_outputmode == 0 )
 		{
-			if (alibavasize > 0 && telescopesize > 0)
+			if (alibavasize > 0 && telescopesize > 0 )
 			{
-				streamlog_out ( DEBUG1 ) << "Mode 0. Writing out event " << anEvent->getEventNumber() << endl;
+				streamlog_out ( DEBUG1 ) << "Mode 0. Writing out event " << anEvent->getEventNumber( ) << endl;
 				alibavaEvent->addCollection(outputTrackerDataVec,_outputCollectionName);
 				alibavaEvent->addCollection(outputTrackerPulseVec,_outputCollectionName2);
 				alibavaEvent->addCollection(outputTrackerDataVec2,_outputCollectionName3);
@@ -447,7 +454,7 @@ void AlibavaMerger::processEvent (LCEvent * anEvent)
 		} if (_outputmode == 1) {
 			if (alibavasize > 0 )
 			{
-				streamlog_out ( DEBUG1 ) << "Mode 1. Writing out event " << anEvent->getEventNumber() << endl;
+				streamlog_out ( DEBUG1 ) << "Mode 1. Writing out event " << anEvent->getEventNumber( ) << endl;
 				alibavaEvent->addCollection(outputTrackerDataVec,_outputCollectionName);
 				alibavaEvent->addCollection(outputTrackerPulseVec,_outputCollectionName2);
 				alibavaEvent->addCollection(outputTrackerDataVec2,_outputCollectionName3);
@@ -455,18 +462,22 @@ void AlibavaMerger::processEvent (LCEvent * anEvent)
 		} if (_outputmode == 2) {
 			if (telescopesize > 0 )
 			{
-				streamlog_out ( DEBUG1 ) << "Mode 2. Writing out event " << anEvent->getEventNumber() << endl;
+				streamlog_out ( DEBUG1 ) << "Mode 2. Writing out event " << anEvent->getEventNumber( ) << endl;
 				alibavaEvent->addCollection(outputTrackerDataVec,_outputCollectionName);
 				alibavaEvent->addCollection(outputTrackerPulseVec,_outputCollectionName2);
 				alibavaEvent->addCollection(outputTrackerDataVec2,_outputCollectionName3);
 			}
 		} if (_outputmode == 3) {
-			streamlog_out ( DEBUG1 ) << "Mode 3. Writing out event " << anEvent->getEventNumber() << endl;
+			streamlog_out ( DEBUG1 ) << "Mode 3. Writing out event " << anEvent->getEventNumber( ) << endl;
 			alibavaEvent->addCollection(outputTrackerDataVec,_outputCollectionName);
 			alibavaEvent->addCollection(outputTrackerPulseVec,_outputCollectionName2);
 			alibavaEvent->addCollection(outputTrackerDataVec2,_outputCollectionName3);
 		}
 
+		if (_eventdifferenceAlibava > 0 )
+		{
+		    _eventdifferenceAlibava--;
+		}
 
 
 }
@@ -478,64 +489,64 @@ void AlibavaMerger::check (LCEvent * /* evt */ )
 }
 
 
-void AlibavaMerger::end()
+void AlibavaMerger::end( )
 {
 	// the telescope file is still open, we can now close it
-	lcReader->close() ;
+	lcReader->close ( ) ;
 	delete lcReader ;
 	streamlog_out ( MESSAGE4 ) << "Successfully finished" << endl;
 }
 
 
-void AlibavaMerger::fillHistos()
+void AlibavaMerger::fillHistos( )
 {
 
 }
 
 
-void AlibavaMerger::bookHistos()
+void AlibavaMerger::bookHistos( )
 {
-	if (_nonsensitiveaxis == "x")
+	if (_nonsensitiveaxis == "x" )
 	{
-		TH2D * signalHisto = new TH2D ("Correlation_X","",1152,0,1151,1152,0,1151);
-		_rootObjectMap.insert(make_pair("Correlation_X", signalHisto));
-		signalHisto->SetTitle("Correlation in X;Alibava Average Channel;Telescope Average Pixel");
+		TH2D * signalHisto = new TH2D ( "Correlation_X","",1152,0,1151,1152,0,1151);
+		_rootObjectMap.insert (make_pair( "Correlation_X", signalHisto) );
+		signalHisto->SetTitle ( "Correlation in X;Alibava Average Channel;Telescope Average Pixel" );
 
-		TH2D * correlation = new TH2D ("Correlation","",256,0,255,576,0,575);
-		_rootObjectMap.insert(make_pair("Correlation", correlation));
-		correlation->SetTitle("Correlation in Y;Alibava Channel;Telescope Pixel");
+		TH2D * correlation = new TH2D ( "Correlation","",256,0,255,576,0,575);
+		_rootObjectMap.insert (make_pair( "Correlation", correlation) );
+		correlation->SetTitle ( "Correlation in Y;Alibava Channel;Telescope Pixel" );
 	} else {
-		TH2D * signalHisto = new TH2D ("Correlation_X","",256,0,255,1152,0,1151);
-		_rootObjectMap.insert(make_pair("Correlation_X", signalHisto));
-		signalHisto->SetTitle("Correlation in X;Alibava Average Channel;Telescope Average Pixel");
+		TH2D * signalHisto = new TH2D ( "Correlation_X","",256,0,255,1152,0,1151);
+		_rootObjectMap.insert (make_pair( "Correlation_X", signalHisto) );
+		signalHisto->SetTitle ( "Correlation in X;Alibava Average Channel;Telescope Average Pixel" );
 	}
 
-	if (_nonsensitiveaxis == "y")
+	if (_nonsensitiveaxis == "y" )
 	{
-		TH2D * signalHisto2 = new TH2D ("Correlation_Y","",576,0,575,576,0,575);
-		_rootObjectMap.insert(make_pair("Correlation_Y", signalHisto2));
-		signalHisto2->SetTitle("Correlation in Y;Alibava Average Channel;Telescope Average Pixel");
+		TH2D * signalHisto2 = new TH2D ( "Correlation_Y","",576,0,575,576,0,575);
+		_rootObjectMap.insert (make_pair( "Correlation_Y", signalHisto2) );
+		signalHisto2->SetTitle ( "Correlation in Y;Alibava Average Channel;Telescope Average Pixel" );
 
-		TH2D * correlation = new TH2D ("Correlation","",256,0,255,1152,0,1151);
-		_rootObjectMap.insert(make_pair("Correlation", correlation));
-		correlation->SetTitle("Correlation in X;Alibava Channel;Telescope Pixel");
+		TH2D * correlation = new TH2D ( "Correlation","",256,0,255,1152,0,1151);
+		_rootObjectMap.insert (make_pair( "Correlation", correlation) );
+		correlation->SetTitle ( "Correlation in X;Alibava Channel;Telescope Pixel" );
 	} else {
-		TH2D * signalHisto2 = new TH2D ("Correlation_Y","",256,0,255,576,0,575);
-		_rootObjectMap.insert(make_pair("Correlation_Y", signalHisto2));
-		signalHisto2->SetTitle("Correlation in Y;Alibava Average Channel;Telescope Average Pixel");
+		TH2D * signalHisto2 = new TH2D ( "Correlation_Y","",256,0,255,576,0,575);
+		_rootObjectMap.insert (make_pair( "Correlation_Y", signalHisto2) );
+		signalHisto2->SetTitle ( "Correlation in Y;Alibava Average Channel;Telescope Average Pixel" );
 	}
 
-	TH2D * signalHisto3 = new TH2D ("Correlation_Z","",256,0,255,1152,0,1151);
-	_rootObjectMap.insert(make_pair("Correlation_Z", signalHisto3));
-	signalHisto3->SetTitle("Correlation in Z;Alibava Average Channel;Telescope Average Pixel");
+	TH2D * signalHisto3 = new TH2D ( "Correlation_Z","",256,0,255,1152,0,1151);
+	_rootObjectMap.insert (make_pair( "Correlation_Z", signalHisto3) );
+	signalHisto3->SetTitle ( "Correlation in Z;Alibava Average Channel;Telescope Average Pixel" );
 
-	TH2D * signalHisto4 = new TH2D ("Correlation_Event","",1000,0,500000,100,-1,1);
-	_rootObjectMap.insert(make_pair("Correlation_Event", signalHisto4));
-	signalHisto4->SetTitle("Correlation over Events;Event Nr.;Telescope Average Pixel - ALiBaVa Average Strip");
+	TH2D * signalHisto4 = new TH2D ( "Correlation_Event","",1000,0,500000,100,-1,1);
+	_rootObjectMap.insert (make_pair( "Correlation_Event", signalHisto4) );
+	signalHisto4->SetTitle ( "Correlation over Events;Event Nr.;Telescope Average Pixel - ALiBaVa Average Strip" );
 
-	TH3D * multihisto = new TH3D ("Correlation_All","",50,-1,1,50,-1,1,1000,0,500000);
-	_rootObjectMap.insert(make_pair("Correlation_All", multihisto));
-	multihisto->SetTitle("Correlation over Events;Average Distance in X;Average Distance in Y;Event Nr.");
+	TH3D * multihisto = new TH3D ( "Correlation_All","",50,-1,1,50,-1,1,1000,0,500000 );
+	_rootObjectMap.insert (make_pair( "Correlation_All", multihisto) );
+	multihisto->SetTitle ( "Correlation over Events;Average Distance in X;Average Distance in Y;Event Nr." );
 
 
 
