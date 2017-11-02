@@ -1122,7 +1122,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  double xs = avx + tx * zs; // track at 4
 	  double ys = avy + ty * zs;
 
-	  double zDUT = _hitsArray[i5][j5].measuredZ - 2.0 * avz - 0.5*(_planePosition[3] - _planePosition[2]);
+	  double zDUT = _hitsArray[i5][j5].measuredZ - (_planePosition[5]-_planePosition[3])  - 0.5*(_planePosition[3] - _planePosition[2]);
 	  double xA = _hitsArray[i5][j5].measuredX - tx * zDUT; // doublet extrapolation at zDUT
 	  double yA = _hitsArray[i5][j5].measuredY - ty * zDUT; // doublet extrapolation at zDUT
 
