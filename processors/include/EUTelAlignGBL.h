@@ -29,7 +29,7 @@
 #include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
 #include <IMPL/TrackerHitImpl.h>
-
+#include <EUTelTripletGBLUtility.h>
 
 #include "EUTelUtility.h"
 
@@ -217,6 +217,13 @@ namespace eutelescope {
         measuredY = y;
         measuredZ = z;
       }
+      HitsInPlane(double const * const otherHit)
+      {
+        measuredX = otherHit[0];
+        measuredY = otherHit[1];
+        measuredZ = otherHit[2];
+      }
+
       bool operator<(const HitsInPlane& b) const
       {
         return (measuredZ < b.measuredZ);
@@ -450,6 +457,7 @@ namespace eutelescope {
 
   private:
 
+    EUTelTripletGBLUtility gblutil;
     //! Run number
     int _iRun;
 
@@ -545,15 +553,14 @@ namespace eutelescope {
     double * _waferResidX;
     double * _waferResidY;
     double * _waferResidZ;
-    double * _telescopeResolX;
-    double * _telescopeResolY;
-    double * _telescopeResolZ;
     double * _xFitPos;
     double * _yFitPos;
 
+	std::vector<int> indexconverter;
     std::vector<double> _siPlaneZPosition;
 	std::vector<int> _sensorIDVec;
-
+	//std::unique_ptr<gbl::MilleBinary>  milleAlignGBL; // for producing MillePede-II binary file
+	gbl::MilleBinary*  milleAlignGBL; // for producing MillePede-II binary file
     //! Fill histogram switch
     /*! Only for debug reason
      */
