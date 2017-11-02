@@ -261,7 +261,7 @@ bool EUTelTripletGBLUtility::IsTripletIsolated(EUTelTripletGBLUtility::triplet c
   return IsolatedTrip;
 }
 
-void EUTelTripletGBLUtility::FindTriplets(std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int plane0, unsigned int plane1, unsigned int plane2, double trip_res_cut, double slope_cut, std::vector<EUTelTripletGBLUtility::triplet> &triplets) {
+void EUTelTripletGBLUtility::FindTriplets(std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int plane0, unsigned int plane1, unsigned int plane2, double trip_res_cut, double slope_cut, std::vector<EUTelTripletGBLUtility::triplet> &triplets, bool onlyBestTriplet) {
 
   // get all hit is plane = plane0
   for( auto& ihit: hits ){
@@ -287,29 +287,29 @@ void EUTelTripletGBLUtility::FindTriplets(std::vector<EUTelTripletGBLUtility::hi
 	if( fabs(new_triplet.getdx(plane1)) > trip_res_cut) continue;
 	if( fabs(new_triplet.getdy(plane1)) > trip_res_cut) continue;
 
-        
-	// For low threshold (high noise) and/or high occupancy, use only the triplet with the smallest sum of residuals on plane1
-	double sum_res = sqrt(new_triplet.getdx(plane1)*new_triplet.getdx(plane1) + new_triplet.getdy(plane1)*new_triplet.getdy(plane1));
-	if(sum_res < sum_res_old){
-
-	  // Remove the last one since it fits worse, not if its the first
-	  triplets.pop_back();
-	  // The triplet is accepted, push it back:
-	  triplets.push_back(new_triplet);
-	  streamlog_out(DEBUG2) << new_triplet;
-	  sum_res_old = sum_res;
-	}
-
-	// update sum_res_old on first iteration
-	if(sum_res_old < 0.) {
-	  // The triplet is accepted, push it back:
-	  triplets.push_back(new_triplet);
-	  streamlog_out(DEBUG2) << new_triplet;
-	  sum_res_old = sum_res;
-	}
+    if(onlyBestTriplet) {    
+		// For low threshold (high noise) and/or high occupancy, use only the triplet with the smallest sum of residuals on plane1
+		double sum_res = sqrt(new_triplet.getdx(plane1)*new_triplet.getdx(plane1) + new_triplet.getdy(plane1)*new_triplet.getdy(plane1));
+		if(sum_res < sum_res_old){
 	
-	//triplets.push_back(new_triplet);
+		  // Remove the last one since it fits worse, not if its the first
+		  triplets.pop_back();
+		  // The triplet is accepted, push it back:
+		  triplets.push_back(new_triplet);
+		  streamlog_out(DEBUG2) << new_triplet;
+		  sum_res_old = sum_res;
+		}
 
+		// update sum_res_old on first iteration
+		if(sum_res_old < 0.) {
+		  // The triplet is accepted, push it back:
+		  triplets.push_back(new_triplet);
+		  streamlog_out(DEBUG2) << new_triplet;
+		  sum_res_old = sum_res;
+		}
+	} else {	
+		triplets.push_back(new_triplet);
+	}
       }//loop over hits
     }//loop over hits
   }// loop over hits
@@ -525,5 +525,4 @@ EUTelTripletGBLUtility::hit EUTelTripletGBLUtility::triplet::slope() const {
   sl.y = (hits.rbegin()->second.y - hits.begin()->second.y) / dz;
   return sl;
 }
-
 #endif

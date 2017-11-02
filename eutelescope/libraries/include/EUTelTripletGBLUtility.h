@@ -89,6 +89,7 @@ namespace eutelescope {
 
       class hit {
 	public:
+
 	  // Coordinates and their position uncertainty
 	  double x;
 	  double ex;
@@ -105,6 +106,16 @@ namespace eutelescope {
 	  double locy;
 	  int id;
 	  // Overloading ostream operator for printing hits:
+
+
+	  hit(double const * const pos, int sensorID){
+		x = pos[0];
+		y = pos[1];
+		z = pos[2];
+		plane = static_cast<unsigned>(sensorID);
+
+		};
+	  hit() = default;
 	  friend std::ostream& operator << (std::ostream& out, const hit& point) // output
 	  {
 	    out << "(" << point.plane << ", " 
@@ -225,7 +236,7 @@ namespace eutelescope {
        *
        * @return a vector of found triplets among the given set of hits.
        */
-      void FindTriplets(std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int plane0, unsigned int plane1, unsigned int plane2, double trip_res_cut, double trip_slope_cut, std::vector<EUTelTripletGBLUtility::triplet> &trip);
+      void FindTriplets(std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int plane0, unsigned int plane1, unsigned int plane2, double trip_res_cut, double trip_slope_cut, std::vector<EUTelTripletGBLUtility::triplet> &trip, bool onlyBestTriplet = true);
 
       //! Match the upstream and downstream triplets to tracks
       void MatchTriplets(std::vector<EUTelTripletGBLUtility::triplet> const & up, std::vector<EUTelTripletGBLUtility::triplet> const & down, double z_match, double trip_matching_cut, std::vector<EUTelTripletGBLUtility::track> &track);
