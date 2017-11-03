@@ -169,12 +169,8 @@ namespace eutelescope {
 
 	std::vector<double>  _planePosition;
 	std::vector<int> indexconverter;
-	//std::unique_ptr<gbl::MilleBinary>  milleAlignGBL; // for producing MillePede-II binary file
-	gbl::MilleBinary*  milleAlignGBL; // for producing MillePede-II binary file
-    //! Fill histogram switch
-    /*! Only for debug reason
-     */
-    bool _histogramSwitch;
+	std::unique_ptr<gbl::MilleBinary>  milleAlignGBL; // for producing MillePede-II binary file
+	//gbl::MilleBinary*  milleAlignGBL; // for producing MillePede-II binary file
   };
 
   //! A global instance of the processor

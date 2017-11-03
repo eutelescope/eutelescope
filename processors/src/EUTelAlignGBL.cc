@@ -294,7 +294,6 @@ void EUTelAlignGBL::init() {
   //This is the vector of sensorIDs ordered alogn the gloabl z-axis, 
   //this is guranteed by the framework 
   _sensorIDVec = geo::gGeometry().sensorIDsVec();
-  _histogramSwitch = true;
   _nPlanes = _sensorIDVec.size();
   _planePosition.reserve(_nPlanes);
 
@@ -357,8 +356,7 @@ void EUTelAlignGBL::init() {
   streamlog_out( MESSAGE2 ) << "Initialising Mille..." << endl;
 
   unsigned int reserveSize = 8000;
-  //milleAlignGBL = std::make_unique<gbl::MilleBinary>( _binaryFilename, reserveSize );
-  milleAlignGBL =  new gbl::MilleBinary( _binaryFilename, reserveSize );
+  milleAlignGBL = std::make_unique<gbl::MilleBinary>( _binaryFilename, reserveSize );
 
   streamlog_out( MESSAGE2 ) << "The filename for the binary file is: " << _binaryFilename.c_str() << endl;
 
@@ -587,8 +585,9 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
 */
     ndriHistGBLAlign->fill( dripletVec.size() );
 
+	double zMid = 0.5*(_planePosition[3] + _planePosition[2]);
 	auto matchedTripletVec = std::vector<EUTelTripletGBLUtility::track>();
-	gblutil.MatchTriplets(tripletVec, dripletVec, 0.5*(_planePosition[3] + _planePosition[2]), _sixCut, matchedTripletVec);
+	gblutil.MatchTriplets(tripletVec, dripletVec, zMid, _sixCut, matchedTripletVec);
 
 	for(auto& track: matchedTripletVec) {
 	
@@ -842,15 +841,19 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
 	  // REF:
 
 	  // monitor what we put into GBL:
+	  double xA = triplet.getx_at(zMid);
+	  double yA = triplet.gety_at(zMid);
+	  double xB = driplet.getx_at(zMid);
+	  double yB = driplet.gety_at(zMid);
 
-	  //selxHistGBLAlign->fill( xA ); // triplet at mid
-	  //selyHistGBLAlign->fill( yA );
+	  selxHistGBLAlign->fill( xA ); // triplet at mid
+	  selyHistGBLAlign->fill( yA );
 	  selaxHistGBLAlign->fill( triSlope.x*1E3 );//track slope
 	  selayHistGBLAlign->fill( triSlope.y*1E3 );
-	  //seldxHistGBLAlign->fill( dx*1E3 ); // triplet-driplet match
-	  //seldyHistGBLAlign->fill( dy*1E3 );
-	  //selkxHistGBLAlign->fill( kx*1E3 ); // triplet-driplet kink
-	  //selkyHistGBLAlign->fill( ky*1E3 );
+	  seldxHistGBLAlign->fill( (xB-xA)*1E3 ); // triplet-driplet match
+	  seldyHistGBLAlign->fill( (yB-yA)*1E3 );
+	  selkxHistGBLAlign->fill( track.kink_x()*1E3 ); // triplet-driplet kink
+	  selkyHistGBLAlign->fill( track.kink_y()*1E3 );
 
 	  seldx1HistGBLAlign->fill( rx[1]*1E3 ); // triplet interpol
 	  seldy1HistGBLAlign->fill( ry[1]*1E3 );
@@ -907,14 +910,14 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
 
 	  if( probchi < 0.01 ) {
 
-	    //badxHistGBLAlign->fill( xA ); // triplet at DUT
-	    //badyHistGBLAlign->fill( yA );
+	    badxHistGBLAlign->fill( xA ); // triplet at DUT
+	    badyHistGBLAlign->fill( yA );
 	    badaxHistGBLAlign->fill( triSlope.x*1E3 );
 	    badayHistGBLAlign->fill( triSlope.y*1E3 );
-	    //baddxHistGBLAlign->fill( dx*1E3 ); // triplet-driplet match
-	    //baddyHistGBLAlign->fill( dy*1E3 );
-	    //badkxHistGBLAlign->fill( kx*1E3 ); // triplet-driplet kink
-	    //badkyHistGBLAlign->fill( ky*1E3 );
+	    baddxHistGBLAlign->fill( (xB-xA)*1E3 ); // triplet-driplet match
+	    baddyHistGBLAlign->fill( (yB-yA)*1E3 );
+	    badkxHistGBLAlign->fill( track.kink_x()*1E3 ); // triplet-driplet kink
+	    badkyHistGBLAlign->fill( track.kink_y()*1E3 );
 
 	    baddx1HistGBLAlign->fill( rx[1]*1E3 ); // triplet interpol
 	    baddy1HistGBLAlign->fill( ry[1]*1E3 );
@@ -1045,7 +1048,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
 
 //------------------------------------------------------------------------------
 void EUTelAlignGBL::end() {
-  delete milleAlignGBL;
+  milleAlignGBL.reset(nullptr);
 
   // if write the pede steering file
   if( _generatePedeSteerfile ) {
