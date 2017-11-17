@@ -102,6 +102,7 @@ namespace eutelescope {
     void bookHistos();
 
   protected:
+	static int const NO_PRINT_EVENT_COUNTER = 20;
     //! Ordered sensor ID
     /*! Within the processor all the loops are done up to _nPlanes and
      *  according to their position along the Z axis (beam axis).
@@ -114,10 +115,10 @@ namespace eutelescope {
     std::vector<std::string> _hitCollectionName;
  
    // parameters
-    std::vector<int > _excludePlanes; //only for internal usage
-    std::vector<int > _excludePlanes_sensorIDs; //this is going to be
-    std::vector<int > _FixedPlanes; //only for internal usage
-    std::vector<int > _FixedPlanes_sensorIDs; //this is going to be
+    std::vector<size_t> _excludePlanes; //only for internal usage
+    std::vector<int> _excludePlanes_sensorIDs; //this is going to be
+    std::vector<size_t> _FixedPlanes; //only for internal usage
+    std::vector<int> _FixedPlanes_sensorIDs; //this is going to be
 
     double _eBeam;
     double _triCut;
@@ -156,18 +157,22 @@ namespace eutelescope {
     int _printEventCounter;
 
     // n Tscope planes
-    int _nTelPlanes;
+    size_t _nTelPlanes;
 
     // Excluded planes
-    int _nExcludePlanes;
+    size_t _nExcludePlanes;
 
     // Statistics
-    int _nMilleDataPoints;
-    int _nMilleTracks;
+    size_t _nMilleDataPoints;
+    size_t _nMilleTracks;
 
-    int _nPlanes;
+    size_t _nPlanes;
 
-	std::vector<double>  _planePosition;
+	std::vector<double> _planePosition;
+	std::vector<double> _planeRadLength;
+	std::vector<Eigen::Vector2d> _planeWscatSi;
+	std::vector<Eigen::Vector2d> _planeWscatAir;
+	std::vector<Eigen::Vector2d> _planeMeasPrec;
 	std::vector<int> indexconverter;
 	std::unique_ptr<gbl::MilleBinary>  milleAlignGBL; // for producing MillePede-II binary file
 	//gbl::MilleBinary*  milleAlignGBL; // for producing MillePede-II binary file

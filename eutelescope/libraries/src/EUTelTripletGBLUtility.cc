@@ -13,6 +13,7 @@
 
 // EUTelescope includes:
 #include "EUTelTripletGBLUtility.h"
+#include "EUTelGeometryTelescopeGeoDescription.h"
 //#include "EUTelTripletGBLDUTscatInstance.h"
 
 #include "EUTELESCOPE.h"
@@ -317,6 +318,91 @@ void EUTelTripletGBLUtility::FindTriplets(std::vector<EUTelTripletGBLUtility::hi
   //return triplets;
 }
 
+bool EUTelTripletGBLUtility::AttachDUT(EUTelTripletGBLUtility::triplet & triplet, std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int dutID,  double dist_cut){
+
+	auto zPos = geo::gGeometry().siPlaneZPosition(dutID);
+	int minHitIx = -1;
+	double minDist = std::numeric_limits<double>::max();
+	double cut_squared = dist_cut*dist_cut;	
+
+	auto trX = triplet.getx_at(zPos);
+	auto trY = triplet.gety_at(zPos);
+
+//	std::cout << "Triplet x/y: " << trX << "|" << trY << '\n'; 
+
+	size_t ix = 0;	
+	for(auto& hit: hits) {
+		if(hit.plane == dutID) {
+			auto hitX = hit.x;
+			auto hitY = hit.y;
+			auto dist = (trX-hitX)*(trX-hitX)+(trY-hitY)*(trY-hitY);
+//			std::cout << "Hit x/y: " << hitX << "|" << hitY << " dist: " << dist << '\n'; 
+			if(dist <= cut_squared && dist < minDist ){
+				minHitIx = ix;
+				//std::cout << "Dist: " << dist << std::endl;
+			}
+		}
+		++ix;
+	}
+
+	if(minHitIx != -1) {
+		auto hitX = hits[minHitIx].x;
+       	auto hitY = hits[minHitIx].y;
+		auto dist = (trX-hitX)*(trX-hitX)+(trY-hitY)*(trY-hitY);
+		triplet.push_back_DUT(hits[minHitIx].plane, hits[minHitIx]);
+		//std::cout << "Added hit with: " << dist << " on plane: " << hits[minHitIx].plane << '\n';
+		return true;
+	}
+return false;
+}
+/*
+bool EUTelTripletGBLUtility::AttachDUT(std::vector<EUTelTripletGBLUtility::triplet> & triplets, std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int dutID, double trip_res_cut, double trip_slope_cut){
+
+	auto zPos = geo::gGeometry().siPlaneZPosition(dutID);
+
+	struct distance {
+		EUTelTripletGBLUtility::triplet * triplet;
+		EUTelTripletGBLUtility::hit const * hit;		
+		double dist;
+		distance(EUTelTripletGBLUtility::triplet & triplet, EUTelTripletGBLUtility::hit const & hit, double const & dist): triplet(&triplet), hit(&hit), dist(dist){};
+		distance(distance const & other): triplet(other.triplet), hit(other.hit), dist(other.dist){};
+		distance & operator= (distance const & other){ triplet = other.triplet; hit=other.hit; dist=other.dist;};
+	};
+
+	std::vector<distance> distances;
+	for(auto& triplet: triplets){
+		auto trX = triplet.getx_at(zPos);
+		auto trY = triplet.gety_at(zPos);
+		for(auto& hit: hits){
+			if(hit.plane == dutID) {
+				auto hitX = hit.x;
+				auto hitY = hit.x;
+				auto dist = (trX-hitX)*(trX-hitX)+(trY-hitY)*(trY-hitY);
+				distances.emplace_back(triplet, hit, dist);
+				std::cout << "Distance: " << dist << '\n';
+			}
+		}
+	}
+
+	std::sort(distances.begin(), distances.end(), [](distance const & a, distance const & b) -> bool {return a.dist > b.dist;});
+
+	while(!distances.empty()) {
+		auto curTriplet = distances.front().triplet;
+		auto curHit = distances.front().hit;
+		//curTriplet->addDUTHit(curHit);
+
+		for(auto it = distances.begin(); it != distances.end(); ) { 
+			auto otherTriplet = it->triplet; 
+			auto otherHit  = it->hit;
+			if( ( curTriplet == otherTriplet ) || ( curHit == otherHit) ) {
+				it = distances.erase(it);
+			}  else {
+				++it;
+			}
+		}
+	}
+}
+*/
 double EUTelTripletGBLUtility::PlaneEfficiency(std::vector<EUTelTripletGBLUtility::triplet> &eff_triplets_UP, std::vector<EUTelTripletGBLUtility::triplet> &eff_triplets_DOWN, std::vector<EUTelTripletGBLUtility::hit> &hits, unsigned int PUT, double track_match_z, double DUTz, double track_match_cut, double eff_radius, std::vector<AIDA::IProfile1D*> &profile) {
 
   std::vector<EUTelTripletGBLUtility::triplet> eff_triplets;
@@ -438,15 +524,15 @@ EUTelTripletGBLUtility::hit EUTelTripletGBLUtility::track::intersect() {
   return inter;
 }
 
-EUTelTripletGBLUtility::triplet EUTelTripletGBLUtility::track::get_upstream() {
+EUTelTripletGBLUtility::triplet& EUTelTripletGBLUtility::track::get_upstream() {
   return upstream;
 }
 
-EUTelTripletGBLUtility::triplet EUTelTripletGBLUtility::track::get_downstream() {
+EUTelTripletGBLUtility::triplet& EUTelTripletGBLUtility::track::get_downstream() {
   return downstream;
 }
 
-EUTelTripletGBLUtility::hit EUTelTripletGBLUtility::track::gethit(int plane) {
+EUTelTripletGBLUtility::hit const & EUTelTripletGBLUtility::track::gethit(int plane) {
   if(plane < 3) return upstream.gethit(plane);
   else return downstream.gethit(plane);
 }
@@ -506,7 +592,7 @@ double EUTelTripletGBLUtility::triplet::getdz() const {
   return hits.rbegin()->second.z - hits.begin()->second.z;
 }
 
-EUTelTripletGBLUtility::hit EUTelTripletGBLUtility::triplet::gethit(int plane) const {
+EUTelTripletGBLUtility::hit const & EUTelTripletGBLUtility::triplet::gethit(int plane) const {
   return hits.at(plane);
 }
 

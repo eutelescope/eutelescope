@@ -66,7 +66,7 @@
 #include <IMPL/TrackerDataImpl.h>
 #include <IMPL/TrackerPulseImpl.h>
 #include <IMPL/LCCollectionVec.h>
-
+/*
 // ROOT includes
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
 #include <TRandom.h>
@@ -78,7 +78,7 @@
 #include <TVector3.h>
 #include <TRotation.h>
 #endif
-
+*/
 // system includes <>
 #include <string>
 #include <vector>
@@ -98,17 +98,6 @@ using namespace eutelescope;
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
 AIDA::IHistogram1D * nAllHitHistoGBLAlign;
-
-AIDA::IHistogram1D * dx01HistGBLAlign;
-AIDA::IHistogram1D * dy01HistGBLAlign;
-AIDA::IHistogram1D * dx02HistGBLAlign;
-AIDA::IHistogram1D * dy02HistGBLAlign;
-AIDA::IHistogram1D * dx03HistGBLAlign;
-AIDA::IHistogram1D * dy03HistGBLAlign;
-AIDA::IHistogram1D * dx04HistGBLAlign;
-AIDA::IHistogram1D * dy04HistGBLAlign;
-AIDA::IHistogram1D * dx05HistGBLAlign;
-AIDA::IHistogram1D * dy05HistGBLAlign;
 
 AIDA::IHistogram1D * tridxHistGBLAlign;
 AIDA::IHistogram1D * tridyHistGBLAlign;
@@ -230,61 +219,34 @@ AIDA::IHistogram1D * nmHistGBLAlign;
 EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelAlignGBL") {
 
   // modify processor description
-  _description =
-    "EUTelAlignGBL uses the MILLE program to write data files for MILLEPEDE II.";
+  _description = "EUTelAlignGBL uses the MILLE program to write data files for MILLEPEDE II.";
 
   // input collections
   std::vector<std::string > HitCollectionNameVecExample;
   HitCollectionNameVecExample.push_back("corrhits");
 
-  registerInputCollections(LCIO::TRACKERHIT,"HitCollectionName",
-      "Hit collections name",
-      _hitCollectionName,HitCollectionNameVecExample);
-
-  registerProcessorParameter( "Ebeam",
-      "Beam energy [GeV]",
-      _eBeam, static_cast < double >( 4.0));
-
-  registerProcessorParameter( "IsFirstAlignStep",
-      "Bool: yes/no",
-      _IsFirstAlignStep, static_cast < int >( 0));
-
+  registerInputCollections(LCIO::TRACKERHIT,"HitCollectionName","Hit collections name",_hitCollectionName,HitCollectionNameVecExample);
+  registerProcessorParameter("Ebeam","Beam energy [GeV]",_eBeam, static_cast<double>(4.0));
+  registerProcessorParameter("IsFirstAlignStep", "Bool: 1/0 (yes/no)",_IsFirstAlignStep, static_cast<int>(0));
   registerOptionalParameter("ExcludePlanes","Exclude planes from fit according to their sensor ids.",_excludePlanes_sensorIDs ,std::vector<int>());
-
   registerOptionalParameter("FixedPlanes","Fix sensor planes in the fit according to their sensor ids.",_FixedPlanes_sensorIDs ,std::vector<int>());
-
-
   registerOptionalParameter("MaxTrackCandidatesTotal","Maximal number of track candidates (Total).",_maxTrackCandidatesTotal, static_cast <int> (10000000));
   registerOptionalParameter("MaxTrackCandidates","Maximal number of track candidates.",_maxTrackCandidates, static_cast <int> (2000));
-
   registerOptionalParameter("BinaryFilename","Name of the Millepede binary file.",_binaryFilename, string ("mille.bin"));
-
   registerOptionalParameter("TelescopeResolution","Resolution of the telescope for Millepede (sigma_x=sigma_y.",_telescopeResolution, static_cast <float> (0.010));
-
   registerOptionalParameter("AlignMode","Number of alignment constants used. Available mode are: "
-      "\nXYZShifts - shifts in X and Y"
-      "\nXYShiftsRotZ - shifts in X and Y and rotation around the Z axis,"
-      "\nXYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis",
-      _alignModeString, std::string("XYShiftsRotZ"));
-
-  registerOptionalParameter( "triCut", "Upstream triplet residual cut [um]", _triCut, 0.30 );
-  registerOptionalParameter( "driCut", "Downstream triplet residual cut [um]", _driCut, 0.40 );
-  registerOptionalParameter( "sixCut", "Upstream-Downstream Track matching cut [um]", _sixCut, 0.60 );
-  registerOptionalParameter( "slopeCut", "t(d)riplet slope cut [radian]", _slopeCut, 0.01 );
-
+      						"\nXYZShifts - shifts in X and Y"
+      						"\nXYShiftsRotZ - shifts in X and Y and rotation around the Z axis,"
+      						"\nXYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis",
+      						_alignModeString, std::string("XYShiftsRotZ"));
+  registerOptionalParameter("triCut", "Upstream triplet residual cut [um]", _triCut, 0.30);
+  registerOptionalParameter("driCut", "Downstream triplet residual cut [um]", _driCut, 0.40);
+  registerOptionalParameter("sixCut", "Upstream-Downstream Track matching cut [um]", _sixCut, 0.60);
+  registerOptionalParameter("slopeCut", "t(d)riplet slope cut [radian]", _slopeCut, 0.01);
   registerOptionalParameter("GeneratePedeSteerfile","Generate a steering file for the pede program.",_generatePedeSteerfile, static_cast <int> (0));
-
   registerOptionalParameter("PedeSteerfileName","Name of the steering file for the pede program.",_pedeSteerfileName, string("steer_mille.txt"));
-
-  registerProcessorParameter( "kappa",
-      "global factor to Highland formula",
-      _kappa, static_cast <double>(1.0)); // 1.0 means HL as is, 1.2 means 20% additional scattering
-
-  registerProcessorParameter( "targetthick",
-      "target thickness in um",
-      _targetthick, static_cast <double>(0.0)); 
+  registerProcessorParameter("kappa","Global factor to Highland formula", _kappa, static_cast <double>(1.0)); // 1.0 means HL as is, 1.2 means 20% additional scattering
 }
-
 
 //------------------------------------------------------------------------------
 void EUTelAlignGBL::init() {
@@ -295,13 +257,83 @@ void EUTelAlignGBL::init() {
   //this is guranteed by the framework 
   _sensorIDVec = geo::gGeometry().sensorIDsVec();
   _nPlanes = _sensorIDVec.size();
-  _planePosition.reserve(_nPlanes);
 
   for(auto& sensorID: _sensorIDVec) {
     _planePosition.emplace_back( geo::gGeometry().siPlaneZPosition(sensorID) );
+	auto z = geo::gGeometry().siPlaneZSize(sensorID);
+	auto rad = geo::gGeometry().siPlaneRadLength(sensorID);
+    if(sensorID < 6) {
+		_planeRadLength.emplace_back(55e-3 / 93.66 + 0.050 / 286.6); // Si + Kapton
+	} else {
+		_planeRadLength.emplace_back(z/rad);
+	}
+  }
+
+  //to compute the total radiation length we will loop over all planes and add radiation
+  //length for air from the first to the last plane
+  double totalRadLength = (_planePosition.back()-_planePosition.front())/304200; //Radiation length for air is 30420 cm
+  for(auto& radLen: _planeRadLength) {
+	totalRadLength += radLen;
+  }
+
+  for(auto& radLen: _planeRadLength) {
+	  // Paper showed HL predicts too high angle, at least for biased measurement. 
+	  double tetSi = _kappa*0.0136 * sqrt(radLen) / _eBeam * ( 1 + 0.038*std::log(totalRadLength) );
+	  _planeWscatSi.emplace_back( 1.0/(tetSi*tetSi), 1.0/(tetSi*tetSi) );
+  }
+
+  for(size_t ipl = 0; ipl < _nPlanes-1; ipl++) {
+	auto distplane = _planePosition[ipl+1] - _planePosition[ipl];
+    double epsAir =   0.5*distplane  / 304200.;  // in [mm]
+	double tetAir = _kappa*0.0136 * sqrt(epsAir) / _eBeam * ( 1 + 0.038*std::log(totalRadLength) );
+	_planeWscatAir.emplace_back( 1.0/(tetAir*tetAir), 1.0/(tetAir*tetAir) );
   }
 
   streamlog_out(MESSAGE4) << "assumed beam energy " << _eBeam << " GeV" <<  endl;
+  streamlog_out(MESSAGE4) 	<< "Summary:\n\t_planeRadLength has size: \t" << _planeRadLength.size() 
+							<< "\n\t_planeWscatSi has size: \t" << _planeWscatSi.size() 
+							<< "\n\t_planeWscatAir has size: \t" << _planeWscatAir.size() << '\n';
+
+
+   // The measurement resolution depends on threshold, energy, dz, and number of iterations done ...
+   // We make an accurate, heuristic  guess
+   double distplane = _planePosition[1] - _planePosition[0];
+   double res = 0;
+   if( distplane > 100. ) {
+	res = 100. - _eBeam*8;
+	if (_eBeam > 11) {
+		res = 8;
+	}
+   }
+   else if( distplane < 30. ) {
+	res = 20. - _eBeam*1.5; // if only tracks with prob(chi2,ndf) > 0.001 are passed to Mille
+   }
+   else if( distplane > 30. && distplane < 100. ) {
+    res = 50 - _eBeam*3.8; 
+	if (_eBeam > 10) {
+		res = 6.;
+	}
+   }
+
+   if(!_IsFirstAlignStep){
+	// 2nd iteration 20
+	if( distplane < 30. ) {
+		res = 4.4 - _eBeam*0.1;
+	}
+	// 2nd iteration 150
+	else if( distplane > 100. ) {
+		res = 18 - _eBeam*1.5;
+	}
+   }
+
+   res = res/1000.; // finally convert to [mm]
+	  
+   streamlog_out( MESSAGE2 ) << "res x = " << res << endl;
+
+   //For now we have the same x/y resolution and the same for telescope & DUT
+   for(size_t ipl = 0; ipl < _nPlanes; ipl++) {
+	_planeMeasPrec.emplace_back(1.0/res/res, 1.0/res/res); // precision = 1/resolution^2
+   }
 
   // the user is giving sensor ids for the planes to be fixed.
   // These sensor ids have to be converted to a local index
@@ -380,7 +412,6 @@ void EUTelAlignGBL::init() {
   streamlog_out( MESSAGE2 ) << "end of init" << endl;
 }
 
-
 //------------------------------------------------------------------------------
 void EUTelAlignGBL::processRunHeader( LCRunHeader* rdr ) {
   gblutil.setParent(this);
@@ -405,7 +436,6 @@ Eigen::Matrix<double,5,5> Jac55new( double ds ) {
   return jac;
 }
 
-
 //------------------------------------------------------------------------------
 void EUTelAlignGBL::processEvent( LCEvent * event ) {
 
@@ -420,7 +450,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
       << endl;
   }
 
-  if( _nMilleTracks > _maxTrackCandidatesTotal ) {
+  if( _nMilleTracks > (size_t)_maxTrackCandidatesTotal ) {
     throw StopProcessingException(this);
   }
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
@@ -430,121 +460,40 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
     return;
   }
 
+
+  CellIDDecoder<TrackerHit> hitCellDecoder(EUTELESCOPE::HITENCODING);
   std::vector<EUTelTripletGBLUtility::hit> _hitsVec;
 
-  // setup cellIdDecoder to decode the hit properties
-  CellIDDecoder<TrackerHit> hitCellDecoder(EUTELESCOPE::HITENCODING);
-
-
-    for( size_t i = 0; i < _hitCollectionName.size(); i++ ) {
-
-      LCCollection* collection;
-      try {
-	collection = event->getCollection(_hitCollectionName[i]);
+  for( size_t i = 0; i < _hitCollectionName.size(); i++ ) {
+	LCCollection* collection = nullptr;
+    try {
+		collection = event->getCollection(_hitCollectionName[i]);
       } catch (DataNotAvailableException& e) {
-	//	streamlog_out( WARNING2 ) << "No input collection "
-	//			  << _hitCollectionName[i] << " found for event "
-	//			  << event->getEventNumber()
-	//			  << " in run " << event->getRunNumber() << endl;
-	throw SkipEventException(this);
+			throw SkipEventException(this);
       }
-
 	// loop over all hits in collection:
 
-        if(_printEventCounter < 100) streamlog_out(DEBUG2) << "Event " << event->getEventNumber() << " contains " 
-	  << collection->getNumberOfElements() << " hits" << endl;
-        nAllHitHistoGBLAlign->fill(collection->getNumberOfElements());
+	if(_printEventCounter < NO_PRINT_EVENT_COUNTER) {
+		streamlog_out(DEBUG2) << "Event " << event->getEventNumber() << " contains " 
+	  	<< collection->getNumberOfElements() << " hits" << endl;
+	}
+	
+	nAllHitHistoGBLAlign->fill(collection->getNumberOfElements());
 
 	for( int iHit = 0; iHit < collection->getNumberOfElements(); iHit++ ) {
 	  auto hit = static_cast<TrackerHitImpl*>( collection->getElementAt(iHit) );
 	  auto sensorID = hitCellDecoder(hit)["sensorID"];
 	  auto hitPosition = hit->getPosition();
 	  _hitsVec.emplace_back(hitPosition, sensorID);
-	} // end loop over all hits in collection
-
-    }//loop over hits
-
-  /*
-     streamlog_out( MESSAGE2 ) << "hits per plane: ";
-     for( size_t i = 0; i < _hitsArray.size(); i++ )
-     streamlog_out( MESSAGE2 ) << _hitsArray[i].size() << "  ";
-     streamlog_out( MESSAGE2 ) << endl;
-     */
-  // mode 1 or 3: tracks are read in
-
-  // DP: correlate telescope hits from different planes
-/*
-  int iA = indexconverter[0]; // plane 0
-
-  if( iA >= 0 ) { // not excluded
-    for( size_t jA = 0; jA < _hitsArray[iA].size(); jA++ ) { // hits in plane
-
-      int iB = indexconverter[1]; // plane 1
-      if( iB >= 0 ) { // not excluded
-	for( size_t jB = 0; jB < _hitsArray[iB].size(); jB++ ) {
-	  double dx = _hitsArray[iB][jB].measuredX - _hitsArray[iA][jA].measuredX;
-	  double dy = _hitsArray[iB][jB].measuredY - _hitsArray[iA][jA].measuredY;
-	  dx01HistGBLAlign->fill( dx*1e3 );
-	  dy01HistGBLAlign->fill( dy*1e3 );
-	}//loop hits jB
-      }//iB valid
-
-      iB = indexconverter[2]; // plane 2
-      if( iB >= 0 ) { // not excluded
-	for( size_t jB = 0; jB < _hitsArray[iB].size(); jB++ ) {
-	  double dx = _hitsArray[iB][jB].measuredX - _hitsArray[iA][jA].measuredX;
-	  double dy = _hitsArray[iB][jB].measuredY - _hitsArray[iA][jA].measuredY;
-	  dx02HistGBLAlign->fill( dx*1e3 );
-	  dy02HistGBLAlign->fill( dy*1e3 );
-	}//loop hits jB
-      }//iB valid
-
-      iB = indexconverter[3]; // plane 3
-      if( iB >= 0 ) { // not excluded
-	for( size_t jB = 0; jB < _hitsArray[iB].size(); jB++ ) {
-	  double dx = _hitsArray[iB][jB].measuredX - _hitsArray[iA][jA].measuredX;
-	  double dy = _hitsArray[iB][jB].measuredY - _hitsArray[iA][jA].measuredY;
-	  dx03HistGBLAlign->fill( dx*1e3 );
-	  dy03HistGBLAlign->fill( dy*1e3 );
-	}//loop hits jB
-      }//iB valid
-
-      iB = indexconverter[4]; // plane 4
-      if( iB >= 0 ) { // not excluded
-	for( size_t jB = 0; jB < _hitsArray[iB].size(); jB++ ) {
-	  double dx = _hitsArray[iB][jB].measuredX - _hitsArray[iA][jA].measuredX;
-	  double dy = _hitsArray[iB][jB].measuredY - _hitsArray[iA][jA].measuredY;
-	  dx04HistGBLAlign->fill( dx*1e3 );
-	  dy04HistGBLAlign->fill( dy*1e3 );
-	}//loop hits jB
-      }//iB valid
-
-      iB = indexconverter[5]; // plane 5
-      if( iB >= 0 ) { // not excluded
-	for( size_t jB = 0; jB < _hitsArray[iB].size(); jB++ ) {
-	  double dx = _hitsArray[iB][jB].measuredX - _hitsArray[iA][jA].measuredX;
-	  double dy = _hitsArray[iB][jB].measuredY - _hitsArray[iA][jA].measuredY;
-	  dx05HistGBLAlign->fill( dx*1e3 );
-	  dy05HistGBLAlign->fill( dy*1e3 );
-	}//loop hits jB
-      }//iB valid
-
-    }//loop hits jA
-  }// iA valid
-
-*/
+	  if(_printEventCounter < NO_PRINT_EVENT_COUNTER) std::cout << "Hit on plane " << sensorID << " at " << hitPosition[0] << "|" << hitPosition[1]  << '\n';
+	} // end loop over all hits in given collection
+  }//loop over all input hit collection
 
   // triplets 0-1-2:
   // driplets 3-4-5:
-
-  // i is plane index
-  // j is hit index
-  // k is triplet index
-
   int i0 = indexconverter[0]; // plane 0
   int i1 = indexconverter[1]; // plane 1
   int i2 = indexconverter[2]; // plane 2
-
   int i3 = indexconverter[3]; // plane 3
   int i4 = indexconverter[4]; // plane 4
   int i5 = indexconverter[5]; // plane 5
@@ -552,42 +501,60 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
   if( i0*i1*i2*i3*i4*i5 >= 0 ) { // not excluded
 
     int nm = 0;
-    double p = _eBeam; // beam momentum
-
 	auto tripletVec = std::vector<EUTelTripletGBLUtility::triplet>();
-    gblutil.FindTriplets(_hitsVec, 0, 1, 2, _triCut, _slopeCut, tripletVec, false);
-/*
-	for(auto it = tripletVec.begin(); it != tripletVec.end(); ) { 
-		double xA = it->getx_at(0.5*(_planePosition[3] + _planePosition[2]));
-		double yA = it->gety_at(0.5*(_planePosition[3] + _planePosition[2]));
-		if( fabs(xA) > 9 || -yA < -4 ) {
-			it = tripletVec.erase(it);
-		}  else {
-			++it;
-		}
-	}
-*/
-    ntriHistGBLAlign->fill( tripletVec.size()  );
-
-    // driplets 3-4-5:
 	auto dripletVec = std::vector<EUTelTripletGBLUtility::triplet>();
-    gblutil.FindTriplets(_hitsVec, 3, 4, 5, _driCut, _slopeCut+0.006, dripletVec, false);
-/*
-	for(auto it = dripletVec.begin(); it != dripletVec.end(); ) { 
-		double xA = it->getx_at(0.5*(_planePosition[3] + _planePosition[2]));
-		double yA = it->gety_at(0.5*(_planePosition[3] + _planePosition[2]));
-		if( fabs(xA) > 9.0 || -yA < -4.0 ) {
-			it = dripletVec.erase(it);
-		}  else {
-			++it;
+    gblutil.FindTriplets(_hitsVec, 0, 1, 2, _triCut, _slopeCut, tripletVec, false);
+    gblutil.FindTriplets(_hitsVec, 3, 4, 5, _driCut, _slopeCut+0.012, dripletVec, false);
+
+	if(_printEventCounter < NO_PRINT_EVENT_COUNTER){
+		std::cout << "Triplets:\n";
+		for(auto& triplet: tripletVec) {
+			std::cout << triplet << '\n';
+		}
+		std::cout << "Driplets:\n";
+		for(auto& driplet: dripletVec) {
+			std::cout << driplet << '\n';
 		}
 	}
-*/
+
+    ntriHistGBLAlign->fill( tripletVec.size()  );
     ndriHistGBLAlign->fill( dripletVec.size() );
 
 	double zMid = 0.5*(_planePosition[3] + _planePosition[2]);
 	auto matchedTripletVec = std::vector<EUTelTripletGBLUtility::track>();
 	gblutil.MatchTriplets(tripletVec, dripletVec, zMid, _sixCut, matchedTripletVec);
+
+if(_printEventCounter < NO_PRINT_EVENT_COUNTER) std::cout << "Matched to:\n"; 
+	for(auto& track: matchedTripletVec) {
+		
+		//std::cout << "Dist 22:\n";
+		auto& triplet = track.get_upstream();
+		auto has22 = gblutil.AttachDUT(triplet, _hitsVec, 22, 3 );	
+		//std::cout << "Dist 21:\n";
+		auto& driplet = track.get_downstream();
+		auto has21 = gblutil.AttachDUT(driplet, _hitsVec, 21, 3 );	
+		if(_printEventCounter < NO_PRINT_EVENT_COUNTER){
+		 	std::cout << "---pair--\n" << triplet << driplet << '\n';
+			std::cout << "Expects hit on 22 at:\n";
+			auto zPos = geo::gGeometry().siPlaneZPosition(22);
+			auto trX = triplet.getx_at(zPos);
+			auto trY = triplet.gety_at(zPos);
+			std::cout << trX << "|" << trY << '\n';
+			std::cout << "Expects hit on 21 at:\n";
+			zPos = geo::gGeometry().siPlaneZPosition(21);
+			trX = driplet.getx_at(zPos);
+			trY = driplet.gety_at(zPos);
+			std::cout << trX << "|" << trY << '\n';		
+		for(auto& hit: _hitsVec) {
+			if(hit.plane == 21 || hit.plane == 22) {
+				std::cout << "Hit on " << hit.plane << " at: " << hit.x << "|" << hit.y << '\n';
+			}
+		}
+}
+		if(has22 && has21) _nMilleTracks++;// std::cout << "Found triplet with both DUTs matched" << std::endl;
+	
+	}
+
 
 	for(auto& track: matchedTripletVec) {
 	
@@ -603,87 +570,8 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
 
 	  Eigen::Matrix2d proL2m = Eigen::Matrix2d::Identity();
 
-	  // this depends on threshold, energy, dz, and number of iterations done ...
-	  // We make an accurate, heuristic  guess
-	  double resx = -1.; // [mm] telescope initial resolution for ONLY PREALIGNED t'scope! this is not 3.24 !
-	  double resy = -1.; // [mm] telescope initial resolution
-
-	  double distplane = _planePosition[1] - _planePosition[0];
-          if(_iEvt < 5) streamlog_out( MESSAGE2 ) << "distplane = " << distplane << endl;
-
-	  if( distplane > 100. ) {
-	    resx = 100. - p*8;
-	    resy = resx; 
-	    if (p > 11) {
-	      resx = 8;
-	      resy = resx;
-	    }
-	  }
-
-	  if( distplane < 30. ) {
-	    resx = 20. - p*1.5; // if only tracks with prob(chi2,ndf) > 0.001 are passed to Mille
-	    resy = resx; 
-	  }
-
-	  if( distplane > 30. && distplane < 100. ) {
-	    resx = 50 - p*3.8; 
-	    resy = resx; 
-	    if (p > 10) {
-	      resx = 6.;
-	      resy = resx;
-	    }
-	  }
-
-	  if(!_IsFirstAlignStep){
-	    // 2nd iteration 20
-	    if( distplane < 30. ) {
-	      resx = 4.4 - p*0.1;
-	      resy = resx;
-	    }
-	    // 2nd iteration 150
-	    if( distplane > 100. ) {
-	      resx = 18 - p*1.5;
-	      resy = resx;
-	    }
-	  }
-
-      resx = resx/1000.; // finally convert to [mm]
-      resy = resy/1000.;
-	  if(_printEventCounter < 10) streamlog_out( MESSAGE2 ) << "res x = " << resx << endl;
-
-	  Eigen::Vector2d measPrec; // precision = 1/resolution^2
-	  measPrec[0] = 1.0 / resx / resx;
-	  measPrec[1] = 1.0 / resy / resy;
-
 	  // scatter:
 	  Eigen::Vector2d scat = Eigen::Vector2d::Zero(); //mean is zero
-
-	  double epsSi = 55e-3 / 93.66 + 0.050 / 286.6; // Si + Kapton
-	  double epsAir = -1.; // define later when dz is known
-	  double epsAlu = _targetthick/88.97; // Alu target
-	  double sumeps = 0.0;
-
-	  // loop over all scatterers first to calculate sumeps, needed for log correctionin Highland
-	  for( int ipl = 0; ipl < 6; ++ipl ){
-	    sumeps += epsSi;
-	    if( ipl < 5) {
-	      distplane = _planePosition[ipl+1] - _planePosition[ipl];
-	      epsAir =   distplane  / 304200.; 
-	      sumeps += epsAir;
-	    }
-	  }
-	  sumeps += epsAlu;
-	  // done with calculating sum eps
-
-	  // Paper showed HL predicts too high angle, at least for biased measurement. 
-	  double tetSi = _kappa*0.0136 * sqrt(epsSi) / p * ( 1 + 0.038*std::log(sumeps) );
-	  double tetAir = -1.;
-
-	  Eigen::Vector2d wscatSi;
-	  wscatSi[0] = 1.0 / ( tetSi * tetSi ); //weight
-	  wscatSi[1] = 1.0 / ( tetSi * tetSi );
-
-	  Eigen::Vector2d wscatAir;
 
       auto triplet = track.get_upstream();
 	  auto triSlope = triplet.slope();
@@ -692,6 +580,16 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
       auto driplet = track.get_downstream();
 	  //auto driSlope = driplet.slope();
 	  //auto driBase = driplet.base();
+
+	  std::vector<EUTelTripletGBLUtility::hit> DUThits;
+	  for(auto it = triplet.DUT_begin(); it != triplet.DUT_end(); ++it){
+		DUThits.emplace_back(it->second);
+	  }
+	  for(auto it = driplet.DUT_begin(); it != driplet.DUT_end(); ++it){
+		DUThits.emplace_back(it->second);
+	  }
+
+	  if(_printEventCounter < NO_PRINT_EVENT_COUNTER) std::cout << "Track has " << DUThits.size() << " DUT hits\n";
 
 	  Eigen::Matrix2d alDer2; // alignment derivatives
 	  alDer2(0,0) = 1.0; // dx/dx GBL sign convetion
@@ -713,133 +611,77 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
 	  alDer4(0,3) = triSlope.x; // dx/dz
 	  alDer4(1,3) = triSlope.y; // dx/dz
 
-	  // telescope planes 0-5:
-
-	  std::array<double,6> rx;;
-	  std::array<double,6> ry;
-
-	  double step = .0;
+	  size_t DUTCount = _nPlanes-6;
+	  std::vector<double> rx (_nPlanes, 0.0);
+	  std::vector<double> ry (_nPlanes, 0.0);
+	
+      double step = .0;
 	  unsigned int iLabel;
 
-	  for( int ipl = 0; ipl < 6; ++ipl ) {
+	  for( size_t ipl = 0; ipl < _nPlanes; ++ipl ) {
 
-		auto hit = ipl < 3 ? triplet.gethit(ipl) : driplet.gethit(ipl) ;
+		//We have to add all the planes, the up and downstream arm of the telescope will definitely have
+		//hits, the DUTs might not though! The first and last three planes are the telescope.
+		EUTelTripletGBLUtility::hit const * hit = nullptr;
+		if(ipl < 3) {
+			hit = &triplet.gethit(ipl);
+		} else if( ipl < 3+DUTCount) {
+		   auto sensorID = _sensorIDVec[ipl];
+		   if(triplet.has_DUT(sensorID)) hit = &triplet.get_DUT_Hit(sensorID);
+		   else if(driplet.has_DUT(sensorID)) hit = &driplet.get_DUT_Hit(sensorID);
+		} else {
+			hit = &driplet.gethit(ipl-DUTCount);
+		}
 
-	    double zz = hit.z; // [mm]
+		//if there is no hit we take the plane position from the geo description
+	    double zz = hit ? hit->z : _planePosition[ipl];// [mm]
 
-	    //double step = zz - zprev;
 	    //transport matrix in (q/p, x', y', x, y) space
 	    auto jacPointToPoint = Jac55new( step );
 	    auto point = gbl::GblPoint( jacPointToPoint );
 	    s += step;
 
-	    // extrapolate triplet vector A to each plane:
-	    double xs = triplet.getx_at(zz);
-	    double ys = triplet.gety_at(zz);
+		//of there is a hit we will add a measurement to the point
+		if(hit){
+		    double xs = triplet.getx_at(zz);
+		    double ys = triplet.gety_at(zz);
 
-	    if(_printEventCounter < 10) std::cout << "xs = " << xs << "   ys = " << ys << std::endl;
+		    if(_printEventCounter < NO_PRINT_EVENT_COUNTER) std::cout << "xs = " << xs << "   ys = " << ys << std::endl;
 
-	    rx[ipl] = (hit.x - xs); // resid hit-triplet, in micrometer ...
-	    ry[ipl] = (hit.y - ys); // resid
+		    rx[ipl] = (hit->x - xs); // resid hit-triplet, in micrometer ...
+		    ry[ipl] = (hit->y - ys); // resid
 	  
-		Eigen::Vector2d meas;
-	    meas[0] = rx[ipl]; // fill meas vector for GBL
-	    meas[1] = ry[ipl];
+			Eigen::Vector2d meas;
+		    meas[0] = rx[ipl]; // fill meas vector for GBL
+		    meas[1] = ry[ipl];
+		    point.addMeasurement( proL2m, meas, _planeMeasPrec[ipl] );
 
-	    point.addMeasurement( proL2m, meas, measPrec );
-	    point.addScatterer( scat, wscatSi );
-
-	    if( _alignMode == Utility::alignMode::XYShifts ) { // only x and y shifts
-	      // global labels for MP:
-	      std::vector<int> globalLabels(2);
-	      globalLabels[0] = 1 + 2*ipl;
-	      globalLabels[1] = 2 + 2*ipl;
-	      point.addGlobals( globalLabels, alDer2 ); // for MillePede alignment
-	    }
-	    else if( _alignMode == Utility::alignMode::XYShiftsRotZ ) { // with rot
-	      std::vector<int> globalLabels(3);
-	      globalLabels[0] = 1 + 3*ipl; // x
-	      globalLabels[1] = 2 + 3*ipl; // y
-	      globalLabels[2] = 3 + 3*ipl; // rot
-	      //alDer3[0][2] = -_hitsArray[ipl][jhit].measuredY; // dx/dphi
-	      //alDer3[1][2] =  _hitsArray[ipl][jhit].measuredX; // dy/dphi
-	      alDer3(0,2) = -ys; // dx/dphi
-	      alDer3(1,2) =  xs; // dy/dphi
-	      point.addGlobals( globalLabels, alDer3 ); // for MillePede alignment
-	    }
-	    else if( _alignMode == Utility::alignMode::XYZShiftsRotZ ) { // with rot and z shift
-	      std::vector<int> globalLabels(4);
-	      globalLabels[0] = 1 + 4*ipl;
-	      globalLabels[1] = 2 + 4*ipl;
-	      globalLabels[2] = 3 + 4*ipl;
-	      globalLabels[3] = 4 + 4*ipl; // z
-	      //alDer4[0][2] = -_hitsArray[ipl][jhit].measuredY; // dx/dphi
-	      //alDer4[1][2] =  _hitsArray[ipl][jhit].measuredX; // dy/dphi
-	      alDer4(0,2) = -ys; // dx/dphi
-	      alDer4(1,2) =  xs; // dy/dphi
-	      point.addGlobals( globalLabels, alDer4 ); // for MillePede alignment
-	    }
-
-	    sPoint.push_back( s );
-	    iLabel = sPoint.size();
-	    ilab.push_back(iLabel);
-	    traj_points.push_back(point);
-
-	    if( ipl < 5) {
-	      distplane = _planePosition[ipl+1] - _planePosition[ipl];
-
-	      //std::cout << " --- Add air --- " << std::endl;
-	      step = 0.21*distplane; // in [mm]
-	      epsAir =   0.5*distplane  / 304200.;  // in [mm]
-	      tetAir = _kappa*0.0136 * sqrt(epsAir) / p * ( 1 + 0.038*std::log(sumeps) );
-
-	      wscatAir[0] = 1.0 / ( tetAir * tetAir ); // weight
-	      wscatAir[1] = 1.0 / ( tetAir * tetAir ); 
-
-	      auto point = gbl::GblPoint( Jac55new( step ) );
-	      point.addScatterer( scat, wscatAir );
-
-	      s += step;
-	      traj_points.push_back(point);
-	      sPoint.push_back( s );
-
-	      step = 0.58*distplane; // in [mm]
-	      if(ipl ==2){ // insert point at centre
-		step = step / 2.;
-		auto pointcentre = gbl::GblPoint( Jac55new( step ) );
-
-	        if(_targetthick > 0.001) { // at least 1 um target
-		  double tetAlu = _kappa*0.0136 * sqrt(epsAlu) / p * ( 1 + 0.038*std::log(sumeps) );
-
-	          Eigen::Vector2d wscatAlu;
-	          wscatAlu[0] = 1.0 / ( tetAlu * tetAlu ); // weight
-	          wscatAlu[1] = 1.0 / ( tetAlu * tetAlu ); 
-
-		  pointcentre.addScatterer( scat, wscatAlu );
-		}
-		s += step;
-		traj_points.push_back(pointcentre);
-		sPoint.push_back( s );
-		//centre_label = sPoint.size();
-		// now again step/2
-	      }
-
-	      auto point1 = gbl::GblPoint( Jac55new( step ) );
-	      point1.addScatterer( scat, wscatAir );
-
-	      s += step;
-	      traj_points.push_back(point1);
-	      sPoint.push_back( s );
-
-	      step = 0.21*distplane; // remaing distance to next plane, in [mm]
-	    }
-
-
-
-	  } // loop over planes
-
-	  // REF:
-
+			if( _alignMode == Utility::alignMode::XYShifts ) { // only x and y shifts
+			  // global labels for MP:
+			  std::vector<int> globalLabels(2);
+			  globalLabels[0] = 1 + 2*ipl;
+			  globalLabels[1] = 2 + 2*ipl;
+			  point.addGlobals( globalLabels, alDer2 ); // for MillePede alignment
+			}
+			else if( _alignMode == Utility::alignMode::XYShiftsRotZ ) { // with rot
+			  std::vector<int> globalLabels(3);
+			  globalLabels[0] = 1 + 3*ipl; // x
+			  globalLabels[1] = 2 + 3*ipl; // y
+			  globalLabels[2] = 3 + 3*ipl; // rot
+			  alDer3(0,2) = -ys; // dx/dphi
+			  alDer3(1,2) =  xs; // dy/dphi
+			  point.addGlobals( globalLabels, alDer3 ); // for MillePede alignment
+			}
+			else if( _alignMode == Utility::alignMode::XYZShiftsRotZ ) { // with rot and z shift
+			  std::vector<int> globalLabels(4);
+			  globalLabels[0] = 1 + 4*ipl;
+			  globalLabels[1] = 2 + 4*ipl;
+			  globalLabels[2] = 3 + 4*ipl;
+			  globalLabels[3] = 4 + 4*ipl; // z
+			  alDer4(0,2) = -ys; // dx/dphi
+			  alDer4(1,2) =  xs; // dy/dphi
+			  point.addGlobals( globalLabels, alDer4 ); // for MillePede alignment
+			}
 	  // monitor what we put into GBL:
 	  double xA = triplet.getx_at(zMid);
 	  double yA = triplet.gety_at(zMid);
@@ -863,6 +705,38 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
 	  seldy4HistGBLAlign->fill( ry[4]*1E3 );
 	  seldx5HistGBLAlign->fill( rx[5]*1E3 );
 	  seldy5HistGBLAlign->fill( ry[5]*1E3 );
+		}
+
+	    point.addScatterer( scat, _planeWscatSi[ipl] );
+	    sPoint.push_back( s );
+	    iLabel = sPoint.size();
+	    ilab.push_back(iLabel);
+	    traj_points.push_back(point);
+
+	    if( ipl < _nPlanes-1 ) {
+	      double distplane = _planePosition[ipl+1] - _planePosition[ipl];
+		  step = 0.21*distplane; // in [mm]
+	      auto point = gbl::GblPoint( Jac55new( step ) );
+	      point.addScatterer( scat, _planeWscatAir[ipl] );
+
+	      s += step;
+	      traj_points.push_back(point);
+	      sPoint.push_back( s );
+
+	      step = 0.58*distplane; // in [mm]
+
+	      auto point1 = gbl::GblPoint( Jac55new( step ) );
+	      point1.addScatterer( scat, _planeWscatAir[ipl] );
+
+	      s += step;
+	      traj_points.push_back(point1);
+	      sPoint.push_back( s );
+
+	      step = 0.21*distplane; // remaing distance to next plane, in [mm]
+	    }
+	  } // loop over planes
+
+	  // REF:
 
 
 	  double Chi2;
@@ -875,7 +749,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
 
 	  // debug:
 
-	  if(_printEventCounter < 10){
+	  if(_printEventCounter < NO_PRINT_EVENT_COUNTER){
 	    streamlog_out(DEBUG4) << "traj with " << traj.getNumPoints() << " points:" << endl;
 	    for( size_t ipl = 0; ipl < sPoint.size(); ++ipl ){
 	      streamlog_out(DEBUG4) << "  GBL point " << ipl;
@@ -910,12 +784,12 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
 
 	  if( probchi < 0.01 ) {
 
-	    badxHistGBLAlign->fill( xA ); // triplet at DUT
-	    badyHistGBLAlign->fill( yA );
+	    //badxHistGBLAlign->fill( xA ); // triplet at DUT
+	    //badyHistGBLAlign->fill( yA );
 	    badaxHistGBLAlign->fill( triSlope.x*1E3 );
 	    badayHistGBLAlign->fill( triSlope.y*1E3 );
-	    baddxHistGBLAlign->fill( (xB-xA)*1E3 ); // triplet-driplet match
-	    baddyHistGBLAlign->fill( (yB-yA)*1E3 );
+	    //baddxHistGBLAlign->fill( (xB-xA)*1E3 ); // triplet-driplet match
+	    //baddyHistGBLAlign->fill( (yB-yA)*1E3 );
 	    badkxHistGBLAlign->fill( track.kink_x()*1E3 ); // triplet-driplet kink
 	    badkyHistGBLAlign->fill( track.kink_y()*1E3 );
 
@@ -1061,18 +935,18 @@ void EUTelAlignGBL::end() {
     if( steerFile.is_open()) {
 
       // find first and last excluded plane
-      int firstnotexcl = _nPlanes;
-      int lastnotexcl = 0;
+      auto firstnotexcl = _nPlanes;
+      size_t lastnotexcl = 0;
 
       // loop over all planes:
 
-      for( int ipl = 0; ipl < _nPlanes; ipl++) {
+      for( size_t ipl = 0; ipl < _nPlanes; ipl++) {
 
-	int excluded = 0;
+	size_t excluded = 0;
 
 	// loop over excluded planes:
 
-	for( int jpl = 0; jpl < _nExcludePlanes; jpl++ ) {
+	for( size_t jpl = 0; jpl < _nExcludePlanes; jpl++ ) {
 	  if( ipl == _excludePlanes[jpl] ) excluded = 1;
 	}
 
@@ -1093,13 +967,13 @@ void EUTelAlignGBL::end() {
 
       // loop over all planes:
 
-      for( int ipl = 0; ipl < _nPlanes; ipl++) {
+      for( size_t ipl = 0; ipl < _nPlanes; ipl++) {
 
 	int excluded = 0; // flag for excluded planes
 
 	// check in list of excluded planes:
 
-	for( int iex = 0; iex < _nExcludePlanes; iex++) {
+	for( size_t iex = 0; iex < _nExcludePlanes; iex++) {
 	  if( ipl == _excludePlanes[iex] )
 	    excluded = 1;
 	}
@@ -1302,46 +1176,6 @@ void EUTelAlignGBL::bookHistos() {
     nAllHitHistoGBLAlign = AIDAProcessor::histogramFactory(this)->
       createHistogram1D( "nallhit", 201, -0.5, 200.5 );
     nAllHitHistoGBLAlign->setTitle( "Telescope hits/event;telescope hits;events" );
-
-    dx01HistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "dx01", 100, -5000, 5000 );
-    dx01HistGBLAlign->setTitle( "dx01;x_{1}-x_{0} [um];hit pairs" );
-
-    dy01HistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "dy01", 100, -5000, 5000 );
-    dy01HistGBLAlign->setTitle( "dy01;y_{1}-y_{0} [um];hit pairs" );
-
-    dx02HistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "dx02", 100, -5000, 5000 );
-    dx02HistGBLAlign->setTitle( "dx02;x_{2}-x_{0} [um];hit pairs" );
-
-    dy02HistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "dy02", 100, -5000, 5000 );
-    dy02HistGBLAlign->setTitle( "dy02;y_{2}-y_{0} [um];hit pairs" );
-
-    dx03HistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "dx03", 100, -5000, 5000 );
-    dx03HistGBLAlign->setTitle( "dx03;x_{3}-x_{0} [um];hit pairs" );
-
-    dy03HistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "dy03", 100, -5000, 5000 );
-    dy03HistGBLAlign->setTitle( "dy03;y_{3}-y_{0} [um];hit pairs" );
-
-    dx04HistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "dx04", 100, -5000, 5000 );
-    dx04HistGBLAlign->setTitle( "dx04;x_{4}-x_{0} [um];hit pairs" );
-
-    dy04HistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "dy04", 100, -5000, 5000 );
-    dy04HistGBLAlign->setTitle( "dy04;y_{4}-y_{0} n[um];hit pairs" );
-
-    dx05HistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "dx05", 100, -5000, 5000 );
-    dx05HistGBLAlign->setTitle( "dx05;x_{5}-x_{0} [um];hit pairs" );
-
-    dy05HistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "dy05", 100, -5000, 5000 );
-    dy05HistGBLAlign->setTitle( "dy05;y_{5}-y_{0} [um];hit pairs" );
 
     tridxHistGBLAlign = AIDAProcessor::histogramFactory(this)->
       createHistogram1D( "tridx", 100, -1000, 1000 );
