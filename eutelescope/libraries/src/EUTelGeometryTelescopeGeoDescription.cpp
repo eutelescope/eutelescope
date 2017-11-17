@@ -153,7 +153,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 		auto ID = _siPlanesLayerLayout->getID(iPlane);
 
 		auto thisMat = EUTelMaterial(0, 0, 0);
-		thisMat._radLength = _siPlanesLayerLayout->getSensitiveRadLength(iPlane)/10; 
+		thisMat._radLength = _siPlanesLayerLayout->getSensitiveRadLength(iPlane); 
 		_materialMap.insert(std::make_pair(std::to_string(ID),thisMat));
 
 		auto thisLayer = std::make_unique<EUTelLayer>(ID);
