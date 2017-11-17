@@ -277,51 +277,50 @@ void EUTelAlignGBL::init() {
     _planeWscatAir.emplace_back( 1.0/(tetAir*tetAir), 1.0/(tetAir*tetAir) );
   }
 
-  streamlog_out(MESSAGE4) << "assumed beam energy " << _eBeam << " GeV" <<  endl;
-  streamlog_out(MESSAGE4)     << "Summary:\n\t_planeRadLength has size: \t" << _planeRadLength.size() 
+  streamlog_out(MESSAGE4)   << "assumed beam energy " << _eBeam << " GeV" <<  endl;
+  streamlog_out(MESSAGE4)   << "Summary:\n\t_planeRadLength has size: \t" << _planeRadLength.size() 
                             << "\n\t_planeWscatSi has size: \t" << _planeWscatSi.size() 
                             << "\n\t_planeWscatAir has size: \t" << _planeWscatAir.size() << '\n';
 
+  // The measurement resolution depends on threshold, energy, dz, and number of iterations done ...
+  // We make an accurate, heuristic  guess
+  double distplane = _planePosition[1] - _planePosition[0];
+  double res = 0;
+  if( distplane > 100. ) {
+   res = 100. - _eBeam*8;
+   if (_eBeam > 11) {
+       res = 8;
+   }
+  }
+  else if( distplane < 30. ) {
+   res = 20. - _eBeam*1.5; // if only tracks with prob(chi2,ndf) > 0.001 are passed to Mille
+  }
+  else if( distplane > 30. && distplane < 100. ) {
+   res = 50 - _eBeam*3.8; 
+   if (_eBeam > 10) {
+       res = 6.;
+   }
+  }
 
-   // The measurement resolution depends on threshold, energy, dz, and number of iterations done ...
-   // We make an accurate, heuristic  guess
-   double distplane = _planePosition[1] - _planePosition[0];
-   double res = 0;
-   if( distplane > 100. ) {
-    res = 100. - _eBeam*8;
-    if (_eBeam > 11) {
-        res = 8;
-    }
+  if(!_IsFirstAlignStep){
+   // 2nd iteration 20
+   if( distplane < 30. ) {
+       res = 4.4 - _eBeam*0.1;
    }
-   else if( distplane < 30. ) {
-    res = 20. - _eBeam*1.5; // if only tracks with prob(chi2,ndf) > 0.001 are passed to Mille
+   // 2nd iteration 150
+   else if( distplane > 100. ) {
+       res = 18 - _eBeam*1.5;
    }
-   else if( distplane > 30. && distplane < 100. ) {
-    res = 50 - _eBeam*3.8; 
-    if (_eBeam > 10) {
-        res = 6.;
-    }
-   }
+  }
 
-   if(!_IsFirstAlignStep){
-    // 2nd iteration 20
-    if( distplane < 30. ) {
-        res = 4.4 - _eBeam*0.1;
-    }
-    // 2nd iteration 150
-    else if( distplane > 100. ) {
-        res = 18 - _eBeam*1.5;
-    }
-   }
+  res = res/1000.; // finally convert to [mm]
+     
+  streamlog_out( MESSAGE2 ) << "res x = " << res << endl;
 
-   res = res/1000.; // finally convert to [mm]
-      
-   streamlog_out( MESSAGE2 ) << "res x = " << res << endl;
-
-   //For now we have the same x/y resolution and the same for telescope & DUT
-   for(size_t ipl = 0; ipl < _nPlanes; ipl++) {
-    _planeMeasPrec.emplace_back(1.0/res/res, 1.0/res/res); // precision = 1/resolution^2
-   }
+  //For now we have the same x/y resolution and the same for telescope & DUT
+  for(size_t ipl = 0; ipl < _nPlanes; ipl++) {
+   _planeMeasPrec.emplace_back(1.0/res/res, 1.0/res/res); // precision = 1/resolution^2
+  }
 
   // the user is giving sensor ids for the planes to be fixed.
   // These sensor ids have to be converted to a local index
@@ -344,13 +343,12 @@ void EUTelAlignGBL::init() {
   int counter = 0;
   for(auto& sensorID: _sensorIDVec) { 
     if(std::find(_excludePlanes_sensorIDs.begin(), _excludePlanes_sensorIDs.end(), sensorID) 
-                 == _excludePlanes_sensorIDs.end()) {
-        indexconverter.emplace_back(counter++);
+    == _excludePlanes_sensorIDs.end()) {
+      indexconverter.emplace_back(counter++);
     } else {
-        indexconverter.emplace_back(-1);
+      indexconverter.emplace_back(-1);
     }
   }
-
 #endif
 
   // this method is called only once even when the rewind is active
@@ -448,9 +446,9 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
     return;
   }
 
-
   CellIDDecoder<TrackerHit> hitCellDecoder(EUTELESCOPE::HITENCODING);
   std::vector<EUTelTripletGBLUtility::hit> _hitsVec;
+  std::vector<EUTelTripletGBLUtility::hit> _DUThitsVec;
 
   for( size_t i = 0; i < _hitCollectionName.size(); i++ ) {
     LCCollection* collection = nullptr;
@@ -472,7 +470,11 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
       auto hit = static_cast<TrackerHitImpl*>( collection->getElementAt(iHit) );
       auto sensorID = hitCellDecoder(hit)["sensorID"];
       auto hitPosition = hit->getPosition();
-      _hitsVec.emplace_back(hitPosition, sensorID);
+      if(sensorID <= 5) {
+        _hitsVec.emplace_back(hitPosition, sensorID);
+      } else {
+        _DUThitsVec.emplace_back(hitPosition, sensorID);
+      }
       if(_printEventCounter < NO_PRINT_EVENT_COUNTER) std::cout << "Hit on plane " << sensorID << " at " << hitPosition[0] << "|" << hitPosition[1]  << '\n';
     } // end loop over all hits in given collection
   }//loop over all input hit collection
@@ -508,7 +510,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
     ntriHistGBLAlign->fill( tripletVec.size()  );
     ndriHistGBLAlign->fill( dripletVec.size() );
 
-    double zMid = 0.5*(_planePosition[3] + _planePosition[2]);
+    double zMid = 0.5*(_planePosition[_nPlanes-3] + _planePosition[2]);
     auto matchedTripletVec = std::vector<EUTelTripletGBLUtility::track>();
     gblutil.MatchTriplets(tripletVec, dripletVec, zMid, _sixCut, matchedTripletVec);
 
@@ -516,10 +518,10 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
     for(auto& track: matchedTripletVec) {    
       //std::cout << "Dist 22:\n";
       auto& triplet = track.get_upstream();
-      auto has22 = gblutil.AttachDUT(triplet, _hitsVec, 22, 3 );    
+      auto has22 = gblutil.AttachDUT(triplet, _DUThitsVec, 22, 3 );    
       //std::cout << "Dist 21:\n";
       auto& driplet = track.get_downstream();
-      auto has21 = gblutil.AttachDUT(driplet, _hitsVec, 21, 3 );    
+      auto has21 = gblutil.AttachDUT(driplet, _DUThitsVec, 21, 3 );    
       if(_printEventCounter < NO_PRINT_EVENT_COUNTER){
          std::cout << "---pair--\n" << triplet << driplet << '\n';
         std::cout << "Expects hit on 22 at:\n";
@@ -532,13 +534,12 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
         trX = driplet.getx_at(zPos);
         trY = driplet.gety_at(zPos);
         std::cout << trX << "|" << trY << '\n';        
-        for(auto& hit: _hitsVec) {
+        for(auto& hit: _DUThitsVec) {
           if(hit.plane == 21 || hit.plane == 22) {
             std::cout << "Hit on " << hit.plane << " at: " << hit.x << "|" << hit.y << '\n';
           }
         }
       }
-      if(has22 && has21) _nMilleTracks++;// std::cout << "Found triplet with both DUTs matched" << std::endl;
     }
 
     for(auto& track: matchedTripletVec) {
@@ -553,8 +554,6 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
       double s = 0;
 
       Eigen::Matrix2d proL2m = Eigen::Matrix2d::Identity();
-
-      // scatter
       Eigen::Vector2d scat = Eigen::Vector2d::Zero(); //mean is zero
 
       auto triplet = track.get_upstream();
