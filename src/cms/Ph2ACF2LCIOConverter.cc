@@ -53,6 +53,10 @@ Ph2ACF2LCIOConverter::Ph2ACF2LCIOConverter ( ) : DataSourceProcessor ( "Ph2ACF2L
 
     registerProcessorParameter ( "MaxRecordNumber", "The maximum number of events to read", _maxRecordNumber, int ( -1 ) );
 
+    registerProcessorParameter ( "NumberOfChips", "The number of CBC chips on each front end", _nChips, int ( 2 ) );
+
+    registerProcessorParameter ( "NumberOfFrontends", "The number of front ends connected", _nFE, int ( 1 ) );
+
     registerProcessorParameter ( "RunNumber", "Formatted run number of file", _formattedRunNumber, string ( "0" ) );
 
     registerOutputCollection ( LCIO::TRACKERDATA, "BottomRawDataCollectionName", "Name of the collection for the bottom sensor", _rawDataCollectionNameBottom, string ( "rawdata2" ) );
@@ -72,11 +76,6 @@ void Ph2ACF2LCIOConverter::init ( )
 {
     printParameters ( );
 
-    // FIXME
-    // eventually this will be set from reading the file header...
-    _nFE = 1;
-    _nChips = 8;
-
 }
 
 
@@ -90,7 +89,7 @@ void Ph2ACF2LCIOConverter::readDataSource ( int /* numEvents */ )
     streamlog::logscope scope ( streamlog::out );
     scope.setLevel < streamlog::MESSAGE > ( );
 
-    streamlog_out ( MESSAGE4 ) << "Reading " << _fileName << " with Ph2ACF2LCIOConverter!" << endl;
+    streamlog_out ( DEBUG4 ) << "Reading " << _fileName << " with Ph2ACF2LCIOConverter!" << endl;
     _runNumber = atoi ( _formattedRunNumber.c_str ( ) );
 
     // open file
@@ -103,14 +102,14 @@ void Ph2ACF2LCIOConverter::readDataSource ( int /* numEvents */ )
     }
     else
     {
-	streamlog_out ( MESSAGE4 ) << "Input file " << _fileName << " successfully opened!" << endl;
+	streamlog_out ( DEBUG4 ) << "Input file " << _fileName << " successfully opened!" << endl;
 	if ( _dataformat == "raw" )
 	{
-	    streamlog_out ( MESSAGE4 ) << "Assuming the file is encoded in RAW file format!" << endl;
+	    streamlog_out ( DEBUG4 ) << "Assuming the file is encoded in RAW file format!" << endl;
 	}
 	else if ( _dataformat == "slink" )
 	{
-	    streamlog_out ( MESSAGE4 ) << "Assuming the file is encoded in SLINK file format!" << endl;
+	    streamlog_out ( DEBUG4 ) << "Assuming the file is encoded in SLINK file format!" << endl;
 	}
 	else
 	{
@@ -176,7 +175,7 @@ void Ph2ACF2LCIOConverter::readDataSource ( int /* numEvents */ )
 
 	if ( eventCounter % 1000 == 0 || eventCounter < 10 )
 	{
-	    streamlog_out ( MESSAGE4 ) << "Processing event " << eventCounter << " in run " << _runNumber << endl;
+	    streamlog_out ( DEBUG4 ) << "Processing event " << eventCounter << " in run " << _runNumber << endl;
 	}
 
 	if ( _dataformat == "raw" )
@@ -220,13 +219,13 @@ void Ph2ACF2LCIOConverter::readDataSource ( int /* numEvents */ )
 		    uint32_t fNCbc = headervec.at ( 8 );
 
 		    uint32_t fEventSize32 = headervec.at ( 10 );
-		    streamlog_out ( MESSAGE4 ) << "Board Type: " << fType << endl;
-		    streamlog_out ( MESSAGE4 ) << "FWMajor: " << fVersionMajor << endl;
-		    streamlog_out ( MESSAGE4 ) << "FWMinor: " << fVersionMinor << endl;
-		    streamlog_out ( MESSAGE4 ) << "BeId: " << fBeId << endl;
-		    streamlog_out ( MESSAGE4 ) << "NCbc: " << fNCbc << endl;
-		    streamlog_out ( MESSAGE4 ) << "EventSize32: " << fEventSize32 << endl;
-		    streamlog_out ( MESSAGE4 ) << "Valid header!" << endl;
+		    streamlog_out ( DEBUG4 ) << "Board Type: " << fType << endl;
+		    streamlog_out ( DEBUG4 ) << "FWMajor: " << fVersionMajor << endl;
+		    streamlog_out ( DEBUG4 ) << "FWMinor: " << fVersionMinor << endl;
+		    streamlog_out ( DEBUG4 ) << "BeId: " << fBeId << endl;
+		    streamlog_out ( DEBUG4 ) << "NCbc: " << fNCbc << endl;
+		    streamlog_out ( DEBUG4 ) << "EventSize32: " << fEventSize32 << endl;
+		    streamlog_out ( DEBUG4 ) << "Valid header!" << endl;
 		}
 		else
 		{
@@ -255,62 +254,62 @@ void Ph2ACF2LCIOConverter::readDataSource ( int /* numEvents */ )
 	    {
 		if ( i == 0 )
 		{
-		    streamlog_out ( DEBUG1 ) << "Part 0: " << vec_header1.at ( i ) << endl;
+		    streamlog_out ( DEBUG3 ) << "Part 0: " << vec_header1.at ( i ) << endl;
 
 		    header1_size = ( vec_header1.at ( i ) >> 24 );
-		    streamlog_out ( DEBUG1 ) << " header1_size " << header1_size << endl;
+		    streamlog_out ( DEBUG3 ) << " header1_size " << header1_size << endl;
 
 		    fe_nbr = ( vec_header1.at ( i ) >> 16 ) & 0xFF;
-		    streamlog_out ( DEBUG1 ) << " fe_nbr " << fe_nbr << endl;
+		    streamlog_out ( DEBUG3 ) << " fe_nbr " << fe_nbr << endl;
 
 		    block_size = ( ( ( vec_header1.at ( i ) >> 8 ) & 0xFF ) + ( ( vec_header1.at ( i ) ) & 0xFF ) );
-		    streamlog_out ( DEBUG1 ) << " block_size " << block_size << endl;
+		    streamlog_out ( DEBUG3 ) << " block_size " << block_size << endl;
 		}
 		if ( i == 1 )
 		{
-		    streamlog_out ( DEBUG1 ) << "Part 1: " << vec_header1.at ( i ) << endl;
+		    streamlog_out ( DEBUG3 ) << "Part 1: " << vec_header1.at ( i ) << endl;
 
 		    cic_id = ( vec_header1.at ( i ) >> 24 );
-		    streamlog_out ( DEBUG1 ) << " cic_id " << cic_id << endl;
+		    streamlog_out ( DEBUG3 ) << " cic_id " << cic_id << endl;
 
 		    chip_id = ( vec_header1.at ( i ) >> 16 ) & 0xFF;
-		    streamlog_out ( DEBUG1 ) << " chip_id " << chip_id << endl;
+		    streamlog_out ( DEBUG3 ) << " chip_id " << chip_id << endl;
 
 		    data_format_ver = ( vec_header1.at ( i ) >> 8 ) & 0xFF;
-		    streamlog_out ( DEBUG1 ) << " data_format_ver " << data_format_ver << endl;
+		    streamlog_out ( DEBUG3 ) << " data_format_ver " << data_format_ver << endl;
 
 		    dummy_size = ( vec_header1.at ( i ) ) & 0xFF;
-		    streamlog_out ( DEBUG1 ) << " dummy_size " << dummy_size << endl;
+		    streamlog_out ( DEBUG3 ) << " dummy_size " << dummy_size << endl;
 		}
 		if ( i == 2 )
 		{
-		    streamlog_out ( DEBUG1 ) << "Part 2: " << vec_header1.at ( i ) << endl;
+		    streamlog_out ( DEBUG3 ) << "Part 2: " << vec_header1.at ( i ) << endl;
 
 		    trigdata_size = ( vec_header1.at ( i ) >> 24 );
-		    streamlog_out ( DEBUG1 ) << " trigdata_size " << trigdata_size << endl;
+		    streamlog_out ( DEBUG3 ) << " trigdata_size " << trigdata_size << endl;
 
 		    event_nbr = ( ( ( vec_header1.at ( i ) >> 16 ) & 0xFF ) + ( ( vec_header1.at ( i ) >> 8 ) & 0xFF ) + ( ( vec_header1.at ( i ) ) & 0xFF ) );
-		    streamlog_out ( DEBUG1 ) << " event_nbr " << event_nbr << endl;
+		    streamlog_out ( DEBUG3 ) << " event_nbr " << event_nbr << endl;
 		}
 		if ( i == 3 )
 		{
-		    streamlog_out ( DEBUG1 ) << "Part 3: " << vec_header1.at ( i ) << endl;
+		    streamlog_out ( DEBUG3 ) << "Part 3: " << vec_header1.at ( i ) << endl;
 
 		    bx_cnt = ( vec_header1.at ( i ) );
-		    streamlog_out ( DEBUG1 ) << " bx_cnt " << bx_cnt << endl;
+		    streamlog_out ( DEBUG3 ) << " bx_cnt " << bx_cnt << endl;
 		}
 		if ( i == 4 )
 		{
-		    streamlog_out ( DEBUG1 ) << "Part 4: " << vec_header1.at ( i ) << endl;
+		    streamlog_out ( DEBUG3 ) << "Part 4: " << vec_header1.at ( i ) << endl;
 
 		    stubdata_size = ( vec_header1.at ( i ) >> 24 );
-		    streamlog_out ( DEBUG1 ) << " stubdata_size " << stubdata_size << endl;
+		    streamlog_out ( DEBUG3 ) << " stubdata_size " << stubdata_size << endl;
 
 		    tlu_trigger_id = ( ( ( vec_header1.at ( i ) >> 16 ) & 0xFF ) + ( ( vec_header1.at ( i ) >> 8 ) & 0xFF ) );
-		    streamlog_out ( DEBUG1 ) << " tlu_trigger_id " << tlu_trigger_id << endl;
+		    streamlog_out ( DEBUG3 ) << " tlu_trigger_id " << tlu_trigger_id << endl;
 
 		    tdc = ( vec_header1.at ( i ) ) & 0xFF;
-		    streamlog_out ( DEBUG1 ) << " tdc " << tdc << endl;
+		    streamlog_out ( DEBUG3 ) << " tdc " << tdc << endl;
 		}
 	    }
 
@@ -322,23 +321,23 @@ void Ph2ACF2LCIOConverter::readDataSource ( int /* numEvents */ )
 		uint32_t tempint;
 		infile.read ( reinterpret_cast < char * > ( &tempint ), sizeof ( uint32_t ) );
 		vec_header2.push_back ( tempint );
-		streamlog_out ( DEBUG1 ) << endl;
-		streamlog_out ( DEBUG1 ) << "CBC Header2, FE " << iFE << ":" << endl;
+		streamlog_out ( DEBUG2 ) << endl;
+		streamlog_out ( DEBUG2 ) << "CBC Header2, FE " << iFE << ":" << endl;
 		for ( unsigned int i = 0; i < vec_header2.size ( ); i++ )
 		{
 		    if ( i == 0 )
 		    {
 			chip_data_mask.push_back ( vec_header2.at ( i ) >> 24 );
-			streamlog_out ( DEBUG1 ) << " chip_data_mask " << chip_data_mask.at ( iFE ) << endl;
+			streamlog_out ( DEBUG2 ) << " chip_data_mask " << chip_data_mask.at ( iFE ) << endl;
 
 			header2_size.push_back ( ( vec_header2.at ( i ) >> 16 ) & 0xFF );
-			streamlog_out ( DEBUG1 ) << " header2_size " << header2_size.at ( iFE ) << endl;
+			streamlog_out ( DEBUG2 ) << " header2_size " << header2_size.at ( iFE ) << endl;
 
 			event_size.push_back ( ( ( vec_header2.at ( i ) >> 8 ) & 0xFF ) + ( ( vec_header2.at ( i ) ) & 0xFF ) );
-			streamlog_out ( DEBUG1 ) << " event_size " << event_size.at ( iFE ) << endl;
+			streamlog_out ( DEBUG2 ) << " event_size " << event_size.at ( iFE ) << endl;
 		    }
 		}
-		streamlog_out ( DEBUG1 ) << endl;
+		streamlog_out ( DEBUG2 ) << endl;
 
 		// chip loop
 		// push_back for the vectors...
@@ -442,7 +441,7 @@ void Ph2ACF2LCIOConverter::readDataSource ( int /* numEvents */ )
 		    }
 
 		    int counter = 0;
-		    streamlog_out ( DEBUG2 ) << "Top ";
+		    streamlog_out ( DEBUG0 ) << "Top ";
 		    for ( int i = 3; i >= 0; i-- )
 		    {
 			for ( int k = 0; k < 32; k++ )
@@ -450,15 +449,15 @@ void Ph2ACF2LCIOConverter::readDataSource ( int /* numEvents */ )
 			    counter++;
 			    if ( counter != 32 )
 			    {
-				streamlog_out ( DEBUG2 ) << topvec[i][k] ;
+				streamlog_out ( DEBUG0 ) << topvec[i][k] ;
 				// output to the vector
 				dataoutputvec_top.push_back ( topvec[i][k] );
 			    }
 			}
 		    }
-		    streamlog_out ( DEBUG2 ) << endl;
+		    streamlog_out ( DEBUG0 ) << endl;
 		    counter = 0;
-		    streamlog_out ( DEBUG2 ) << "Bot ";
+		    streamlog_out ( DEBUG0 ) << "Bot ";
 		    for ( int i = 3; i >= 0; i-- )
 		    {
 			for ( int k = 0; k < 32; k++ )
@@ -466,13 +465,13 @@ void Ph2ACF2LCIOConverter::readDataSource ( int /* numEvents */ )
 			    counter ++;
 			    if ( counter != 32 )
 			    {
-				streamlog_out ( DEBUG2 ) << botvec[i][k] ;
+				streamlog_out ( DEBUG0 ) << botvec[i][k] ;
 				// output to the vector
 				dataoutputvec_bot.push_back ( botvec[i][k] );
 			    }
 			}
 		    }
-		    streamlog_out ( DEBUG2 ) << endl;
+		    streamlog_out ( DEBUG0 ) << endl;
 
 		} // done chip loop
 

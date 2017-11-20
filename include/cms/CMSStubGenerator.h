@@ -66,7 +66,11 @@ namespace eutelescope
 
 	    int _outputSensorID;
 
+	    int _requirestubflag;
+
 	    int _runMode;
+
+	    int _totalstubs;
 
 	    TrackerHitImpl* cloneHit ( TrackerHitImpl *inputHit );
 

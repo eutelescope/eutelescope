@@ -1,3 +1,4 @@
+
 /*
  * Created by Thomas Eichhorn
  *  (2017 DESY)
@@ -24,6 +25,11 @@
 #include "marlin/Global.h"
 #include "marlin/AIDAProcessor.h"
 
+#include <marlin/AIDAProcessor.h>
+#include <AIDA/IHistogramFactory.h>
+#include <AIDA/IHistogram1D.h>
+#include <AIDA/IHistogram2D.h>
+
 // lcio includes <.h>
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerHitImpl.h>
@@ -45,6 +51,15 @@ using namespace marlin;
 using namespace gear;
 using namespace IMPL;
 using namespace eutelescope;
+
+AIDA::IHistogram1D * stubdistx;
+AIDA::IHistogram1D * stubdisty;
+AIDA::IHistogram1D * stubdistx_bit;
+AIDA::IHistogram1D * stubdisty_bit;
+AIDA::IHistogram1D * faildistx;
+AIDA::IHistogram1D * faildisty;
+AIDA::IHistogram2D * correx;
+AIDA::IHistogram2D * correy;
 
 
 CMSStubGenerator::CMSStubGenerator ( ) : Processor ( "CMSStubGenerator" )
@@ -68,6 +83,8 @@ CMSStubGenerator::CMSStubGenerator ( ) : Processor ( "CMSStubGenerator" )
 
     registerProcessorParameter ( "OutputSensorID", "SensorID of the output stub.", _outputSensorID, int ( 8 ) );
 
+    registerProcessorParameter ( "RequireStub", "Do we require an event to have the stub flag set to create an offline stub? 1 for on, 0 for off.", _requirestubflag, int ( 1 ) );
+
 }
 
 
@@ -77,6 +94,8 @@ void CMSStubGenerator::init ( )
     printParameters ( );
 
     bookHistos ( );
+
+    _totalstubs = 0;
 
 }
 
@@ -125,6 +144,11 @@ void CMSStubGenerator::processEvent ( LCEvent * event )
     {
 	outputHitCollection = new LCCollectionVec ( LCIO::TRACKERHIT );
     }
+
+    // the stub flags in the data stream
+    std::string stub3 = evt -> getParameters ( ) .getStringVal ( "stub_pos_00_03_0" );
+    std::string stub2 = evt -> getParameters ( ) .getStringVal ( "stub_pos_00_02_0" );
+    std::string stub1 = evt -> getParameters ( ) .getStringVal ( "stub_pos_00_01_0" );
 
     // prepare an encoder for the hit collection
     CellIDEncoder < TrackerHitImpl > outputCellIDEncoder ( EUTELESCOPE::HITENCODING, outputHitCollection );
@@ -215,6 +239,9 @@ void CMSStubGenerator::processEvent ( LCEvent * event )
 		}
 		streamlog_out ( DEBUG0 ) << " x1 " << x1 << " y1 " << y1 << " q1 " << q1 << " x2 " << x2 << " y2 " << y2 << " q2 " << q2 << " evt " << evt -> getRunNumber ( ) << endl;
 
+		correx -> fill ( x1, x2 );
+		correy -> fill ( y1, y2 );
+
 		float dx = -1.0;
 		float dy = -1.0;
 		dx = fabs ( x1 - x2 );
@@ -246,8 +273,39 @@ void CMSStubGenerator::processEvent ( LCEvent * event )
 		    idHitEncoder["sensorID"] =  _outputSensorID ;
 		    idHitEncoder["properties"] = 0;
 
-		    idHitEncoder.setCellID( hit );
-		    outputHitCollection->push_back( hit );
+		    idHitEncoder.setCellID ( hit );
+
+		    stubdistx -> fill ( x1 - x2 );
+		    stubdisty -> fill ( y1 - y2 );
+
+		    bool bitpresent = false;
+		    bool writeoutput = true;
+
+		    if ( stub1 == "1" || stub2 == "1" || stub3 == "1" )
+		    {
+			stubdistx_bit -> fill ( x1 - x2 );
+			stubdisty_bit -> fill ( y1 - y2 );
+
+			bitpresent = true;
+	
+		    }
+
+		    if ( _requirestubflag == 1 && bitpresent == false )
+		    {
+			writeoutput = false;
+		    }
+
+		    if ( writeoutput == true )
+		    {
+			outputHitCollection -> push_back ( hit );
+			_totalstubs++;
+		    }
+
+		}
+		else
+		{
+		    faildistx -> fill ( x1 - x2 );
+		    faildisty -> fill ( y1 - y2 );
 		}
 	    }
 	}
@@ -261,6 +319,7 @@ void CMSStubGenerator::processEvent ( LCEvent * event )
     {
 	event -> addCollection ( outputHitCollection, _outputHitCollectionName );
     }
+
 }
 
 
@@ -305,9 +364,42 @@ TrackerHitImpl* CMSStubGenerator::cloneHit ( TrackerHitImpl *inputHit )
 void CMSStubGenerator::end ( )
 {
 
+    streamlog_out ( MESSAGE4 ) << "Created " << _totalstubs << " stubs!" << endl;
+
 }
 
 void CMSStubGenerator::bookHistos( )
 {
+    try
+    {
+	streamlog_out ( MESSAGE2 ) << "Booking histograms..." << endl;
+	
+	stubdistx = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "Stub Distance in x", 101, -50, 50 );
+	stubdistx -> setTitle ( "Stub Distance in x;x_{0} - x_{1} [channels];Entries" );
 
+	stubdisty = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "Stub Distance in y", 101, -50, 50 );
+	stubdisty -> setTitle ( "Stub Distance in y;y_{0} - y_{1} [channels];Entries" );
+
+	stubdistx_bit = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "Stub Distance in x, bit required", 101, -50, 50 );
+	stubdistx_bit -> setTitle ( "Stub Distance in x, bit required;x_{0} - x_{1} [channels];Entries" );
+
+	stubdisty_bit = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "Stub Distance in y, bit required", 101, -50, 50 );
+	stubdisty_bit -> setTitle ( "Stub Distance in y, bit required;y_{0} - y_{1} [channels];Entries" );
+
+	faildistx = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "Fail Distance in x", 1000, -500, 500 );
+	faildistx -> setTitle ( "Fail Distance in x;x_{0} - x_{1} [channels];Entries" );
+
+	faildisty = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "Fail Distance in y", 1000, -500, 500 );
+	faildisty -> setTitle ( "Fail Distance in y;y_{0} - y_{1} [channels];Entries" );
+
+	correx = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "Cluster correlation in x", 1016, 0, 1015, 1016, 0, 1015 );
+	correx -> setTitle ( "Cluster correlation in x;x_{0} [Channel];x_{1} [Channel]" );
+
+	correy = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "Cluster correlation in y", 1016, 0, 1015, 1016, 0, 1015 );
+	correy -> setTitle ( "Cluster correlation in y;y_{0} [Channel];y_{1} [Channel]" );
+    }
+    catch ( ... )
+    {
+
+    }
 }

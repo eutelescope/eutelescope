@@ -82,9 +82,13 @@ _aidaHistoMap ( )
 
     registerProcessorParameter ( "CBCPulseOutputCollectionName", "The name of the CBC pulse collection we want to write", _cbcPulseOutputCollectionName, string ( "cbc_pulse_output" ) );
 
+    registerProcessorParameter ( "ChannelCount", "The total number of channels in the sensor", _chancount, int ( 1016 ) );
+
     registerProcessorParameter ( "NonSensitiveAxis", "The unsensitive axis of the CBC", _nonsensitiveaxis, string ( "x" ) );
 
     registerProcessorParameter ( "OutputSensorID", "The sensor id to write", _outputSensorID, int ( 6 ) );
+
+    registerProcessorParameter ( "ZSMode", "Zero Suppression Mode? 0 for off, 1 for first, 2 for second sensor", _zsmode, int ( 0 ) );
 
 }
 
@@ -167,15 +171,96 @@ void CBCClustering::processEvent ( LCEvent * anEvent )
 		    FloatVec datavec;
 		    datavec = trkdata -> getChargeValues ( );
 
+		    if ( _zsmode != 0 && ( _zsmode != ( i + 1 ) ) )
+		    {
+			size_t temp = datavec.size ( );
+			datavec.assign ( temp, 0 );
+		    }
+
+		    int nClusters = 0;
+
+		    FloatVec outputvec;
+
+		    // highly inefficient way...
+		    if ( _zsmode == ( i + 1 ) )
+		    {
+
+			FloatVec pixel_x;
+			FloatVec pixel_y;
+			FloatVec pixel_charge;
+			FloatVec pixel_time;
+
+			if ( datavec.size ( ) > 0 )
+			{
+			    // data is x,y,q,t
+			    for ( size_t ix = 0; ix <= ( datavec.size ( ) - 4 ); ix = ix + 4 )
+			    {
+				streamlog_out ( DEBUG1 ) << "chan x " << datavec[ix] << endl;
+				streamlog_out ( DEBUG1 ) << "chan y " << datavec[ix+1] << endl;
+				streamlog_out ( DEBUG1 ) << "chan q " << datavec[ix+2] << endl;
+				streamlog_out ( DEBUG1 ) << "chan t " << datavec[ix+3] << endl;
+				pixel_x.push_back ( datavec[ix] );
+				pixel_y.push_back ( datavec[ix+1] );
+				pixel_charge.push_back ( datavec[ix+2] );
+				pixel_time.push_back ( datavec[ix+3] );
+			    }
+			}
+
+			// fill the channels with a signal if it's there...
+			int point = 0;
+
+			for ( int j = 0; j < _chancount; j++ )
+			{
+
+			    double background = 0.0;
+
+			    // add the charge, if any
+			    if ( _nonsensitiveaxis == "x" )
+			    {
+				if ( pixel_y.size ( ) > 0 )
+				{
+				    if ( pixel_y[point] == ( j ) )
+				    {
+					double signal = 0.0;
+					signal = pixel_charge[point];
+					background += signal;
+					point++;
+					streamlog_out ( DEBUG2 ) << "Output chanel "<< j << " signal is " << signal << endl;
+				    }
+				}
+			    }
+			    if ( _nonsensitiveaxis == "y" )
+			    {
+				if ( pixel_x.size ( ) > 0 )
+				{
+				    if ( pixel_x[point] == ( j ) )
+				    {
+					double signal = 0.0;
+					signal = pixel_charge[point];
+					background += signal;
+					point++;
+					streamlog_out ( DEBUG2 ) << "Output chanel "<< j << " signal is " << signal << endl;
+				    }
+				}
+			    }
+			    // push back this channel
+			    outputvec.push_back(background);
+			    streamlog_out ( DEBUG3 ) << "Output chanel "<< j << " final signal is " << background << endl;
+			}
+
+			datavec = outputvec;
+
+		    }
+
 		    std::vector < int > clusterNumber;
 		    clusterNumber.assign ( datavec.size ( ), 0 );
-		    int nClusters = 0;
-	
+
 		    for ( size_t ichan = 0; ichan < datavec.size ( ); ichan++ )
 		    {
 			int cluleft = 0;
 			int cluright = 0;
 			int clusize = 0;
+
 			if ( datavec[ichan] * 1.0 > 0 )
 			{
 			    streamlog_out ( DEBUG0 ) << "Chan " << ichan << " over threshold" << endl;

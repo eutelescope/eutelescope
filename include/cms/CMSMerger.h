@@ -73,6 +73,8 @@ namespace eutelescope
 	    long _cbceventtime;
 	    long _telescopeeventtime;
 
+	    int _eventdifferenceTelescope;
+	    int _eventdifferenceCBC;
 	    int _readcount;
 	    int _maxevents;
 	    int _multiplicity;
