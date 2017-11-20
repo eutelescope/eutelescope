@@ -56,6 +56,10 @@ namespace eutelescope
 
 	    int _chancount;
 
+	    int _maxclusters;
+
+	    int _maxclustersize;
+
 	    int _outputSensorID;
 
 	    int _zsmode;
