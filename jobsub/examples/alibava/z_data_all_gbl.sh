@@ -1,9 +1,9 @@
 #!/bin/bash
-INPUT=runlists/n.csv
+INPUT=runlist.csv
 MAXJOBS=10
 jobcount=0
 T="$(date "+%d/%m/%y %T")"
-touch logoutput_data_gbl_n.txt
+touch logoutput_data_gbl.txt
 echo "Starting script at $T !" > logoutput_data_gbl.txt
 
 OLDIFS=$IFS

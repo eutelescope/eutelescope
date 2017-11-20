@@ -1314,7 +1314,10 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
     streamlog_out ( DEBUG1 ) << "Hits per plane: ";
     for ( size_t i = 0; i < _hitsArray.size ( ); i++ )
     {
-	streamlog_out ( DEBUG1 ) << i << ": " << _hitsArray[i].size ( ) << " ";
+	if ( _hitsArray[i].size ( ) > 0 )
+	{
+	    streamlog_out ( DEBUG1 ) << i << ": " << _hitsArray[i].size ( ) << " ";
+	}
     }
     streamlog_out ( DEBUG1 ) << endl;
 
@@ -5194,7 +5197,7 @@ void EUTelMilleGBL::bookHistos ( )
 	    dy36Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "InputHits/dy36", 100, -5000, 5000 );
 	    dy36Hist -> setTitle ( "Hit Shift DUT - Plane 3 in y;y_{6}-y_{3} [um];hit pairs" );
 
-	    if ( _useREF == true )
+	    if ( _useREF > 0 )
 	    {
 
 		dx37Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "InputHits/dx37", 100, -5000, 5000 );

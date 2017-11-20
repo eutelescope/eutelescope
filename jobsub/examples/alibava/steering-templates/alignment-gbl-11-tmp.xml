@@ -790,7 +790,7 @@
   <!--DUT resolution in y [um].-->
   <parameter name="DUTResY" type="double" value="15"/>
   <!--Do an additional DUT alignment after track search? 1 = DUT alignment in alpha, 2 = DUT alignment in beta, 3 = DUT alignment in gamma with unsensitive x-axis, 4 = DUT alignment in gamma with unsensitive y-axis, 0 = no additional alignment.-->
-  <parameter name="DoDUTAlignment" type="int" value="2"/>
+  <parameter name="DoDUTAlignment" type="int" value="1"/>
   <!--Use this processor to do Prealignment? In this case, no tracking is performed. 1 = yes, 0 = no, 2 = yes, with zero Prealignment, aka output an alignment file with zeros to preserve file structure.-->
   <!--parameter name="DoPreAlignment" type="int" value="0"/-->
   <!--Beam energy in GeV.-->
