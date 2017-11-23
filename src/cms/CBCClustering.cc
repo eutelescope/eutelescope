@@ -84,6 +84,10 @@ _aidaHistoMap ( )
 
     registerProcessorParameter ( "ChannelCount", "The total number of channels in the sensor", _chancount, int ( 1016 ) );
 
+    registerProcessorParameter ( "MaxClusterCountPerEvent", "The maximum allowed number of clusters in an event, events with more clusters will be discarded", _maxclusters, int ( 4 ) );
+
+    registerProcessorParameter ( "MaxClusterSize", "The maximum allowed cluster size, larger clusters will be discarded as noise", _maxclustersize, int ( 4 ) );
+
     registerProcessorParameter ( "NonSensitiveAxis", "The unsensitive axis of the CBC", _nonsensitiveaxis, string ( "x" ) );
 
     registerProcessorParameter ( "OutputSensorID", "The sensor id to write", _outputSensorID, int ( 6 ) );
@@ -245,7 +249,10 @@ void CBCClustering::processEvent ( LCEvent * anEvent )
 			    }
 			    // push back this channel
 			    outputvec.push_back(background);
-			    streamlog_out ( DEBUG3 ) << "Output chanel "<< j << " final signal is " << background << endl;
+			    if ( background > 0.0 )
+			    {
+				streamlog_out ( DEBUG3 ) << "Output chanel "<< j << " final signal is " << background << endl;
+			    }
 			}
 
 			datavec = outputvec;
@@ -277,10 +284,18 @@ void CBCClustering::processEvent ( LCEvent * anEvent )
 				    ichan++;
 				    if ( datavec[ichan] > 0 )
 				    {
-					cluright = ichan;
-					clusize++;
-					dynamic_cast < AIDA::IHistogram1D* > ( _aidaHistoMap["Hitmap_" + to_string ( _outputSensorID ) ] ) -> fill ( ichan );
-					streamlog_out ( DEBUG1 ) << "Chan " << ichan << " added to cluster, size now " << clusize << endl;
+					if ( clusize < _maxclustersize )
+					{
+					    cluright = ichan;
+					    clusize++;
+					    dynamic_cast < AIDA::IHistogram1D* > ( _aidaHistoMap["Hitmap_" + to_string ( _outputSensorID ) ] ) -> fill ( ichan );
+					    streamlog_out ( DEBUG1 ) << "Chan " << ichan << " added to cluster, size now " << clusize << endl;
+					}
+					else
+					{
+					    streamlog_out ( DEBUG4 ) << "Cluster size larger than allowed max cluster size of " << _maxclustersize << "! Discarding cluster in event " << anEvent -> getEventNumber ( ) << "!" << endl;
+					    search = false;
+					}
 				    }
 				    else
 				    {
@@ -297,6 +312,12 @@ void CBCClustering::processEvent ( LCEvent * anEvent )
 				clusterNumber.at ( k ) = nClusters;
 			    }
 			}
+		    }
+
+		    if ( nClusters > _maxclusters )
+		    {
+			clusterNumber.assign ( datavec.size ( ), 0 );
+			streamlog_out ( DEBUG4 ) << "Found " << nClusters << " clusters in event " << anEvent -> getEventNumber ( ) << "! Discarding all of them!" << endl;
 		    }
 
 		    // now output the clusters we have found
