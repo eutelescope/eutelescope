@@ -16,6 +16,7 @@
 #include <AIDA/ITree.h>
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/IHistogram1D.h>
+#include <AIDA/IHistogram2D.h>
 #endif
 
 // lcio includes <.h>
@@ -64,14 +65,14 @@ using namespace eutelescope;
 
 
 AIDA::IHistogram1D * multiplicityhisto;
+AIDA::IHistogram2D * mergecorrelation_x;
+AIDA::IHistogram2D * mergecorrelation_y;
 
 
 CMSMerger::CMSMerger ( ) : Processor ( "CMSMerger" )
 {
 
-    _description = "CMSMerger merges the CBC data stream with the telescope data stream, based on TLU time stamps.";
-
-    registerProcessorParameter ( "TelescopeFile", "The filename where the telescope data is stored", _telescopeFile, string ( "dummy_telescope.slcio" ) );
+    _description = "CMSMerger merges the CBC data stream with the telescope data stream, based on events or TLU time stamps.";
 
     registerProcessorParameter ( "CBCDataCollectionName1", "The name of the CBC data collection we want to merge - sensor 1", _cbcDataCollectionName1, string ( "cbc_collection1d" ) );
 
@@ -81,15 +82,25 @@ CMSMerger::CMSMerger ( ) : Processor ( "CMSMerger" )
 
     registerProcessorParameter ( "CBCPulseCollectionName2", "The name of the CBC pulse collection we want to merge - sensor 2", _cbcPulseCollectionName2, string ( "cbc_collection2p" ) );
 
-    registerProcessorParameter ( "TelescopeCollectionName", "The name of the telescope collection we want to merge", _telescopeCollectionName, string ( "telescope_collection1" ) );
+    registerProcessorParameter ( "CorrelationPlane", "The sensorID of the telescope plane to use for correlation plots", _correlationPlaneID, int ( 2 ) );
 
-    registerProcessorParameter ( "TelescopeCollectionName2", "The name of the secondary telescope collection we want to merge", _telescopeCollectionName2, string ( "telescope_collection2" ) );
+    registerProcessorParameter ( "EventMerge", "Merge events based on event number (true) or on event time (false)", _eventmerge, bool ( true ) );
 
     registerProcessorParameter ( "OutputCollectionName", "The name of the output collection we want to create", _outputCollectionName, string ( "output_collection1" ) );
 
     registerProcessorParameter ( "OutputCollectionName2", "The name of the secondary output collection we want to create", _outputCollectionName2, string ( "output_collection2" ) );
 
     registerProcessorParameter ( "OutputCollectionName3", "The name of the tertiary output collection we want to create", _outputCollectionName3, string ( "output_collection3" ) );
+
+    registerProcessorParameter ( "ReadCBCAhead", "Read this number of CBC events before reading the first telescope event", _eventdifferenceCBC, int ( 0 ) );
+
+    registerProcessorParameter ( "ReadTelescopeAhead", "Read this number of telescope events before reading the first CBC event", _eventdifferenceTelescope, int ( 0 ) );
+
+    registerProcessorParameter ( "TelescopeCollectionName", "The name of the telescope collection we want to merge", _telescopeCollectionName, string ( "telescope_collection1" ) );
+
+    registerProcessorParameter ( "TelescopeCollectionName2", "The name of the secondary telescope collection we want to merge", _telescopeCollectionName2, string ( "telescope_collection2" ) );
+
+    registerProcessorParameter ( "TelescopeFile", "The filename where the telescope data is stored", _telescopeFile, string ( "dummy_telescope.slcio" ) );
 
 }
 
@@ -104,6 +115,15 @@ void CMSMerger::init ( )
     _telescopeeventtime = -2;
     _maxevents = 2;
     _readcount = 0;
+
+
+    for ( int i = 0; i < _eventdifferenceTelescope; i++ )
+    {
+	LCEvent *evt = readTelescope ( );
+	streamlog_out ( MESSAGE4 ) << "Skipped " << i + 1 << " telescope events!" << endl;
+	streamlog_out ( MESSAGE4 ) << "Event skipped was " << evt -> getEventNumber ( ) << endl;
+    }
+
 }
 
 
@@ -194,167 +214,197 @@ void CMSMerger::processEvent ( LCEvent * anEvent )
     int telescopesize2 = 0;
     int telescopesize3 = 0;
 
-    try
+    std::vector < double > cbc_corr;
+    std::vector < double > tele_corr_x;
+    std::vector < double > tele_corr_y;
+
+    if ( _eventdifferenceCBC == 0 )
     {
 
-	_cbceventtime = anEvent -> getTimeStamp ( );
-	streamlog_out ( DEBUG4 ) << "CBC time is " << _cbceventtime << endl;
-	
-	cbcDataCollectionVec1 = dynamic_cast < LCCollectionVec * > ( anEvent -> getCollection ( _cbcDataCollectionName1 ) );
-	cbcsize1d = cbcDataCollectionVec1 -> getNumberOfElements ( );
-	streamlog_out ( DEBUG1 ) << cbcsize1d << " Elements in cbc event!" << endl;
-
-	// and the secondary collections
-	cbcPulseCollectionVec1 = dynamic_cast < LCCollectionVec * > ( anEvent -> getCollection ( _cbcPulseCollectionName1 ) );
-	cbcsize1p = cbcPulseCollectionVec1 -> getNumberOfElements ( );
-	streamlog_out ( DEBUG1 ) << cbcsize1p << " Elements in cbc event - collection 2!" << endl;
-
-	CellIDDecoder < TrackerDataImpl > inputSparseColDecoder ( cbcDataCollectionVec1 );
-	CellIDDecoder < TrackerPulseImpl > inputPulseColDecoder ( cbcPulseCollectionVec1 );
-
-	// Cell ID Encoders for the telescope, introduced in eutelescope::EUTELESCOPE
-	// for sparseFrame (usually called cluster collection)
-	CellIDEncoder < TrackerDataImpl > outputSparseColEncoder ( eutelescope::EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, outputVec1 );
-	// for pulseFrame
-	CellIDEncoder < TrackerPulseImpl > outputPulseColEncoder ( eutelescope::EUTELESCOPE::PULSEDEFAULTENCODING, outputVec2 );
-
-	unsigned int nCBCClusters;
-	// go through input clusters and copy them to output cluster collection
-
-	nCBCClusters = cbcPulseCollectionVec1 -> getNumberOfElements ( );
-	for ( size_t i = 0; i < nCBCClusters; ++i )
+	try
 	{
-	    TrackerPulseImpl * outputPulseFrame = new TrackerPulseImpl ( );
-	    TrackerDataImpl * outputSparseFrame = new TrackerDataImpl ( );
 
-	    TrackerPulseImpl* inputPulseFrame = dynamic_cast < TrackerPulseImpl* > ( cbcPulseCollectionVec1 -> getElementAt ( i ) );
-	    TrackerDataImpl* inputSparseFrame = dynamic_cast < TrackerDataImpl* > ( inputPulseFrame -> getTrackerData ( ) );
+	    _cbceventtime = anEvent -> getTimeStamp ( );
+	    streamlog_out ( DEBUG4 ) << "CBC time is " << _cbceventtime << endl;
 
-	    // set Cell ID for sparse collection
-	    outputSparseColEncoder["sensorID"] = static_cast < int > ( inputSparseColDecoder ( inputSparseFrame ) ["sensorID"] );
-	    outputSparseColEncoder["sparsePixelType"] = static_cast < int > ( inputSparseColDecoder ( inputSparseFrame ) ["sparsePixelType"] );
-	    outputSparseColEncoder["quality"] = static_cast < int > ( inputSparseColDecoder ( inputSparseFrame ) ["quality"] );
-	    outputSparseColEncoder.setCellID ( outputSparseFrame );
+	    cbcDataCollectionVec1 = dynamic_cast < LCCollectionVec * > ( anEvent -> getCollection ( _cbcDataCollectionName1 ) );
+	    cbcsize1d = cbcDataCollectionVec1 -> getNumberOfElements ( );
+	    streamlog_out ( DEBUG1 ) << cbcsize1d << " Elements in cbc event!" << endl;
 
-	    // copy tracker data
-	    outputSparseFrame -> setChargeValues ( inputSparseFrame -> getChargeValues ( ) );
-	    // add it to the cluster collection
-	    outputVec1 -> push_back ( outputSparseFrame );
+	    // and the secondary collections
+	    cbcPulseCollectionVec1 = dynamic_cast < LCCollectionVec * > ( anEvent -> getCollection ( _cbcPulseCollectionName1 ) );
+	    cbcsize1p = cbcPulseCollectionVec1 -> getNumberOfElements ( );
+	    streamlog_out ( DEBUG1 ) << cbcsize1p << " Elements in cbc event - collection 2!" << endl;
 
-	    // prepare a pulse for this cluster
-	    outputPulseColEncoder["sensorID"] = static_cast < int > ( inputPulseColDecoder ( inputPulseFrame ) ["sensorID"] );
-	    outputPulseColEncoder["type"] = static_cast < int > ( inputPulseColDecoder ( inputPulseFrame ) ["type"] );
-	    outputPulseColEncoder.setCellID ( outputPulseFrame );
+	    CellIDDecoder < TrackerDataImpl > inputSparseColDecoder ( cbcDataCollectionVec1 );
+	    CellIDDecoder < TrackerPulseImpl > inputPulseColDecoder ( cbcPulseCollectionVec1 );
 
-	    outputPulseFrame -> setCharge ( inputPulseFrame -> getCharge ( ) );
-	    outputPulseFrame -> setTrackerData ( outputSparseFrame );
-	    outputVec2 -> push_back ( outputPulseFrame );
+	    // Cell ID Encoders for the telescope, introduced in eutelescope::EUTELESCOPE
+	    // for sparseFrame (usually called cluster collection)
+	    CellIDEncoder < TrackerDataImpl > outputSparseColEncoder ( eutelescope::EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, outputVec1 );
+	    // for pulseFrame
+	    CellIDEncoder < TrackerPulseImpl > outputPulseColEncoder ( eutelescope::EUTELESCOPE::PULSEDEFAULTENCODING, outputVec2 );
 
+	    unsigned int nCBCClusters;
+	    // go through input clusters and copy them to output cluster collection
+
+	    nCBCClusters = cbcPulseCollectionVec1 -> getNumberOfElements ( );
+	    for ( size_t i = 0; i < nCBCClusters; ++i )
+	    {
+		TrackerPulseImpl * outputPulseFrame = new TrackerPulseImpl ( );
+		TrackerDataImpl * outputSparseFrame = new TrackerDataImpl ( );
+
+		TrackerPulseImpl* inputPulseFrame = dynamic_cast < TrackerPulseImpl* > ( cbcPulseCollectionVec1 -> getElementAt ( i ) );
+		TrackerDataImpl* inputSparseFrame = dynamic_cast < TrackerDataImpl* > ( inputPulseFrame -> getTrackerData ( ) );
+
+		// set Cell ID for sparse collection
+		outputSparseColEncoder["sensorID"] = static_cast < int > ( inputSparseColDecoder ( inputSparseFrame ) ["sensorID"] );
+		outputSparseColEncoder["sparsePixelType"] = static_cast < int > ( inputSparseColDecoder ( inputSparseFrame ) ["sparsePixelType"] );
+		outputSparseColEncoder["quality"] = static_cast < int > ( inputSparseColDecoder ( inputSparseFrame ) ["quality"] );
+		outputSparseColEncoder.setCellID ( outputSparseFrame );
+
+		// copy tracker data
+		outputSparseFrame -> setChargeValues ( inputSparseFrame -> getChargeValues ( ) );
+		// add it to the cluster collection
+		outputVec1 -> push_back ( outputSparseFrame );
+
+		// prepare a pulse for this cluster
+		outputPulseColEncoder["sensorID"] = static_cast < int > ( inputPulseColDecoder ( inputPulseFrame ) ["sensorID"] );
+		outputPulseColEncoder["type"] = static_cast < int > ( inputPulseColDecoder ( inputPulseFrame ) ["type"] );
+		outputPulseColEncoder.setCellID ( outputPulseFrame );
+
+		outputPulseFrame -> setCharge ( inputPulseFrame -> getCharge ( ) );
+		outputPulseFrame -> setTrackerData ( outputSparseFrame );
+		outputVec2 -> push_back ( outputPulseFrame );
+
+		cbc_corr.push_back ( inputPulseColDecoder ( inputPulseFrame ) ["xSeed"] );
+
+	    }
+
+	}
+	catch ( lcio::DataNotAvailableException )
+	{
+	    streamlog_out ( DEBUG4 ) << "Collection " << _cbcDataCollectionName1 << " not found in event " << anEvent -> getEventNumber ( ) << endl;
+	}
+
+	try
+	{
+
+	    cbcDataCollectionVec2 = dynamic_cast < LCCollectionVec * > ( anEvent -> getCollection ( _cbcDataCollectionName2 ) );
+	    cbcsize2d = cbcDataCollectionVec2 -> getNumberOfElements ( );
+	    streamlog_out ( DEBUG1 ) << cbcsize2d << " Elements in cbc event!" << endl;
+
+	    // and the secondary collections
+	    cbcPulseCollectionVec2 = dynamic_cast < LCCollectionVec * > ( anEvent -> getCollection ( _cbcPulseCollectionName2 ) );
+	    cbcsize2p = cbcPulseCollectionVec2 -> getNumberOfElements ( );
+	    streamlog_out ( DEBUG1 ) << cbcsize2p << " Elements in cbc event - collection 2!" << endl;
+
+	    CellIDDecoder < TrackerDataImpl > inputSparseColDecoder ( cbcDataCollectionVec2 );
+	    CellIDDecoder < TrackerPulseImpl > inputPulseColDecoder ( cbcPulseCollectionVec2 );
+
+	    // Cell ID Encoders for the telescope, introduced in eutelescope::EUTELESCOPE
+	    // for sparseFrame (usually called cluster collection)
+	    CellIDEncoder < TrackerDataImpl > outputSparseColEncoder ( eutelescope::EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, outputVec1 );
+	    // for pulseFrame
+	    CellIDEncoder < TrackerPulseImpl > outputPulseColEncoder ( eutelescope::EUTELESCOPE::PULSEDEFAULTENCODING, outputVec2 );
+
+	    unsigned int nCBCClusters;
+	    // go through input clusters and copy them to output cluster collection
+
+	    nCBCClusters = cbcPulseCollectionVec2 -> getNumberOfElements ( );
+	    for ( size_t i = 0; i < nCBCClusters; ++i )
+	    {
+		TrackerPulseImpl * outputPulseFrame = new TrackerPulseImpl ( );
+		TrackerDataImpl * outputSparseFrame = new TrackerDataImpl ( );
+
+		TrackerPulseImpl* inputPulseFrame = dynamic_cast < TrackerPulseImpl* > ( cbcPulseCollectionVec2 -> getElementAt ( i ) );
+		TrackerDataImpl* inputSparseFrame = dynamic_cast < TrackerDataImpl* > ( inputPulseFrame -> getTrackerData ( ) );
+
+		// set Cell ID for sparse collection
+		outputSparseColEncoder["sensorID"] = static_cast < int > ( inputSparseColDecoder ( inputSparseFrame ) ["sensorID"] );
+		outputSparseColEncoder["sparsePixelType"] = static_cast < int > ( inputSparseColDecoder ( inputSparseFrame ) ["sparsePixelType"] );
+		outputSparseColEncoder["quality"] = static_cast < int > ( inputSparseColDecoder ( inputSparseFrame ) ["quality"] );
+		outputSparseColEncoder.setCellID ( outputSparseFrame );
+
+		// copy tracker data
+		outputSparseFrame -> setChargeValues ( inputSparseFrame -> getChargeValues ( ) );
+		// add it to the cluster collection
+		outputVec1 -> push_back ( outputSparseFrame );
+
+		// prepare a pulse for this cluster
+		outputPulseColEncoder["sensorID"] = static_cast < int > ( inputPulseColDecoder ( inputPulseFrame ) ["sensorID"] );
+		outputPulseColEncoder["type"] = static_cast < int > ( inputPulseColDecoder ( inputPulseFrame ) ["type"] );
+		outputPulseColEncoder.setCellID ( outputPulseFrame );
+
+		outputPulseFrame -> setCharge ( inputPulseFrame -> getCharge ( ) );
+		outputPulseFrame -> setTrackerData ( outputSparseFrame );
+		outputVec2 -> push_back ( outputPulseFrame );
+
+	    }
+
+	}
+	catch ( lcio::DataNotAvailableException )
+	{
+	    streamlog_out ( DEBUG4 ) << "Collection " << _cbcDataCollectionName2 << " not found in event " << anEvent -> getEventNumber ( ) << endl;
 	}
 
     }
-    catch ( lcio::DataNotAvailableException )
+
+    if ( _eventdifferenceCBC > 0 )
     {
-	streamlog_out ( DEBUG4 ) << "Collection " << _cbcDataCollectionName1 << " not found in event " << anEvent -> getEventNumber ( ) << endl;
+	_eventdifferenceCBC--;
+	streamlog_out ( MESSAGE4 ) << "Skipping a CBC event!" << endl;
     }
 
     try
     {
 
-	cbcDataCollectionVec2 = dynamic_cast < LCCollectionVec * > ( anEvent -> getCollection ( _cbcDataCollectionName2 ) );
-	cbcsize2d = cbcDataCollectionVec2 -> getNumberOfElements ( );
-	streamlog_out ( DEBUG1 ) << cbcsize2d << " Elements in cbc event!" << endl;
-
-	// and the secondary collections
-	cbcPulseCollectionVec2 = dynamic_cast < LCCollectionVec * > ( anEvent -> getCollection ( _cbcPulseCollectionName2 ) );
-	cbcsize2p = cbcPulseCollectionVec2 -> getNumberOfElements ( );
-	streamlog_out ( DEBUG1 ) << cbcsize2p << " Elements in cbc event - collection 2!" << endl;
-
-	CellIDDecoder < TrackerDataImpl > inputSparseColDecoder ( cbcDataCollectionVec2 );
-	CellIDDecoder < TrackerPulseImpl > inputPulseColDecoder ( cbcPulseCollectionVec2 );
-
-	// Cell ID Encoders for the telescope, introduced in eutelescope::EUTELESCOPE
-	// for sparseFrame (usually called cluster collection)
-	CellIDEncoder < TrackerDataImpl > outputSparseColEncoder ( eutelescope::EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, outputVec1 );
-	// for pulseFrame
-	CellIDEncoder < TrackerPulseImpl > outputPulseColEncoder ( eutelescope::EUTELESCOPE::PULSEDEFAULTENCODING, outputVec2 );
-
-	unsigned int nCBCClusters;
-	// go through input clusters and copy them to output cluster collection
-
-	nCBCClusters = cbcPulseCollectionVec2 -> getNumberOfElements ( );
-	for ( size_t i = 0; i < nCBCClusters; ++i )
-	{
-	    TrackerPulseImpl * outputPulseFrame = new TrackerPulseImpl ( );
-	    TrackerDataImpl * outputSparseFrame = new TrackerDataImpl ( );
-
-	    TrackerPulseImpl* inputPulseFrame = dynamic_cast < TrackerPulseImpl* > ( cbcPulseCollectionVec2 -> getElementAt ( i ) );
-	    TrackerDataImpl* inputSparseFrame = dynamic_cast < TrackerDataImpl* > ( inputPulseFrame -> getTrackerData ( ) );
-
-	    // set Cell ID for sparse collection
-	    outputSparseColEncoder["sensorID"] = static_cast < int > ( inputSparseColDecoder ( inputSparseFrame ) ["sensorID"] );
-	    outputSparseColEncoder["sparsePixelType"] = static_cast < int > ( inputSparseColDecoder ( inputSparseFrame ) ["sparsePixelType"] );
-	    outputSparseColEncoder["quality"] = static_cast < int > ( inputSparseColDecoder ( inputSparseFrame ) ["quality"] );
-	    outputSparseColEncoder.setCellID ( outputSparseFrame );
-
-	    // copy tracker data
-	    outputSparseFrame -> setChargeValues ( inputSparseFrame -> getChargeValues ( ) );
-	    // add it to the cluster collection
-	    outputVec1 -> push_back ( outputSparseFrame );
-
-	    // prepare a pulse for this cluster
-	    outputPulseColEncoder["sensorID"] = static_cast < int > ( inputPulseColDecoder ( inputPulseFrame ) ["sensorID"] );
-	    outputPulseColEncoder["type"] = static_cast < int > ( inputPulseColDecoder ( inputPulseFrame ) ["type"] );
-	    outputPulseColEncoder.setCellID ( outputPulseFrame );
-
-	    outputPulseFrame -> setCharge ( inputPulseFrame -> getCharge ( ) );
-	    outputPulseFrame -> setTrackerData ( outputSparseFrame );
-	    outputVec2 -> push_back ( outputPulseFrame );
-
-	}
-
-    }
-    catch ( lcio::DataNotAvailableException )
-    {
-	streamlog_out ( DEBUG4 ) << "Collection " << _cbcDataCollectionName2 << " not found in event " << anEvent -> getEventNumber ( ) << endl;
-    }
-
-    try
-    {
 	// process this guy...
 	LCEvent* evt;
 
-	// the cbc has moved on in time, we need to read again
-	if ( _telescopeeventtime < _cbceventtime )
+	if ( _eventmerge == false )
 	{
 
-	    multiplicityhisto -> fill ( _multiplicity );
-	    _multiplicity = 1;
-
-	    // the telescope is read by the function
-	    if ( _readcount <  _maxevents )
+	    // the cbc has moved on in time, we need to read again
+	    if ( _telescopeeventtime < _cbceventtime )
 	    {
-		evt = readTelescope();
+
+		multiplicityhisto -> fill ( _multiplicity );
+		_multiplicity = 1;
+
+		// the telescope is read by the function
+		if ( _readcount <  _maxevents )
+		{
+		    evt = readTelescope ( );
+		}
+		else
+		{
+		    streamlog_out ( MESSAGE4 ) << "Reached EOF!" << endl;
+		    exit ( -1 );
+		}
+
+		int tempnr = evt -> getEventNumber ( );
+		streamlog_out ( DEBUG4 ) << "Reading new event nr " << tempnr << endl;
+		// save for future...
+		_storeevt = evt;
+
 	    }
 	    else
 	    {
-		streamlog_out ( MESSAGE4 ) << "Reached EOF!" << endl;
-		exit (-1);
+		_multiplicity++;
+		evt = _storeevt;
+		int tempnr = evt -> getEventNumber ( );
+
+		streamlog_out ( DEBUG4 ) << "Reading old event nr " << tempnr << endl;
 	    }
 
-	    int tempnr = evt -> getEventNumber ( );
-	    streamlog_out ( DEBUG4 ) << "Reading new event nr " << tempnr << endl;
-	    // save for future...
-	    _storeevt = evt;
-
 	}
-	else
-	{
-	    _multiplicity++;
-	    evt = _storeevt;
-	    int tempnr = evt -> getEventNumber ( );
 
-	    streamlog_out ( DEBUG4 ) << "Reading old event nr " << tempnr << endl;
+	if ( _eventmerge == true )
+	{
+
+	    evt = readTelescope ( );
+
 	}
 
 	 _telescopeeventtime = evt -> getTimeStamp ( );
@@ -394,7 +444,7 @@ void CMSMerger::processEvent ( LCEvent * anEvent )
 
 	    TrackerPulseImpl* inputPulseFrame = dynamic_cast < TrackerPulseImpl* > ( telescopeCollectionVec2 -> getElementAt ( i ) );
 	    TrackerDataImpl* inputSparseFrame = dynamic_cast < TrackerDataImpl* > ( inputPulseFrame -> getTrackerData ( ) );
-	    
+
 	    // set Cell ID for sparse collection
 	    outputSparseColEncoder["sensorID"] = static_cast < int > ( inputSparseColDecoder ( inputSparseFrame ) ["sensorID"] );
 	    outputSparseColEncoder["sparsePixelType"] = static_cast < int > ( inputSparseColDecoder ( inputSparseFrame ) ["sparsePixelType"] );
@@ -414,6 +464,24 @@ void CMSMerger::processEvent ( LCEvent * anEvent )
 	    outputPulseFrame -> setCharge ( inputPulseFrame -> getCharge ( ) );
 	    outputPulseFrame -> setTrackerData ( outputSparseFrame );
 	    outputVec2 -> push_back ( outputPulseFrame );
+
+	    int tempplane = -1;
+	    tempplane = static_cast < int > ( inputPulseColDecoder ( inputPulseFrame ) ["sensorID"] );
+
+	    if ( tempplane == _correlationPlaneID )
+	    {
+		// get these for the correlation plots
+		EUTelVirtualCluster * tempCluster;
+		tempCluster = new EUTelSparseClusterImpl < EUTelGenericSparsePixel > ( static_cast < TrackerDataImpl* > ( inputPulseFrame -> getTrackerData ( ) ) );
+		float tempx = 0.0;
+		float tempy = 0.0;
+		tempCluster -> getCenterOfGravity ( tempx, tempy ) ;
+		streamlog_out ( DEBUG0 ) << "Plot x is " << tempx << endl;
+		streamlog_out ( DEBUG0 ) << "Plot y is " << tempy << endl;
+		delete tempCluster;
+		tele_corr_x.push_back ( tempx );
+		tele_corr_y.push_back ( tempy );
+	    }
 
 	} // end of loop over input clusters
 
@@ -470,4 +538,11 @@ void CMSMerger::bookHistos ( )
 {
     multiplicityhisto = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "Multiplicity", 10, -0.5, 9.5 );
     multiplicityhisto -> setTitle ( "Telescope Events per CBC Event;Telescope Events;Events" );
+
+    mergecorrelation_x = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "Correlation in X", 1152, 0, 1151, 1016, 0, 1015 );
+    mergecorrelation_x -> setTitle ( "Telescope Cluster;CBC Cluster;Entries" );
+
+    mergecorrelation_y = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "Correlation in Y", 576, 0, 575, 1016, 0, 1015 );
+    mergecorrelation_y -> setTitle ( "Telescope Cluster;CBC Cluster;Entries" );
+
 }

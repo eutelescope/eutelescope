@@ -30,21 +30,33 @@ namespace eutelescope
 	    }
 
 	    //! Default constructor
-	    CMSMerger ();
+	    CMSMerger ( );
 
-	    virtual void init ();
+	    bool _eventmerge;
 
-	    virtual void processRunHeader (LCRunHeader * run);
+	    bool _telescopeopen;
 
-	    virtual void processEvent (LCEvent * evt);
+	    int _correlationPlaneID;
 
-	    virtual void check (LCEvent * evt);
+	    int _eventdifferenceTelescope;
 
-	    void bookHistos();
+	    int _eventdifferenceCBC;
 
-	    void fillHistos();
+	    int _maxevents;
 
-	    virtual void end();
+	    int _multiplicity;
+
+	    int _readcount;
+
+	    LCEvent* _storeevt;
+
+	    LCEvent *readTelescope ( );
+
+	    LCReader* lcReader;
+
+	    long _cbceventtime;
+
+	    long _telescopeeventtime;
 
 	    std::string _telescopeFile;
 
@@ -56,32 +68,29 @@ namespace eutelescope
 
 	    std::string _cbcPulseCollectionName2;
 
-	    std::string _telescopeCollectionName;
-
-	    std::string _telescopeCollectionName2;
-
 	    std::string _outputCollectionName;
 
 	    std::string _outputCollectionName2;
 
 	    std::string _outputCollectionName3;
 
-	    bool _telescopeopen;
+	    std::string _telescopeCollectionName;
 
-	    LCReader* lcReader;
+	    std::string _telescopeCollectionName2;
 
-	    long _cbceventtime;
-	    long _telescopeeventtime;
+	    virtual void check ( LCEvent * evt );
 
-	    int _eventdifferenceTelescope;
-	    int _eventdifferenceCBC;
-	    int _readcount;
-	    int _maxevents;
-	    int _multiplicity;
+	    virtual void end ( );
 
-	    LCEvent* _storeevt;
+	    virtual void init ( );
 
-	    LCEvent *readTelescope ();
+	    virtual void processRunHeader ( LCRunHeader * run );
+
+	    virtual void processEvent ( LCEvent * evt );
+
+	    void bookHistos ( );
+
+	    void fillHistos ( );
 
 	protected:
 
