@@ -333,6 +333,10 @@ AIDA::IProfile2D * dutkmap;
 AIDA::IProfile2D * dutkxmap;
 AIDA::IProfile2D * dutkymap;
 
+AIDA::IProfile2D * dutkmap20;
+AIDA::IProfile2D * dutkxmap20;
+AIDA::IProfile2D * dutkymap20;
+
 AIDA::IHistogram2D * duttrackhitmap;
 
 AIDA::IHistogram2D * duthitmap;
@@ -1244,7 +1248,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
     // assuming the telescope has planes 0 to 5...
 
     int icounter = 0;
-    for ( int i = 0; i < _nPlanes; i++ )
+    for ( int i = 0; i < ( _nPlanes ); i++ )
     {
 
 	if ( i < 3 )
@@ -1314,7 +1318,10 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
     streamlog_out ( DEBUG1 ) << "Hits per plane: ";
     for ( size_t i = 0; i < _hitsArray.size ( ); i++ )
     {
-	streamlog_out ( DEBUG1 ) << i << ": " << _hitsArray[i].size ( ) << " ";
+	if ( _hitsArray[i].size ( ) > 0 )
+	{
+	    streamlog_out ( DEBUG1 ) << i << ": " << _hitsArray[i].size ( ) << " ";
+	}
     }
     streamlog_out ( DEBUG1 ) << endl;
 
@@ -2133,9 +2140,11 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	// hits in plane
 	for ( size_t j3 = 0; j3 < _hitsArray[i3].size ( ); j3++ )
 	{
+	    streamlog_out( DEBUG0 ) << "Looping first driplet plane" << endl;
 
 	    for ( size_t j5 = 0; j5 < _hitsArray[i5].size ( ); j5++ )
 	    {
+		streamlog_out( DEBUG0 ) << "Looping last driplet plane" << endl;
 
 		double dx35 = _hitsArray[i5][j5].measuredX - _hitsArray[i3][j3].measuredX;
 		double dy35 = _hitsArray[i5][j5].measuredY - _hitsArray[i3][j3].measuredY;
@@ -2151,6 +2160,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		// middle plane 4 for driplets:
 		for ( size_t j4 = 0; j4 < _hitsArray[i4].size ( ); j4++ )
 		{
+		    streamlog_out( DEBUG0 ) << "Looping central driplet plane" << endl;
 
 		    // driplet residual:
 		    double zs = _hitsArray[i4][j4].measuredZ - avz;
@@ -2273,6 +2283,8 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	    }//loop hits j5
 
 	}//loop hits j3
+	
+	streamlog_out( DEBUG0 ) << "Done driplet loop" << endl;
 
 	ndriHist -> fill ( ndri );
 
@@ -2289,6 +2301,15 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	if ( ntri > 0 && ndri > 0)
 	{
 	    streamlog_out ( DEBUG3 ) << "Matching " << ntri << " triplets and " << ndri << " driplets." << endl;
+	}
+	
+	if ( ntri == 0 )
+	{
+	    streamlog_out ( DEBUG0 ) << "No triplets in this event!" << endl;
+	}
+	if ( ndri == 0 )
+	{
+	    streamlog_out ( DEBUG0 ) << "No driplets in this event!" << endl;
 	}
 
 	// i = A
@@ -2520,7 +2541,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		    {
 
 			// in this case just add scatterer and continue with the next plane
-			if ( _requireDUTHit == 0 && ipl == 3 )
+			if ( _requireDUTHit == 0 && ipl == 3 && _manualDUTid > 5 )
 			{
 
 			    // give correct z from fit!
@@ -3277,6 +3298,10 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			dutkymap -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
 			dutkmap -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
 
+			dutkxmap20 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			dutkymap20 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			dutkmap20 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+
 			// hitmap for comparison
 			duthitmap -> fill ( fitpos[0], fitpos[1] );
 			duttrackhitmap -> fill ( dutfitposX / 1000.0, dutfitposY / 1000.0 );
@@ -3474,6 +3499,9 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 
 	}//loop kA
 
+	streamlog_out ( DEBUG0 ) << "Done matching loop" << endl;
+
+
 	nmGoodHist -> fill ( nmGood );
 	nmHist -> fill ( nm );
 
@@ -3502,6 +3530,8 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	badtrackrate -> fill ( event -> getEventNumber ( ), ( ( _nMilleTracks - _nGoodMilleTracks ) * 1.0 / ( event -> getEventNumber ( ) * 1.0 ) ) );
 	goodtrackrate -> fill ( event -> getEventNumber ( ), ( _nGoodMilleTracks * 1.0 / ( event -> getEventNumber ( ) * 1.0 ) ) );
     }
+
+    streamlog_out ( DEBUG0 ) << "Done event loop" << endl;
 
 } // done
 
@@ -5194,7 +5224,7 @@ void EUTelMilleGBL::bookHistos ( )
 	    dy36Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "InputHits/dy36", 100, -5000, 5000 );
 	    dy36Hist -> setTitle ( "Hit Shift DUT - Plane 3 in y;y_{6}-y_{3} [um];hit pairs" );
 
-	    if ( _useREF == true )
+	    if ( _useREF > 0 )
 	    {
 
 		dx37Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "InputHits/dx37", 100, -5000, 5000 );
@@ -5628,14 +5658,23 @@ void EUTelMilleGBL::bookHistos ( )
 	    dutrzprobHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrzprob", 100, -500, 500, 1000, 0, 1 );
 	    dutrzprobHist -> setTitle ( "Track Residual at DUT in z vs Track prob;#Deltaz [#mum];prob" );
 
-	    dutkmap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap", 1000, -15, 15, 1000, -15, 15, 0, 100 );
+	    dutkmap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap", 3000, -15, 15, 3000, -15, 15, 0, 50 );
 	    dutkmap -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
 
-	    dutkxmap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap", 1000, -15, 15, 1000, -15, 15, 0, 100 );
+	    dutkxmap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap", 3000, -15, 15, 3000, -15, 15, 0, 50 );
 	    dutkxmap -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
 
-	    dutkymap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap", 1000, -15, 15, 1000, -15, 15, 0, 100 );
+	    dutkymap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap", 3000, -15, 15, 3000, -15, 15, 0, 50 );
 	    dutkymap -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+
+	    dutkmap20 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap20", 1500, -15, 15, 1500, -15, 15, 0, 20 );
+	    dutkmap20 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+
+	    dutkxmap20 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap20", 1500, -15, 15, 1500, -15, 15, 0, 20 );
+	    dutkxmap20 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+
+	    dutkymap20 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap20", 1500, -15, 15, 1500, -15, 15, 0, 20 );
+	    dutkymap20 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
 
 	    duthitmap = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/duthitmap", 1000, -15, 15, 1000, -15, 15 );
 	    duthitmap -> setTitle (  "DUT Good Hits Map;hit_{x} [mm];hit_{y} [mm]" );
