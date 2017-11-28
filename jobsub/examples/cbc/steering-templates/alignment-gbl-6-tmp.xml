@@ -425,7 +425,7 @@
   <!--Input hit collections names.-->
   <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit"> AlignedHit5 </parameter>
   <!--Number of alignment constants used. Available modes are: 1: shift in Z only. 2: shifts in X and Y. 3: shifts in X and Y and rotation around the Z axis, 4: shifts in X,Y and Z and rotation around the Z axis. 5: shifts in X,Y and rotations around all axis, fix Z. 6: shifts in X,Y and Z and rotations around all axis. 7: Shifts in X, Y and Z. Note that in modes 5 and 6, alignment constants in alpha and beta will only be returned for rotated/tilted sensors.-->
-  <parameter name="AlignMode" type="int" value="3"/>
+  <parameter name="AlignMode" type="int" value="5"/>
   <!--All alignment collection names which have been applied must be entered here. The order should correspond to their application, i.e.: alignment1 alignment2 etc.-->
   <parameter name="AlignmentCollectionName" type="StringVec"> alignment1 alignment2 alignment3 alignment4 alignment5 </parameter>
   <!--This is the name of the alignment collection to be saved into the lcio file.-->
@@ -441,9 +441,9 @@
   <!--Method with which to get the DUT fit position: 0 = centre of the DUT (bad if DUT is rotated), 1 = extrapolate from triplet and get intersect with plane, 2 = extrapolate from driplet, 3 = get average from methods 1 and 2.-->
   <parameter name="DUTFitMethod" type="int" value="3"/>
   <!--DUT resolution in x [um].-->
-  <parameter name="DUTResX" type="double" value="400"/>
+  <parameter name="DUTResX" type="double" value="28"/>
   <!--DUT resolution in y [um].-->
-  <parameter name="DUTResY" type="double" value="20"/>
+  <parameter name="DUTResY" type="double" value="400"/>
   <!--Do an additional DUT alignment after track search? 1 = DUT alignment in alpha, 2 = DUT alignment in beta, 3 = DUT alignment in gamma with unsensitive x-axis, 4 = DUT alignment in gamma with unsensitive y-axis, 0 = no additional alignment.-->
   <!--parameter name="DoDUTAlignment" type="int" value="0"/-->
   <!--Use this processor to do Prealignment? In this case, no tracking is performed. 1 = yes, 0 = no, 2 = yes, with zero Prealignment, aka output an alignment file with zeros to preserve file structure.-->
@@ -458,12 +458,10 @@
   <parameter name="FixedPlanes" type="IntVec"> 0 1 2 3 4 5 9 </parameter>
   <!--Generate a steering file for pede? 0 = false, 1 = true.-->
   <parameter name="GeneratePedeSteerfile" type="int" value="1"/>
-  <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
-  <parameter name="InputMode" value="0"/>
   <!--The sensor id number of the DUT.-->
   <parameter name="ManualDUTid" type="int" value="32"/>
   <!--Maximal number of track candidates in the whole run.-->
-  <parameter name="MaxTrackCandidatesTotal" type="int" value="10000000"/>
+  <parameter name="MaxTrackCandidatesTotal" type="int" value="100000"/>
   <!--The name of the output fit hit collection.-->
   <!--parameter name="OutputHitCollection" type="string" value="fithits"/-->
   <!--The name of the output track fit collection.-->
@@ -487,9 +485,9 @@
   <!--Track slope cut in y, tracks below are accepted.-->
   <!--parameter name="SlopeCutDUTy" type="double" value="10"/-->
   <!--Telescope resolution in x [um].-->
-  <parameter name="TelescopeResX" type="double" value="3.5"/>
+  <parameter name="TelescopeResX" type="double" value="4.0"/>
   <!--Telescope resolution in y [um].-->
-  <parameter name="TelescopeResY" type="double" value="3.5"/>
+  <parameter name="TelescopeResY" type="double" value="4.0"/>
   <!--Flag to fill dt histograms. Will increase histogram file size quite a bit.-->
   <!--parameter name="TimeDependencyHistos" type="bool" value="false"/-->
   <!--Use Reference Plane? If so, set the sensor id (usually 7). To deactivate, set to 0 or below.-->
@@ -507,9 +505,9 @@
   <!--Upstream triplet residual cut [um].-->
   <parameter name="triCut" type="double" value="150."/>
   <!--Upstream triplet DUT residual cut in x [um].-->
-  <parameter name="triCutDUTx" type="double" value="350."/>
+  <parameter name="triCutDUTx" type="double" value="250."/>
   <!--Upstream triplet DUT residual cut in y [um].-->
-  <parameter name="triCutDUTy" type="double" value="350."/>
+  <parameter name="triCutDUTy" type="double" value="250."/>
 </processor>
 
 </marlin>

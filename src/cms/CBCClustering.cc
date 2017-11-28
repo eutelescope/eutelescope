@@ -175,16 +175,19 @@ void CBCClustering::processEvent ( LCEvent * anEvent )
 		    FloatVec datavec;
 		    datavec = trkdata -> getChargeValues ( );
 
+		    /*
 		    if ( _zsmode != 0 && ( _zsmode != ( i + 1 ) ) )
 		    {
 			size_t temp = datavec.size ( );
 			datavec.assign ( temp, 0 );
 		    }
+		    */
 
 		    int nClusters = 0;
 
-		    FloatVec outputvec;
+		    //FloatVec outputvec;
 
+		    /*
 		    // highly inefficient way...
 		    if ( _zsmode == ( i + 1 ) )
 		    {
@@ -258,42 +261,53 @@ void CBCClustering::processEvent ( LCEvent * anEvent )
 			datavec = outputvec;
 
 		    }
+		    */
 
 		    std::vector < int > clusterNumber;
-		    clusterNumber.assign ( datavec.size ( ), 0 );
-
-		    for ( size_t ichan = 0; ichan < datavec.size ( ); ichan++ )
+		    
+		    
+		    
+		    if ( _zsmode == 0 )
 		    {
-			int cluleft = 0;
-			int cluright = 0;
-			int clusize = 0;
+			clusterNumber.assign ( datavec.size ( ), 0 );
 
-			if ( datavec[ichan] * 1.0 > 0 )
+			for ( size_t ichan = 0; ichan < datavec.size ( ); ichan++ )
 			{
-			    streamlog_out ( DEBUG0 ) << "Chan " << ichan << " over threshold" << endl;
-			    cluleft = ichan;
-			    cluright = ichan;
-			    bool search = true;
-			    nClusters++;
-			    clusize++;
-			    dynamic_cast < AIDA::IHistogram1D* > ( _aidaHistoMap["Hitmap_" + to_string ( _outputSensorID ) ] ) -> fill ( ichan );
-			    while ( search == true )
+			    int cluleft = 0;
+			    int cluright = 0;
+			    int clusize = 0;
+
+			    if ( datavec[ichan] * 1.0 > 0 )
 			    {
-				if ( ( ichan + 1 ) < ( datavec.size ( ) - 1 ) )
+				streamlog_out ( DEBUG0 ) << "Chan " << ichan << " over threshold" << endl;
+				cluleft = ichan;
+				cluright = ichan;
+				bool search = true;
+				nClusters++;
+				clusize++;
+				dynamic_cast < AIDA::IHistogram1D* > ( _aidaHistoMap["Hitmap_" + to_string ( _outputSensorID + i ) ] ) -> fill ( ichan );
+				while ( search == true )
 				{
-				    ichan++;
-				    if ( datavec[ichan] > 0 )
+				    if ( ( ichan + 1 ) < ( datavec.size ( ) - 1 ) )
 				    {
-					if ( clusize < _maxclustersize )
+					ichan++;
+					if ( datavec[ichan] > 0 )
 					{
-					    cluright = ichan;
-					    clusize++;
-					    dynamic_cast < AIDA::IHistogram1D* > ( _aidaHistoMap["Hitmap_" + to_string ( _outputSensorID ) ] ) -> fill ( ichan );
-					    streamlog_out ( DEBUG1 ) << "Chan " << ichan << " added to cluster, size now " << clusize << endl;
+					    if ( clusize < _maxclustersize )
+					    {
+						cluright = ichan;
+						clusize++;
+						dynamic_cast < AIDA::IHistogram1D* > ( _aidaHistoMap["Hitmap_" + to_string ( _outputSensorID + i ) ] ) -> fill ( ichan );
+						streamlog_out ( DEBUG1 ) << "Chan " << ichan << " added to cluster, size now " << clusize << endl;
+					    }
+					    else
+					    {
+						streamlog_out ( DEBUG4 ) << "Cluster size larger than allowed max cluster size of " << _maxclustersize << "! Discarding cluster in event " << anEvent -> getEventNumber ( ) << "!" << endl;
+						search = false;
+					    }
 					}
 					else
 					{
-					    streamlog_out ( DEBUG4 ) << "Cluster size larger than allowed max cluster size of " << _maxclustersize << "! Discarding cluster in event " << anEvent -> getEventNumber ( ) << "!" << endl;
 					    search = false;
 					}
 				    }
@@ -302,21 +316,80 @@ void CBCClustering::processEvent ( LCEvent * anEvent )
 					search = false;
 				    }
 				}
-				else
+				for ( int k = cluleft; k <= cluright; k++ )
 				{
-				    search = false;
+				    clusterNumber.at ( k ) = nClusters;
 				}
 			    }
-			    for ( int k = cluleft; k <= cluright; k++ )
+			}
+
+		    }
+
+		    if ( _zsmode > 0 )
+		    {
+			streamlog_out ( DEBUG4 ) << "Using ZS mode, sensor " << i << endl;
+			clusterNumber.assign ( _chancount, 0 );
+			int clupos = -2;
+			int temppos = -2;
+			int clusize = 0;
+			if ( datavec.size ( ) > 0 )
+			{
+			    if ( _nonsensitiveaxis == "y" )
 			    {
-				clusterNumber.at ( k ) = nClusters;
+				for ( size_t ix = 0; ix <= ( datavec.size ( ) - 4 ); ix = ix + 4 )
+				{
+				    clupos = datavec[ix];
+				    if ( ( ( clupos - temppos ) == 1 ) && clusize < _maxclustersize )
+				    {
+					clusterNumber.at ( clupos ) = nClusters;
+					temppos = clupos;
+					clusize++;
+					streamlog_out ( DEBUG4 ) << "Enlarged cluster at " << clupos << endl;
+					dynamic_cast < AIDA::IHistogram1D* > ( _aidaHistoMap["Hitmap_" + to_string ( _outputSensorID + i ) ] ) -> fill ( clupos );
+				    }
+				    else
+				    {
+					nClusters++;
+					clusterNumber.at ( clupos ) = nClusters;
+					streamlog_out ( DEBUG4 ) << "Found new cluster at " << clupos << endl;
+					temppos = clupos;
+					clusize = 1;
+					dynamic_cast < AIDA::IHistogram1D* > ( _aidaHistoMap["Hitmap_" + to_string ( _outputSensorID + i ) ] ) -> fill ( clupos );
+				    }
+				}
+			    }
+			    if ( _nonsensitiveaxis == "x" )
+			    {
+				for ( size_t ix = 0; ix <= ( datavec.size ( ) - 4 ); ix = ix + 4 )
+				{
+				    clupos = datavec[ix + 1];
+				    if ( ( ( clupos - temppos ) == 1 ) && clusize < _maxclustersize )
+				    {
+					clusterNumber.at ( clupos ) = nClusters;
+					temppos = clupos;
+					clusize++;
+				    }
+				    else
+				    {
+					nClusters++;
+					clusterNumber.at ( clupos ) = nClusters;
+					temppos = clupos;
+					clusize = 1;
+				    }
+				}
 			    }
 			}
+			datavec.clear ( );
+			for ( size_t ii = 0; ii < clusterNumber.size ( ); ii++ )
+			{
+			    datavec.push_back ( clusterNumber.at ( ii ) );
+			}
+			
 		    }
 
 		    if ( nClusters > _maxclusters )
 		    {
-			clusterNumber.assign ( datavec.size ( ), 0 );
+			clusterNumber.assign ( _chancount, 0 );
 			streamlog_out ( DEBUG4 ) << "Found " << nClusters << " clusters in event " << anEvent -> getEventNumber ( ) << "! Discarding all of them!" << endl;
 		    }
 
@@ -389,17 +462,17 @@ void CBCClustering::processEvent ( LCEvent * anEvent )
 
 			    streamlog_out( DEBUG1 ) << "Cluster: " << *it << ", Q: " << charge << " , x: " << x << " , y: " << y << " , dx: " << xsize << " , dy: " << ysize << " in event: " << anEvent -> getEventNumber ( ) << endl;
 
-			    dynamic_cast < AIDA::IHistogram1D* > ( _aidaHistoMap["ClusterCharge_" + to_string ( _outputSensorID ) ] ) -> fill ( charge );
+			    dynamic_cast < AIDA::IHistogram1D* > ( _aidaHistoMap["ClusterCharge_" + to_string ( _outputSensorID + i ) ] ) -> fill ( charge );
 			    if ( _nonsensitiveaxis == "x" )
 			    {
-				dynamic_cast < AIDA::IHistogram1D* > ( _aidaHistoMap["ClusterSize_" + to_string ( _outputSensorID ) ] ) -> fill ( ysize );
+				dynamic_cast < AIDA::IHistogram1D* > ( _aidaHistoMap["ClusterSize_" + to_string ( _outputSensorID + i ) ] ) -> fill ( ysize );
 			    }
 			    if ( _nonsensitiveaxis == "y" )
 			    {
-				dynamic_cast < AIDA::IHistogram1D* > ( _aidaHistoMap["ClusterSize_" + to_string ( _outputSensorID ) ] ) -> fill ( xsize );
+				dynamic_cast < AIDA::IHistogram1D* > ( _aidaHistoMap["ClusterSize_" + to_string ( _outputSensorID + i ) ] ) -> fill ( xsize );
 			    }
 
-			    zsDataEncoder["sensorID"] = _outputSensorID;
+			    zsDataEncoder["sensorID"] = _outputSensorID + i;
 			    zsDataEncoder["xSeed"] = static_cast < long > ( x );
 			    zsDataEncoder["ySeed"] = static_cast < long > ( y );
 			    zsDataEncoder["xCluSize"] = xsize;
@@ -410,7 +483,7 @@ void CBCClustering::processEvent ( LCEvent * anEvent )
 			    pulseFrame -> setTrackerData ( clusterFrame );
 			    clusterCollection -> push_back ( pulseFrame );
 
-			    idClusterEncoder["sensorID"] = _outputSensorID;
+			    idClusterEncoder["sensorID"] = _outputSensorID + i;
 			    idClusterEncoder["sparsePixelType"] = static_cast < int > ( 2 );
 			    idClusterEncoder["quality"] = static_cast < int > ( 0 );
 			    idClusterEncoder.setCellID ( clusterFrame );
@@ -465,21 +538,22 @@ void CBCClustering::fillHistos ( )
 
 void CBCClustering::bookHistos ( )
 {
+    for ( int i = 0; i < 2; i++ )
+    {
+	string basePath = "Clustering_" + to_string ( _outputSensorID + i);
+	AIDAProcessor::tree ( this ) -> mkdir ( basePath.c_str ( ) );
+	basePath.append ( "/" );
 
-    string basePath = "Clustering_" + to_string ( _outputSensorID );
-    AIDAProcessor::tree ( this ) -> mkdir ( basePath.c_str ( ) );
-    basePath.append ( "/" );
+	AIDA::IHistogram1D * csizeHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( ( basePath + "ClusterSize_" + to_string ( _outputSensorID + i) ).c_str ( ), 10, -0.5, 9.5 );
+	_aidaHistoMap.insert ( make_pair ( "ClusterSize_" + to_string ( _outputSensorID + i ), csizeHist ) );
+	csizeHist -> setTitle ( "Cluster Size;Cluster Size;Entries" );
 
-    AIDA::IHistogram1D * csizeHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( ( basePath + "ClusterSize_" + to_string ( _outputSensorID ) ).c_str ( ), 10, -0.5, 9.5 );
-    _aidaHistoMap.insert ( make_pair ( "ClusterSize_" + to_string ( _outputSensorID ), csizeHist ) );
-    csizeHist -> setTitle ( "Cluster Size;Cluster Size;Entries" );
+	AIDA::IHistogram1D * cchargeHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( ( basePath + "ClusterCharge_" + to_string ( _outputSensorID + i ) ).c_str ( ), 10, -0.5, 9.5 );
+	_aidaHistoMap.insert ( make_pair ( "ClusterCharge_" + to_string ( _outputSensorID + i ), cchargeHist ) );
+	cchargeHist -> setTitle ( "Cluster Charge;Cluster Charge;Entries" );
 
-    AIDA::IHistogram1D * cchargeHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( ( basePath + "ClusterCharge_" + to_string ( _outputSensorID ) ).c_str ( ), 100, -0.5, 99.5 );
-    _aidaHistoMap.insert ( make_pair ( "ClusterCharge_" + to_string ( _outputSensorID ), cchargeHist ) );
-    cchargeHist -> setTitle ( "Cluster Charge;Cluster Charge;Entries" );
-
-    AIDA::IHistogram1D * hitmapHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( ( basePath + "Hitmap_" + to_string ( _outputSensorID ) ).c_str ( ), 1017, -0.5, 1016.5 );
-    _aidaHistoMap.insert ( make_pair ( "Hitmap_" + to_string ( _outputSensorID ), hitmapHist ) );
-    hitmapHist -> setTitle ( "Hitmap;Channel;Entries" );
-
+	AIDA::IHistogram1D * hitmapHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( ( basePath + "Hitmap_" + to_string ( _outputSensorID + i ) ).c_str ( ), _chancount + 1, -0.5, _chancount - 0.5 );
+	_aidaHistoMap.insert ( make_pair ( "Hitmap_" + to_string ( _outputSensorID + i ), hitmapHist ) );
+	hitmapHist -> setTitle ( "Hitmap;Channel;Entries" );
+    }
 }

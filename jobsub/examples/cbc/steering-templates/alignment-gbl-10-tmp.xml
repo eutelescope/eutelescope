@@ -701,7 +701,7 @@
   <!--Input hit collections names.-->
   <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit"> AlignedHit9 </parameter>
   <!--Number of alignment constants used. Available modes are: 1: shift in Z only. 2: shifts in X and Y. 3: shifts in X and Y and rotation around the Z axis, 4: shifts in X,Y and Z and rotation around the Z axis. 5: shifts in X,Y and rotations around all axis, fix Z. 6: shifts in X,Y and Z and rotations around all axis. 7: Shifts in X, Y and Z. Note that in modes 5 and 6, alignment constants in alpha and beta will only be returned for rotated/tilted sensors.-->
-  <parameter name="AlignMode" type="int" value="3"/>
+  <parameter name="AlignMode" type="int" value="5"/>
   <!--All alignment collection names which have been applied must be entered here. The order should correspond to their application, i.e.: alignment1 alignment2 etc.-->
   <parameter name="AlignmentCollectionName" type="StringVec"> alignment1 alignment2 alignment3 alignment4 alignment5 alignment6 alignment7 alignment8 alignment9 </parameter>
   <!--This is the name of the alignment collection to be saved into the lcio file.-->
@@ -715,11 +715,11 @@
   <!--The coordinator step PreAlignment to be loaded.-->
   <parameter name="CoordinatorPreAlignmentCollectionName" type="string" value="coordinatorprealignment"/>
   <!--Method with which to get the DUT fit position: 0 = centre of the DUT (bad if DUT is rotated), 1 = extrapolate from triplet and get intersect with plane, 2 = extrapolate from driplet, 3 = get average from methods 1 and 2.-->
-  <parameter name="DUTFitMethod" type="int" value="1"/>
+  <parameter name="DUTFitMethod" type="int" value="3"/>
   <!--DUT resolution in x [um].-->
-  <parameter name="DUTResX" type="double" value="200"/>
+  <parameter name="DUTResX" type="double" value="25"/>
   <!--DUT resolution in y [um].-->
-  <parameter name="DUTResY" type="double" value="15"/>
+  <parameter name="DUTResY" type="double" value="200"/>
   <!--Do an additional DUT alignment after track search? 1 = DUT alignment in alpha, 2 = DUT alignment in beta, 3 = DUT alignment in gamma with unsensitive x-axis, 4 = DUT alignment in gamma with unsensitive y-axis, 0 = no additional alignment.-->
   <!--parameter name="DoDUTAlignment" type="int" value="0"/-->
   <!--Use this processor to do Prealignment? In this case, no tracking is performed. 1 = yes, 0 = no, 2 = yes, with zero Prealignment, aka output an alignment file with zeros to preserve file structure.-->
@@ -729,17 +729,15 @@
   <!--Exclude planes from tracking and alignment, according to their sensor ids.-->
   <parameter name="ExcludePlanes" type="IntVec"> 60 61 </parameter>
   <!--Fixes the given alignment parameters of a sensor in the fit. For each sensor (even excluded ones) an integer must be specified. If no value or not enough values are given, then all parameters will be free. Bit 0 = x shift, bit 1 = y shift, bit 2 = z shift, bit 3 = alpha, bit 4 = beta, bit 5 = gamma. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id. This can override free parameters from AlignMode.-->
-  <parameter name="FixParameter" type="IntVec"> 63 63 63 52 63 63 63 63 </parameter>
+  <!--parameter name="FixParameter" type="IntVec"> 63 63 63 52 63 63 63 63 </parameter-->
   <!--Fix position of sensor planes in the fit according to their sensor ids.-->
   <parameter name="FixedPlanes" type="IntVec"> 0 1 2 3 4 5 9 </parameter>
   <!--Generate a steering file for pede? 0 = false, 1 = true.-->
   <parameter name="GeneratePedeSteerfile" type="int" value="1"/>
-  <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
-  <parameter name="InputMode" value="0"/>
   <!--The sensor id number of the DUT.-->
   <parameter name="ManualDUTid" type="int" value="32"/>
   <!--Maximal number of track candidates in the whole run.-->
-  <parameter name="MaxTrackCandidatesTotal" type="int" value="10000000"/>
+  <parameter name="MaxTrackCandidatesTotal" type="int" value="100000"/>
   <!--The name of the output fit hit collection.-->
   <!--parameter name="OutputHitCollection" type="string" value="fithits"/-->
   <!--The name of the output track fit collection.-->
@@ -751,9 +749,9 @@
   <!--Probability cut, tracks above are accepted.-->
   <parameter name="ProbCut" type="double" value="0.01"/>
   <!--Reference plane resolution in x [um].-->
-  <!--parameter name="REFResX" type="double" value="10"/-->
+  <parameter name="REFResX" type="double" value="10"/>
   <!--Reference plane resolution in y [um].-->
-  <!--parameter name="REFResY" type="double" value="10"/-->
+  <parameter name="REFResY" type="double" value="10"/>
   <!--Require DUT hit for valid track? 0 = false, 1 = true.-->
   <!--parameter name="RequireDUTHit" type="int" value="1"/-->
   <!--Execute the pede program using the generated steering file? 0 = false, 1 = true.-->
@@ -783,9 +781,9 @@
   <!--Upstream triplet residual cut [um].-->
   <parameter name="triCut" type="double" value="150."/>
   <!--Upstream triplet DUT residual cut in x [um].-->
-  <parameter name="triCutDUTx" type="double" value="350."/>
+  <parameter name="triCutDUTx" type="double" value="250."/>
   <!--Upstream triplet DUT residual cut in y [um].-->
-  <parameter name="triCutDUTy" type="double" value="350."/>
+  <parameter name="triCutDUTy" type="double" value="250."/>
 </processor>
 
 </marlin>

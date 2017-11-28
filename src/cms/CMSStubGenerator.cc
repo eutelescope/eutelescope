@@ -60,6 +60,12 @@ AIDA::IHistogram1D * faildistx;
 AIDA::IHistogram1D * faildisty;
 AIDA::IHistogram2D * correx;
 AIDA::IHistogram2D * correy;
+AIDA::IHistogram2D * stubdt;
+AIDA::IHistogram2D * stubratiodt;
+AIDA::IHistogram1D * stubmap_top_x;
+AIDA::IHistogram1D * stubmap_bot_x;
+AIDA::IHistogram1D * stubmap_top_y;
+AIDA::IHistogram1D * stubmap_bot_y;
 
 
 CMSStubGenerator::CMSStubGenerator ( ) : Processor ( "CMSStubGenerator" )
@@ -110,6 +116,7 @@ void CMSStubGenerator::processRunHeader ( LCRunHeader * rdr )
 
 void CMSStubGenerator::processEvent ( LCEvent * event )
 {
+    int stubsinthisevent = 0;
 
     EUTelEventImpl * evt = static_cast < EUTelEventImpl* > ( event );
 
@@ -287,7 +294,8 @@ void CMSStubGenerator::processEvent ( LCEvent * event )
 			stubdisty_bit -> fill ( y1 - y2 );
 
 			bitpresent = true;
-	
+
+
 		    }
 
 		    if ( _requirestubflag == 1 && bitpresent == false )
@@ -299,6 +307,11 @@ void CMSStubGenerator::processEvent ( LCEvent * event )
 		    {
 			outputHitCollection -> push_back ( hit );
 			_totalstubs++;
+			stubsinthisevent++;
+			stubmap_top_x -> fill ( x1 );
+			stubmap_bot_x -> fill ( x2 );
+			stubmap_top_y -> fill ( y1 );
+			stubmap_bot_y -> fill ( y2 );
 		    }
 
 		}
@@ -319,6 +332,10 @@ void CMSStubGenerator::processEvent ( LCEvent * event )
     {
 	event -> addCollection ( outputHitCollection, _outputHitCollectionName );
     }
+
+    double ratio = stubsinthisevent * 1.0 / ( ( dutPlane1Hits.size ( ) + dutPlane2Hits.size ( ) ) / 2.0 );
+    stubratiodt -> fill ( event -> getEventNumber ( ), ratio );
+    stubdt -> fill ( ( event -> getEventNumber ( ) ) * 1.0, ( ( _totalstubs * 1.0 ) / ( event -> getEventNumber ( ) * 1.0 ) ) );
 
 }
 
@@ -393,10 +410,29 @@ void CMSStubGenerator::bookHistos( )
 	faildisty -> setTitle ( "Fail Distance in y;y_{0} - y_{1} [channels];Entries" );
 
 	correx = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "Cluster correlation in x", 1016, 0, 1015, 1016, 0, 1015 );
-	correx -> setTitle ( "Cluster correlation in x;x_{0} [Channel];x_{1} [Channel]" );
+	correx -> setTitle ( "Cluster Correlation in x;x_{0} [Channel];x_{1} [Channel]" );
 
 	correy = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "Cluster correlation in y", 1016, 0, 1015, 1016, 0, 1015 );
-	correy -> setTitle ( "Cluster correlation in y;y_{0} [Channel];y_{1} [Channel]" );
+	correy -> setTitle ( "Cluster Correlation in y;y_{0} [Channel];y_{1} [Channel]" );
+
+	stubdt = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "Stubs per Event", 10000, 0, 500000, 100, 0, 1 );
+	stubdt -> setTitle ( "Stubs per Event;Events;Stubs per Event" );
+
+	stubratiodt = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "Stubs per Cluster Ratio over Events", 10000, 0, 500000, 100, 0, 1 );
+	stubratiodt -> setTitle ( "Stubs per Cluster Ratio over Events;Events;Stubs per Cluster" );
+
+	stubmap_top_x = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "Stub map, top, x", 1016, 0, 1015 );
+	stubmap_top_x -> setTitle ( "Stub Map, Top Sensor in x;Channel;Entries" );
+
+	stubmap_bot_x = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "Stub map, bot, x", 1016, 0, 1015 );
+	stubmap_bot_x -> setTitle ( "Stub Map, Bottom Sensor in x;Channel;Entries" );
+
+	stubmap_top_y = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "Stub map, top, y", 1016, 0, 1015 );
+	stubmap_top_y -> setTitle ( "Stub Map, Top Sensor in y;Channel;Entries" );
+
+	stubmap_bot_y = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "Stub map, bot, y", 1016, 0, 1015 );
+	stubmap_bot_y -> setTitle ( "Stub Map, Bottom Sensor in y;Channel;Entries" );
+
     }
     catch ( ... )
     {

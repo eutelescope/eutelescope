@@ -149,7 +149,7 @@
   <!--Input hit collections names.-->
   <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit"> AlignedHit1 </parameter>
   <!--Number of alignment constants used. Available modes are: 1: shift in Z only. 2: shifts in X and Y. 3: shifts in X and Y and rotation around the Z axis, 4: shifts in X,Y and Z and rotation around the Z axis. 5: shifts in X,Y and rotations around all axis, fix Z. 6: shifts in X,Y and Z and rotations around all axis. 7: Shifts in X, Y and Z. Note that in modes 5 and 6, alignment constants in alpha and beta will only be returned for rotated/tilted sensors.-->
-  <parameter name="AlignMode" type="int" value="5"/>
+  <parameter name="AlignMode" type="int" value="3"/>
   <!--All alignment collection names which have been applied must be entered here. The order should correspond to their application, i.e.: alignment1 alignment2 etc.-->
   <parameter name="AlignmentCollectionName" type="StringVec" value="alignment1"/>
   <!--This is the name of the alignment collection to be saved into the lcio file.-->
@@ -185,7 +185,7 @@
   <!--The sensor id number of the DUT.-->
   <parameter name="ManualDUTid" type="int" value="32"/>
   <!--Maximal number of track candidates in the whole run.-->
-  <parameter name="MaxTrackCandidatesTotal" type="int" value="10000000"/>
+  <parameter name="MaxTrackCandidatesTotal" type="int" value="100000"/>
   <!--The name of the output fit hit collection.-->
   <!--parameter name="OutputHitCollection" type="string" value="fithits"/-->
   <!--The name of the output track fit collection.-->
@@ -195,7 +195,7 @@
   <!--All prealignment collection names which have been applied must be entered here. The order should correspond to their application, i.e.: prealignment1 prealignment2 etc.-->
   <!--parameter name="PreAlignmentCollectionName" type="StringVec"> </parameter-->
   <!--Probability cut, tracks above are accepted.-->
-  <parameter name="ProbCut" type="double" value="0.01"/>
+  <parameter name="ProbCut" type="double" value="0.001"/>
   <!--Reference plane resolution in x [um].-->
   <parameter name="REFResX" type="double" value="100"/>
   <!--Reference plane resolution in y [um].-->
@@ -221,17 +221,17 @@
   <!--Downstream triplet residual cut [um].-->
   <parameter name="driCut" type="double" value="250."/>
   <!--Downstream driplet reference plane residual cut in x [um].-->
-  <parameter name="driCutREFx" type="double" value="350"/>
+  <parameter name="driCutREFx" type="double" value="750"/>
   <!--Downstream driplet reference plane residual cut in y [um].-->
-  <parameter name="driCutREFy" type="double" value="350"/>
+  <parameter name="driCutREFy" type="double" value="750"/>
   <!--Upstream-downstream track matching cut [um].-->
-  <parameter name="sixCut" type="double" value="550."/>
+  <parameter name="sixCut" type="double" value="750."/>
   <!--Upstream triplet residual cut [um].-->
-  <parameter name="triCut" type="double" value="250."/>
+  <parameter name="triCut" type="double" value="350."/>
   <!--Upstream triplet DUT residual cut in x [um].-->
-  <parameter name="triCutDUTx" type="double" value="350."/>
+  <parameter name="triCutDUTx" type="double" value="500."/>
   <!--Upstream triplet DUT residual cut in y [um].-->
-  <parameter name="triCutDUTy" type="double" value="350."/>
+  <parameter name="triCutDUTy" type="double" value="500."/>
 </processor>
 
 </marlin>

@@ -234,9 +234,9 @@
   <!--Method with which to get the DUT fit position: 0 = centre of the DUT (bad if DUT is rotated), 1 = extrapolate from triplet and get intersect with plane, 2 = extrapolate from driplet, 3 = get average from methods 1 and 2.-->
   <parameter name="DUTFitMethod" type="int" value="3"/>
   <!--DUT resolution in x [um].-->
-  <parameter name="DUTResX" type="double" value="700"/>
+  <parameter name="DUTResX" type="double" value="50"/>
   <!--DUT resolution in y [um].-->
-  <parameter name="DUTResY" type="double" value="50"/>
+  <parameter name="DUTResY" type="double" value="700"/>
   <!--Do an additional DUT alignment after track search? 1 = DUT alignment in alpha, 2 = DUT alignment in beta, 3 = DUT alignment in gamma with unsensitive x-axis, 4 = DUT alignment in gamma with unsensitive y-axis, 0 = no additional alignment.-->
   <!--parameter name="DoDUTAlignment" type="int" value="0"/-->
   <!--Use this processor to do Prealignment? In this case, no tracking is performed. 1 = yes, 0 = no, 2 = yes, with zero Prealignment, aka output an alignment file with zeros to preserve file structure.-->
@@ -254,7 +254,7 @@
   <!--The sensor id number of the DUT.-->
   <parameter name="ManualDUTid" type="int" value="32"/>
   <!--Maximal number of track candidates in the whole run.-->
-  <parameter name="MaxTrackCandidatesTotal" type="int" value="10000000"/>
+  <parameter name="MaxTrackCandidatesTotal" type="int" value="100000"/>
   <!--The name of the output fit hit collection.-->
   <!--parameter name="OutputHitCollection" type="string" value="fithits"/-->
   <!--The name of the output track fit collection.-->
@@ -290,9 +290,9 @@
   <!--Downstream triplet residual cut [um].-->
   <parameter name="driCut" type="double" value="150."/>
   <!--Downstream driplet reference plane residual cut in x [um].-->
-  <parameter name="driCutREFx" type="double" value="350"/>
+  <parameter name="driCutREFx" type="double" value="500"/>
   <!--Downstream driplet reference plane residual cut in y [um].-->
-  <parameter name="driCutREFy" type="double" value="350"/>
+  <parameter name="driCutREFy" type="double" value="500"/>
   <!--Upstream-downstream track matching cut [um].-->
   <parameter name="sixCut" type="double" value="400."/>
   <!--Upstream triplet residual cut [um].-->
