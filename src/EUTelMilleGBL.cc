@@ -102,6 +102,7 @@
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
+#include <sys/resource.h>
 
 #define PI 3.14159265
 
@@ -341,6 +342,10 @@ AIDA::IHistogram2D * duttrackhitmap;
 
 AIDA::IHistogram2D * duthitmap;
 
+AIDA::IHistogram1D * unbiasedDUTrx;
+AIDA::IHistogram1D * unbiasedDUTry;
+AIDA::IHistogram1D * unbiasedDUTrz;
+
 AIDA::IHistogram1D * gblax0Hist;
 AIDA::IHistogram1D * gbldx0Hist;
 AIDA::IHistogram1D * gblrx0Hist;
@@ -567,6 +572,28 @@ EUTelMilleGBL::EUTelMilleGBL ( ) : Processor ( "EUTelMilleGBL" )
 
 void EUTelMilleGBL::init ( )
 {
+    
+    
+    
+    const rlim_t kStackSize = 16 * 1024 * 1024;   // min stack size = 16 MB
+    struct rlimit rl;
+    int result;
+
+    result = getrlimit(RLIMIT_STACK, &rl);
+    if (result == 0)
+    {
+        if (rl.rlim_cur < kStackSize)
+        {
+            rl.rlim_cur = kStackSize;
+            result = setrlimit(RLIMIT_STACK, &rl);
+            if (result != 0)
+            {
+                fprintf(stderr, "setrlimit returned result = %d\n", result);
+            }
+        }
+    }
+    
+    
 
     // check if Marlin was built with GEAR support or not
     #ifndef USE_GEAR
@@ -739,7 +766,7 @@ void EUTelMilleGBL::init ( )
 	streamlog_out ( WARNING2 ) << "Consistency check of the fixed parameters array failed. The array size is different from the number of found planes!" << endl;
 	streamlog_out ( WARNING2 ) << "The array is now set to default values, which means that all parameters are free in the fit, depending only on your input to AlignMode!" << endl;
 	_FixParameter.clear ( );
-	for ( size_t i = 0; i < _activeSensorID.size ( ); i++ )
+	for ( int i = 0; i < _nPlanes; i++ )
 	{
 	    _FixParameter.push_back ( 0 );
 	}
@@ -749,7 +776,7 @@ void EUTelMilleGBL::init ( )
     {
 	streamlog_out ( MESSAGE0 ) << "The fixed parameters array is empty. All parameters are free in the fit now, depending only on your input to AlignMode!" << endl;
 	_FixParameter.clear ( );
-	for ( size_t i = 0; i < _activeSensorID.size ( ); i++ )
+	for ( int i = 0; i < _nPlanes; i++ )
 	{
 	    _FixParameter.push_back ( 0 );
 	}
@@ -1814,7 +1841,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	{
 	    telexc[_excludePlanes_sensorIDs.at ( exc ) ] = 0;
 	    telexccount++;
-	    streamlog_out ( DEBUG8 ) << "Excluded telescope plane " << _excludePlanes_sensorIDs.at ( exc ) << " in the setup, remapping!" << endl;
+	    streamlog_out ( MESSAGE2 ) << "Excluded telescope plane " << _excludePlanes_sensorIDs.at ( exc ) << " in the setup, remapping!" << endl;
 	}
     }
     if ( telexc[0] * telexc[1] * telexc[2] == 0 && telexc[3] * telexc[4] * telexc[5] == 0 && telexccount > 0 && telexccount < 3 )
@@ -2521,9 +2548,9 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		    TMatrixD alDer6 ( 3, 6 ); // alignment derivatives
 
 		    // telescope planes 0-5 + DUT + REF:
-		    double rx[8];
-		    double ry[8];
-		    double rz[8];
+		    double rx[8] = { 0.0 };
+		    double ry[8] = { 0.0 };
+		    double rz[8] = { 0.0 };
 
 		    int jhit = hts[0][kA];
 		    // first plane, including any pre-alignment
@@ -2575,7 +2602,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			    delete point;
 
 			    streamlog_out ( DEBUG3 ) << "Adding GBL DUT scatterer at z: " << zz << " um in Event " << event -> getEventNumber ( ) << endl;
-			    streamlog_out ( DEBUG3 ) << "Accumulated X0 is " << accum_x0*1E3 << " E-3!" << endl;
+			    streamlog_out ( DEBUG3 ) << "Accumulated X0 is " << accum_x0 * 1E3 << " E-3!" << endl;
 
 			    // also add air
 			    // positions in um
@@ -2674,8 +2701,8 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			ry[indexconverter[ipl]] = _hitsArray[indexconverter[ipl]][jhit].measuredY - ys;
 
 			// resid hit-track
-			meas[0] = _hitsArray[indexconverter[ipl]][jhit].measuredX - xs;
-			meas[1] = _hitsArray[indexconverter[ipl]][jhit].measuredY - ys;
+			meas[0] = ( _hitsArray[indexconverter[ipl]][jhit].measuredX - xs ) * 1.0;
+			meas[1] = ( _hitsArray[indexconverter[ipl]][jhit].measuredY - ys ) * 1.0;
 
 			double tetSi = 0.0136 * sqrt ( X0Si ) / p * ( 1 + 0.038 * std::log ( X0Si + accum_x0 ) );
 			double tetSiDUT = 0.0136 * sqrt ( X0SiDUT ) / p * ( 1 + 0.038 * std::log ( X0SiDUT + accum_x0 ) );
@@ -2919,25 +2946,25 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		    selkxHist -> fill ( kx * 1E3 );
 		    selkyHist -> fill ( ky * 1E3 );
 
-		    selrx0Hist -> fill ( rx[indexconverter[0]] );
-		    selry0Hist -> fill ( ry[indexconverter[0]] );
-		    selrx1Hist -> fill ( rx[indexconverter[1]] );
-		    selry1Hist -> fill ( ry[indexconverter[1]] );
-		    selrx2Hist -> fill ( rx[indexconverter[2]] );
-		    selry2Hist -> fill ( ry[indexconverter[2]] );
-		    selrx6Hist -> fill ( rx[indexconverter[3]] );
-		    selry6Hist -> fill ( ry[indexconverter[3]] );
-		    selrx3Hist -> fill ( rx[indexconverter[4]] );
-		    selry3Hist -> fill ( ry[indexconverter[4]] );
-		    selrx4Hist -> fill ( rx[indexconverter[5]] );
-		    selry4Hist -> fill ( ry[indexconverter[5]] );
-		    selrx5Hist -> fill ( rx[indexconverter[6]] );
-		    selry5Hist -> fill ( ry[indexconverter[6]] );
+		    selrx0Hist -> fill ( rx[indexconverter[0]] * 1.0 );
+		    selry0Hist -> fill ( ry[indexconverter[0]] * 1.0 );
+		    selrx1Hist -> fill ( rx[indexconverter[1]] * 1.0 );
+		    selry1Hist -> fill ( ry[indexconverter[1]] * 1.0 );
+		    selrx2Hist -> fill ( rx[indexconverter[2]] * 1.0 );
+		    selry2Hist -> fill ( ry[indexconverter[2]] * 1.0 );
+		    selrx6Hist -> fill ( rx[indexconverter[3]] * 1.0 );
+		    selry6Hist -> fill ( ry[indexconverter[3]] * 1.0 );
+		    selrx3Hist -> fill ( rx[indexconverter[4]] * 1.0 );
+		    selry3Hist -> fill ( ry[indexconverter[4]] * 1.0 );
+		    selrx4Hist -> fill ( rx[indexconverter[5]] * 1.0 );
+		    selry4Hist -> fill ( ry[indexconverter[5]] * 1.0 );
+		    selrx5Hist -> fill ( rx[indexconverter[6]] * 1.0 );
+		    selry5Hist -> fill ( ry[indexconverter[6]] * 1.0 );
 
 		    if ( _useREF > 0 )
 		    {
-			selrx7Hist -> fill ( rx[indexconverter[7]] );
-			selry7Hist -> fill ( ry[indexconverter[7]] );
+			selrx7Hist -> fill ( rx[indexconverter[7]] * 1.0 );
+			selry7Hist -> fill ( ry[indexconverter[7]] * 1.0 );
 		    }
 
 		    double Chi2;
@@ -2958,9 +2985,6 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		    gblprbHist -> fill ( probchi );
 
 		    // possibility to cut on track slope at DUT:
-		    TVectorD aCorrection ( 5 );
-		    TMatrixDSym aCovariance ( 5 );
-
 		    // bad fits:
 		    if ( probchi < _probCut || chi2ndf > _chi2ndfCut || fabs ( sxA[iA] * 1E3 ) > _slopecutDUTx || fabs ( syA[iA] * 1E3 ) > _slopecutDUTy )
 		    {
@@ -3045,21 +3069,18 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			    goody7Hist -> fill ( ry[indexconverter[7]] );
 			}
 
-			// 6 telescope planes, + 1 dut + 1 ref
-			double ax[8];
-			double ay[8];
 			unsigned int k = 0;
 			unsigned int ndim = 2;
-
 			TVectorD aResiduals ( ndim );
 			TVectorD aMeasErrors ( ndim );
 			TVectorD aResErrors ( ndim );
 			TVectorD aDownWeights ( ndim );
-
 			TVectorD aKinks ( ndim );
 			TVectorD aKinkErrors ( ndim );
 			TVectorD kResErrors ( ndim );
 			TVectorD kDownWeights ( ndim );
+			TVectorD aCorrection ( 5 );
+			TMatrixDSym aCovariance ( 5 );
 
 			// prepare an encoder for the hit collection
 			CellIDEncoder < TrackerHitImpl > fitHitEncoder ( EUTELESCOPE::HITENCODING, fitpointvec );
@@ -3104,6 +3125,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			gbldx0Hist -> fill ( aCorrection[3] );
 			// residual x [um]
 			gblrx0Hist -> fill ( rx[indexconverter[0]] - aCorrection[3] );
+
 			// angle y [mrad]
 			gblay0Hist -> fill ( syA[kA] - aCorrection[2] * 1E3 );
 			// shift y [um]
@@ -3112,12 +3134,12 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			gblry0Hist -> fill ( ry[indexconverter[0]] - aCorrection[4] );
 			// pull residual x
 			gblpx0Hist -> fill ( 0.0 );
-			// pull residual y 
+			// pull residual y
 			gblpy0Hist -> fill ( 0.0 );
 			// angle correction at plane, for kinks
-			ax[k] = aCorrection[1];
+			double ax_prev = aCorrection[1];
 			// angle correction at plane, for kinks
-			ay[k] = aCorrection[2];
+			double ay_prev = aCorrection[2];
 
 			// the fit at this point is the measurement - aCorrection, so we can save these fit hits:
 			TrackerHitImpl * fitpoint0 = new TrackerHitImpl;
@@ -3132,7 +3154,6 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			fitpos[2] = _hitsArray[indexconverter[0]][jhit].measuredZ / 1000.0;
 
 			fitpoint0 -> setPosition ( fitpos );
-
 			fitpoint0 -> setCovMatrix ( fitcov );
 			fitpointvec -> push_back ( fitpoint0 );
 			fittrack -> addHit ( fitpoint0 );
@@ -3156,9 +3177,11 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			gbldy1Hist -> fill ( aCorrection[4] );
 			gblry1Hist -> fill ( ry[indexconverter[1]] - aCorrection[4] );
 			gblpx1Hist -> fill ( aResiduals[0] / aResErrors[0] );
-			gblpy1Hist -> fill ( aResiduals[1] / aResErrors[1] ); 
-			ax[k] = aCorrection[1];
-			ay[k] = aCorrection[2];
+			gblpy1Hist -> fill ( aResiduals[1] / aResErrors[1] );
+			gblkx1Hist -> fill ( ( aCorrection[1] - ax_prev ) * 1E3 );
+			gblky1Hist -> fill ( ( aCorrection[2] - ay_prev ) * 1E3 );
+			ax_prev = aCorrection[1];
+			ay_prev = aCorrection[2];
 
 			TrackerHitImpl * fitpoint1 = new TrackerHitImpl;
 			fitHitEncoder["sensorID"] =  1;
@@ -3191,8 +3214,10 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			gblry2Hist -> fill ( ry[indexconverter[2]] - aCorrection[4] );
 			gblpx2Hist -> fill ( aResiduals[0] / aResErrors[0] );
 			gblpy2Hist -> fill ( aResiduals[1] / aResErrors[1] );
-			ax[k] = aCorrection[1];
-			ay[k] = aCorrection[2];
+			gblkx2Hist -> fill ( ( aCorrection[1] - ax_prev ) * 1E3 );
+			gblky2Hist -> fill ( ( aCorrection[2] - ay_prev ) * 1E3 );
+			ax_prev = aCorrection[1];
+			ay_prev = aCorrection[2];
 	
 			TrackerHitImpl * fitpoint2 = new TrackerHitImpl;
 			fitHitEncoder["sensorID"] =  2;
@@ -3225,11 +3250,13 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			gblry6Hist -> fill ( ry[indexconverter[3]] - aCorrection[4] );
 			gblpx6Hist -> fill ( aResiduals[0] / aResErrors[0] );
 			gblpy6Hist -> fill ( aResiduals[1] / aResErrors[1] );
-			ax[k] = aCorrection[1];
-			ay[k] = aCorrection[2];
-	
+			gblkx6Hist -> fill ( ( aCorrection[1] - ax_prev ) * 1E3 );
+			gblky6Hist -> fill ( ( aCorrection[2] - ay_prev ) * 1E3 );
+			ax_prev = aCorrection[1];
+			ay_prev = aCorrection[2];
+
 			TrackerHitImpl * fitpoint3 = new TrackerHitImpl;
-			fitHitEncoder["sensorID"] =  6;
+			fitHitEncoder["sensorID"] =  _manualDUTid;
 			fitHitEncoder["properties"] = kFittedHit;
 			fitHitEncoder.setCellID ( fitpoint3 );
 	
@@ -3242,9 +3269,45 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			    fitpos[0] = dutfitposX / 1000.0;
 			    fitpos[1] = dutfitposY / 1000.0;
 			    fitpos[2] = dutfitposZ / 1000.0;
+
+			    double selectx = 99999.0;
+			    double selecty = 99999.0;
+			    int hitselect = -1;
+
+			    // select closest hit to the track
+			    for ( size_t ji = 0; ji < _hitsArray[indexconverter[3]].size ( ); ji++ )
+			    {
+				double dutdx = _hitsArray[indexconverter[3]][ji].measuredX - dutfitposX;
+				double dutdy = _hitsArray[indexconverter[3]][ji].measuredY - dutfitposY;
+				double dutdz = _hitsArray[indexconverter[3]][ji].measuredZ - dutfitposZ;
+				unbiasedDUTrx -> fill ( dutdx );
+				unbiasedDUTry -> fill ( dutdy );
+				unbiasedDUTrz -> fill ( dutdz );
+
+				if ( ( sqrt ( dutdx * dutdx + dutdy * dutdy ) ) < ( sqrt ( selectx * selectx + selecty * selecty ) ) )
+				{
+				    hitselect = ji;
+				    selectx = dutdx;
+				    selecty = dutdy;
+				}
+			    }
+
+			    if ( hitselect > -1 )
+			    {
+				rx[indexconverter[3]] = _hitsArray[indexconverter[3]][hitselect].measuredX - dutfitposX + aCorrection[3];
+				ry[indexconverter[3]] = _hitsArray[indexconverter[3]][hitselect].measuredY - dutfitposY + aCorrection[4];
+				rz[indexconverter[3]] = _hitsArray[indexconverter[3]][hitselect].measuredZ - dutfitposZ;
+				streamlog_out ( DEBUG5 ) << "Selected hit " << hitselect << " of " << _hitsArray[indexconverter[3]].size ( ) << " hits, x = " << fitpos[0] << ", y = " << fitpos[1] << endl;
+				streamlog_out ( DEBUG4 ) << "Correction x = " << aCorrection[3] << ", correction y = " << aCorrection[4] << endl;
+			    }
+			    else
+			    {
+				streamlog_out ( DEBUG4 ) << "No DUT hit to extrapolate to!" << endl;
+			    }
 			}
 			else
 			{
+			    // the hit that made the track
 			    fitpos[0] = ( _hitsArray[indexconverter[3]][jhit].measuredX - aCorrection[3] ) / 1000.0;
 			    fitpos[1] = ( _hitsArray[indexconverter[3]][jhit].measuredY - aCorrection[4] ) / 1000.0;
 			    fitpos[2] = _hitsArray[indexconverter[3]][jhit].measuredZ / 1000.0;
@@ -3326,8 +3389,10 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			gblry3Hist -> fill ( ry[indexconverter[4]] - aCorrection[4] );
 			gblpx3Hist -> fill ( aResiduals[0] / aResErrors[0] );
 			gblpy3Hist -> fill ( aResiduals[1] / aResErrors[1] );
-			ax[k] = aCorrection[1];
-			ay[k] = aCorrection[2];
+			gblkx3Hist -> fill ( ( aCorrection[1] - ax_prev ) * 1E3 );
+			gblky3Hist -> fill ( ( aCorrection[2] - ay_prev ) * 1E3 );
+			ax_prev = aCorrection[1];
+			ay_prev = aCorrection[2];
 	
 			TrackerHitImpl * fitpoint4 = new TrackerHitImpl;
 			fitHitEncoder["sensorID"] =  3;
@@ -3360,8 +3425,10 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			gblry4Hist -> fill ( ry[indexconverter[5]] - aCorrection[4] );
 			gblpx4Hist -> fill ( aResiduals[0] / aResErrors[0] );
 			gblpy4Hist -> fill ( aResiduals[1] / aResErrors[1] );
-			ax[k] = aCorrection[1];
-			ay[k] = aCorrection[2];
+			gblkx4Hist -> fill ( ( aCorrection[1] - ax_prev ) * 1E3 );
+			gblky4Hist -> fill ( ( aCorrection[2] - ay_prev ) * 1E3 );
+			ax_prev = aCorrection[1];
+			ay_prev = aCorrection[2];
 	
 			TrackerHitImpl * fitpoint5 = new TrackerHitImpl;
 			fitHitEncoder["sensorID"] =  4;
@@ -3394,8 +3461,10 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			gblry5Hist -> fill ( ry[indexconverter[6]] - aCorrection[4] );
 			gblpx5Hist -> fill ( aResiduals[0] / aResErrors[0] );
 			gblpy5Hist -> fill ( aResiduals[1] / aResErrors[1] );
-			ax[k] = aCorrection[1];
-			ay[k] = aCorrection[2];
+			gblkx5Hist -> fill ( ( aCorrection[1] - ax_prev ) * 1E3 );
+			gblky5Hist -> fill ( ( aCorrection[2] - ay_prev ) * 1E3 );
+			ax_prev = aCorrection[1];
+			ay_prev = aCorrection[2];
 	
 			TrackerHitImpl * fitpoint6 = new TrackerHitImpl;
 			fitHitEncoder["sensorID"] =  5;
@@ -3430,8 +3499,10 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			    gblry7Hist -> fill ( ry[indexconverter[7]] - aCorrection[4] );
 			    gblpx7Hist -> fill ( aResiduals[0] / aResErrors[0] );
 			    gblpy7Hist -> fill ( aResiduals[1] / aResErrors[1] );
-			    ax[k] = aCorrection[1];
-			    ay[k] = aCorrection[2];
+			    gblkx7Hist -> fill ( ( aCorrection[1] - ax_prev ) * 1E3 );
+			    gblky7Hist -> fill ( ( aCorrection[2] - ay_prev ) * 1E3 );
+			    ax_prev = aCorrection[1];
+			    ay_prev = aCorrection[2];
 
 			    TrackerHitImpl * fitpoint7 = new TrackerHitImpl;
 			    fitHitEncoder["sensorID"] =  7;
@@ -3456,32 +3527,6 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			// done with the track
 			fittrack -> setReferencePoint ( refpoint );
 			fittrackvec -> addElement ( fittrack );
-	
-			// kinks in x in mrad
-			gblkx1Hist -> fill ( ( ax[indexconverter[1]] - ax[indexconverter[0]] ) * 1E3 );
-			gblkx2Hist -> fill ( ( ax[indexconverter[2]] - ax[indexconverter[1]] ) * 1E3 );
-			gblkx6Hist -> fill ( ( ax[indexconverter[3]] - ax[indexconverter[2]] ) * 1E3 );
-			gblkx3Hist -> fill ( ( ax[indexconverter[4]] - ax[indexconverter[3]] ) * 1E3 );
-			gblkx4Hist -> fill ( ( ax[indexconverter[5]] - ax[indexconverter[4]] ) * 1E3 );
-			gblkx5Hist -> fill ( ( ax[indexconverter[6]] - ax[indexconverter[5]] ) * 1E3 );
-
-			if ( _useREF > 0 )
-			{
-			    gblkx7Hist -> fill ( ( ax[indexconverter[7]] - ax[indexconverter[7]] ) * 1E3 );
-			}
-	
-			// kinks in y in mrad
-			gblky1Hist -> fill ( ( ay[indexconverter[1]] - ay[indexconverter[0]] ) * 1E3 );
-			gblky2Hist -> fill ( ( ay[indexconverter[2]] - ay[indexconverter[1]] ) * 1E3 );
-			gblky6Hist -> fill ( ( ay[indexconverter[3]] - ay[indexconverter[2]] ) * 1E3 );
-			gblky3Hist -> fill ( ( ay[indexconverter[4]] - ay[indexconverter[3]] ) * 1E3 );
-			gblky4Hist -> fill ( ( ay[indexconverter[5]] - ay[indexconverter[4]] ) * 1E3 );
-			gblky5Hist -> fill ( ( ay[indexconverter[6]] - ay[indexconverter[5]] ) * 1E3 );
-
-			if ( _useREF > 0 )
-			{
-			    gblky7Hist -> fill ( ( ay[indexconverter[7]] - ay[indexconverter[7]] ) * 1E3 );
-			}
 
 			// done
 			streamlog_message ( DEBUG0, traj.printTrajectory ( 10 );, std::endl; );
@@ -3628,6 +3673,7 @@ void EUTelMilleGBL::end ( )
 		    // if fixed planes
 		    if ( fixed ||  ( _FixedPlanes.size ( ) == 0 && ( ipl == firstnotexcl || ipl == lastnotexcl ) ) )
 		    {
+			streamlog_out ( MESSAGE2 ) << "Plane " << ipl << " fixed" << endl;
 			nfix++;
 			if ( _alignMode == 2 )
 			{
@@ -4242,7 +4288,7 @@ void EUTelMilleGBL::end ( )
 				// catch missing line
 				if ( ( thisparameter - previousparameter ) > 1 )
 				{
-				    streamlog_out ( DEBUG8 ) << "Missing line detected in the millepede.res file! This might be due to a wrong alignment mode with too many free parameters!" << endl;
+				    streamlog_out ( WARNING2 ) << "Missing line detected in the millepede.res file! This might be due to a wrong alignment mode with too many free parameters!" << endl;
 				    temp_tokens = tokens;
 				    readprevious = true;
 				    double mylist[] = { previousparameter * 1.0 + 1.0, 0.0, 0.0 };
@@ -5576,6 +5622,15 @@ void EUTelMilleGBL::bookHistos ( )
 		goody7Hist -> setTitle ( "driplet resid y at REF, good GBL;#Deltay [#mum];tracks" );
 
 	    }
+
+	    unbiasedDUTrx = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/DUT/unbiasedrx", 100, -500, 500 );
+	    unbiasedDUTrx -> setTitle ( "Unbiased Track Residual at DUT in x;#Deltax [#mum];tracks" );
+
+	    unbiasedDUTry = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/DUT/unbiasedry", 100, -500, 500 );
+	    unbiasedDUTry -> setTitle ( "Unbiased Track Residual at DUT in y;#Deltay [#mum];tracks" );
+
+	    unbiasedDUTrz = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/DUT/unbiasedrz", 100, -500, 500 );
+	    unbiasedDUTrz -> setTitle ( "Unbiased Track Residual at DUT in z;#Deltaz [#mum];tracks" );
 
 	    dutrxxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrxx", 100, -500, 500, 100, -15, 15 );
 	    dutrxxHist -> setTitle ( "Track Residual at DUT in x vs Track x;#Deltax [#mum];track_{x} [mm]" );
