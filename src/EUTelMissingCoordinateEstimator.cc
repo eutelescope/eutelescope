@@ -80,6 +80,9 @@ _maxExpectedCreatedHitPerDUTHit ( 10 )
 
     registerProcessorParameter ( "MaxResidual", "This processor will look for hits in the known coordinate to determine if the hits are correlated. The hits will be considered as correlated if the residual is smaller than MaxResidual", _maxResidual, float ( 10.0 ) );
 
+    registerProcessorParameter ( "MultiHitMode", "Allow an individual DUT hit to be transformed into multiple hits? If false, only the closest extrapolated position will be used.", _multihitmode, bool ( true ) );
+    
+
 }
 
 
@@ -239,78 +242,158 @@ void EUTelMissingCoordinateEstimator::processEvent ( LCEvent * event )
      * z=z1+(z2−z1)t
      */
 
-    // loop over DUT hits
-    for ( unsigned int k = 0; k < dutPlaneHits.size ( ); k++ )
+    // ugly way, to be optimised
+    if ( _multihitmode == true )
     {
-	TrackerHitImpl * dutHit = dynamic_cast < TrackerHitImpl* > ( inputHitCollection -> getElementAt ( dutPlaneHits[k] ) );
-	const double* dutHitPos = dutHit -> getPosition ( );
-	double newDutHitPos[3];
-
-	int hitsperhit = 0;
-
-	// loop over first reference plane hits
-	for ( unsigned int i = 0; i < referencePlaneHits1.size ( ); i++ )
+	// loop over DUT hits
+	for ( unsigned int k = 0; k < dutPlaneHits.size ( ); k++ )
 	{
-	    TrackerHitImpl * refHit1 = dynamic_cast < TrackerHitImpl* > ( inputHitCollection -> getElementAt ( referencePlaneHits1[i] ) );
-	    const double* refHit1Pos = refHit1 -> getPosition ( );
+	    TrackerHitImpl * dutHit = dynamic_cast < TrackerHitImpl* > ( inputHitCollection -> getElementAt ( dutPlaneHits[k] ) );
+	    const double* dutHitPos = dutHit -> getPosition ( );
+	    double newDutHitPos[3];
 
-	    // loop over second reference plane hits
-	    for ( unsigned int j = 0; j < referencePlaneHits2.size ( ); j++ )
+	    int hitsperhit = 0;
+
+	    // loop over first reference plane hits
+	    for ( unsigned int i = 0; i < referencePlaneHits1.size ( ); i++ )
 	    {
-		TrackerHitImpl * refHit2 = dynamic_cast < TrackerHitImpl* > ( inputHitCollection -> getElementAt ( referencePlaneHits2[j] ) );
-		const double* refHit2Pos = refHit2 -> getPosition ( );
+		TrackerHitImpl * refHit1 = dynamic_cast < TrackerHitImpl* > ( inputHitCollection -> getElementAt ( referencePlaneHits1[i] ) );
+		const double* refHit1Pos = refHit1 -> getPosition ( );
 
-		// t = (z-z1)/(z2-z1)
-		double t = ( dutHitPos[2] - refHit1Pos[2] ) / ( refHit2Pos[2] - refHit1Pos[2] );
-
-		// find the known coordinate value that correcponds to that z on the line
-		double knownHitPosOnLine = refHit1Pos[_knownHitPos] + ( refHit2Pos[_knownHitPos] - refHit1Pos[_knownHitPos] ) * t;
-
-		pointhitmaphisto -> fill ( ( refHit1Pos[0] + ( refHit2Pos[0] - refHit1Pos[0] ) * t ), ( refHit1Pos[1] + ( refHit2Pos[1] - refHit1Pos[1] ) * t ) );
-
-		// if knownHitPosOnLine is close to the actual DUT hit position
-		if ( fabs ( knownHitPosOnLine - dutHitPos[_knownHitPos] ) < _maxResidual )
+		// loop over second reference plane hits
+		for ( unsigned int j = 0; j < referencePlaneHits2.size ( ); j++ )
 		{
-		    // first copy old DUT hit position to the new one
-		    newDutHitPos[0] = dutHitPos[0];
-		    newDutHitPos[1] = dutHitPos[1];
-		    newDutHitPos[2] = dutHitPos[2];
+		    TrackerHitImpl * refHit2 = dynamic_cast < TrackerHitImpl* > ( inputHitCollection -> getElementAt ( referencePlaneHits2[j] ) );
+		    const double* refHit2Pos = refHit2 -> getPosition ( );
 
-		    // then replace the unknown one with the estimated one
-		    double estimatedHitPos = refHit1Pos[_missingHitPos] + ( refHit2Pos[_missingHitPos] - refHit1Pos[_missingHitPos] ) * t;
+		    // t = (z-z1)/(z2-z1)
+		    double t = ( dutHitPos[2] - refHit1Pos[2] ) / ( refHit2Pos[2] - refHit1Pos[2] );
 
-		    newDutHitPos[_missingHitPos] = estimatedHitPos;
+		    // find the known coordinate value that correcponds to that z on the line
+		    double knownHitPosOnLine = refHit1Pos[_knownHitPos] + ( refHit2Pos[_knownHitPos] - refHit1Pos[_knownHitPos] ) * t;
 
-		    // now store new hit position in the collection
-		    TrackerHitImpl * newHit = cloneHit ( dutHit );
-		    const double* hitpos = newDutHitPos;
-		    newHit -> setPosition ( &hitpos[0] );
-		    outputHitCollection -> push_back ( newHit );
-		    streamlog_out ( DEBUG0 ) << "New hit: x: " << newDutHitPos[0] << ", y: " << newDutHitPos[1] << ", z: " << newDutHitPos[2] << endl;
-		    hitmaphisto -> fill ( newDutHitPos[0], newDutHitPos[1] );
+		    pointhitmaphisto -> fill ( ( refHit1Pos[0] + ( refHit2Pos[0] - refHit1Pos[0] ) * t ), ( refHit1Pos[1] + ( refHit2Pos[1] - refHit1Pos[1] ) * t ) );
 
-		    // count new created hits
-		    hitsperhit ++;
-		    _nDutHitsCreated++;
+		    // if knownHitPosOnLine is close to the actual DUT hit position
+		    if ( fabs ( knownHitPosOnLine - dutHitPos[_knownHitPos] ) < _maxResidual )
+		    {
+			// first copy old DUT hit position to the new one
+			newDutHitPos[0] = dutHitPos[0];
+			newDutHitPos[1] = dutHitPos[1];
+			newDutHitPos[2] = dutHitPos[2];
 
-		}
-		else
-		{
-		    streamlog_out ( DEBUG0 ) << "Failing residual cut!" << endl;
-		    failhitmaphisto -> fill ( dutHitPos[0], dutHitPos[1] );
-		    faildistancehisto -> fill ( knownHitPosOnLine - dutHitPos[_knownHitPos] );
-		    _nResidualFailCount++;
-		}
+			// then replace the unknown one with the estimated one
+			double estimatedHitPos = refHit1Pos[_missingHitPos] + ( refHit2Pos[_missingHitPos] - refHit1Pos[_missingHitPos] ) * t;
 
-	    } // end of loop over second reference plane hits
-	} // end of loop over first reference plane hits
+			newDutHitPos[_missingHitPos] = estimatedHitPos;
 
-	if ( hitsperhit > 9 )
+			// now store new hit position in the collection
+			TrackerHitImpl * newHit = cloneHit ( dutHit );
+			const double* hitpos = newDutHitPos;
+			newHit -> setPosition ( &hitpos[0] );
+			outputHitCollection -> push_back ( newHit );
+			streamlog_out ( DEBUG0 ) << "New hit: x: " << newDutHitPos[0] << ", y: " << newDutHitPos[1] << ", z: " << newDutHitPos[2] << endl;
+			hitmaphisto -> fill ( newDutHitPos[0], newDutHitPos[1] );
+
+			// count new created hits
+			hitsperhit ++;
+			_nDutHitsCreated++;
+
+		    }
+		    else
+		    {
+			streamlog_out ( DEBUG0 ) << "Failing residual cut!" << endl;
+			failhitmaphisto -> fill ( dutHitPos[0], dutHitPos[1] );
+			faildistancehisto -> fill ( knownHitPosOnLine - dutHitPos[_knownHitPos] );
+			_nResidualFailCount++;
+		    }
+
+		} // end of loop over second reference plane hits
+	    } // end of loop over first reference plane hits
+
+	    if ( hitsperhit > 9 )
+	    {
+		hitsperhit = 9;
+	    }
+	    _numberOfCreatedHitsPerDUTHit[hitsperhit]++;
+	} // end of loop over DUT hits
+    } // end _multihitmode == true
+
+    // ugly way, to be optimised
+    if ( _multihitmode == false )
+    {
+	bool foundhit = false;
+	double closestresidual = _maxResidual;
+	// loop over DUT hits
+	for ( unsigned int k = 0; k < dutPlaneHits.size ( ); k++ )
 	{
-	    hitsperhit = 9;
-	}
-	_numberOfCreatedHitsPerDUTHit[hitsperhit]++;
-    } // end of loop over DUT hits
+	    TrackerHitImpl * dutHit = dynamic_cast < TrackerHitImpl* > ( inputHitCollection -> getElementAt ( dutPlaneHits[k] ) );
+	    const double* dutHitPos = dutHit -> getPosition ( );
+	    double newDutHitPos[3];
+
+	    int hitsperhit = 0;
+
+	    // loop over first reference plane hits
+	    for ( unsigned int i = 0; i < referencePlaneHits1.size ( ); i++ )
+	    {
+		TrackerHitImpl * refHit1 = dynamic_cast < TrackerHitImpl* > ( inputHitCollection -> getElementAt ( referencePlaneHits1[i] ) );
+		const double* refHit1Pos = refHit1 -> getPosition ( );
+
+		// loop over second reference plane hits
+		for ( unsigned int j = 0; j < referencePlaneHits2.size ( ); j++ )
+		{
+		    TrackerHitImpl * refHit2 = dynamic_cast < TrackerHitImpl* > ( inputHitCollection -> getElementAt ( referencePlaneHits2[j] ) );
+		    const double* refHit2Pos = refHit2 -> getPosition ( );
+
+		    // t = (z-z1)/(z2-z1)
+		    double t = ( dutHitPos[2] - refHit1Pos[2] ) / ( refHit2Pos[2] - refHit1Pos[2] );
+
+		    // find the known coordinate value that correcponds to that z on the line
+		    double knownHitPosOnLine = refHit1Pos[_knownHitPos] + ( refHit2Pos[_knownHitPos] - refHit1Pos[_knownHitPos] ) * t;
+
+		    pointhitmaphisto -> fill ( ( refHit1Pos[0] + ( refHit2Pos[0] - refHit1Pos[0] ) * t ), ( refHit1Pos[1] + ( refHit2Pos[1] - refHit1Pos[1] ) * t ) );
+
+		    // if knownHitPosOnLine is close to the actual DUT hit position
+		    if ( fabs ( knownHitPosOnLine - dutHitPos[_knownHitPos] ) < closestresidual )
+		    {
+			foundhit = true;
+			closestresidual = knownHitPosOnLine - dutHitPos[_knownHitPos];
+			// first copy old DUT hit position to the new one
+			newDutHitPos[0] = dutHitPos[0];
+			newDutHitPos[1] = dutHitPos[1];
+			newDutHitPos[2] = dutHitPos[2];
+
+			// then replace the unknown one with the estimated one
+			double estimatedHitPos = refHit1Pos[_missingHitPos] + ( refHit2Pos[_missingHitPos] - refHit1Pos[_missingHitPos] ) * t;
+
+			newDutHitPos[_missingHitPos] = estimatedHitPos;
+		    }
+
+		} // end of loop over second reference plane hits
+	    } // end of loop over first reference plane hits
+
+	    if ( foundhit == true )
+	    {
+		// now store new hit position in the collection
+		TrackerHitImpl * newHit = cloneHit ( dutHit );
+		const double* hitpos = newDutHitPos;
+		newHit -> setPosition ( &hitpos[0] );
+		outputHitCollection -> push_back ( newHit );
+		streamlog_out ( DEBUG0 ) << "New hit: x: " << newDutHitPos[0] << ", y: " << newDutHitPos[1] << ", z: " << newDutHitPos[2] << endl;
+		hitmaphisto -> fill ( newDutHitPos[0], newDutHitPos[1] );
+
+		// count new created hits
+		hitsperhit ++;
+		_nDutHitsCreated++;
+	    }
+
+	    if ( hitsperhit > 9 )
+	    {
+		hitsperhit = 9;
+	    }
+	    _numberOfCreatedHitsPerDUTHit[hitsperhit]++;
+	} // end of loop over DUT hits
+    } // end _multihitmode == false
 
     if ( referencePlaneHits1.size ( ) == 0 || referencePlaneHits2.size ( ) == 0 )
     {

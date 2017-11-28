@@ -156,6 +156,7 @@ ADD_DEFINITIONS("-DDO_TESTING")
 include_directories(SYSTEM ./external)
 INCLUDE_DIRECTORIES( ./include )
 INCLUDE_DIRECTORIES( ./include/alibava )
+INCLUDE_DIRECTORIES( ./include/cms )
 INCLUDE_DIRECTORIES( ./pixgeo/include/ )
 
  
@@ -172,6 +173,7 @@ SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -fdiagnostics-show-option -Weffc++ -W
 SET( libname ${PROJECT_NAME} )
 AUX_SOURCE_DIRECTORY( ./src library_sources )
 AUX_SOURCE_DIRECTORY( ./src/alibava library_sources )
+AUX_SOURCE_DIRECTORY( ./src/cms library_sources )
 ADD_SHARED_LIBRARY( ${libname} ${library_sources} )
 INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
 #INSTALL_SHARED_LIBRARY( GBL DESTINATION lib )
