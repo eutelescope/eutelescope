@@ -87,6 +87,8 @@ namespace eutelescope
 
 	private:
 
+	    bool _multihitmode;
+
 	    unsigned int _missingHitPos;
 
 	    unsigned int _knownHitPos;
