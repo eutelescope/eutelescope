@@ -394,7 +394,19 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
 					float xCoG(0.0f), yCoG(0.0f);
 					cluster->getCenterOfGravity(xCoG, yCoG);
 					xDet = (xCoG + 0.5) * xPitch;
-					yDet = (yCoG + 0.5) * yPitch; 
+					yDet = (yCoG + 0.5) * yPitch;
+
+					// HACK TE 29.11.2017
+					// we catch the edge pixels of a CMS pixel module
+					if ( sensorID == 9 )
+					{
+					    int xoff = xCoG / 52;
+					    xDet += ( ( xoff * 0.3 ) + 0.150 );
+					    int yoff = yCoG / 80;
+					    yDet += ( ( yoff * 0.2 ) + 0.100 );
+					    //cout << " xoff " << xoff << " from clu " << xCoG << endl;
+					}
+					
 
 					streamlog_out(DEBUG1) << "cluster[" << setw(4) << iCluster << "] on sensor[" << setw(3) << sensorID 
 							<< "] at [" << setw(8) << setprecision(3) << xCoG << ":" << setw(8) << setprecision(3) << yCoG << "]"
