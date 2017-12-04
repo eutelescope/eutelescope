@@ -346,6 +346,13 @@ AIDA::IHistogram1D * unbiasedDUTrx;
 AIDA::IHistogram1D * unbiasedDUTry;
 AIDA::IHistogram1D * unbiasedDUTrz;
 
+AIDA::IHistogram2D * refrxxHist;
+AIDA::IHistogram2D * refrxyHist;
+AIDA::IHistogram2D * refrxzHist;
+AIDA::IHistogram2D * refryxHist;
+AIDA::IHistogram2D * refryyHist;
+AIDA::IHistogram2D * refryzHist;
+
 AIDA::IHistogram1D * gblax0Hist;
 AIDA::IHistogram1D * gbldx0Hist;
 AIDA::IHistogram1D * gblrx0Hist;
@@ -517,6 +524,8 @@ EUTelMilleGBL::EUTelMilleGBL ( ) : Processor ( "EUTelMilleGBL" )
     registerOptionalParameter ( "FixParameter", "Fixes the given alignment parameters of a sensor in the fit. For each sensor (even excluded ones) an integer must be specified. If no value or not enough values are given, then all parameters will be free. Bit 0 = x shift, bit 1 = y shift, bit 2 = z shift, bit 3 = alpha, bit 4 = beta, bit 5 = gamma. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id. This can override free parameters from AlignMode.", _FixParameter, IntVec ( static_cast < int > ( 0 ), 24 ) );
 
     registerOptionalParameter ( "GeneratePedeSteerfile", "Generate a steering file for pede? 0 = false, 1 = true.", _generatePedeSteerfile, static_cast < int > ( 0 ) );
+
+    registerOptionalParameter ( "IsolationCut", "Maximum allowed hit distance within planes 1 and 4 in um for a hit to be considered isolated.", _isolationCut, static_cast < double > ( 0.1 ) );
 
     registerOptionalParameter ( "ManualDUTid", "The sensor id number of the DUT.", _manualDUTid, static_cast < int > ( 6 ) );
 
@@ -2005,6 +2014,23 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		    double dx = _hitsArray[i1][j1].measuredX - xs;
 		    double dy = _hitsArray[i1][j1].measuredY - ys;
 
+		    bool notisolated = false;
+		    for ( size_t j1a = j1 + 1; j1a < _hitsArray[i1].size ( ); j1a++ )
+		    {
+			if ( fabs ( _hitsArray[i1][j1].measuredX - _hitsArray[i1][j1a].measuredX ) < _isolationCut )
+			{
+			    notisolated = true;
+			}
+			if ( fabs ( _hitsArray[i1][j1].measuredY - _hitsArray[i1][j1a].measuredY ) < _isolationCut )
+			{
+			    notisolated = true;
+			}
+		    }
+		    if ( notisolated == true )
+		    {
+			continue;
+		    }
+
 		    // require DUT hit?
 		    if ( _requireDUTHit == 1 )
 		    {
@@ -2197,6 +2223,23 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		    double dx = _hitsArray[i4][j4].measuredX - xs;
 		    double dy = _hitsArray[i4][j4].measuredY - ys;
 
+		    bool notisolated = false;
+		    for ( size_t j4a = j4 + 1; j4a < _hitsArray[i4].size ( ); j4a++ )
+		    {
+			if ( fabs ( _hitsArray[i4][j4].measuredX - _hitsArray[i4][j4a].measuredX ) < _isolationCut )
+			{
+			    notisolated = true;
+			}
+			if ( fabs ( _hitsArray[i4][j4].measuredY - _hitsArray[i4][j4a].measuredY ) < _isolationCut )
+			{
+			    notisolated = true;
+			}
+		    }
+		    if ( notisolated == true )
+		    {
+			continue;
+		    }
+
 		    if ( _useREF <= 0 )
 		    {
 
@@ -2277,7 +2320,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			    if ( abs ( dx ) < _driCut  && abs ( dy ) < _driCut && abs ( dx7 ) < _driCutREFx && abs ( dy7 ) < _driCutREFy )
 			    {
 
-// 				streamlog_out ( DEBUG2 ) << "Passed all driplet cuts, now having "<< ndri << " driplets." << endl;
+				streamlog_out ( DEBUG2 ) << "Passed all driplet cuts, now having "<< ndri << " driplets." << endl;
 
 				if ( ndri < 499 )
 				{
@@ -2867,7 +2910,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 
 			streamlog_out ( DEBUG2 ) << "Point pushed to gbl:" << endl; 
 			streamlog_out ( DEBUG2 ) << " Labels:" << endl;
-			for ( size_t ic=0; ic < point -> getGlobalLabels ( ).size ( ); ic++ )
+			for ( size_t ic = 0; ic < point -> getGlobalLabels ( ).size ( ); ic++ )
 			{
 			    streamlog_out ( DEBUG2 ) << "  " << ic << " " << point -> getGlobalLabels ( ) .at ( ic ) << endl;
 			}
@@ -3520,6 +3563,13 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			    fitpoint7 -> setCovMatrix ( fitcov );
 			    fitpointvec -> push_back ( fitpoint7 );
 			    fittrack -> addHit ( fitpoint7 );
+
+			    refrxxHist -> fill ( rx[indexconverter[7]], fitpos[0] );
+			    refrxyHist -> fill ( rx[indexconverter[7]], fitpos[1] );
+			    refrxzHist -> fill ( rx[indexconverter[7]], fitpos[2] );
+			    refryxHist -> fill ( ry[indexconverter[7]], fitpos[0] );
+			    refryyHist -> fill ( ry[indexconverter[7]], fitpos[1] );
+			    refryzHist -> fill ( ry[indexconverter[7]], fitpos[2] );
 
 			    k++;
 			}
@@ -5908,6 +5958,24 @@ void EUTelMilleGBL::bookHistos ( )
 
 	    if ( _useREF > 0 )
 	    {
+		refrxxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/REF/refrxx", 100, -500, 500, 100, -15, 15 );
+		refrxxHist -> setTitle ( "Track Residual at REF in x vs Track x;#Deltax [#mum];track_{x} [mm]" );
+
+		refrxyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/REF/refrxy", 100, -500, 500, 100, -15, 15 );
+		refrxyHist -> setTitle ( "Track Residual at REF in x vs Track y;#Deltax [#mum];track_{y} [mm]" );
+
+		refrxzHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/REF/refrxz", 100, -500, 500, 100, -15, 15 );
+		refrxzHist -> setTitle ( "Track Residual at REF in x vs Track z;#Deltax [#mum];track_{z} [mm]" );
+
+		refryxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/REF/refryx", 100, -500, 500, 100, -15, 15 );
+		refryxHist -> setTitle ( "Track Residual at REF in y vs Track x;#Deltay [#mum];track_{x} [mm]" );
+
+		refryyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/REF/refryy", 100, -500, 500, 100, -15, 15 );
+		refryyHist -> setTitle ( "Track Residual at REF in y vs Track y;#Deltay [#mum];track_{y} [mm]" );
+
+		refryzHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/REF/refryz", 100, -500, 500, 100, -15, 15 );
+		refryzHist -> setTitle ( "Track Residual at REF in y vs Track z;#Deltay [#mum];track_{z} [mm]" );
+
 		gblax7Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/REF/gblax7", 100, -25, 25 );
 		gblax7Hist -> setTitle ( "GBL angle at REF;x angle at REF [mrad];tracks" );
 

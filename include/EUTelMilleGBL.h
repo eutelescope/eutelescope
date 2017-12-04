@@ -125,6 +125,7 @@ namespace eutelescope
 	    double _driCutREFx;
 	    double _driCutREFy;
 	    double _eBeam;
+	    double _isolationCut;
 	    double _probCut;
 	    double _resdutx;
 	    double _resduty;
