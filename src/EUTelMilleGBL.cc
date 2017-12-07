@@ -334,9 +334,45 @@ AIDA::IProfile2D * dutkmap;
 AIDA::IProfile2D * dutkxmap;
 AIDA::IProfile2D * dutkymap;
 
+AIDA::IProfile2D * dutkmap10;
+AIDA::IProfile2D * dutkxmap10;
+AIDA::IProfile2D * dutkymap10;
+
 AIDA::IProfile2D * dutkmap20;
 AIDA::IProfile2D * dutkxmap20;
 AIDA::IProfile2D * dutkymap20;
+
+AIDA::IProfile2D * dutkmap30;
+AIDA::IProfile2D * dutkxmap30;
+AIDA::IProfile2D * dutkymap30;
+
+AIDA::IProfile2D * dutkmap40;
+AIDA::IProfile2D * dutkxmap40;
+AIDA::IProfile2D * dutkymap40;
+
+AIDA::IProfile2D * dutkmap50;
+AIDA::IProfile2D * dutkxmap50;
+AIDA::IProfile2D * dutkymap50;
+
+AIDA::IProfile2D * dutkmap60;
+AIDA::IProfile2D * dutkxmap60;
+AIDA::IProfile2D * dutkymap60;
+
+AIDA::IProfile2D * dutkmap70;
+AIDA::IProfile2D * dutkxmap70;
+AIDA::IProfile2D * dutkymap70;
+
+AIDA::IProfile2D * dutkmap80;
+AIDA::IProfile2D * dutkxmap80;
+AIDA::IProfile2D * dutkymap80;
+
+AIDA::IProfile2D * dutkmap90;
+AIDA::IProfile2D * dutkxmap90;
+AIDA::IProfile2D * dutkymap90;
+
+AIDA::IProfile2D * dutkmap100;
+AIDA::IProfile2D * dutkxmap100;
+AIDA::IProfile2D * dutkymap100;
 
 AIDA::IHistogram2D * duttrackhitmap;
 
@@ -529,7 +565,7 @@ EUTelMilleGBL::EUTelMilleGBL ( ) : Processor ( "EUTelMilleGBL" )
 
     registerOptionalParameter ( "ManualDUTid", "The sensor id number of the DUT.", _manualDUTid, static_cast < int > ( 6 ) );
 
-    registerOptionalParameter ( "MaxTrackCandidatesTotal", "Maximal number of track candidates in the whole run.",_maxTrackCandidatesTotal, static_cast < int > ( 10000000 ) );
+    registerOptionalParameter ( "MaxTrackCandidatesTotal", "Maximal number of track candidates in the whole run, set to less than 0 to deactivate.",_maxTrackCandidatesTotal, static_cast < int > ( 10000000 ) );
 
     registerOptionalParameter ( "OutputHitCollection", "The name of the output fit hit collection.", _outputHitCollectionName, std::string ( "fithits" ) );
 
@@ -1251,7 +1287,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	streamlog_out ( MESSAGE1 ) << "Processing event " << setw ( 6 ) << setiosflags ( ios::right ) << event -> getEventNumber ( ) << " in run " << setw ( 6 ) << setiosflags ( ios::right ) << event -> getRunNumber ( ) << ", with " << setw ( 6 ) << setiosflags ( ios::right ) << _nMilleTracks << " tracks, " << setw ( 6 ) << setiosflags ( ios::right ) << _nGoodMilleTracks << "  good" << endl;
     }
 
-    if ( _nMilleTracks > _maxTrackCandidatesTotal )
+    if ( _nMilleTracks > _maxTrackCandidatesTotal && _maxTrackCandidatesTotal > 0 )
     {
 	throw StopProcessingException ( this );
     }
@@ -3404,9 +3440,45 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			dutkymap -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
 			dutkmap -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
 
+			dutkxmap10 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			dutkymap10 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			dutkmap10 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+
 			dutkxmap20 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
 			dutkymap20 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
 			dutkmap20 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+
+			dutkxmap30 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			dutkymap30 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			dutkmap30 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+
+			dutkxmap40 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			dutkymap40 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			dutkmap40 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+
+			dutkxmap50 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			dutkymap50 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			dutkmap50 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+
+			dutkxmap60 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			dutkymap60 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			dutkmap60 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+
+			dutkxmap70 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			dutkymap70 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			dutkmap70 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+
+			dutkxmap80 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			dutkymap80 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			dutkmap80 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+
+			dutkxmap90 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			dutkymap90 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			dutkmap90 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+
+			dutkxmap100 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			dutkymap100 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			dutkmap100 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
 
 			// hitmap for comparison
 			duthitmap -> fill ( fitpos[0], fitpos[1] );
@@ -5763,14 +5835,23 @@ void EUTelMilleGBL::bookHistos ( )
 	    dutrzprobHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrzprob", 100, -500, 500, 1000, 0, 1 );
 	    dutrzprobHist -> setTitle ( "Track Residual at DUT in z vs Track prob;#Deltaz [#mum];prob" );
 
-	    dutkmap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap", 3000, -15, 15, 3000, -15, 15, 0, 50 );
+	    dutkmap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap", 1500, -15, 15, 1500, -15, 15 );
 	    dutkmap -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
 
-	    dutkxmap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap", 3000, -15, 15, 3000, -15, 15, 0, 50 );
+	    dutkxmap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap", 1500, -15, 15, 1500, -15, 15 );
 	    dutkxmap -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
 
-	    dutkymap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap", 3000, -15, 15, 3000, -15, 15, 0, 50 );
+	    dutkymap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap", 1500, -15, 15, 1500, -15, 15 );
 	    dutkymap -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+
+	    dutkmap10 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap10", 1500, -15, 15, 1500, -15, 15, 0, 10 );
+	    dutkmap10 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+
+	    dutkxmap10 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap10", 1500, -15, 15, 1500, -15, 15, 0, 10 );
+	    dutkxmap10 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+
+	    dutkymap10 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap10", 1500, -15, 15, 1500, -15, 15, 0, 10 );
+	    dutkymap10 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
 
 	    dutkmap20 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap20", 1500, -15, 15, 1500, -15, 15, 0, 20 );
 	    dutkmap20 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
@@ -5780,6 +5861,78 @@ void EUTelMilleGBL::bookHistos ( )
 
 	    dutkymap20 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap20", 1500, -15, 15, 1500, -15, 15, 0, 20 );
 	    dutkymap20 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+
+	    dutkmap30 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap30", 1500, -15, 15, 1500, -15, 15, 0, 30 );
+	    dutkmap30 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+
+	    dutkxmap30 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap30", 1500, -15, 15, 1500, -15, 15, 0, 30 );
+	    dutkxmap30 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+
+	    dutkymap30 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap30", 1500, -15, 15, 1500, -15, 15, 0, 30 );
+	    dutkymap30 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+
+	    dutkmap40 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap40", 1500, -15, 15, 1500, -15, 15, 0, 40 );
+	    dutkmap40 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+
+	    dutkxmap40 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap40", 1500, -15, 15, 1500, -15, 15, 0, 40 );
+	    dutkxmap40 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+
+	    dutkymap40 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap40", 1500, -15, 15, 1500, -15, 15, 0, 40 );
+	    dutkymap40 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+
+	    dutkmap50 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap50", 1500, -15, 15, 1500, -15, 15, 0, 50 );
+	    dutkmap50 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+
+	    dutkxmap50 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap50", 1500, -15, 15, 1500, -15, 15, 0, 50 );
+	    dutkxmap50 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+
+	    dutkymap50 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap50", 1500, -15, 15, 1500, -15, 15, 0, 50 );
+	    dutkymap50 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+
+	    dutkmap60 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap60", 1500, -15, 15, 1500, -15, 15, 0, 60 );
+	    dutkmap60 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+
+	    dutkxmap60 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap60", 1500, -15, 15, 1500, -15, 15, 0, 60 );
+	    dutkxmap60 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+
+	    dutkymap60 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap60", 1500, -15, 15, 1500, -15, 15, 0, 60 );
+	    dutkymap60 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+
+	    dutkmap70 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap70", 1500, -15, 15, 1500, -15, 15, 0, 70 );
+	    dutkmap70 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+
+	    dutkxmap70 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap70", 1500, -15, 15, 1500, -15, 15, 0, 70 );
+	    dutkxmap70 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+
+	    dutkymap70 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap70", 1500, -15, 15, 1500, -15, 15, 0, 70 );
+	    dutkymap70 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+
+	    dutkmap80 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap80", 1500, -15, 15, 1500, -15, 15, 0, 80 );
+	    dutkmap80 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+
+	    dutkxmap80 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap80", 1500, -15, 15, 1500, -15, 15, 0, 80 );
+	    dutkxmap80 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+
+	    dutkymap80 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap80", 1500, -15, 15, 1500, -15, 15, 0, 80 );
+	    dutkymap80 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+
+	    dutkmap90 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap90", 1500, -15, 15, 1500, -15, 15, 0, 90 );
+	    dutkmap90 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+
+	    dutkxmap90 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap90", 1500, -15, 15, 1500, -15, 15, 0, 90 );
+	    dutkxmap90 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+
+	    dutkymap90 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap90", 1500, -15, 15, 1500, -15, 15, 0, 90 );
+	    dutkymap90 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+
+	    dutkmap100 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap100", 1500, -15, 15, 1500, -15, 15, 0, 100 );
+	    dutkmap100 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+
+	    dutkxmap100 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap100", 1500, -15, 15, 1500, -15, 15, 0, 100 );
+	    dutkxmap100 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+
+	    dutkymap100 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap100", 1500, -15, 15, 1500, -15, 15, 0, 100 );
+	    dutkymap100 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
 
 	    duthitmap = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/duthitmap", 1000, -15, 15, 1000, -15, 15 );
 	    duthitmap -> setTitle (  "DUT Good Hits Map;hit_{x} [mm];hit_{y} [mm]" );

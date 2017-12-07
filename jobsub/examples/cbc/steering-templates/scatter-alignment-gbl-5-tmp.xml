@@ -32,7 +32,7 @@
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @LcioPath@/run@RunNumber@-stub.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @LcioPath@/run@RunNumber@-hitmaker.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -89,7 +89,7 @@
   <!--Alignment constant from the condition file-->
   <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> prealignment </parameter>
   <!--The name of the input hit collection-->
-  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hitstubs </parameter>
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
   <!--The name of the output hit collection-->
   <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> PreAlignedHit </parameter>
   <!--Rotation Angle around X axis-->
@@ -434,17 +434,17 @@
   <!--Beam energy in GeV.-->
   <parameter name="Ebeam" type="double" value="@Energy@"/>
   <!--Exclude planes from tracking and alignment, according to their sensor ids.-->
-  <parameter name="ExcludePlanes" type="IntVec"> 60 61 </parameter>
+  <parameter name="ExcludePlanes" type="IntVec"> </parameter>
   <!--Fixes the given alignment parameters of a sensor in the fit. For each sensor (even excluded ones) an integer must be specified. If no value or not enough values are given, then all parameters will be free. Bit 0 = x shift, bit 1 = y shift, bit 2 = z shift, bit 3 = alpha, bit 4 = beta, bit 5 = gamma. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id. This can override free parameters from AlignMode.-->
   <!--parameter name="FixParameter" type="IntVec"> 28 28 28 28 28 28 28 28 28 4 </parameter-->
   <!--Fix position of sensor planes in the fit according to their sensor ids.-->
-  <parameter name="FixedPlanes" type="IntVec"> 0 5 </parameter>
+  <parameter name="FixedPlanes" type="IntVec"> 0 99 5 </parameter>
   <!--Generate a steering file for pede? 0 = false, 1 = true.-->
   <parameter name="GeneratePedeSteerfile" type="int" value="1"/>
   <!--The sensor id number of the DUT.-->
-  <parameter name="ManualDUTid" type="int" value="32"/>
+  <parameter name="ManualDUTid" type="int" value="99"/>
   <!--Maximal number of track candidates in the whole run.-->
-  <parameter name="MaxTrackCandidatesTotal" type="int" value="50000"/>
+  <parameter name="MaxTrackCandidatesTotal" type="int" value="500000"/>
   <!--The name of the output fit hit collection.-->
   <!--parameter name="OutputHitCollection" type="string" value="fithits"/-->
   <!--The name of the output track fit collection.-->
@@ -460,7 +460,7 @@
   <!--Reference plane resolution in y [um].-->
   <parameter name="REFResY" type="double" value="20"/>
   <!--Require DUT hit for valid track? 0 = false, 1 = true.-->
-  <!--parameter name="RequireDUTHit" type="int" value="1"/-->
+  <parameter name="RequireDUTHit" type="int" value="0"/>
   <!--Execute the pede program using the generated steering file? 0 = false, 1 = true.-->
   <parameter name="RunPede" type="int" value="1"/>
   <!--Track slope cut in x, tracks below are accepted.-->
