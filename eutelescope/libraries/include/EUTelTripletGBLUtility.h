@@ -97,21 +97,23 @@ namespace eutelescope {
 	  unsigned int plane;
 	  // clustersize of the cluster associated to the hit
 	  int clustersize;
+	  int clustersizex;
+	  int clustersizey;
 	  // local coords
 	  double locx;
 	  double locy;
 	  int id;
-	  // Overloading ostream operator for printing hits:
 
+	  hit() = default;
 
 	  hit(double const * const pos, int sensorID){
 		x = pos[0];
 		y = pos[1];
 		z = pos[2];
 		plane = static_cast<unsigned>(sensorID);
-
 		};
-	  hit() = default;
+
+	  // Overloading ostream operator for printing hits:
 	  friend std::ostream& operator << (std::ostream& out, const hit& point) // output
 	  {
 	    out << "(" << point.plane << ", " 
