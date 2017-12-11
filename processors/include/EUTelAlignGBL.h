@@ -99,10 +99,10 @@ namespace eutelescope {
      *  conversion has been properly done. Of course this method is
      *  effectively doing something only in the case MARLIN_USE_AIDA.
      */
-    void bookHistos();
+    void bookHistos(std::vector<int> const & );
 
   protected:
-	static int const NO_PRINT_EVENT_COUNTER = 20;
+	static int const NO_PRINT_EVENT_COUNTER = 3;
     //! Ordered sensor ID
     /*! Within the processor all the loops are done up to _nPlanes and
      *  according to their position along the Z axis (beam axis).
