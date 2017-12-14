@@ -17,10 +17,6 @@
 #include <memory>
 #include "marlin/Processor.h"
 
-// gear includes <.h>
-#include <gear/SiPlanesParameters.h>
-#include <gear/SiPlanesLayerLayout.h>
-
 // lcio includes <.h>
 #include "lcio.h"
 #include <UTIL/CellIDEncoder.h>
@@ -78,7 +74,6 @@ namespace eutelescope {
     EUTelGBLFitter(const EUTelGBLFitter&); 
     void operator=(EUTelGBLFitter const&); 
 
-
     //! Default constructor
     EUTelGBLFitter();
 
@@ -130,7 +125,7 @@ namespace eutelescope {
     //TMatrixD JacobianPointToPoint( double ds );
 
     //! Fill the telescope plane correlation plots:
-    void TelescopeCorrelationPlots(std::vector<EUTelTripletGBLUtility::hit> &telescopehits);
+    void TelescopeCorrelationPlots(std::vector<EUTelTripletGBLUtility::hit> const & telescopehits);
 
     //! Find hit triplets from three telescope planes
     /*! This runs over all hits in the planes of the telescope and
@@ -151,28 +146,6 @@ namespace eutelescope {
 
   
   protected:
-    //! Silicon planes parameters as described in GEAR
-    /*! This structure actually contains the following:
-     *  @li A reference to the telescope geoemtry and layout
-     *  @li An integer number saying if the telescope is w/ or w/o DUT
-     *  @li An integer number saying the number of planes in the
-     *  telescope.
-     *
-     *  This object is provided by GEAR during the init() phase and
-     *  stored here for local use.
-     */
-    gear::SiPlanesParameters * _siPlanesParameters;
-
-    //! Silicon plane layer layout
-    /*! This is the real geoemetry description. For each layer
-     *  composing the telescope the relevant information are
-     *  available.
-     *
-     *  This object is taken from the _siPlanesParameters during the
-     *  init() phase and stored for local use
-     */
-    gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
-
     std::string _inputCollectionTelescope;
 
     //Analysis parameters
@@ -199,8 +172,8 @@ namespace eutelescope {
     std::vector<int> _sensorIDVec;
     std::vector<double>  _planePosition;
     std::vector<double> _planeRadLength;
-    std::map<size_t, std::vector<double>> _planeResolutionX;
-    std::map<size_t, std::vector<double>> _planeResolutionY;
+    std::map<size_t, std::vector<float>> _planeResolutionX;
+    std::map<size_t, std::vector<float>> _planeResolutionY;
 
 	  std::vector<Eigen::Vector2d> _planeWscatSi;
 	  std::vector<Eigen::Vector2d> _planeWscatAir;
@@ -210,7 +183,6 @@ namespace eutelescope {
 
     EUTelTripletGBLUtility gblutil;
 
-
       // definition of static members mainly used to name histograms
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
@@ -218,7 +190,6 @@ namespace eutelescope {
 
   // Correlation plots for telescope planes
   AIDA::IHistogram1D * dx01Histo, * dy01Histo, * du01Histo, * dx02Histo, * dx03Histo, * dx04Histo, * dx05Histo, * dx12Histo, * dy12Histo, * du12Histo, * dx23Histo, * dy23Histo, * du23Histo, * dx34Histo, * dy34Histo, * du34Histo, * dx45Histo, * dy45Histo, * du45Histo;
-
 
   // triplets 0-1-2:
   AIDA::IHistogram1D * da02Histo;
@@ -577,13 +548,8 @@ namespace eutelescope {
   AIDA::IHistogram2D * gblnCS7xy1_plane3;
 
 #endif
-
   };
-
   //! A global instance of the processor:
-  //EUTelGBLFitter aEUTelGBLFitter;
-
-
+  EUTelGBLFitter aEUTelGBLFitter;
 }
-
 #endif
