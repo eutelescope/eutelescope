@@ -58,6 +58,7 @@
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/IHistogram1D.h>
 #include <AIDA/IHistogram2D.h>
+#include <AIDA/IHistogram3D.h>
 #include <AIDA/IProfile2D.h>
 #include <AIDA/ITree.h>
 #include <AIDA/IAxis.h>
@@ -373,6 +374,10 @@ AIDA::IProfile2D * dutkymap90;
 AIDA::IProfile2D * dutkmap100;
 AIDA::IProfile2D * dutkxmap100;
 AIDA::IProfile2D * dutkymap100;
+
+AIDA::IHistogram3D * dutkmap3D;
+AIDA::IHistogram3D * dutkxmap3D;
+AIDA::IHistogram3D * dutkymap3D;
 
 AIDA::IHistogram2D * duttrackhitmap;
 
@@ -3436,6 +3441,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			dutrzprobHist -> fill ( rz[indexconverter[3]], probchi );
 
 			// fill kink vs impact map
+
 			dutkxmap -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
 			dutkymap -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
 			dutkmap -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
@@ -3479,6 +3485,10 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			dutkxmap100 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
 			dutkymap100 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
 			dutkmap100 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+
+			//dutkxmap3D -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			//dutkymap3D -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			dutkmap3D -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
 
 			// hitmap for comparison
 			duthitmap -> fill ( fitpos[0], fitpos[1] );
@@ -5687,6 +5697,10 @@ void EUTelMilleGBL::bookHistos ( )
 	    AIDAProcessor::tree ( this ) -> mkdir ( "GBLOutput/Good/Plane4" );
 	    AIDAProcessor::tree ( this ) -> mkdir ( "GBLOutput/Good/Plane5" );
 	    AIDAProcessor::tree ( this ) -> mkdir ( "GBLOutput/Good/DUT" );
+	    AIDAProcessor::tree ( this ) -> mkdir ( "GBLOutput/Good/DUT/ResidualsX" );
+	    AIDAProcessor::tree ( this ) -> mkdir ( "GBLOutput/Good/DUT/ResidualsY" );
+	    AIDAProcessor::tree ( this ) -> mkdir ( "GBLOutput/Good/DUT/ResidualsZ" );
+	    AIDAProcessor::tree ( this ) -> mkdir ( "GBLOutput/Good/DUT/KinkMaps" );
 
 	    if ( _useREF > 0 )
 	    {
@@ -5754,185 +5768,194 @@ void EUTelMilleGBL::bookHistos ( )
 	    unbiasedDUTrz = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/DUT/unbiasedrz", 100, -500, 500 );
 	    unbiasedDUTrz -> setTitle ( "Unbiased Track Residual at DUT in z;#Deltaz [#mum];tracks" );
 
-	    dutrxxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrxx", 100, -500, 500, 100, -15, 15 );
+	    dutrxxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutrxx", 100, -500, 500, 100, -15, 15 );
 	    dutrxxHist -> setTitle ( "Track Residual at DUT in x vs Track x;#Deltax [#mum];track_{x} [mm]" );
 
-	    dutrxyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrxy", 100, -500, 500, 100, -15, 15 );
+	    dutrxyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutrxy", 100, -500, 500, 100, -15, 15 );
 	    dutrxyHist -> setTitle ( "Track Residual at DUT in x vs Track y;#Deltax [#mum];track_{y} [mm]" );
 
-	    dutrxzHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrxz", 100, -500, 500, 100, -15, 15 );
+	    dutrxzHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutrxz", 100, -500, 500, 100, -15, 15 );
 	    dutrxzHist -> setTitle ( "Track Residual at DUT in x vs Track z;#Deltax [#mum];track_{z} [mm]" );
 
-	    dutryxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutryx", 100, -500, 500, 100, -15, 15 );
+	    dutryxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsY/dutryx", 100, -500, 500, 100, -15, 15 );
 	    dutryxHist -> setTitle ( "Track Residual at DUT in y vs Track x;#Deltay [#mum];track_{x} [mm]" );
 
-	    dutryyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutryy", 100, -500, 500, 100, -15, 15 );
+	    dutryyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsY/dutryy", 100, -500, 500, 100, -15, 15 );
 	    dutryyHist -> setTitle ( "Track Residual at DUT in y vs Track y;#Deltay [#mum];track_{y} [mm]" );
 
-	    dutryzHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutryz", 100, -500, 500, 100, -15, 15 );
+	    dutryzHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsY/dutryz", 100, -500, 500, 100, -15, 15 );
 	    dutryzHist -> setTitle ( "Track Residual at DUT in y vs Track z;#Deltay [#mum];track_{z} [mm]" );
 
-	    dutrzxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrzx", 100, -500, 500, 100, -15, 15 );
+	    dutrzxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsZ/dutrzx", 100, -500, 500, 100, -15, 15 );
 	    dutrzxHist -> setTitle ( "Track Residual at DUT in z vs Track x;#Deltaz [#mum];track_{x} [mm]" );
 
-	    dutrzyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrzy", 100, -500, 500, 100, -15, 15 );
+	    dutrzyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsZ/dutrzy", 100, -500, 500, 100, -15, 15 );
 	    dutrzyHist -> setTitle ( "Track Residual at DUT in z vs Track y;#Deltaz [#mum];track_{y} [mm]" );
 
-	    dutrzzHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrzz", 100, -500, 500, 100, -15, 15 );
+	    dutrzzHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsZ/dutrzz", 100, -500, 500, 100, -15, 15 );
 	    dutrzzHist -> setTitle ( "Track Residual at DUT in z vs Track z;#Deltaz [#mum];track_{z} [mm]" );
 
-	    dutrxsxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrxsx", 100, -500, 500, 100, -5.0, 5.0 );
+	    dutrxsxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutrxsx", 100, -500, 500, 100, -5.0, 5.0 );
 	    dutrxsxHist -> setTitle ( "Track Residual at DUT in x vs Track Slope in x;#Deltax [#mum];angle_{x} [mrad]" );
 
-	    dutrxsyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrxsy", 100, -500, 500, 100, -5.0, 5.0 );
+	    dutrxsyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutrxsy", 100, -500, 500, 100, -5.0, 5.0 );
 	    dutrxsyHist -> setTitle ( "Track Residual at DUT in x vs Track Slope in y;#Deltax [#mum];angle_{y} [mrad]" );
 
-	    dutrysxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrysx", 100, -500, 500, 100, -5.0, 5.0 );
+	    dutrysxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsY/dutrysx", 100, -500, 500, 100, -5.0, 5.0 );
 	    dutrysxHist -> setTitle ( "Track Residual at DUT in y vs Track Slope in x;#Deltay [#mum];angle_{x} [mrad]" );
 
-	    dutrysyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrysy", 100, -500, 500, 100, -5.0, 5.0 );
+	    dutrysyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsY/dutrysy", 100, -500, 500, 100, -5.0, 5.0 );
 	    dutrysyHist -> setTitle ( "Track Residual at DUT in y vs Track Slope in y;#Deltay [#mum];angle_{y} [mrad]" );
 
-	    dutrzsxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrzsx", 100, -500, 500, 100, -5.0, 5.0 );
+	    dutrzsxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsZ/dutrzsx", 100, -500, 500, 100, -5.0, 5.0 );
 	    dutrzsxHist -> setTitle ( "Track Residual at DUT in z vs Track Slope in x;#Deltaz [#mum];angle_{x} [mrad]" );
 
-	    dutrzsyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrzsy", 100, -500, 500, 100, -5.0, 5.0 );
+	    dutrzsyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsZ/dutrzsy", 100, -500, 500, 100, -5.0, 5.0 );
 	    dutrzsyHist -> setTitle ( "Track Residual at DUT in z vs Track Slope in y;#Deltaz [#mum];angle_{y} [mrad]" );
 
-	    dutrxkxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrxkx", 100, -500, 500, 100, -25, 25 );
+	    dutrxkxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutrxkx", 100, -500, 500, 100, -25, 25 );
 	    dutrxkxHist -> setTitle ( "Track Residual at DUT in x vs Kink Angle in x;#Deltax [#mum];angle_{x} [mrad]" );
 
-	    dutrxkyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrxky", 100, -500, 500, 100, -25, 25 );
+	    dutrxkyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutrxky", 100, -500, 500, 100, -25, 25 );
 	    dutrxkyHist -> setTitle ( "Track Residual at DUT in x vs Kink Angle in y;#Deltax [#mum];angle_{y} [mrad]" );
 
-	    dutrykxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrykx", 100, -500, 500, 100, -25, 25 );
+	    dutrykxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsY/dutrykx", 100, -500, 500, 100, -25, 25 );
 	    dutrykxHist -> setTitle ( "Track Residual at DUT in y vs Kink Angle in x;#Deltay [#mum];angle_{x} [mrad]" );
 
-	    dutrykyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutryky", 100, -500, 500, 100, -25, 25 );
+	    dutrykyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsY/dutryky", 100, -500, 500, 100, -25, 25 );
 	    dutrykyHist -> setTitle ( "Track Residual at DUT in y vs Kink Angle in y;#Deltay [#mum];angle_{y} [mrad]" );
 
-	    dutrzkxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrzkx", 100, -500, 500, 100, -25, 25 );
+	    dutrzkxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsZ/dutrzkx", 100, -500, 500, 100, -25, 25 );
 	    dutrzkxHist -> setTitle ( "Track Residual at DUT in z vs Kink Angle in x;#Deltaz [#mum];angle_{x} [mrad]" );
 
-	    dutrzkyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrzky", 100, -500, 500, 100, -25, 25 );
+	    dutrzkyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsZ/dutrzky", 100, -500, 500, 100, -25, 25 );
 	    dutrzkyHist -> setTitle ( "Track Residual at DUT in z vs Kink Angle in y;#Deltaz [#mum];angle_{y} [mrad]" );
 
-	    dutrxchi2ndfHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrxchi2ndf", 100, -500, 500, 100, 0, 50 );
+	    dutrxchi2ndfHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutrxchi2ndf", 100, -500, 500, 100, 0, 50 );
 	    dutrxchi2ndfHist -> setTitle ( "Track Residual at DUT in x vs Track chi2/NDF;#Deltax [#mum];chi2/NDF" );
 
-	    dutrychi2ndfHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrychi2ndf", 100, -500, 500, 100, 0, 50 );
+	    dutrychi2ndfHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsY/dutrychi2ndf", 100, -500, 500, 100, 0, 50 );
 	    dutrychi2ndfHist -> setTitle ( "Track Residual at DUT in y vs Track chi2/NDF;#Deltay [#mum];chi2/NDF" );
 
-	    dutrzchi2ndfHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrzchi2ndf", 100, -500, 500, 100, 0, 50 );
+	    dutrzchi2ndfHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsZ/dutrzchi2ndf", 100, -500, 500, 100, 0, 50 );
 	    dutrzchi2ndfHist -> setTitle ( "Track Residual at DUT in z vs Track chi2/NDF;#Deltaz [#mum];chi2/NDF" );
 
-	    dutrxprobHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrxprob", 100, -500, 500, 1000, 0, 1 );
+	    dutrxprobHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutrxprob", 100, -500, 500, 1000, 0, 1 );
 	    dutrxprobHist -> setTitle ( "Track Residual at DUT in x vs Track prob;#Deltax [#mum];prob" );
 
-	    dutryprobHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutryprob", 100, -500, 500, 1000, 0, 1 );
+	    dutryprobHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutryprob", 100, -500, 500, 1000, 0, 1 );
 	    dutryprobHist -> setTitle ( "Track Residual at DUT in y vs Track prob;#Deltay [#mum];prob" );
 
-	    dutrzprobHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrzprob", 100, -500, 500, 1000, 0, 1 );
+	    dutrzprobHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutrzprob", 100, -500, 500, 1000, 0, 1 );
 	    dutrzprobHist -> setTitle ( "Track Residual at DUT in z vs Track prob;#Deltaz [#mum];prob" );
 
-	    dutkmap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap", 1500, -15, 15, 1500, -15, 15 );
+	    dutkmap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap", 1500, -15, 15, 1500, -15, 15 );
 	    dutkmap -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
 
-	    dutkxmap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap", 1500, -15, 15, 1500, -15, 15 );
+	    dutkxmap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap", 1500, -15, 15, 1500, -15, 15 );
 	    dutkxmap -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
 
-	    dutkymap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap", 1500, -15, 15, 1500, -15, 15 );
+	    dutkymap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap", 1500, -15, 15, 1500, -15, 15 );
 	    dutkymap -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
 
-	    dutkmap10 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap10", 1500, -15, 15, 1500, -15, 15, 0, 10 );
+	    dutkmap10 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap10", 1500, -15, 15, 1500, -15, 15, 0, 10 );
 	    dutkmap10 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
 
-	    dutkxmap10 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap10", 1500, -15, 15, 1500, -15, 15, 0, 10 );
+	    dutkxmap10 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap10", 1500, -15, 15, 1500, -15, 15, 0, 10 );
 	    dutkxmap10 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
 
-	    dutkymap10 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap10", 1500, -15, 15, 1500, -15, 15, 0, 10 );
+	    dutkymap10 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap10", 1500, -15, 15, 1500, -15, 15, 0, 10 );
 	    dutkymap10 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
 
-	    dutkmap20 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap20", 1500, -15, 15, 1500, -15, 15, 0, 20 );
+	    dutkmap20 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap20", 1500, -15, 15, 1500, -15, 15, 0, 20 );
 	    dutkmap20 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
 
-	    dutkxmap20 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap20", 1500, -15, 15, 1500, -15, 15, 0, 20 );
+	    dutkxmap20 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap20", 1500, -15, 15, 1500, -15, 15, 0, 20 );
 	    dutkxmap20 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
 
-	    dutkymap20 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap20", 1500, -15, 15, 1500, -15, 15, 0, 20 );
+	    dutkymap20 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap20", 1500, -15, 15, 1500, -15, 15, 0, 20 );
 	    dutkymap20 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
 
-	    dutkmap30 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap30", 1500, -15, 15, 1500, -15, 15, 0, 30 );
+	    dutkmap30 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap30", 1500, -15, 15, 1500, -15, 15, 0, 30 );
 	    dutkmap30 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
 
-	    dutkxmap30 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap30", 1500, -15, 15, 1500, -15, 15, 0, 30 );
+	    dutkxmap30 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap30", 1500, -15, 15, 1500, -15, 15, 0, 30 );
 	    dutkxmap30 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
 
-	    dutkymap30 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap30", 1500, -15, 15, 1500, -15, 15, 0, 30 );
+	    dutkymap30 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap30", 1500, -15, 15, 1500, -15, 15, 0, 30 );
 	    dutkymap30 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
 
-	    dutkmap40 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap40", 1500, -15, 15, 1500, -15, 15, 0, 40 );
+	    dutkmap40 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap40", 1500, -15, 15, 1500, -15, 15, 0, 40 );
 	    dutkmap40 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
 
-	    dutkxmap40 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap40", 1500, -15, 15, 1500, -15, 15, 0, 40 );
+	    dutkxmap40 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap40", 1500, -15, 15, 1500, -15, 15, 0, 40 );
 	    dutkxmap40 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
 
-	    dutkymap40 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap40", 1500, -15, 15, 1500, -15, 15, 0, 40 );
+	    dutkymap40 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap40", 1500, -15, 15, 1500, -15, 15, 0, 40 );
 	    dutkymap40 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
 
-	    dutkmap50 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap50", 1500, -15, 15, 1500, -15, 15, 0, 50 );
+	    dutkmap50 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap50", 1500, -15, 15, 1500, -15, 15, 0, 50 );
 	    dutkmap50 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
 
-	    dutkxmap50 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap50", 1500, -15, 15, 1500, -15, 15, 0, 50 );
+	    dutkxmap50 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap50", 1500, -15, 15, 1500, -15, 15, 0, 50 );
 	    dutkxmap50 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
 
-	    dutkymap50 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap50", 1500, -15, 15, 1500, -15, 15, 0, 50 );
+	    dutkymap50 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap50", 1500, -15, 15, 1500, -15, 15, 0, 50 );
 	    dutkymap50 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
 
-	    dutkmap60 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap60", 1500, -15, 15, 1500, -15, 15, 0, 60 );
+	    dutkmap60 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap60", 1500, -15, 15, 1500, -15, 15, 0, 60 );
 	    dutkmap60 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
 
-	    dutkxmap60 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap60", 1500, -15, 15, 1500, -15, 15, 0, 60 );
+	    dutkxmap60 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap60", 1500, -15, 15, 1500, -15, 15, 0, 60 );
 	    dutkxmap60 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
 
-	    dutkymap60 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap60", 1500, -15, 15, 1500, -15, 15, 0, 60 );
+	    dutkymap60 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap60", 1500, -15, 15, 1500, -15, 15, 0, 60 );
 	    dutkymap60 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
 
-	    dutkmap70 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap70", 1500, -15, 15, 1500, -15, 15, 0, 70 );
+	    dutkmap70 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap70", 1500, -15, 15, 1500, -15, 15, 0, 70 );
 	    dutkmap70 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
 
-	    dutkxmap70 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap70", 1500, -15, 15, 1500, -15, 15, 0, 70 );
+	    dutkxmap70 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap70", 1500, -15, 15, 1500, -15, 15, 0, 70 );
 	    dutkxmap70 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
 
-	    dutkymap70 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap70", 1500, -15, 15, 1500, -15, 15, 0, 70 );
+	    dutkymap70 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap70", 1500, -15, 15, 1500, -15, 15, 0, 70 );
 	    dutkymap70 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
 
-	    dutkmap80 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap80", 1500, -15, 15, 1500, -15, 15, 0, 80 );
+	    dutkmap80 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap80", 1500, -15, 15, 1500, -15, 15, 0, 80 );
 	    dutkmap80 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
 
-	    dutkxmap80 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap80", 1500, -15, 15, 1500, -15, 15, 0, 80 );
+	    dutkxmap80 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap80", 1500, -15, 15, 1500, -15, 15, 0, 80 );
 	    dutkxmap80 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
 
-	    dutkymap80 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap80", 1500, -15, 15, 1500, -15, 15, 0, 80 );
+	    dutkymap80 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap80", 1500, -15, 15, 1500, -15, 15, 0, 80 );
 	    dutkymap80 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
 
-	    dutkmap90 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap90", 1500, -15, 15, 1500, -15, 15, 0, 90 );
+	    dutkmap90 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap90", 1500, -15, 15, 1500, -15, 15, 0, 90 );
 	    dutkmap90 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
 
-	    dutkxmap90 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap90", 1500, -15, 15, 1500, -15, 15, 0, 90 );
+	    dutkxmap90 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap90", 1500, -15, 15, 1500, -15, 15, 0, 90 );
 	    dutkxmap90 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
 
-	    dutkymap90 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap90", 1500, -15, 15, 1500, -15, 15, 0, 90 );
+	    dutkymap90 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap90", 1500, -15, 15, 1500, -15, 15, 0, 90 );
 	    dutkymap90 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
 
-	    dutkmap100 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap100", 1500, -15, 15, 1500, -15, 15, 0, 100 );
+	    dutkmap100 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap100", 1500, -15, 15, 1500, -15, 15, 0, 100 );
 	    dutkmap100 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
 
-	    dutkxmap100 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap100", 1500, -15, 15, 1500, -15, 15, 0, 100 );
+	    dutkxmap100 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap100", 1500, -15, 15, 1500, -15, 15, 0, 100 );
 	    dutkxmap100 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
 
-	    dutkymap100 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap100", 1500, -15, 15, 1500, -15, 15, 0, 100 );
+	    dutkymap100 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap100", 1500, -15, 15, 1500, -15, 15, 0, 100 );
 	    dutkymap100 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+
+	    dutkmap3D = AIDAProcessor::histogramFactory ( this ) -> createHistogram3D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap3D", 600, -15, 15, 400, -10, 10, 200, -40, 40 );
+	    dutkmap3D -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+
+	    //dutkxmap3D = AIDAProcessor::histogramFactory ( this ) -> createHistogram3D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap3D", 600, -15, 15, 400, -10, 10, 200, -40, 40 );
+	    //dutkxmap3D -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+
+	    //dutkymap3D = AIDAProcessor::histogramFactory ( this ) -> createHistogram3D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap3D", 600, -15, 15, 400, -10, 10, 200, -40, 40 );
+	    //dutkymap3D -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
 
 	    duthitmap = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/duthitmap", 1000, -15, 15, 1000, -15, 15 );
 	    duthitmap -> setTitle (  "DUT Good Hits Map;hit_{x} [mm];hit_{y} [mm]" );
