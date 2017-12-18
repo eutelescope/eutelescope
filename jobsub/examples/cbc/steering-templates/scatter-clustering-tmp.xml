@@ -27,6 +27,7 @@
 
    <global>
       <parameter name="LCIOInputFiles"> @LcioPath@/run@RunNumber@-telescope-converter.slcio </parameter>
+      <!--parameter name="LCIOInputFiles"> at_concatinput_at </parameter-->
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>

@@ -20,7 +20,7 @@
       <processor name="LoadRefHitDB"/>
       <processor name="CombinedHitMaker"/>
       <processor name="Correlator"/>
-      <processor name="PreAligner"/>
+      <!--processor name="PreAligner"/-->
       <processor name="Save"/>
       <processor name="MyEUTelUtilityPrintEventNumber"/>
    </execute>
@@ -28,7 +28,7 @@
    <global>
       <parameter name="LCIOInputFiles"> @LcioPath@/run@RunNumber@-clustering.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
-      <parameter name="MaxRecordNumber" value="15000"/>
+      <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
       <parameter name="SupressCheck" value="false"/>
       <parameter name="Verbosity" value="@Verbosity@"/>
