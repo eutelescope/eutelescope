@@ -3488,7 +3488,9 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 
 			//dutkxmap3D -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
 			//dutkymap3D -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
-			dutkmap3D -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+			//dutkmap3D -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+			dutkmap3D -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 ) );
+			dutkmap3D -> fill ( fitpos[0], fitpos[1], ( ky * 1E3 ) );
 
 			// hitmap for comparison
 			duthitmap -> fill ( fitpos[0], fitpos[1] );
@@ -5949,7 +5951,7 @@ void EUTelMilleGBL::bookHistos ( )
 	    dutkymap100 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
 
 	    dutkmap3D = AIDAProcessor::histogramFactory ( this ) -> createHistogram3D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap3D", 600, -15, 15, 400, -10, 10, 200, -40, 40 );
-	    dutkmap3D -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+	    dutkmap3D -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];kink [mrad]" );
 
 	    //dutkxmap3D = AIDAProcessor::histogramFactory ( this ) -> createHistogram3D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap3D", 600, -15, 15, 400, -10, 10, 200, -40, 40 );
 	    //dutkxmap3D -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
