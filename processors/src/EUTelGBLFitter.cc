@@ -91,7 +91,7 @@ using namespace marlin;
 using namespace eutelescope;
 
 
-EUTelGBLFitter::EUTelGBLFitter() : Processor("EUTelGBLFitter"), _inputCollectionTelescope(""), _isFirstEvent(0), _eBeam(0), _nEvt(0), _nPlanes(0), _dut_plane(3), _track_match_cut(0.15),  _planePosition() {
+EUTelGBLFitter::EUTelGBLFitter() : Processor("EUTelGBLFitter"), _inputCollectionTelescope(""), _isFirstEvent(0), _eBeam(0), _nEvt(0), _nPlanes(0), _track_match_cut(0.15),  _planePosition() {
   // modify processor description
   _description = "Analysis for DATURA reference analysis ";
 
@@ -107,8 +107,7 @@ EUTelGBLFitter::EUTelGBLFitter() : Processor("EUTelGBLFitter"), _inputCollection
 
   registerProcessorParameter( "slopeCut", "cut for track slopes in x coordinate in rad", _slope_cut, static_cast<double>(0.002));
 
-  registerProcessorParameter( "dut_plane", "plane to be considered the DUT and excluded from the track fit",
-      _dut_plane, static_cast <int>(3));
+  registerProcessorParameter( "excludedPlanes", "Planes to be excluded from the track fit", _excluded_planes, EVENT::IntVec() );
 
   //in mm. 0.1 is for 6 GeV, 20 mm. This is scaled with E and dz
   registerProcessorParameter( "eff_radius", "radius on DUT plane to accept match with triplet", _eff_radius, static_cast <double>(0.1)); 
@@ -118,13 +117,13 @@ EUTelGBLFitter::EUTelGBLFitter() : Processor("EUTelGBLFitter"), _inputCollection
 
   registerProcessorParameter( "probchi2Cut", "Cut on Prob(chi2,ndf) rejecting bad tracks with prob < cut", _probchi2_cut, static_cast<double>(.01)); 
 
-  registerOptionalParameter( "Resolution", "resolution parameter for each Cluster size, same for all planes. first value is average of all CSes. Up to CS6 plus larger than 6, hence in total 8 numbers. Disable with -1, e.g. (3.5e-3, -1, -1, ...., -1)", _resolution,  
-  FloatVec(static_cast<double>(8), 3.5*1e-3));
+  registerProcessorParameter( "TelescopeResolution", "Resolution parameter for each cluster size (CS) for all telescope planes. First value is average of all CSes, subsequently for CS=1 them CS=2 and so on. The last value is for all CSes larger than the previous ones. I.e. if you provide five values: <avg> <CS 1> <CS 2> <CS 3> <CS greater 3>", _telResolution, FloatVec(static_cast<double>(8), 3.5*1e-3));
+
+  registerOptionalParameter( "DUTXResolutions", "Same as TelescopeResolution, but now only for y-direction. Also, there needs to be an additional leading NEGATIVE number for the sensorID. E.g. -20 0.5 0.7 0.4 0.3 would correspond to <sensorID (20)> <avg> <CS 1> <CS 2> <CS greater 2>, this could be followed by a further section which again starts with a negative number for the next sensorID", _dutResolutionX, FloatVec(static_cast<double>(8), 3.5*1e-3));
+
+  registerOptionalParameter( "DUTYResolutions", "Same as DUTXResolutions but in y-direction.", _dutResolutionY, FloatVec(static_cast<double>(8), 3.5*1e-3));
 
   registerOptionalParameter( "Thickness","thickness parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.", _thickness, FloatVec(static_cast<double>(6), 50*1e-3));
-
-  registerProcessorParameter( "ClusterSizeSwitch", "boolian to switch b/w cluster charge (0, false) and cluster dimension (1, true) used as cluster size",
-  _CSswitch, static_cast<bool>(true));
 }
 
 void EUTelGBLFitter::init() {
@@ -141,9 +140,11 @@ void EUTelGBLFitter::init() {
   _nPlanes = _sensorIDVec.size();
 
   for(auto& sensorID: _sensorIDVec) {
-    _planePosition.emplace_back( geo::gGeometry().siPlaneZPosition(sensorID) );
-    auto z = geo::gGeometry().siPlaneZSize(sensorID);
-    auto rad = geo::gGeometry().siPlaneRadLength(sensorID);
+    auto const & pos = geo::gGeometry().siPlaneZPosition(sensorID);
+    _planePosition.emplace_back( pos );
+    auto const & z = geo::gGeometry().siPlaneZSize(sensorID);
+    auto const & rad = geo::gGeometry().siPlaneRadLength(sensorID);
+
     if(sensorID < 6) {
         _planeRadLength.emplace_back(55e-3 / 93.66 + 0.050 / 286.6); // Si + Kapton
     } else {
@@ -174,40 +175,82 @@ void EUTelGBLFitter::init() {
   streamlog_out(MESSAGE0) << "Beam energy " << _eBeam << " GeV" <<  std::endl;
 
   for(auto& sensorID: _sensorIDVec) {
-    //streamlog_out( MESSAGE6 ) << "  Thickness Plane " << i << " = " << _thickness[i] << std::endl;
-    //_planeResolution[i] = _siPlanesLayerLayout->getSensitiveResolution(i); // Get it from input
-    //_planeResolution[i] = _resolution[0]; // pass the average here, which is the first entry of the vector
-    streamlog_out( MESSAGE6 ) << "  Avg. reso Plane " << sensorID << " = " << _resolution[0] << std::endl;
-    _planeResolutionX[sensorID] = _resolution;
-    _planeResolutionY[sensorID] = _resolution;
+    streamlog_out( MESSAGE6 ) << "  Avg. reso Plane " << sensorID << " = " << _telResolution[0] << std::endl;
+    _planeResolutionX[sensorID] = _telResolution;
+    _planeResolutionY[sensorID] = _telResolution;
   }
 
-  streamlog_out( MESSAGE2 ) <<  "Telescope configuration with " << _nPlanes << " planes" << std::endl;
+  std::vector<float>* currentResVector = nullptr;
+  for(auto it = _dutResolutionX.begin(); it !=_dutResolutionX.end(); it++) {
+    if(*it < 0) {
+      auto sensorID = static_cast<int>(-(*it));
+      if(std::find(_sensorIDVec.begin(), _sensorIDVec.end(), sensorID) == _sensorIDVec.end()) {
+        //Something went horribly wrong - probably the sensor ID is not present in GEAR file
+      } else {
+        currentResVector = &_planeResolutionX[sensorID];
+        currentResVector->clear();
+      }
+    } else {
+      if(currentResVector) {
+        currentResVector->emplace_back(*it);
+      } else {
+        //Something went horribly wrong - probably no sensor ID was given
+      }
+    }
+  }
+  currentResVector = nullptr;
+  for(auto it = _dutResolutionY.begin(); it !=_dutResolutionY.end(); it++) {
+    if(*it < 0) {
+      auto sensorID = static_cast<int>(-(*it));
+      if(std::find(_sensorIDVec.begin(), _sensorIDVec.end(), sensorID) == _sensorIDVec.end()) {
+        streamlog_out(ERROR5) << "Something went horribly wrong - probably the sensor ID is not present in GEAR file" << std::endl;
+      } else {
+        currentResVector = &_planeResolutionY[sensorID];
+        currentResVector->clear();
+      }
+    } else {
+      if(currentResVector) {
+        currentResVector->emplace_back(*it);
+      } else {
+        streamlog_out(ERROR5) << "Something went horribly wrong - probably no sensor ID was given" << std::endl;
+      }
+    }
+  }
 
-  for( size_t ipl = 0; ipl < _nPlanes; ipl++) {
+  //Resolution Info
+  for(auto sensorID: _sensorIDVec) {
+    auto& resX = _planeResolutionX[sensorID];
+    auto& resY = _planeResolutionY[sensorID];
     std::stringstream ss;
-    ss << "  ID = " << "<ID>"
-      << "  at Z [mm] = " << _planePosition[ipl]
-      << " dZ [um] = " << "<planeThickness[ipl]*1000.>";
-    //ss << "  average Res [um] = " << _planeResolution[ipl]*1000.;
+    int const width = 8;
+    ss  << "---- Plane: " << sensorID << " ----" 
+        << std::endl << std::left << setw(20) << setfill(' ') << "Resolution X [um]: ";
+    for(size_t i = 0; i < resX.size(); ++i) {
+      if(i == 0) ss << std::left << setw(width) << setfill(' ') << "<avg>";
+      else if( i == resX.size()-1) ss << setw(width) << setfill(' ') << "<CS >"+std::to_string(i-1)+">\n";
+      else ss << setw(width) << setfill(' ') << "<CS "+std::to_string(i)+">";
+    }
+    ss << std::left << setw(20) << setfill(' ') << ' ';
+    std::for_each(resX.begin(), resX.end(), [&](double const & n){ ss << std::left << setw(width) << setfill(' ') << n*1000;});
+    ss  << std::endl <<  std::left << setw(20) << setfill(' ') <<  "Resolution Y [um]: ";
+    for(size_t i = 0; i < resY.size(); ++i) {
+      if(i == 0) ss << std::left << setw(width) << setfill(' ') << "<avg>";
+      else if( i == resY.size()-1) ss << setw(width) << setfill(' ') << "<CS >"+std::to_string(i-1)+">\n";
+      else ss << setw(width) << setfill(' ') << "<CS "+std::to_string(i)+">";
+    }
+    ss << std::left << setw(20) << setfill(' ') << ' ';
+    std::for_each(resY.begin(), resY.end(), [&](double const & n){ ss << std::left << setw(width) << setfill(' ') << n*1000;});
     streamlog_out( MESSAGE2 ) <<  ss.str() << std::endl;
   }
 
-/*
-  if( _resolution.size() != 8 )
-  {
-    throw InvalidParameterException("WARNING, length of resolution vector is != 8. You need to pass 8 resolutions (-1 if not known). \n");
+  //Material Info
+  for(size_t ix = 0; ix < _sensorIDVec.size(); ++ix) {
+    auto sensorID = _sensorIDVec[ix];
+    auto const & pos = _planePosition[ix];
+    auto const & rad = _planeRadLength[ix];
+    streamlog_out( MESSAGE2 ) << "Plane " << sensorID << " is located at (z-position) " << pos << " mm.\nIt has a radiation length of " << rad << " [mm/mm]\n"; 
   }
-  if ( _resolution.at(0) < 0) {
-    streamlog_out( ERROR2 ) << " Found avg resolution < 0, namely = " << _resolution.size() << 
-      "\n   will have to termiante." << std::endl;
-    return;
-  }
-  for (int i = 1; i < 8; i++) if(_resolution[i] < 0) _resolution.at(i) = _resolution.at(0);
 
-  for (int i = 1; i < 8; i++) // not from 0 , 0 is average
-    streamlog_out( MESSAGE6 ) <<  "CS resolutions: CS" << i << " = " << _resolution.at(i) << std::endl;
-*/
   _triplet_res_cut = _triplet_res_cut *6. / _eBeam * (_planePosition[1] - _planePosition[0]) / 20.;
 
   // Book histograms:
@@ -435,6 +478,8 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
   double track_match_z = _planePosition[3];
   double DUTz = _planePosition[3];
 
+/*
+
   // Generate new triplet set with planes 0, 1, 2; 2,4,5:
   std::vector<EUTelTripletGBLUtility::triplet> eff_triplets_UP = upstream_triplets;
   //gblutil.FindTriplets(hits, 0, 1, 2, _triplet_res_cut, _slope_cut, eff_triplets_UP);
@@ -527,6 +572,9 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
   profiles.push_back(effiy5);
   gblutil.PlaneEfficiency(eff_triplets_UP, eff_triplets_DOWN, hits, 5, track_match_z, DUTz, _track_match_cut, eff_radius, profiles);
 
+*/
+
+
   //----------------------------------------------------------------------------
   // six: triplets A and driplets B
   // matching and GBL fit
@@ -611,7 +659,7 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
     for( int ipl = 0; ipl < 6; ++ipl ){
 
       // Get the corresponding hit from the track:
-      EUTelTripletGBLUtility::hit trackhit = tr.gethit(ipl);
+      auto const & trackhit = tr.gethit(ipl);
 
       if (ipl == 0) clustersize0->fill(trackhit.clustersize);
       if (ipl == 1) clustersize1->fill(trackhit.clustersize);
@@ -653,38 +701,27 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
       }
 
       auto point = gbl::GblPoint( gblutil.JacobianPointToPoint( step ) );
+      auto meas = Eigen::Vector2d(rx[ipl], ry[ipl]);
 
-      Eigen::Vector2d meas;
-      meas[0] = rx[ipl];
-      meas[1] = ry[ipl];
-      //meas[0] = trackhit.x;
-      //meas[1] = trackhit.y;
-
-      //measPrec[0] = 1.0 / _resolution[ipl] / _resolution[ipl];
-      //measPrec[1] = 1.0 / _resolution[ipl] / _resolution[ipl];
-      double _resolution_tmp = -1.0;
-      if(trackhit.clustersize == 1) _resolution_tmp = _resolution[1];
-      if(trackhit.clustersize == 2) _resolution_tmp = _resolution[2];
-      if(trackhit.clustersize == 3) _resolution_tmp = _resolution[3];
-      if(trackhit.clustersize == 4) _resolution_tmp = _resolution[4];
-      if(trackhit.clustersize == 5) _resolution_tmp = _resolution[5];
-      if(trackhit.clustersize == 6) _resolution_tmp = _resolution[6];
-      if(trackhit.clustersize >  6) _resolution_tmp = _resolution[7];
-      //_resolution_tmp = 3.24*1e-3;
+      auto const & resVecX = _planeResolutionX[trackhit.plane];
+      auto const & resVecY = _planeResolutionY[trackhit.plane];
+      //auto cluX = trackhit.clustersizex; 
+      auto cluX = trackhit.clustersize; 
+      //auto cluY = trackhit.clustersizey; 
+      auto cluY = trackhit.clustersize; 
+      double _x_resolution_tmp = (cluX >= resVecX.size()) ? resVecX.back() : resVecX[cluX];
+      double _y_resolution_tmp = (cluY >= resVecY.size()) ? resVecY.back() : resVecY[cluY];
       
-   	  Eigen::Vector2d measPrec; // precision = 1/resolution^2
-      measPrec[0] = 1.0 / _resolution_tmp / _resolution_tmp;
-      measPrec[1] = 1.0 / _resolution_tmp / _resolution_tmp;
+   	  auto measPrec = Eigen::Vector2d(1.0/_x_resolution_tmp/_x_resolution_tmp, 1.0/_y_resolution_tmp/_y_resolution_tmp);
 
-      if(ipl != _dut_plane) { point.addMeasurement( proL2m, meas, measPrec ); }
-
+      //The measurement is only included if it is a non excluded plane
+      if( std::find( std::begin(_excluded_planes), std::end(_excluded_planes), ipl) == _excluded_planes.end() ) {
+         point.addMeasurement( proL2m, meas, measPrec );
+      }
       point.addScatterer( scat, _planeWscatSi[ipl] );
 
-      std::vector<int> globalLabels(3);
-      globalLabels[0] = 10 + ipl; // dx
-      globalLabels[1] = 20 + ipl; // dy
-      globalLabels[2] = 40 + ipl; // rot
-
+      // streamlog_out(DEBUG4) << "Added Scatterer:\n" << _planeWscatSi[ipl] << std::endl; 
+      // streamlog_out(DEBUG4) << "Meas Precision:\n" << measPrec << std::endl; 
       traj_points.emplace_back(point);
       s += step;
       sPoint.push_back( s );
@@ -701,12 +738,14 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
         traj_points.push_back(point);
         sPoint.push_back( s );
 
+        // streamlog_out(DEBUG4) << "Added Air Scatterer:\n" << _planeWscatAir[ipl] << "\nat: " << s << std::endl; 
         step = 0.58*distplane;
         auto point1 = gbl::GblPoint( gblutil.JacobianPointToPoint( step ) );
         point1.addScatterer( scat, _planeWscatAir[ipl] );
         s += step;
         traj_points.push_back(point1);
         sPoint.push_back( s );
+        // streamlog_out(DEBUG4) << "Added Air Scatterer:\n" << _planeWscatAir[ipl] << "\nat :" << s << std::endl; 
 	      
         step = 0.21*distplane; // remaing distance to next plane
       }
@@ -850,8 +889,8 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
       gblry0Histo->fill( ( ry[0] - aCorrection[4] ) * 1E3 ); // residual y [um]
       gblpx0Histo->fill( aResiduals[0] / aResErrors[0] ); // pull
       gblpy0Histo->fill( aResiduals[1] / aResErrors[1] ); // pull
-      if(_dut_plane == 0) gblpx0_unbHisto->fill( (rx[0] - aCorrection[3]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(3,3)) ); // unbiased pull
-      if(_dut_plane == 0) gblpy0_unbHisto->fill( (ry[0] - aCorrection[4]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(4,4)) ); // unbiased pull
+ //     if(_dut_plane == 0) gblpx0_unbHisto->fill( (rx[0] - aCorrection[3]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(3,3)) ); // unbiased pull
+ //     if(_dut_plane == 0) gblpy0_unbHisto->fill( (ry[0] - aCorrection[4]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(4,4)) ); // unbiased pull
       gblqx0Histo->fill( aKinks[0]*1E3 ); // kink RESIDUAL (measured kink - fit kink)
       ax[k] = aCorrection[1]; // angle correction at plane, for kinks
       // TProfile for res_x a.f.o. x
@@ -944,8 +983,8 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
       gblry1Histo->fill( ( ry[1] - aCorrection[4] ) * 1E3 ); // residual y [um]
       gblpx1Histo->fill( aResiduals[0] / aResErrors[0] ); // pull
       gblpy1Histo->fill( aResiduals[1] / aResErrors[1] ); // pull
-      if(_dut_plane == 1) gblpx1_unbHisto->fill( (rx[1] - aCorrection[3]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(3,3)) ); // unbiased pull
-      if(_dut_plane == 1) gblpy1_unbHisto->fill( (ry[1] - aCorrection[4]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(4,4)) ); // unbiased pull
+ //     if(_dut_plane == 1) gblpx1_unbHisto->fill( (rx[1] - aCorrection[3]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(3,3)) ); // unbiased pull
+ //     if(_dut_plane == 1) gblpy1_unbHisto->fill( (ry[1] - aCorrection[4]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(4,4)) ); // unbiased pull
       gblqx1Histo->fill( aKinks[0]*1E3 ); // kink-residual (NOT KINK itself!)
       gblsx1Histo->fill( aKinks[0]/aKinkErrors[0] ); // x kink pull
       gbltx1Histo->fill( aKinks[0]/kResErrors[0] ); // x kink pull
@@ -967,8 +1006,8 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
       gblry2Histo->fill( ( ry[2] - aCorrection[4] ) * 1E3 ); // residual y [um]
       gblpx2Histo->fill( aResiduals[0] / aResErrors[0] ); // pull
       gblpy2Histo->fill( aResiduals[1] / aResErrors[1] ); // pull
-      if(_dut_plane == 2) gblpx2_unbHisto->fill( (rx[2] - aCorrection[3]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(3,3)) ); // unbiased pull
-      if(_dut_plane == 2) gblpy2_unbHisto->fill( (ry[2] - aCorrection[4]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(4,4)) ); // unbiased pull
+  //    if(_dut_plane == 2) gblpx2_unbHisto->fill( (rx[2] - aCorrection[3]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(3,3)) ); // unbiased pull
+  //    if(_dut_plane == 2) gblpy2_unbHisto->fill( (ry[2] - aCorrection[4]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(4,4)) ); // unbiased pull
       gblqx2Histo->fill( aKinks[0]*1E3 ); // kink-residual
       gblsx2Histo->fill( aKinks[0]/aKinkErrors[0] ); // x kink res over kinkError
       gbltx2Histo->fill( aKinks[0]/kResErrors[0] ); // x kink pull
@@ -995,8 +1034,8 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
       ax[k] = aCorrection[1]; // angle correction at plane, for kinks
       //ay[k] = aCorrection[2]; // angle correction at plane, for kinks
       //
-      if(_dut_plane == 3) gblpx3_unbHisto->fill( (rx[3] - aCorrection[3]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(3,3)) ); // unbiased pull
-      if(_dut_plane == 3) gblpy3_unbHisto->fill( (ry[3] - aCorrection[4]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(4,4)) ); // unbiased pull
+  //    if(_dut_plane == 3) gblpx3_unbHisto->fill( (rx[3] - aCorrection[3]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(3,3)) ); // unbiased pull
+  //    if(_dut_plane == 3) gblpy3_unbHisto->fill( (ry[3] - aCorrection[4]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(4,4)) ); // unbiased pull
 
       // clustersize-specific plots
       //
@@ -1140,8 +1179,8 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
       gblry4Histo->fill( ( ry[4] - aCorrection[4] ) * 1E3 ); // residual y [um]
       gblpx4Histo->fill( aResiduals[0] / aResErrors[0] ); // pull
       gblpy4Histo->fill( aResiduals[1] / aResErrors[1] ); // pull
-      if(_dut_plane == 4) gblpx4_unbHisto->fill( (rx[4] - aCorrection[3]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(3,3)) ); // unbiased pull
-      if(_dut_plane == 4) gblpy4_unbHisto->fill( (ry[4] - aCorrection[4]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(4,4)) ); // unbiased pull
+  //    if(_dut_plane == 4) gblpx4_unbHisto->fill( (rx[4] - aCorrection[3]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(3,3)) ); // unbiased pull
+  //    if(_dut_plane == 4) gblpy4_unbHisto->fill( (ry[4] - aCorrection[4]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(4,4)) ); // unbiased pull
       gblqx4Histo->fill( aKinks[0]*1E3 ); // kink
       gblsx4Histo->fill( aKinks[0]/aKinkErrors[0] ); // x kink pull
       gbltx4Histo->fill( aKinks[0]/kResErrors[0] ); // x kink pull
@@ -1162,8 +1201,8 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
       gblry5Histo->fill( ( ry[5] - aCorrection[4] ) * 1E3 ); // residual y [um]
       gblpx5Histo->fill( aResiduals[0] / aResErrors[0] ); // pull
       gblpy5Histo->fill( aResiduals[1] / aResErrors[1] ); // pull
-      if(_dut_plane == 5) gblpx5_unbHisto->fill( (rx[5] - aCorrection[3]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(3,3)) ); // unbiased pull
-      if(_dut_plane == 5) gblpy5_unbHisto->fill( (ry[5] - aCorrection[4]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(4,4)) ); // unbiased pull
+ //     if(_dut_plane == 5) gblpx5_unbHisto->fill( (rx[5] - aCorrection[3]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(3,3)) ); // unbiased pull
+ //     if(_dut_plane == 5) gblpy5_unbHisto->fill( (ry[5] - aCorrection[4]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(4,4)) ); // unbiased pull
       gblqx5Histo->fill( aKinks[0]*1E3 ); // kink
       ax[k] = aCorrection[1]; // angle correction at plane, for kinks
       //ay[k] = aCorrection[2]; // angle correction at plane, for kinks

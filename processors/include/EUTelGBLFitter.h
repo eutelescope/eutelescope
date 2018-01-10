@@ -156,11 +156,9 @@ namespace eutelescope {
     int _nEvt;
     size_t _nPlanes;
     int _ngbl;
-    int _dut_plane;
+    EVENT::IntVec _excluded_planes;
     double _eff_radius;
     double _kappa;
-    double _aluthickum;
-    bool _CSswitch;
     
     // Cuts for matching:
     double _track_match_cut;
@@ -178,7 +176,9 @@ namespace eutelescope {
 	  std::vector<Eigen::Vector2d> _planeWscatSi;
 	  std::vector<Eigen::Vector2d> _planeWscatAir;
 
-    FloatVec _resolution;
+    FloatVec _telResolution;
+    FloatVec _dutResolutionX;
+    FloatVec _dutResolutionY;
     FloatVec _thickness;
 
     EUTelTripletGBLUtility gblutil;
