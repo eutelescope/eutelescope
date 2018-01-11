@@ -127,24 +127,7 @@ namespace eutelescope {
     //! Fill the telescope plane correlation plots:
     void TelescopeCorrelationPlots(std::vector<EUTelTripletGBLUtility::hit> const & telescopehits);
 
-    //! Find hit triplets from three telescope planes
-    /*! This runs over all hits in the planes of the telescope and
-     * tries to match triplets by comparing with the middle planes.
-     * Two cut criteria can be set:
-     * @param triplet_residual_cut Cut on the hit residual in the middle plane with respect to the triplet defined by first and last plane
-     * @param triplet_angle_cut Cut on the triplet track angle
-     *
-     * @return a vector of found triplets among the given set of hits.
-     */
-    //void FindTriplets(std::vector<EUTelTripletGBLUtility::hit> &hits, unsigned int plane0, unsigned int plane1, unsigned int plane2, std::vector<EUTelGBLFitterUtility::triplet> &trip);
-
-    //! Match the upstream and downstream triplets to tracks
-    //void MatchTriplets(std::vector<EUTelGBLFitterUtility::triplet> &up, std::vector<EUTelGBLFitterUtility::triplet> &down, double z_match, std::vector<EUTelGBLFitterUtility::track> &track);
-
-    //! Check isolation of triplet within vector of triplets
-    //bool IsTripletIsolated(std::vector<EUTelGBLFitterUtility::triplet>::iterator it, std::vector<EUTelGBLFitterUtility::triplet> &trip, double z_match, double isolation = 0.3);
-
-  
+    void fillTrackhitHisto(EUTelTripletGBLUtility::hit const & hit, int ipl);
   protected:
     std::string _inputCollectionTelescope;
 
@@ -179,14 +162,14 @@ namespace eutelescope {
     FloatVec _telResolution;
     FloatVec _dutResolutionX;
     FloatVec _dutResolutionY;
-    FloatVec _thickness;
 
     EUTelTripletGBLUtility gblutil;
 
       // definition of static members mainly used to name histograms
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-  AIDA::IHistogram1D * nAllHitHisto;
+  AIDA::IHistogram1D * nAllTelHitHisto;
+  AIDA::IHistogram1D * nAllDUTHitHisto;
 
   // Correlation plots for telescope planes
   AIDA::IHistogram1D * dx01Histo, * dy01Histo, * du01Histo, * dx02Histo, * dx03Histo, * dx04Histo, * dx05Histo, * dx12Histo, * dy12Histo, * du12Histo, * dx23Histo, * dy23Histo, * du23Histo, * dx34Histo, * dy34Histo, * du34Histo, * dx45Histo, * dy45Histo, * du45Histo;
@@ -265,24 +248,12 @@ namespace eutelescope {
 
   AIDA::IProfile2D * kinkpixvsxy;
 
-  AIDA::IHistogram1D * clustersize0;
-  AIDA::IHistogram1D * sixx0Histo;
-  AIDA::IHistogram1D * sixy0Histo;
-  AIDA::IHistogram1D * clustersize1;
-  AIDA::IHistogram1D * sixx1Histo;
-  AIDA::IHistogram1D * sixy1Histo;
-  AIDA::IHistogram1D * clustersize2;
-  AIDA::IHistogram1D * sixx2Histo;
-  AIDA::IHistogram1D * sixy2Histo;
-  AIDA::IHistogram1D * clustersize3;
-  AIDA::IHistogram1D * sixx3Histo;
-  AIDA::IHistogram1D * sixy3Histo;
-  AIDA::IHistogram1D * clustersize4;
-  AIDA::IHistogram1D * sixx4Histo;
-  AIDA::IHistogram1D * sixy4Histo;
-  AIDA::IHistogram1D * clustersize5;
-  AIDA::IHistogram1D * sixx5Histo;
-  AIDA::IHistogram1D * sixy5Histo;
+  std::vector<AIDA::IHistogram1D*> clustersizeTotal;
+  std::vector<AIDA::IHistogram1D*> clustersizeX;
+  std::vector<AIDA::IHistogram1D*> clustersizeY;
+
+  std::vector<AIDA::IHistogram1D*> sixXHistos;
+  std::vector<AIDA::IHistogram1D*> sixYHistos;
 
   AIDA::IHistogram2D * sixxylkHisto;
 

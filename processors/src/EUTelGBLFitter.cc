@@ -96,8 +96,7 @@ EUTelGBLFitter::EUTelGBLFitter() : Processor("EUTelGBLFitter"), _inputCollection
   _description = "Analysis for DATURA reference analysis ";
 
   // processor parameters
-  registerInputCollection( LCIO::TRACKERHIT, "InputCollection", "Name of the input TrackerHit collection of the telescope",
-      _inputCollectionTelescope, std::string("") ); // no collection defaulted forcing the user to pass something meaningful
+  registerInputCollection( LCIO::TRACKERHIT, "InputCollection", "Name of the input TrackerHit collection of the telescope", _inputCollectionTelescope, std::string("") );
 
   registerProcessorParameter( "Ebeam", "Beam energy [GeV]", _eBeam, static_cast<double>(0.0));
 
@@ -122,8 +121,6 @@ EUTelGBLFitter::EUTelGBLFitter() : Processor("EUTelGBLFitter"), _inputCollection
   registerOptionalParameter( "DUTXResolutions", "Same as TelescopeResolution, but now only for y-direction. Also, there needs to be an additional leading NEGATIVE number for the sensorID. E.g. -20 0.5 0.7 0.4 0.3 would correspond to <sensorID (20)> <avg> <CS 1> <CS 2> <CS greater 2>, this could be followed by a further section which again starts with a negative number for the next sensorID", _dutResolutionX, FloatVec(static_cast<double>(8), 3.5*1e-3));
 
   registerOptionalParameter( "DUTYResolutions", "Same as DUTXResolutions but in y-direction.", _dutResolutionY, FloatVec(static_cast<double>(8), 3.5*1e-3));
-
-  registerOptionalParameter( "Thickness","thickness parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.", _thickness, FloatVec(static_cast<double>(6), 50*1e-3));
 }
 
 void EUTelGBLFitter::init() {
@@ -185,7 +182,7 @@ void EUTelGBLFitter::init() {
     if(*it < 0) {
       auto sensorID = static_cast<int>(-(*it));
       if(std::find(_sensorIDVec.begin(), _sensorIDVec.end(), sensorID) == _sensorIDVec.end()) {
-        //Something went horribly wrong - probably the sensor ID is not present in GEAR file
+        streamlog_out(ERROR5) << "Something went horribly wrong - probably the sensor ID is not present in GEAR file" << std::endl;
       } else {
         currentResVector = &_planeResolutionX[sensorID];
         currentResVector->clear();
@@ -194,7 +191,7 @@ void EUTelGBLFitter::init() {
       if(currentResVector) {
         currentResVector->emplace_back(*it);
       } else {
-        //Something went horribly wrong - probably no sensor ID was given
+        streamlog_out(ERROR5) << "Something went horribly wrong - probably no sensor ID was given" << std::endl;
       }
     }
   }
@@ -319,7 +316,6 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
   // Copy hits to local table
   // Assign hits to sensor planes
   if(_nEvt < 10) streamlog_out( MESSAGE6 )  << "Total of " << collection->getNumberOfElements() << " tracker hits in input collection " << std::endl;
-  nAllHitHisto->fill(collection->getNumberOfElements());
   //----------------------------------------------------------------------------
 
   CellIDDecoder<TrackerHit> hitCellDecoder(EUTELESCOPE::HITENCODING);
@@ -366,7 +362,11 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
     }
   } // end loop over all hits in given collection
 
-  streamlog_out(DEBUG4) << "Event " << event->getEventNumber() << " contains " << hits.size() << " hits" << std::endl;
+  
+  nAllTelHitHisto->fill( hits.size() );
+  nAllDUTHitHisto->fill( DUThits.size() );
+
+  streamlog_out(DEBUG4) << "Event " << event->getEventNumber() << " contains " << hits.size() << " telscope and " << DUThits.size() << " DUT hits" << std::endl;
 
   // Fill the telescope plane correlation plots:
   TelescopeCorrelationPlots(hits);
@@ -474,11 +474,12 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
   // Then try to find a match on DUT (plane 3)
 
   // This scales the radius with beam energy spacing (efficiencty shouldnt depend on amount of scattering!). Define radius at 6 GeV, 20 mm
-  double eff_radius = _eff_radius * 6. / _eBeam * (_planePosition[1] - _planePosition[0]) / 20.; 
+  //double eff_radius = _eff_radius * 6. / _eBeam * (_planePosition[1] - _planePosition[0]) / 20.; 
+/*  
   double track_match_z = _planePosition[3];
   double DUTz = _planePosition[3];
 
-/*
+
 
   // Generate new triplet set with planes 0, 1, 2; 2,4,5:
   std::vector<EUTelTripletGBLUtility::triplet> eff_triplets_UP = upstream_triplets;
@@ -581,28 +582,22 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
   // kinks: triplets A vs driplets B
   // scattering point = DUT:
 
-  //FIXME: DUTz is the place where they should be matched!
-  // now hardcoded to center of telescope...
-  DUTz = _planePosition[2] + (_planePosition[3] - _planePosition[2])/2;
-
-  // Match the Telescope Upstream and Downstream Arm triplets to get tracks:
+  //Match half way between the upstream and downstream arms
+  double zMid = 0.5*(_planePosition[_nPlanes-3] + _planePosition[2]);
   std::vector<EUTelTripletGBLUtility::track> telescope_tracks;
-  gblutil.MatchTriplets(upstream_triplets,downstream_triplets, DUTz, _track_match_cut, telescope_tracks);
-
-  //delete downstream_triplets;
-  //delete upstream_triplets;
+  gblutil.MatchTriplets(upstream_triplets,downstream_triplets, zMid, _track_match_cut, telescope_tracks);
 
   streamlog_out(DEBUG4) << "Found " << telescope_tracks.size() << " tracks from matching t/driplets." << endl;
   
   for( auto& tr: telescope_tracks ){
-    auto const & trip = tr.get_upstream();
+    //unused: auto const & trip = tr.get_upstream();
     auto const & drip = tr.get_downstream();
     EUTelTripletGBLUtility::triplet srip(tr.gethit(0), tr.gethit(2), tr.gethit(5)); // seed triplet is called srip
 
     std::vector<double> xAplanes(_nPlanes);
     std::vector<double> yAplanes(_nPlanes);
 
-    for (int i = 0; i < _nPlanes; i++){
+    for (size_t i = 0; i < _nPlanes; i++){
       xAplanes[i] = srip.getx_at(_planePosition[i]);
       yAplanes[i] = srip.gety_at(_planePosition[i]);
     }
@@ -614,12 +609,12 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
     double ky = tr.kink_y();
 
     // Track impact position at DUT from Downstream:
-    double xB = drip.getx_at(DUTz);
-    double yB = drip.gety_at(DUTz);
+    double xB = drip.getx_at(zMid);
+    double yB = drip.gety_at(zMid);
 
     // Track impact position at DUT from Upstream:
-    double xA = srip.getx_at(DUTz);
-    double yA = srip.gety_at(DUTz);
+    double xA = srip.getx_at(zMid);
+    double yA = srip.gety_at(zMid);
 
     double dx = xB - xA; // driplet - triplet
     double dy = yB - yA;
@@ -643,81 +638,71 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
     
     std::vector<unsigned int> ilab; // 0-5 = telescope
 
-    // plane 0-5:
-    double rx[6];
-    double ry[6];
-    double trackhitx[6];
-    double trackhity[6];
-    double trackhitxloc[6];
-    double trackhityloc[6];
-    //double zprev = _planePosition[0];
+    size_t DUTCount = _nPlanes-6;
+    std::vector<double> rx (_nPlanes, -1.0);
+    std::vector<double> ry (_nPlanes, -1.0);
+    std::vector<double> trackhitx (_nPlanes, -1.0);
+    std::vector<double> trackhity (_nPlanes, -1.0);
+    std::vector<double> trackhitxloc (_nPlanes, -1.0);
+    std::vector<double> trackhityloc (_nPlanes, -1.0);
+    std::vector<bool> hasHit (_nPlanes, false);
+
     double step = 0.;
     s = 0.;
+    for( size_t ipl = 0; ipl < _nPlanes; ++ipl ){
 
-    int DUT_label;
-  
-    for( int ipl = 0; ipl < 6; ++ipl ){
-
-      // Get the corresponding hit from the track:
-      auto const & trackhit = tr.gethit(ipl);
-
-      if (ipl == 0) clustersize0->fill(trackhit.clustersize);
-      if (ipl == 1) clustersize1->fill(trackhit.clustersize);
-      if (ipl == 2) clustersize2->fill(trackhit.clustersize);
-      if (ipl == 3) clustersize3->fill(trackhit.clustersize);
-      if (ipl == 4) clustersize4->fill(trackhit.clustersize);
-      if (ipl == 5) clustersize5->fill(trackhit.clustersize);
-
-      double dz = trackhit.z - srip.base().z;
-      double xs = srip.base().x + srip.slope().x * dz; // Ax at plane
-      double ys = srip.base().y + srip.slope().y * dz; // Ay at plane
-
-      trackhitx[ipl] = trackhit.x;
-      trackhity[ipl] = trackhit.y;
-      trackhitxloc[ipl] = trackhit.locx;
-      trackhityloc[ipl] = trackhit.locy;
-
-      rx[ipl] = trackhit.x - xs;
-      ry[ipl] = trackhit.y - ys;
-
-      if( ipl == 0 ) {
-        sixx0Histo->fill( -trackhit.x );
-        sixy0Histo->fill( -trackhit.y );
-      } else if( ipl == 1 ) {
-        sixx1Histo->fill( -trackhit.x );
-        sixy1Histo->fill( -trackhit.y );
-      } else if( ipl == 2 ) {
-        sixx2Histo->fill( -trackhit.x );
-        sixy2Histo->fill( -trackhit.y );
-      } else if( ipl == 3 ) {
-        sixx3Histo->fill( -trackhit.x );
-        sixy3Histo->fill( -trackhit.y );
-      } else if( ipl == 4 ) {
-        sixx4Histo->fill( -trackhit.x );
-        sixy4Histo->fill( -trackhit.y );
-      } else if( ipl == 5 ) {
-        sixx5Histo->fill( -trackhit.x );
-        sixy5Histo->fill( -trackhit.y );
+      //We have to add all the planes, the up and downstream arm of the telescope will definitely have
+      //hits, the DUTs might not though! The first and last three planes are the telescope.
+      EUTelTripletGBLUtility::hit const * trackhit = nullptr;
+      if(ipl < 3) {
+        trackhit = &tr.gethit(ipl);
+      } else if( ipl < 3+DUTCount) {
+//        auto sensorID = _sensorIDVec[ipl];
+//        if(triplet.has_DUT(sensorID)) trackhit = &triplet.get_DUT_Hit(sensorID);
+//        else if(driplet.has_DUT(sensorID)) trackhit = &driplet.get_DUT_Hit(sensorID);
+      } else {
+        trackhit = &tr.gethit(ipl-DUTCount);
       }
+
+      //if there is no hit we take the plane position from the geo description
+      //double zz = trackhit ? trackhit->z : _planePosition[ipl];// [mm]
 
       auto point = gbl::GblPoint( gblutil.JacobianPointToPoint( step ) );
-      auto meas = Eigen::Vector2d(rx[ipl], ry[ipl]);
 
-      auto const & resVecX = _planeResolutionX[trackhit.plane];
-      auto const & resVecY = _planeResolutionY[trackhit.plane];
-      //auto cluX = trackhit.clustersizex; 
-      auto cluX = trackhit.clustersize; 
-      //auto cluY = trackhit.clustersizey; 
-      auto cluY = trackhit.clustersize; 
-      double _x_resolution_tmp = (cluX >= resVecX.size()) ? resVecX.back() : resVecX[cluX];
-      double _y_resolution_tmp = (cluY >= resVecY.size()) ? resVecY.back() : resVecY[cluY];
+      if(trackhit){
+        //fill the trackhit relevant histograms
+        fillTrackhitHisto(*trackhit, ipl);
+
+        double dz = trackhit->z - srip.base().z;
+        double xs = srip.base().x + srip.slope().x * dz; // Ax at plane
+        double ys = srip.base().y + srip.slope().y * dz; // Ay at plane
+
+        trackhitx[ipl] = trackhit->x;
+        trackhity[ipl] = trackhit->y;
+        trackhitxloc[ipl] = trackhit->locx;
+        trackhityloc[ipl] = trackhit->locy;
+
+        rx[ipl] = trackhit->x - xs;
+        ry[ipl] = trackhit->y - ys;
+
+        auto meas = Eigen::Vector2d(rx[ipl], ry[ipl]);
+
+        auto const & resVecX = _planeResolutionX[trackhit->plane];
+        auto const & resVecY = _planeResolutionY[trackhit->plane];
+        //auto cluX = trackhit->clustersizex; 
+        auto cluX = trackhit->clustersize; 
+        //auto cluY = trackhit->clustersizey; 
+        auto cluY = trackhit->clustersize; 
+        double _x_resolution_tmp = (cluX >= resVecX.size()) ? resVecX.back() : resVecX[cluX];
+        double _y_resolution_tmp = (cluY >= resVecY.size()) ? resVecY.back() : resVecY[cluY];
       
-   	  auto measPrec = Eigen::Vector2d(1.0/_x_resolution_tmp/_x_resolution_tmp, 1.0/_y_resolution_tmp/_y_resolution_tmp);
+   	    auto measPrec = Eigen::Vector2d(1.0/_x_resolution_tmp/_x_resolution_tmp, 1.0/_y_resolution_tmp/_y_resolution_tmp);
 
-      //The measurement is only included if it is a non excluded plane
-      if( std::find( std::begin(_excluded_planes), std::end(_excluded_planes), ipl) == _excluded_planes.end() ) {
-         point.addMeasurement( proL2m, meas, measPrec );
-      }
+        //The measurement is only included if it is a non excluded plane
+        if( std::find( std::begin(_excluded_planes), std::end(_excluded_planes), ipl) == _excluded_planes.end() ) {
+          point.addMeasurement( proL2m, meas, measPrec );
+        }
+      }  
       point.addScatterer( scat, _planeWscatSi[ipl] );
 
       // streamlog_out(DEBUG4) << "Added Scatterer:\n" << _planeWscatSi[ipl] << std::endl; 
@@ -725,8 +710,7 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
       traj_points.emplace_back(point);
       s += step;
       sPoint.push_back( s );
-      DUT_label = sPoint.size();
-      ilab.push_back(DUT_label);
+      ilab.push_back( sPoint.size() );
 
       if( ipl < 5) {
         double distplane = _planePosition[ipl+1] - _planePosition[ipl];
@@ -1298,7 +1282,7 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
 
       if( abs( kx ) > 0.001 ) {
 	sixzx1Histo->fill( zx - _planePosition[2] );
-	if( abs( zx - DUTz ) < 30 ) {
+	if( abs( zx - zMid ) < 30 ) {
 	  sixkyzxHisto->fill( ky*1E3 );
 	  sixkxzxHisto->fill( kx*1E3 ); // plot with gap, fittp0g.C("sixkxzx")
 	}
@@ -1306,7 +1290,7 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
 
       if( abs( ky ) > 0.001 ) {
 	sixzy1Histo->fill( zy - _planePosition[2] );
-	if( abs( zy - DUTz ) < 30 ) {
+	if( abs( zy - zMid ) < 30 ) {
 	  sixkxzyHisto->fill( kx*1E3 );
 	  sixkyzyHisto->fill( ky*1E3 ); // plot with gap
 	}
@@ -1342,9 +1326,16 @@ void EUTelGBLFitter::end(){
     << "Processed events:    "
     << std::setw(10) << std::setiosflags(std::ios::right)
     << _nEvt << std::resetiosflags(std::ios::right) << std::endl;
+}
 
-} // end end
+void EUTelGBLFitter::fillTrackhitHisto(EUTelTripletGBLUtility::hit const & hit, int ipl){
+  clustersizeTotal[ipl]->fill(hit.clustersize);
+  clustersizeX[ipl]->fill(hit.clustersizex);
+  clustersizeY[ipl]->fill(hit.clustersizey);
 
+  sixXHistos[ipl]->fill( -hit.x );
+  sixYHistos[ipl]->fill( -hit.y );
+}
 
 void EUTelGBLFitter::TelescopeCorrelationPlots(std::vector<EUTelTripletGBLUtility::hit> const & telescopehits) {
   for( auto& ihit: telescopehits ){
@@ -1409,15 +1400,18 @@ void EUTelGBLFitter::bookHistos()
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-  // telescope hits per plane:
+  // telescope and DUT hits per plane:
   AIDAProcessor::tree(this)->mkdir("Telescope");
 
-  nAllHitHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Telescope/nallhit", 201, -0.5, 200.5 );
-  nAllHitHisto->setTitle( "Telescope hits/event;telescope hits;events" );
+  nAllTelHitHisto = AIDAProcessor::histogramFactory(this)->
+    createHistogram1D( "Telescope/nalltelhit", 201, -0.5, 200.5 );
+  nAllTelHitHisto->setTitle( "Telescope hits/event;telescope hits;events" );
 
-  // telescope dx:
+  nAllDUTHitHisto = AIDAProcessor::histogramFactory(this)->
+    createHistogram1D( "Telescope/nallduthit", 51, -0.5, 50.5 );
+  nAllDUTHitHisto->setTitle( "DUT hits/event;DUT hits;events" );
 
+  // telescope correlation plots:
   dx01Histo = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "Telescope/dx01", 100, -1, 1 );
   dx01Histo->setTitle( "x1-x0;x_{1}-x_{0} [mm];hit pairs" );
@@ -1493,6 +1487,7 @@ void EUTelGBLFitter::bookHistos()
   du45Histo = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "Telescope/du45", 100, -1, 1 );
   du45Histo->setTitle( "x5-x4, |dy| < 1;x_{5}-x_{4} [mm];hit pairs" );
+
 
   // triplets:
   AIDAProcessor::tree(this)->mkdir("Upstream");
@@ -1784,10 +1779,6 @@ void EUTelGBLFitter::bookHistos()
     createProfile1D( "Effi/effiy5", 60, -6, 6, -0.1, 1.1 );
   effiy5->setTitle( "trip-effi vs y at plane 5;y [mm]; efficiency" );
 
-
-
-
-
   //driplets-triplets
   // Tracks
   AIDAProcessor::tree(this)->mkdir("Tracks");
@@ -1797,77 +1788,40 @@ void EUTelGBLFitter::bookHistos()
   nsixHisto->setTitle( "telescope six-plane-tracks;six-plane-tracks;events" );
 
 
-  clustersize0 = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/clustersize0", 100, 0, 100 );
-  clustersize0->setTitle( "clustersize at 0; clustersize;six-plane tracks" );
+  AIDAProcessor::tree(this)->mkdir("Tracks/ClusterSize");
+  for(size_t ix = 0; ix < _sensorIDVec.size(); ++ix) {
+    auto sensorIdString = std::to_string(_sensorIDVec[ix]);
+    std::string histNameTotal = "Tracks/ClusterSize/ClusterSizeTotal_"+sensorIdString;
+    std::string histNameX = "Tracks/ClusterSize/ClusterSizeX_"+sensorIdString;
+    std::string histNameY = "Tracks/ClusterSize/ClusterSizeY_"+sensorIdString;
 
-  sixx0Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/sixx0", 240, -12, 12 );
-  sixx0Histo->setTitle( "six x at 0;six x_{out} at 0 [mm];six-plane tracks" );
+    clustersizeTotal.push_back(AIDAProcessor::histogramFactory(this)->
+     createHistogram1D( histNameTotal, 101, -0.5, 100 ));
+    clustersizeTotal.back()->setTitle( "total cluster size on plane "+sensorIdString+";#hit pixels in cluster;count" );
 
-  sixy0Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/sixy0", 120, -6, 6 );
-  sixy0Histo->setTitle( "six y at 0;six y_{up} at 0 [mm];six-plane tracks" );
+    clustersizeX.push_back(AIDAProcessor::histogramFactory(this)->
+     createHistogram1D( histNameX, 101, -0.5, 100 ));
+    clustersizeX.back()->setTitle( "total cluster size in x on plane "+sensorIdString+";#hit pixels in cluster in x;count" );
 
-  clustersize1 = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/clustersize1", 100, 0, 100 );
-  clustersize1->setTitle( "clustersize at 1; clustersize;six-plane tracks" );
+    clustersizeY.push_back(AIDAProcessor::histogramFactory(this)->
+     createHistogram1D( histNameY, 101, -0.5, 100 ));
+    clustersizeY.back()->setTitle( "total cluster size in y on plane "+sensorIdString+";#hit pixels in cluster in y;count" );
+  }
 
-  sixx1Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/sixx1", 240, -12, 12 );
-  sixx1Histo->setTitle( "six x at 1;six x_{out} at 1 [mm];six-plane tracks" );
+  AIDAProcessor::tree(this)->mkdir("Tracks/HitPosition");
+  for(size_t ix = 0; ix < _sensorIDVec.size(); ++ix) {
+    auto sensorIdString = std::to_string(_sensorIDVec[ix]);
+    std::string histNameX = "Tracks/HitPosition/X_"+sensorIdString;
+    std::string histNameY = "Tracks/HitPosition/Y_"+sensorIdString;
+  
+    sixXHistos.push_back(AIDAProcessor::histogramFactory(this)->
+     createHistogram1D( histNameX, 240, -12, 12 ));
+    sixXHistos.back()->setTitle( "measured hit on track x on plane "+sensorIdString+";x position [mm]; tracks" );
 
-  sixy1Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/sixy1", 120, -6, 6 );
-  sixy1Histo->setTitle( "six y at 1;six y_{up} at 1 [mm];six-plane tracks" );
-
-  clustersize2 = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/clustersize2", 100, 0, 100 );
-  clustersize2->setTitle( "clustersize at 2; clustersize;six-plane tracks" );
-
-  sixx2Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/sixx2", 240, -12, 12 );
-  sixx2Histo->setTitle( "six x at 2;six x_{out} at 2 [mm];six-plane tracks" );
-
-  sixy2Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/sixy2", 120, -6, 6 );
-  sixy2Histo->setTitle( "six y at 2;six y_{up} at 2 [mm];six-plane tracks" );
-
-  clustersize3 = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/clustersize3", 100, 0, 100 );
-  clustersize3->setTitle( "clustersize at 3; clustersize;six-plane tracks" );
-
-  sixx3Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/sixx3", 240, -12, 12 );
-  sixx3Histo->setTitle( "six x at 3;six x_{out} at 3 [mm];six-plane tracks" );
-
-  sixy3Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/sixy3", 120, -6, 6 );
-  sixy3Histo->setTitle( "six y at 3;six y_{up} at 3 [mm];six-plane tracks" );
-
-  clustersize4 = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/clustersize4", 100, 0, 100 );
-  clustersize4->setTitle( "clustersize at 4; clustersize;six-plane tracks" );
-
-  sixx4Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/sixx4", 240, -12, 12 );
-  sixx4Histo->setTitle( "six x at 4;six x_{out} at 4 [mm];six-plane tracks" );
-
-  sixy4Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/sixy4", 120, -6, 6 );
-  sixy4Histo->setTitle( "six y at 4;six y_{up} at 4 [mm];six-plane tracks" );
-
-  clustersize5 = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/clustersize5", 100, 0, 100 );
-  clustersize5->setTitle( "clustersize at 5; clustersize;six-plane tracks" );
-
-  sixx5Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/sixx5", 240, -12, 12 );
-  sixx5Histo->setTitle( "six x at 5;six x_{out} at 5 [mm];six-plane tracks" );
-
-  sixy5Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/sixy5", 120, -6, 6 );
-  sixy5Histo->setTitle( "six y at 5;six y_{up} at 5 [mm];six-plane tracks" );
+    sixYHistos.push_back(AIDAProcessor::histogramFactory(this)->
+     createHistogram1D( histNameY, 240, -12, 12 ));
+    sixYHistos.back()->setTitle( "measured hit on track y on plane "+sensorIdString+";y position [mm]; tracks" );
+  }
 
   // GBL:
   AIDAProcessor::tree(this)->mkdir("GBL");
