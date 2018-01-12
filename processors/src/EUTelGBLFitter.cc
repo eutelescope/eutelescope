@@ -248,6 +248,14 @@ void EUTelGBLFitter::init() {
     streamlog_out( MESSAGE2 ) << "Plane " << sensorID << " is located at (z-position) " << pos << " mm.\nIt has a radiation length of " << rad << " [mm/mm]\n"; 
   }
 
+  for(auto sensorID: _sensorIDVec) {
+    if( std::find( std::begin(_excluded_planes), std::end(_excluded_planes), sensorID ) == _excluded_planes.end() ) {
+      _excludedSensorMap.insert( std::make_pair(sensorID, false) ); 
+    } else {
+      _excludedSensorMap.insert( std::make_pair(sensorID, true) ); 
+    }  
+  }
+
   _triplet_res_cut = _triplet_res_cut *6. / _eBeam * (_planePosition[1] - _planePosition[0]) / 20.;
 
   // Book histograms:
@@ -637,6 +645,7 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
     Eigen::Vector2d scat = Eigen::Vector2d::Zero(); //mean is zero
     
     std::vector<unsigned int> ilab; // 0-5 = telescope
+    std::map<size_t, size_t> ilabToSensorID;
 
     size_t DUTCount = _nPlanes-6;
     std::vector<double> rx (_nPlanes, -1.0);
@@ -699,9 +708,29 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
    	    auto measPrec = Eigen::Vector2d(1.0/_x_resolution_tmp/_x_resolution_tmp, 1.0/_y_resolution_tmp/_y_resolution_tmp);
 
         //The measurement is only included if it is a non excluded plane
-        if( std::find( std::begin(_excluded_planes), std::end(_excluded_planes), ipl) == _excluded_planes.end() ) {
+        auto currentSensorID = _sensorIDVec[ipl];
+        if( !_excludedSensorMap[currentSensorID]  ) {
           point.addMeasurement( proL2m, meas, measPrec );
         }
+
+        // monitor what we put into GBL:
+        selxHisto->fill( -xA ); // triplet at DUT
+        selyHisto->fill( -yA );
+        selaxHisto->fill( srip.slope().x*1E3 );
+        selayHisto->fill( srip.slope().y*1E3 );
+        seldxHisto->fill( dx*1E3 ); // triplet-driplet match
+        seldyHisto->fill( dy*1E3 );
+        selkxHisto->fill( kx*1E3 ); // triplet-driplet kink
+        selkyHisto->fill( ky*1E3 );
+
+        seldx1Histo->fill( rx[1]*1E3 ); // triplet interpol
+        seldy1Histo->fill( ry[1]*1E3 );
+        seldx3Histo->fill( rx[3]*1E3 ); // triplet extrapol
+        seldy3Histo->fill( ry[3]*1E3 );
+        seldx4Histo->fill( rx[4]*1E3 );
+        seldy4Histo->fill( ry[4]*1E3 );
+        seldx5Histo->fill( rx[5]*1E3 );
+        seldy5Histo->fill( ry[5]*1E3 );
       }  
       point.addScatterer( scat, _planeWscatSi[ipl] );
 
@@ -711,6 +740,7 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
       s += step;
       sPoint.push_back( s );
       ilab.push_back( sPoint.size() );
+      ilabToSensorID.insert( std::make_pair(ilab.back(), _sensorIDVec[ipl]) );
 
       if( ipl < 5) {
         double distplane = _planePosition[ipl+1] - _planePosition[ipl];
@@ -735,25 +765,6 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
       }
     } // loop over planes
 
-    // monitor what we put into GBL:
-    selxHisto->fill( -xA ); // triplet at DUT
-    selyHisto->fill( -yA );
-    selaxHisto->fill( srip.slope().x*1E3 );
-    selayHisto->fill( srip.slope().y*1E3 );
-    seldxHisto->fill( dx*1E3 ); // triplet-driplet match
-    seldyHisto->fill( dy*1E3 );
-    selkxHisto->fill( kx*1E3 ); // triplet-driplet kink
-    selkyHisto->fill( ky*1E3 );
-
-    seldx1Histo->fill( rx[1]*1E3 ); // triplet interpol
-    seldy1Histo->fill( ry[1]*1E3 );
-    seldx3Histo->fill( rx[3]*1E3 ); // triplet extrapol
-    seldy3Histo->fill( ry[3]*1E3 );
-    seldx4Histo->fill( rx[4]*1E3 );
-    seldy4Histo->fill( ry[4]*1E3 );
-    seldx5Histo->fill( rx[5]*1E3 );
-    seldy5Histo->fill( ry[5]*1E3 );
-
     double Chi2;
     int Ndf;
     double lostWeight;
@@ -761,7 +772,6 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
     gbl::GblTrajectory traj(traj_points, false ); // curvature = false
     std::string fit_optionList = "";
     traj.fit( Chi2, Ndf, lostWeight, fit_optionList );
-    //traj.getLabels(ilab); // instead pushback sPoint.size() when adding plane
 
     // debug:
     if(_printEventCounter < 10){
@@ -839,9 +849,8 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
       Eigen::VectorXd aCorrection(2);
       Eigen::MatrixXd aCovariance(5,5);
 
-      double ax[8];
+      auto ax = std::vector<double>(_nPlanes, -2);
       // double ay[8];
-      unsigned int k = 0;
 
       unsigned int ndim = 2;
       Eigen::VectorXd aResiduals(ndim);
@@ -855,376 +864,93 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
       Eigen::VectorXd kDownWeights(ndim);
 
       double pixel_size = 18.4e-3;
-
       unsigned int ndata = 2;
       //track = q/p, x', y', x, y
       //        0,   1,  2,  3, 4
-      // at plane DUT:
-      unsigned int ipos = ilab[0];
-      traj.getResults( ipos, aCorrection, aCovariance );
-      traj.getMeasResults( ipos, ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
-      traj.getScatResults( ipos, ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
-      aResiduals[0] = rx[0] - aCorrection[3];
-      aResiduals[1] = ry[0] - aCorrection[4];
-      gblax0Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-      gbldx0Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
-      gbldx01Histo->fill( aCorrection[3] ); // shift x [mm]
-      gblrx0Histo->fill( ( rx[0] - aCorrection[3] ) * 1E3 ); // residual x [um]
-      gblry0Histo->fill( ( ry[0] - aCorrection[4] ) * 1E3 ); // residual y [um]
-      gblpx0Histo->fill( aResiduals[0] / aResErrors[0] ); // pull
-      gblpy0Histo->fill( aResiduals[1] / aResErrors[1] ); // pull
+      size_t ipos = ilab[0];
+      size_t currentSensor = ilabToSensorID[ipos];
+
+      for(size_t ipl = 0; ipl < ilab.size(); ++ipl) {
+        ipos = ilab[ipl];
+        currentSensor = ilabToSensorID[ipos];
+
+        traj.getResults( ipos, aCorrection, aCovariance );
+        traj.getMeasResults( ipos, ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+        traj.getScatResults( ipos, ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
+
+        aResiduals[0] = rx[ipl] - aCorrection[3];
+        aResiduals[1] = ry[ipl] - aCorrection[4];
+
+        gblaxHistos[ipl]->fill( aCorrection[1]*1E3 ); // angle x [mrad]
+        gbldxHistos[ipl]->fill( aCorrection[3]*1E3 ); // shift x [um]
+
+//      gbldx01Histo->fill( aCorrection[3] ); // shift x [mm]
+
+        gblrxHistos[ipl]->fill( ( rx[ipl] - aCorrection[3] ) * 1E3 ); // residual x [um]
+        gblryHistos[ipl]->fill( ( ry[ipl] - aCorrection[4] ) * 1E3 ); // residual y [um]
+        gblpxHistos[ipl]->fill( aResiduals[0] / aResErrors[0] ); // pull
+        gblpyHistos[ipl]->fill( aResiduals[1] / aResErrors[1] ); // pull
  //     if(_dut_plane == 0) gblpx0_unbHisto->fill( (rx[0] - aCorrection[3]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(3,3)) ); // unbiased pull
  //     if(_dut_plane == 0) gblpy0_unbHisto->fill( (ry[0] - aCorrection[4]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(4,4)) ); // unbiased pull
-      gblqx0Histo->fill( aKinks[0]*1E3 ); // kink RESIDUAL (measured kink - fit kink)
-      ax[k] = aCorrection[1]; // angle correction at plane, for kinks
-      // TProfile for res_x a.f.o. x
-      gblrxvsx0->fill( xAplanes.at(k), sqrt(TMath::Pi()/2.)*fabs(aResiduals[0]));
-      gblryvsy0->fill( yAplanes.at(k), sqrt(TMath::Pi()/2.)*fabs(aResiduals[1]));
-      gblrxvsx01->fill((trackhitx[0] - aResiduals[0]), sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); // seed corrected
-      gblryvsy01->fill((trackhity[0] - aResiduals[1]), sqrt(TMath::Pi()/2.)*fabs(aResiduals[1]));
 
-      double corrPos[2];
-      corrPos[0] = trackhitx[0] - aResiduals[0]; //+ .4e-3;  should be zero ! :/
-      corrPos[1] = trackhity[0] - aResiduals[1]; // + .15e-3; should be zero (no alignment on plane 0, not even pre-align)      
-      int nx = (corrPos[0]) / pixel_size;
-      int ny = (corrPos[1]) / pixel_size;
-      int invsignx = -(corrPos[0]) / fabs((corrPos[0]));
-      int invsigny = -(corrPos[1]) / fabs((corrPos[1]));
-
-      // do again for extrapolated srip position, userd ONLY for gblrxvsxpix0 and gblryvsypix0
-      int nx1 = (xAplanes[0]) / pixel_size;
-      int ny1 = (yAplanes[0]) / pixel_size;
-      int invsignx1 = -(xAplanes[0]) / fabs((xAplanes[0]));
-      int invsigny1 = -(yAplanes[0]) / fabs((yAplanes[0]));
-
-      gblrxvsxpix0->fill(                    (xAplanes[0] +invsignx1*(abs(nx1) +1.)*pixel_size)*1e3, sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-      gblryvsypix0->fill(                    (yAplanes[0] +invsigny1*(abs(ny1) +1.)*pixel_size)*1e3, sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
-      gblrxvsxpix01->fill( ((trackhitx[0] - aResiduals[0])+invsignx*(abs(nx) +1.)*pixel_size)*1e3, sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-      gblryvsypix01->fill( ((trackhity[0] - aResiduals[1])+invsigny*(abs(ny) +1.)*pixel_size)*1e3, sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
-      // clustersize-specific plots
-      int CS0 = tr.gethit(0).clustersize;
-
-      double modPos[2];
-      modPos[0] = ((corrPos[0])+(invsignx*(abs(nx) +.5) + 0.5) *pixel_size)*1e3;
-      modPos[1] = ((corrPos[1])+(invsigny*(abs(ny) +.5) + 0.5) *pixel_size)*1e3;
+        gblqxHistos[ipl]->fill( aKinks[0]*1E3 ); // kink RESIDUAL (measured kink - fit kink)
       
-      // overlay of all CSs
-      gblnxy_plane0->fill(modPos[0], modPos[1], CS0 );
-      gblnxy1_plane0->fill(modPos[0], modPos[1], 1 );
+        ax[ipl] = aCorrection[1]; // angle correction at plane, for kinks
 
-      if (CS0 == 1){
-	gblnCS1xy_plane0->fill(modPos[0], modPos[1] );
-	//gblnCS1xy1_plane0->fill((trackhitx[3] - aResiduals[0]), (trackhity[3] - aResiduals[1]));
+        // TProfile for res_x a.f.o. x
+        gblrxvsx[ipl]->fill( xAplanes.at(ipl), sqrt(TMath::Pi()/2.)*fabs(aResiduals[0]));
+        gblryvsy[ipl]->fill( yAplanes.at(ipl), sqrt(TMath::Pi()/2.)*fabs(aResiduals[1]));
+        gblrxvsx1[ipl]->fill((trackhitx[ipl] - aResiduals[0]), sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); // seed corrected
+        gblryvsy1[ipl]->fill((trackhity[ipl] - aResiduals[1]), sqrt(TMath::Pi()/2.)*fabs(aResiduals[1]));
+        
+        std::array<double,2> corrPos;
+        corrPos[0] = trackhitx[ipl] - aResiduals[0]; //+ .4e-3;  should be zero ! :/
+        corrPos[1] = trackhity[ipl] - aResiduals[1]; // + .15e-3; should be zero (no alignment on plane 0, not even pre-align)      
 
-        gblrxvsxpix01_CS1->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
-        gblryvsypix01_CS1->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
+        std::array<double, 3> globalCorrPos {corrPos[0], corrPos[1], _planePosition[ipl]};
+        std::array<double, 3> localCorrPos;
+ 
+        geo::gGeometry().master2Local(currentSensor, globalCorrPos, localCorrPos);
+        corrPos[0] = localCorrPos[0];
+        corrPos[1] = localCorrPos[1];
+
+        int nx = (corrPos[0]) / pixel_size;
+        int ny = (corrPos[1]) / pixel_size;
+        int invsignx = -(corrPos[0]) / fabs((corrPos[0]));
+        int invsigny = -(corrPos[1]) / fabs((corrPos[1])); 
+
+        // do again for extrapolated srip position, userd ONLY for gblrxvsxpix0 and gblryvsypix0
+        int nx1 = (xAplanes[ipl]) / pixel_size;
+        int ny1 = (yAplanes[ipl]) / pixel_size;
+        int invsignx1 = -(xAplanes[ipl]) / fabs((xAplanes[ipl]));
+        int invsigny1 = -(yAplanes[ipl]) / fabs((yAplanes[ipl]));
+
+        gblrxvsxpix[ipl]->fill(                    (xAplanes[ipl] +invsignx1*(abs(nx1) +1.)*pixel_size)*1e3, sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+        gblryvsypix[ipl]->fill(                    (yAplanes[ipl] +invsigny1*(abs(ny1) +1.)*pixel_size)*1e3, sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+        gblrxvsxpix1[ipl]->fill( ((trackhitx[ipl] - aResiduals[0])+invsignx*(abs(nx) +1.)*pixel_size)*1e3, sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+        gblryvsypix1[ipl]->fill( ((trackhity[ipl] - aResiduals[1])+invsigny*(abs(ny) +1.)*pixel_size)*1e3, sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+
+        // clustersize-specific plots
+        auto CS = tr.gethit(currentSensor).clustersize;
+
+        std::array<double,2> modPos;
+        modPos[0] = ((corrPos[0])+(invsignx*(abs(nx) +.5) + 0.5) *pixel_size)*1e3;
+        modPos[1] = ((corrPos[1])+(invsigny*(abs(ny) +.5) + 0.5) *pixel_size)*1e3;
+  
+        // overlay of all CSs
+        gblnxy[ipl]->fill(modPos[0], modPos[1], CS );
+        gblnxy1[ipl]->fill(modPos[0], modPos[1], 1 );
+
+        size_t CSIndex = (CS > 6) ? 6 : CS-1;
+        gblnCSxy[ipl][CSIndex]->fill(modPos[0], modPos[1] );    
+
+        if(CSIndex<4){
+          gblrxvsxpix1CS[ipl][CSIndex]->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3);
+          gblryvsypix1CS[ipl][CSIndex]->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3);
+        }  
       } 
-      if (CS0 == 2){
-	gblnCS2xy_plane0->fill(modPos[0], modPos[1] );
-	// gblnCS2xy1_plane0->fill((trackhitx[3] - aResiduals[0]),   (trackhity[3] - aResiduals[1]));
-	
-        gblrxvsxpix01_CS2->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
-        gblryvsypix01_CS2->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
-      } 
-      if (CS0 == 3){
-	gblnCS3xy_plane0->fill(modPos[0], modPos[1] );
-	//gblnCS3xy1_plane0->fill((trackhitx[3] - aResiduals[0]),(trackhity[3] - aResiduals[1]));
+/*
 
-        gblrxvsxpix01_CS3->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
-        gblryvsypix01_CS3->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
-      } 
-      if (CS0 == 4){
-	gblnCS4xy_plane0->fill(modPos[0], modPos[1] );
-	//gblnCS4xy1_plane0->fill((trackhitx[3] - aResiduals[0]),   (trackhity[3] - aResiduals[1]));
-
-        gblrxvsxpix01_CS4->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
-        gblryvsypix01_CS4->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
-      } 
-      if( CS0 == 5 ) {
-	gblnCS5xy_plane0->fill(modPos[0], modPos[1] );
-	//gblnCS5xy1_plane0->fill((trackhitx[3] - aResiduals[0]), (trackhity[3] - aResiduals[1]));
-      }
-      if( CS0 == 6 ) {
-	gblnCS6xy_plane0->fill(modPos[0], modPos[1] );
-	//gblnCS6xy1_plane0->fill((trackhitx[3] - aResiduals[0]),  (trackhity[3] - aResiduals[1]));
-      }
-      if( CS0 > 6 ) {
-	gblnCS7xy_plane0->fill(modPos[0], modPos[1] );
-      }
-
-      k++;
-
-      ipos = ilab[1];
-      traj.getResults( ipos, aCorrection, aCovariance );
-      traj.getMeasResults(static_cast<unsigned int>(ipos), ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
-      traj.getScatResults(static_cast<unsigned int>(ipos), ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
-      aResiduals[0] = rx[1] - aCorrection[3];
-      aResiduals[1] = ry[1] - aCorrection[4];
-      gblax1Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-      gbldx1Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
-      gbldx11Histo->fill( aCorrection[3] ); // shift x [mm]
-      gblrx1Histo->fill( ( rx[1] - aCorrection[3] ) * 1E3 ); // residual x [um]
-      gblry1Histo->fill( ( ry[1] - aCorrection[4] ) * 1E3 ); // residual y [um]
-      gblpx1Histo->fill( aResiduals[0] / aResErrors[0] ); // pull
-      gblpy1Histo->fill( aResiduals[1] / aResErrors[1] ); // pull
- //     if(_dut_plane == 1) gblpx1_unbHisto->fill( (rx[1] - aCorrection[3]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(3,3)) ); // unbiased pull
- //     if(_dut_plane == 1) gblpy1_unbHisto->fill( (ry[1] - aCorrection[4]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(4,4)) ); // unbiased pull
-      gblqx1Histo->fill( aKinks[0]*1E3 ); // kink-residual (NOT KINK itself!)
-      gblsx1Histo->fill( aKinks[0]/aKinkErrors[0] ); // x kink pull
-      gbltx1Histo->fill( aKinks[0]/kResErrors[0] ); // x kink pull
-      ax[k] = aCorrection[1]; // angle correction at plane, for kinks
-      //ay[k] = aCorrection[2]; // angle correction at plane, for kinks
-      //std::cout << " aResiduals[0] = " << aResiduals[0] << " aResErrors[0] = " << aResErrors[0] << std::endl;  
-      k++;
-
-      ipos = ilab[2];
-      traj.getResults( ipos, aCorrection, aCovariance );
-      traj.getMeasResults(static_cast<unsigned int>(ipos), ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
-      traj.getScatResults(static_cast<unsigned int>(ipos), ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
-      aResiduals[0] = rx[2] - aCorrection[3];
-      aResiduals[1] = ry[2] - aCorrection[4];
-      gblax2Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-      gbldx2Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
-      gbldx21Histo->fill( aCorrection[3] ); // shift x [mm]
-      gblrx2Histo->fill( ( rx[2] - aCorrection[3] ) * 1E3 ); // residual x [um]
-      gblry2Histo->fill( ( ry[2] - aCorrection[4] ) * 1E3 ); // residual y [um]
-      gblpx2Histo->fill( aResiduals[0] / aResErrors[0] ); // pull
-      gblpy2Histo->fill( aResiduals[1] / aResErrors[1] ); // pull
-  //    if(_dut_plane == 2) gblpx2_unbHisto->fill( (rx[2] - aCorrection[3]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(3,3)) ); // unbiased pull
-  //    if(_dut_plane == 2) gblpy2_unbHisto->fill( (ry[2] - aCorrection[4]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(4,4)) ); // unbiased pull
-      gblqx2Histo->fill( aKinks[0]*1E3 ); // kink-residual
-      gblsx2Histo->fill( aKinks[0]/aKinkErrors[0] ); // x kink res over kinkError
-      gbltx2Histo->fill( aKinks[0]/kResErrors[0] ); // x kink pull
-      ax[k] = aCorrection[1]; // angle correction at plane, for kinks
-      //ay[k] = aCorrection[2]; // angle correction at plane, for kinks
-      k++;
-
-      ipos = ilab[3];
-      traj.getResults( ipos, aCorrection, aCovariance );
-      traj.getMeasResults(static_cast<unsigned int>(ipos), ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
-      traj.getScatResults(static_cast<unsigned int>(ipos), ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
-      aResiduals[0] = rx[3] - aCorrection[3];
-      aResiduals[1] = ry[3] - aCorrection[4];
-      gblax3Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-      gbldx3Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
-      gbldx31Histo->fill( aCorrection[3] ); // shift x [mm]
-      gblrx3Histo->fill( ( rx[3] - aCorrection[3] ) * 1E3 ); // residual x [um]
-      gblry3Histo->fill( ( ry[3] - aCorrection[4] ) * 1E3 ); // residual y [um]
-      gblpx3Histo->fill( aResiduals[0] / aResErrors[0] ); // pull
-      gblpy3Histo->fill( aResiduals[1] / aResErrors[1] ); // pull
-      gblqx3Histo->fill( aKinks[0]*1E3 ); // kink
-      gblsx3Histo->fill( aKinks[0]/aKinkErrors[0] ); // x kink pull
-      gbltx3Histo->fill( aKinks[0]/kResErrors[0] ); // x kink pull
-      ax[k] = aCorrection[1]; // angle correction at plane, for kinks
-      //ay[k] = aCorrection[2]; // angle correction at plane, for kinks
-      //
-  //    if(_dut_plane == 3) gblpx3_unbHisto->fill( (rx[3] - aCorrection[3]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(3,3)) ); // unbiased pull
-  //    if(_dut_plane == 3) gblpy3_unbHisto->fill( (ry[3] - aCorrection[4]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(4,4)) ); // unbiased pull
-
-      // clustersize-specific plots
-      //
-      // FIXME get alignment constants from GEAR file (rather then opening all 4 alignment files ....)
-      int CS3 = tr.gethit(3).clustersize;
-      corrPos[0] = trackhitx[3] - aResiduals[0] +  7.077e-3 + 0.35e-3; // run000117, better get automatically, with new GEAR file
-      corrPos[1] = trackhity[3] - aResiduals[1] + 18.128e-3 + 0.1e-3;  // run000117
-      //corrPos[0] = trackhitx[3] - aResiduals[0] -  6.645e-3; // run002140
-      //corrPos[1] = trackhity[3] - aResiduals[1] - 10.324e-3;  // run002140
-
-      // correct for rotation
-      double corrPos2[2];
-      double gamma3 = 5.3e-3; // run000117, get automatically
-      //double gamma3 = 1.94969e-03; // run002140
-      corrPos2[0] = cos(gamma3)*corrPos[0] - sin(gamma3)*corrPos[1];
-      corrPos2[1] = sin(gamma3)*corrPos[0] + cos(gamma3)*corrPos[1];
-      
-      corrPos[0] = corrPos2[0];
-      corrPos[1] = corrPos2[1];
-
-      nx = fabs((corrPos[0])) / pixel_size;
-      ny = fabs((corrPos[1])) / pixel_size;
-      invsignx = -(corrPos[0]) / fabs((corrPos[0]));
-      invsigny = -(corrPos[1]) / fabs((corrPos[1]));
-
-      modPos[0] = ((corrPos[0])+(invsignx*(abs(nx) +.5) + 0.5)*pixel_size)*1e3;
-      modPos[1] = ((corrPos[1])+(invsigny*(abs(ny) +.5) + 0.5)*pixel_size)*1e3;
-
-      //gblrxvsxpix31->fill( (trackhitx[3] - aResiduals[0])+invsignx*(abs(nx) +0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-      //gblryvsypix31->fill( (trackhity[3] - aResiduals[1])+invsigny*(abs(ny) +0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
-      gblrxvsxpix31->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
-      gblryvsypix31->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
-
-      // overlay of all CSs
-      gblnxy_plane3->fill(modPos[0], modPos[1], CS3 );
-      gblnxy1_plane3->fill(modPos[0], modPos[1], 1 );
-
-      if( CS3 == 1 ) {
-	gblrx3_cs1Histo->fill( aResiduals[0]* 1E3 ); 
-	gblry3_cs1Histo->fill( aResiduals[1]* 1E3 ); 
-	gblpx3_cs1Histo->fill( aResiduals[0] / aResErrors[0] ); 
-	gblpy3_cs1Histo->fill( aResiduals[1] / aResErrors[1] ); 
-
-	gblnCS1xy_plane3->fill(modPos[0], modPos[1] );
-	gblnCS1xy1_plane3->fill((trackhitx[3] - aResiduals[0]),
-	    (trackhity[3] - aResiduals[1]));
-
-	gblrxvsxpix3cs1->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
-	gblryvsypix3cs1->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
-      }
-      if( CS3 == 2 ) {
-	gblrx3_cs2Histo->fill( aResiduals[0]* 1E3 ); 
-	gblry3_cs2Histo->fill( aResiduals[1]* 1E3 ); 
-	gblpx3_cs2Histo->fill( aResiduals[0] / aResErrors[0] ); 
-	gblpy3_cs2Histo->fill( aResiduals[1] / aResErrors[1] ); 
-
-	gblnCS2xy_plane3->fill(modPos[0], modPos[1] );
-	gblnCS2xy1_plane3->fill((trackhitx[3] - aResiduals[0]),
-	    (trackhity[3] - aResiduals[1]));
-
-	gblrxvsxpix3cs2->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
-	gblryvsypix3cs2->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
-      }
-      if( CS3 == 3 ) {
-	gblrx3_cs3Histo->fill( aResiduals[0]* 1E3 ); 
-	gblry3_cs3Histo->fill( aResiduals[1]* 1E3 ); 
-	gblpx3_cs3Histo->fill( aResiduals[0] / aResErrors[0] ); 
-	gblpy3_cs3Histo->fill( aResiduals[1] / aResErrors[1] ); 
-
-	gblnCS3xy_plane3->fill(modPos[0], modPos[1] );
-	gblnCS3xy1_plane3->fill((trackhitx[3] - aResiduals[0]),
-	    (trackhity[3] - aResiduals[1]));
-
-	gblrxvsxpix3cs3->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
-	gblryvsypix3cs3->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
-      }
-      if( CS3 == 4 ) {
-	gblrx3_cs4Histo->fill( aResiduals[0]* 1E3 ); 
-	gblry3_cs4Histo->fill( aResiduals[1]* 1E3 ); 
-	gblpx3_cs4Histo->fill( aResiduals[0] / aResErrors[0] ); 
-	gblpy3_cs4Histo->fill( aResiduals[1] / aResErrors[1] ); 
-
-	gblnCS4xy_plane3->fill(modPos[0], modPos[1] );
-	gblnCS4xy1_plane3->fill((trackhitx[3] - aResiduals[0]),
-	    (trackhity[3] - aResiduals[1]));
-
-	gblrxvsxpix3cs4->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
-	gblryvsypix3cs4->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
-      }
-      if( CS3 == 5 ) {
-	gblrx3_cs5Histo->fill( aResiduals[0]* 1E3 ); 
-	gblry3_cs5Histo->fill( aResiduals[1]* 1E3 ); 
-	gblpx3_cs5Histo->fill( aResiduals[0] / aResErrors[0] ); 
-	gblpy3_cs5Histo->fill( aResiduals[1] / aResErrors[1] ); 
-
-	gblnCS5xy_plane3->fill(modPos[0], modPos[1] );
-	gblnCS5xy1_plane3->fill((trackhitx[3] - aResiduals[0]),
-	    (trackhity[3] - aResiduals[1]));
-
-	gblrxvsxpix3cs5->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
-	gblryvsypix3cs5->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
-      }
-      if( CS3 == 6 ) {
-	gblrx3_cs6Histo->fill( aResiduals[0]* 1E3 ); 
-	gblry3_cs6Histo->fill( aResiduals[1]* 1E3 ); 
-	gblpx3_cs6Histo->fill( aResiduals[0] / aResErrors[0] ); 
-	gblpy3_cs6Histo->fill( aResiduals[1] / aResErrors[1] ); 
-
-	gblnCS6xy_plane3->fill(modPos[0], modPos[1] );
-	gblnCS6xy1_plane3->fill((trackhitx[3] - aResiduals[0]),
-	    (trackhity[3] - aResiduals[1]));
-
-	gblrxvsxpix3cs6->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
-	gblryvsypix3cs6->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
-      }
-      if( CS3 > 6 ) {
-	gblpx3_cs7Histo->fill( aResiduals[0] / aResErrors[0] ); 
-	gblpy3_cs7Histo->fill( aResiduals[1] / aResErrors[1] ); 
-
-	gblnCS7xy_plane3->fill(modPos[0], modPos[1] );
-
-	//gblrxvsxpix3cs6->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-	//gblryvsypix3cs6->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
-      }
-
-      kinkpixvsxy->fill( modPos[0], modPos[1] , sqrt((aCorrection[1]*aCorrection[1] + aCorrection[2]*aCorrection[2]))*1E3 ); //sqrt(<kink^2>) [mrad]
-
-
-      k++;
-
-      ipos = ilab[4];
-      traj.getResults( ipos, aCorrection, aCovariance );
-      traj.getMeasResults(static_cast<unsigned int>(ipos), ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
-      traj.getScatResults(static_cast<unsigned int>(ipos), ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
-      aResiduals[0] = rx[4] - aCorrection[3];
-      aResiduals[1] = ry[4] - aCorrection[4];
-      gblax4Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-      gbldx4Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
-      gbldx41Histo->fill( aCorrection[3] ); // shift x [mm]
-      gblrx4Histo->fill( ( rx[4] - aCorrection[3] ) * 1E3 ); // residual x [um]
-      gblry4Histo->fill( ( ry[4] - aCorrection[4] ) * 1E3 ); // residual y [um]
-      gblpx4Histo->fill( aResiduals[0] / aResErrors[0] ); // pull
-      gblpy4Histo->fill( aResiduals[1] / aResErrors[1] ); // pull
-  //    if(_dut_plane == 4) gblpx4_unbHisto->fill( (rx[4] - aCorrection[3]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(3,3)) ); // unbiased pull
-  //    if(_dut_plane == 4) gblpy4_unbHisto->fill( (ry[4] - aCorrection[4]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(4,4)) ); // unbiased pull
-      gblqx4Histo->fill( aKinks[0]*1E3 ); // kink
-      gblsx4Histo->fill( aKinks[0]/aKinkErrors[0] ); // x kink pull
-      gbltx4Histo->fill( aKinks[0]/kResErrors[0] ); // x kink pull
-      ax[k] = aCorrection[1]; // angle correction at plane, for kinks
-      //ay[k] = aCorrection[2]; // angle correction at plane, for kinks
-      k++;
-
-      ipos = ilab[5];
-      traj.getResults( ipos, aCorrection, aCovariance );
-      traj.getMeasResults(static_cast<unsigned int>(ipos), ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
-      traj.getScatResults(static_cast<unsigned int>(ipos), ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
-      aResiduals[0] = rx[5] - aCorrection[3];
-      aResiduals[1] = ry[5] - aCorrection[4];
-      gblax5Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-      gbldx5Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
-      gbldx51Histo->fill( aCorrection[3] ); // shift x [mm]
-      gblrx5Histo->fill( ( rx[5] - aCorrection[3] ) * 1E3 ); // residual x [um]
-      gblry5Histo->fill( ( ry[5] - aCorrection[4] ) * 1E3 ); // residual y [um]
-      gblpx5Histo->fill( aResiduals[0] / aResErrors[0] ); // pull
-      gblpy5Histo->fill( aResiduals[1] / aResErrors[1] ); // pull
- //     if(_dut_plane == 5) gblpx5_unbHisto->fill( (rx[5] - aCorrection[3]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(3,3)) ); // unbiased pull
- //     if(_dut_plane == 5) gblpy5_unbHisto->fill( (ry[5] - aCorrection[4]) / sqrt(_telResolution[0]*_telResolution[0] + aCovariance(4,4)) ); // unbiased pull
-      gblqx5Histo->fill( aKinks[0]*1E3 ); // kink
-      ax[k] = aCorrection[1]; // angle correction at plane, for kinks
-      //ay[k] = aCorrection[2]; // angle correction at plane, for kinks
-      //
-
-      corrPos[0] = trackhitx[5] - aResiduals[0] + 2.028e-3 ;  // alignment const (from pre-align only for plane 5) modulo 18.4
-      corrPos[1] = trackhity[5] - aResiduals[1] + 1.930e-3;       
-      
-      nx = (corrPos[0]) / pixel_size;
-      ny = (corrPos[1]) / pixel_size;
-      invsignx = -(corrPos[0]) / fabs((corrPos[0]));
-      invsigny = -(corrPos[1]) / fabs((corrPos[1]));
-
-      modPos[0] = ((corrPos[0])+(invsignx*(abs(nx) +.5) + 0.5) *pixel_size)*1e3;
-      modPos[1] = ((corrPos[1])+(invsigny*(abs(ny) +.5) + 0.5) *pixel_size)*1e3;
-
-      // clustersize-specific plots
-      int CS5 = tr.gethit(5).clustersize;
-
-      if (CS5 == 1){
-        gblrxvsxpix51_CS1->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
-        gblryvsypix51_CS1->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
-      } 
-      if (CS5 == 2){
-        gblrxvsxpix51_CS2->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
-        gblryvsypix51_CS2->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
-      } 
-      if (CS5 == 3){
-        gblrxvsxpix51_CS3->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
-        gblryvsypix51_CS3->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
-      } 
-      if (CS5 == 4){
-        gblrxvsxpix51_CS4->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
-        gblryvsypix51_CS4->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
-      } 
-
-
-      k++;
       // do some more analysis with kinks. 
       //   Calculate the two angles as corr_n-1 - corr_n-2, corr_n - corr_n-1, corr_n+1 - corr_n -> sum of all =  corr_n+1 - corr_n-2
 
@@ -1238,13 +964,11 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
 
       gblkxCentreHisto->fill( (kink_downstream - kink_upstream)*1E3 ); // kink at air/alu (sum of neighbours) [mrad]
       gblkxCentre1Histo->fill((kink_downstream - kink_upstream) ); // kink at air/alu (sum of neighbours) [rad]
-      gblkx1Histo->fill( (ax[1] - ax[0])*1E3 ); // kink at 1 [mrad]
-      gblkx2Histo->fill( (ax[2] - ax[1])*1E3 ); // kink at 2 [mrad]
-      gblkx3Histo->fill( (ax[3] - ax[2])*1E3 ); // kink at 3 [mrad]
-      gblkx4Histo->fill( (ax[4] - ax[3])*1E3 ); // kink at 4 [mrad]
-      gblkx5Histo->fill( (ax[5] - ax[4])*1E3 ); // kink at 5 [mrad] // THIS IS NULL as ax[5] is not updated
+*/
+      for(size_t ix = 1; ix < _nPlanes; ++ix) {
+        gblkxHistos[ix-1]->fill( (ax[ix] - ax[ix-1])*1E3 );
+      }
       //gblkx6Histo->fill( (ax[6] - ax[5])*1E3 ); // kink at 6 [mrad]
-
     } // end if good fit 
 
 
@@ -1906,14 +1630,6 @@ void EUTelGBLFitter::bookHistos()
     createHistogram1D( "GBL/seldy5", 100, -3000, 3000 );
   seldy5Histo->setTitle( "triplet resid y at 5, sel GBL;#Deltay [#mum];tracks" );
 
-  /*seldx6Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/seldx6", 100, -500, 500 );
-    seldx6Histo->setTitle( "triplet resid x at DUT, sel GBL;#Deltax [#mum];tracks" );
-
-    seldy6Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/seldy6", 100, -500, 500 );
-    seldy6Histo->setTitle( "triplet resid y at DUT, sel GBL;#Deltay [#mum];tracks" );*/
-
   gblndfHisto = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "GBL/gblndf", 16, -0.5, 15.5 );
   gblndfHisto->setTitle( "GBL fit NDF;GBL NDF;tracks" );
@@ -1938,105 +1654,7 @@ void EUTelGBLFitter::bookHistos()
     createHistogram2D( "GBL/gblprby", 120, -6, 6, 1000, 0, 1 );
   gblprbyHisto->setTitle( "GBL fit probability vs. y at DUT;y at DUT [mm]; GBL fit probability;tracks" );
 
-  gblnxy_plane0 = AIDAProcessor::histogramFactory(this)->
-    createProfile2D( "GBL/gblnxy_plane0", 35, 0., 18.4, 35, 0., 18.4,0,5 );
-  gblnxy_plane0->setTitle( "GBL intra-pixel weighted occurrence of all CSs;GBL track x at plane0 [#mum];GBL track y at plane0 [mm];events" );
-
-  gblnxy1_plane0 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnxy1_plane0", 35, 0., 18.4, 35, 0., 18.4);
-  gblnxy1_plane0->setTitle( "GBL intra-pixel occurrence of all CSs;GBL track x at plane0 [#mum];GBL track y at plane0 [mm];events" );
-
-  gblnxy_plane3 = AIDAProcessor::histogramFactory(this)->
-    createProfile2D( "GBL/gblnxy_plane3", 35, 0., 18.4, 35, 0., 18.4,0,5 );
-  gblnxy_plane3->setTitle( "GBL intra-pixel weighted occurrence of all CSs;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
-
-  gblnxy1_plane3 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnxy1_plane3", 35, 0., 18.4, 35, 0., 18.4);
-  gblnxy1_plane3->setTitle( "GBL intra-pixel occurrence of all CSs;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
-
-  gblnCS1xy_plane0 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS1xy_plane0", 35, 0., 18.4, 35, 0., 18.4 );
-  gblnCS1xy_plane0->setTitle( "GBL in-pixel occurrence of CS1;GBL track x at plane0 [#mum];GBL track y at plane0 [mm];events" );
-
-  gblnCS2xy_plane0 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS2xy_plane0", 35, 0., 18.4, 35, 0., 18.4 );
-  gblnCS2xy_plane0->setTitle( "GBL in-pixel occurrence of CS2;GBL track x at plane0 [#mum];GBL track y at plane0 [mm];events" );
-
-  gblnCS3xy_plane0 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS3xy_plane0", 35, 0., 18.4, 35, 0., 18.4 );
-  gblnCS3xy_plane0->setTitle( "GBL in-pixel occurrence of CS3;GBL track x at plane0 [#mum];GBL track y at plane0 [mm];events" );
-
-  gblnCS4xy_plane0 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS4xy_plane0", 35, 0., 18.4, 35, 0., 18.4 );
-  gblnCS4xy_plane0->setTitle( "GBL in-pixel occurrence of CS4;GBL track x at plane0 [#mum];GBL track y at plane0 [mm];events" );
-
-  gblnCS5xy_plane0 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS5xy_plane0", 35, 0., 18.4, 35, 0., 18.4 );
-  gblnCS5xy_plane0->setTitle( "GBL in-pixel occurrence of CS5;GBL track x at plane0 [#mum];GBL track y at plane0 [mm];events" );
-
-  gblnCS6xy_plane0 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS6xy_plane0", 35, 0., 18.4, 35, 0., 18.4 );
-  gblnCS6xy_plane0->setTitle( "GBL in-pixel occurrence of CS6;GBL track x at plane0 [#mum];GBL track y at plane0 [mm];events" );
-
-  gblnCS7xy_plane0 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS7xy_plane0", 35, 0., 18.4, 35, 0., 18.4 );
-  gblnCS7xy_plane0->setTitle( "GBL in-pixel occurrence of CS>6;GBL track x at plane0 [#mum];GBL track y at plane0 [mm];events" );
-
-  gblnCS1xy_plane3 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS1xy_plane3", 35, 0., 18.4, 35, 0., 18.4 );
-  gblnCS1xy_plane3->setTitle( "GBL in-pixel occurrence of CS1;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
-
-  gblnCS2xy_plane3 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS2xy_plane3", 35, 0., 18.4, 35, 0., 18.4 );
-  gblnCS2xy_plane3->setTitle( "GBL in-pixel occurrence of CS2;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
-
-  gblnCS3xy_plane3 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS3xy_plane3", 35, 0., 18.4, 35, 0., 18.4 );
-  gblnCS3xy_plane3->setTitle( "GBL in-pixel occurrence of CS3;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
-
-  gblnCS4xy_plane3 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS4xy_plane3", 35, 0., 18.4, 35, 0., 18.4 );
-  gblnCS4xy_plane3->setTitle( "GBL in-pixel occurrence of CS4;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
-
-  gblnCS5xy_plane3 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS5xy_plane3", 35, 0., 18.4, 35, 0., 18.4 );
-  gblnCS5xy_plane3->setTitle( "GBL in-pixel occurrence of CS5;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
-
-  gblnCS6xy_plane3 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS6xy_plane3", 35, 0., 18.4, 35, 0., 18.4 );
-  gblnCS6xy_plane3->setTitle( "GBL in-pixel occurrence of CS6;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
-
-  gblnCS7xy_plane3 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS7xy_plane3", 35, 0., 18.4, 35, 0., 18.4 );
-  gblnCS7xy_plane3->setTitle( "GBL in-pixel occurrence of CS>6;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
-
- gblnCS1xy1_plane3 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS1xy1_plane3", 110, -11, 11, 60, -6, 6 );
-  gblnCS1xy1_plane3->setTitle( "GBL occurrence of CS1;GBL track x at plane3 [mm];GBL track y at plane3 [mm];events" );
-
-  gblnCS2xy1_plane3 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS2xy1_plane3", 110, -11, 11, 60, -6, 6 );
-  gblnCS2xy1_plane3->setTitle( "GBL occurrence of CS2;GBL track x at plane3 [mm];GBL track y at plane3 [mm];events" );
-
-  gblnCS3xy1_plane3 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS3xy1_plane3", 110, -11, 11, 60, -6, 6 );
-  gblnCS3xy1_plane3->setTitle( "GBL occurrence of CS3;GBL track x at plane3 [mm];GBL track y at plane3 [mm];events" );
-
-  gblnCS4xy1_plane3 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS4xy1_plane3", 110, -11, 11, 60, -6, 6 );
-  gblnCS4xy1_plane3->setTitle( "GBL occurrence of CS4;GBL track x at plane3 [mm];GBL track y at plane3 [mm];events" );
-
-  gblnCS5xy1_plane3 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS5xy1_plane3", 110, -11, 11, 60, -6, 6 );
-  gblnCS5xy1_plane3->setTitle( "GBL occurrence of CS5;GBL track x at plane3 [mm];GBL track y at plane3 [mm];events" );
-
-  gblnCS6xy1_plane3 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS6xy1_plane3", 110, -11, 11, 60, -6, 6 );
-  gblnCS6xy1_plane3->setTitle( "GBL occurrence of CS>5;GBL track x at plane3 [mm];GBL track y at plane3 [mm];events" );
-
-
   // bad fits:
-
   badxHisto = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "GBL/badx", 240, -12, 12 );
   badxHisto->setTitle( "x at DUT, bad GBL;six x_{out} at DUT [mm];bad tracks" );
@@ -2101,16 +1719,7 @@ void EUTelGBLFitter::bookHistos()
     createHistogram1D( "GBL/baddy5", 100, -3000, 3000 );
   baddy5Histo->setTitle( "triplet resid y at 5, bad GBL;#Deltay [#mum];tracks" );
 
-  /*baddx6Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/baddx6", 100, -250, 250 );
-    baddx6Histo->setTitle( "triplet resid x at DUT, bad GBL;#Deltax [#mum];tracks" );
-
-    baddy6Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/baddy6", 100, -250, 250 );
-    baddy6Histo->setTitle( "triplet resid y at DUT, bad GBL;#Deltay [#mum];tracks" );*/
-
   // good fits:
-
   goodxHisto = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "GBL/goodx", 240, -12, 12 );
   goodxHisto->setTitle( "x at DUT, good GBL;six x_{out} at DUT [mm];good tracks" );
@@ -2127,591 +1736,142 @@ void EUTelGBLFitter::bookHistos()
     createHistogram1D( "GBL/goody1", 100, -100, 100 );
   goody1Histo->setTitle( "triplet resid y at 1, good GBL;#Deltay [#mum];tracks" );
 
-  /*goodx6Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/goodx6", 100, -250, 250 );
-    goodx6Histo->setTitle( "triplet resid x at 6, good GBL;#Deltax [#mum];tracks" );
-
-    goody6Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/goody6", 100, -250, 250 );
-    goody6Histo->setTitle( "triplet resid y at 6, good GBL;#Deltay [#mum];tracks" );*/
-
   // look at fit:
+  AIDAProcessor::tree(this)->mkdir("GBL/Angles");
+  AIDAProcessor::tree(this)->mkdir("GBL/Shifts");
+  AIDAProcessor::tree(this)->mkdir("GBL/Residuals");
+  AIDAProcessor::tree(this)->mkdir("GBL/Pulls");
+  AIDAProcessor::tree(this)->mkdir("GBL/Kinks");
+  AIDAProcessor::tree(this)->mkdir("GBL/ResVsPos");
+  AIDAProcessor::tree(this)->mkdir("GBL/ClusterSize");
+  AIDAProcessor::tree(this)->mkdir("GBL/ResVsPosVsCS");
 
-  gblax0Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblax0", 100, -1, 1 );
-  gblax0Histo->setTitle( "GBL x angle at plane 0;x angle at plane 0 [mrad];tracks" );
+  for(size_t ix = 0; ix < _sensorIDVec.size(); ++ix) {
+    auto sensorIdString = std::to_string(_sensorIDVec[ix]);
+    std::string histNameAngleX = "GBL/Angles/gblax_"+sensorIdString;
+    std::string histNameShiftX = "GBL/Shifts/gbldx_"+sensorIdString;
+    std::string histNameResX = "GBL/Residuals/gblrx_"+sensorIdString;
+    std::string histNameResY = "GBL/Residuals/gblry_"+sensorIdString;
+    std::string histNamePullX = "GBL/Pulls/gblpx_"+sensorIdString;
+    std::string histNamePullY = "GBL/Pulls/gblpy_"+sensorIdString;
+    std::string histNameKinkX = "GBL/Kinks/gblqx_"+sensorIdString;
+    std::string histNameXResVsX = "GBL/ResVsPos/gblrxvsx_"+sensorIdString;  
+    std::string histNameYResVsY = "GBL/ResVsPos/gblryvsy_"+sensorIdString;  
+    std::string histNameXResVsX1 = "GBL/ResVsPos/gblrxvsx1_"+sensorIdString;  
+    std::string histNameYResVsY1 = "GBL/ResVsPos/gblryvsy1_"+sensorIdString;  
+    std::string histNameXResVsXPix = "GBL/ResVsPos/gblrxvsxpix_"+sensorIdString;
+    std::string histNameYResVsYPix = "GBL/ResVsPos/gblryvsypix_"+sensorIdString;
+    std::string histNameXResVsXPix1 = "GBL/ResVsPos/gblrxvsxpix1_"+sensorIdString;
+    std::string histNameYResVsYPix1 = "GBL/ResVsPos/gblryvsypix1_"+sensorIdString;
+    std::string histNameClusterSizes = "GBL/ClusterSize/gblnxy_"+sensorIdString;
+    std::string histNameWeightClusterSizes = "GBL/ClusterSize/gblnxy1_"+sensorIdString;
 
-  gbldx0Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbldx0", 100, -10, 10 );
-  gbldx0Histo->setTitle( "GBL x shift at plane 0;x shift at plane 0 [#mum];tracks" );
+    gblaxHistos.push_back(AIDAProcessor::histogramFactory(this)->
+     createHistogram1D( histNameAngleX, 100, -1, 1 ));
+    gblaxHistos.back()->setTitle( "GBL x angle at plane  "+sensorIdString+";x angle at plane [mrad];tracks" );
 
-  gbldx01Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbldx01", 100, -10, 10 );
-  gbldx01Histo->setTitle( "GBL x shift at plane 0;x shift at plane 0 [mm];tracks" );
+    gbldxHistos.push_back(AIDAProcessor::histogramFactory(this)->
+     createHistogram1D( histNameShiftX, 100, -10, 10 ));
+    gbldxHistos.back()->setTitle( "GBL x shift at plane "+sensorIdString+";x shift at plane [#mum];tracks" );
 
-  gblrx0Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblrx0", 250, -25, 25 );
-  gblrx0Histo->setTitle( "GBL x resid at plane 0;x resid at plane 0 [#mum];tracks" );
+    gblrxHistos.push_back(AIDAProcessor::histogramFactory(this)->
+     createHistogram1D( histNameResX, 250, -25, 25 ));
+    gblrxHistos.back()->setTitle( "GBL x resid at plane "+sensorIdString+";x resid at plane [#mum];tracks" );
 
-  gblry0Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblry0", 250, -25, 25 );
-  gblry0Histo->setTitle( "GBL y resid at plane 0;y resid at plane 0 [#mum];tracks" );
+    gblryHistos.push_back(AIDAProcessor::histogramFactory(this)->
+     createHistogram1D( histNameResY, 250, -25, 25 ));
+    gblryHistos.back()->setTitle( "GBL y resid at plane "+sensorIdString+";y resid at plane [#mum];tracks" );
 
-  gblpx0Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpx0", 100, -10, 10 );
-  gblpx0Histo->setTitle( "GBL x pull at plane 0;x pull at plane 0 [#sigma];tracks" );
+    gblpxHistos.push_back(AIDAProcessor::histogramFactory(this)->
+     createHistogram1D( histNamePullX, 100, -10, 10 ));
+    gblpxHistos.back()->setTitle( "GBL x pull at plane "+sensorIdString+";x pull at plane [#sigma];tracks" );
 
+    gblpyHistos.push_back(AIDAProcessor::histogramFactory(this)->
+     createHistogram1D( histNamePullY, 100, -10, 10 ));
+    gblpyHistos.back()->setTitle( "GBL y pull at plane "+sensorIdString+";y pull at plane [#sigma];tracks" );
+
+    gblqxHistos.push_back(AIDAProcessor::histogramFactory(this)->
+     createHistogram1D( histNameKinkX, 200, -1, 1 ));
+    gblqxHistos.back()->setTitle( "GBL x kink resid at plane "+sensorIdString+";x kink resid at plane [mrad];tracks" );
+
+    gblrxvsx.push_back(AIDAProcessor::histogramFactory(this)->
+     createProfile1D( histNameXResVsX, 110, -11, 11, -100, 100 ));
+    gblrxvsx.back()->setTitle( "gbl x resid vs x plane"+sensorIdString+";x [mm];<#sigma_{x}> [#mum]" );
+
+    gblryvsy.push_back(AIDAProcessor::histogramFactory(this)->
+     createProfile1D( histNameYResVsY, 110, -11, 11, -100, 100 ));
+    gblryvsy.back()->setTitle( "gbl y resid vs y plane"+sensorIdString+";y [mm];<#sigma_{y}> [#mum]" );
+
+    gblrxvsx1.push_back(AIDAProcessor::histogramFactory(this)->
+     createProfile1D( histNameXResVsX1, 110, -11, 11, -100, 100 ));
+    gblrxvsx1.back()->setTitle( "gbl x resid vs x plane"+sensorIdString+";x [mm];<#sigma_{x}> [#mum]" );
+
+    gblryvsy1.push_back(AIDAProcessor::histogramFactory(this)->
+     createProfile1D( histNameYResVsY1, 110, -11, 11, -100, 100 ));
+    gblryvsy1.back()->setTitle( "gbl y resid vs y plane"+sensorIdString+";y [mm];<#sigma_{y}> [#mum]" );
+
+    gblrxvsxpix.push_back(AIDAProcessor::histogramFactory(this)->
+     createProfile1D( histNameXResVsXPix, 200, 0., 18.4, -100, 100 ));
+    gblrxvsxpix.back()->setTitle( "gbl x resid vs x plane"+sensorIdString+";x [mm];<#sigma_{x}> [#mum]" );
+
+    gblryvsypix.push_back(AIDAProcessor::histogramFactory(this)->
+     createProfile1D( histNameYResVsYPix, 200, 0., 18.4, -100, 100 ));
+    gblryvsypix.back()->setTitle( "gbl y resid vs y plane"+sensorIdString+";y [mm];<#sigma_{y}> [#mum]" );
+
+    gblrxvsxpix1.push_back(AIDAProcessor::histogramFactory(this)->
+     createProfile1D( histNameXResVsXPix1, 200, 0., 18.4, -100, 100 ));
+    gblrxvsxpix1.back()->setTitle( "gbl x resid vs x at plane"+sensorIdString+";x [mm];<#sigma_{x}> [#mum]" );
+
+    gblryvsypix1.push_back(AIDAProcessor::histogramFactory(this)->
+     createProfile1D( histNameYResVsYPix1, 200, 0., 18.4, -100, 100 ));
+    gblryvsypix1.back()->setTitle( "gbl y resid vs y at plane"+sensorIdString+";y [mm];<#sigma_{y}> [#mum]" );
+
+    gblnxy.push_back(AIDAProcessor::histogramFactory(this)->
+     createProfile2D( histNameClusterSizes, 35, 0., 18.4, 35, 0., 18.4,0,5 ));
+    gblnxy.back()->setTitle( "GBL intra-pixel weighted occurrence of all CSs;GBL track x at plane "+sensorIdString+" [#mum];GBL track y at plane [mm];events" );
+
+    gblnxy1.push_back(AIDAProcessor::histogramFactory(this)->
+     createHistogram2D( histNameWeightClusterSizes, 35, 0., 18.4, 35, 0., 18.4));
+    gblnxy1.back()->setTitle( "GBL intra-pixel occurrence of all CSs;GBL track x at plane "+sensorIdString+" [#mum];GBL track y at plane [mm];events" );
+
+    std::string histNameCSRaw = "GBL/ClusterSize/CS";
+    gblnCSxy.emplace_back(std::vector<AIDA::IHistogram2D*>(7, nullptr));
+    for(size_t iy = 0; iy < gblnCSxy.back().size(); ++iy){
+      std::string CSString = std::to_string(iy+1);
+      std::string histName = histNameCSRaw+CSString+"_plane"+sensorIdString;
+
+      gblnCSxy.back()[iy] = AIDAProcessor::histogramFactory(this)->
+       createHistogram2D( histName, 35, 0., 18.4, 35, 0., 18.4 );
+      gblnCSxy.back()[iy]->setTitle( "GBL in-pixel occurrence of CS"+CSString+";GBL track x at plane "+sensorIdString+" [#mum];GBL track y at plane [mm];events" ); 
+    }
+
+    std::string histNameResVsPosByCSRawX = "GBL/ResVsPosVsCS/gblrxvsxpix_plane";
+    std::string histNameResVsPosByCSRawY = "GBL/ResVsPosVsCS/gblryvsypix_plane";
+    gblrxvsxpix1CS.emplace_back(std::vector<AIDA::IProfile1D*>(4, nullptr));
+    gblryvsypix1CS.emplace_back(std::vector<AIDA::IProfile1D*>(4, nullptr));
+    for(size_t iy = 0; iy < gblrxvsxpix1CS.back().size(); ++iy){
+      std::string CSString = std::to_string(iy+1);
+      std::string histNameX = histNameResVsPosByCSRawX+sensorIdString+"_CS"+CSString;
+      std::string histNameY = histNameResVsPosByCSRawY+sensorIdString+"_CS"+CSString;
+
+      gblrxvsxpix1CS.back()[iy] = AIDAProcessor::histogramFactory(this)->
+       createProfile1D( histNameX, 200, 0., 18.4, -100, 100 );
+      gblrxvsxpix1CS.back()[iy]->setTitle( "gbl x resid vs x at plane "+sensorIdString+" for CS"+CSString+";x [#mum];<#sigma_{x}> [#mum]" );
+
+      gblryvsypix1CS.back()[iy] = AIDAProcessor::histogramFactory(this)->
+       createProfile1D( histNameY, 200, 0., 18.4, -100, 100 );
+      gblryvsypix1CS.back()[iy]->setTitle( "gbl y resid vs y at plane "+sensorIdString+" for CS"+CSString+";y [#mum];<#sigma_{y}> [#mum]" );
+    }
+  }
+/*
   gblpx0_unbHisto = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "GBL/gblpx0_unb", 100, -10, 10 );
   gblpx0_unbHisto->setTitle( "GBL x unbiased pull at plane 0;x unbiased pull at plane 0 [#sigma];tracks" );
 
-  gblpy0Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpy0", 100, -10, 10 );
-  gblpy0Histo->setTitle( "GBL y pull at plane 0;y pull at plane 0 [#sigma];tracks" );
-
   gblpy0_unbHisto = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "GBL/gblpy0_unb", 100, -10, 10 );
   gblpy0_unbHisto->setTitle( "GBL y unbiased pull at plane 0;y unbiased pull at plane 0 [#sigma];tracks" );
-
-  gblqx0Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblqx0", 200, -1, 1 );
-  gblqx0Histo->setTitle( "GBL x kink at plane 0;x kink at plane 0 [mrad];tracks" );
-
-  gblrxvsx0 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblrxvsx0", 110, -11, 11, -100, 100 );
-  gblrxvsx0->setTitle( "gbl x resid vs x;x [mm];<#sigma_{x}> [#mum]" );
-
-  gblryvsy0 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblryvsy0", 110, -11, 11, -100, 100 );
-  gblryvsy0->setTitle( "gbl y resid vs y;y [mm];<#sigma_{y}> [#mum]" );
-
-  gblrxvsx01 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblrxvsx01", 110, -11, 11, -100, 100 );
-  gblrxvsx01->setTitle( "gbl x resid vs x;x [mm];<#sigma_{x}> [#mum]" );
-
-  gblryvsy01 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblryvsy01", 110, -11, 11, -100, 100 );
-  gblryvsy01->setTitle( "gbl y resid vs y;y [mm];<#sigma_{y}> [#mum]" );
-
-  gblrxvsxpix0 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblrxvsxpix0", 200, 0., 18.4, -100, 100 );
-  gblrxvsxpix0->setTitle( "gbl x resid vs x;x [mm];<#sigma_{x}> [#mum]" );
-
-  gblryvsypix0 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblryvsypix0", 200, 0., 18.4, -100, 100 );
-  gblryvsypix0->setTitle( "gbl y resid vs y;y [mm];<#sigma_{y}> [#mum]" );
-
-  gblrxvsxpix01 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblrxvsxpix01", 200, 0., 18.4, -100, 100 );
-  gblrxvsxpix01->setTitle( "gbl x resid vs x at plane 0;x [#mum];<#sigma_{x}> [#mum]" );
-
-  gblryvsypix01 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblryvsypix01", 200, 0., 18.4, -100, 100 );
-  gblryvsypix01->setTitle( "gbl y resid vs y at plane 0;y [#mum];<#sigma_{y}> [#mum]" );
-
-  gblrxvsxpix01_CS1 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblrxvsxpix01_CS1", 200, 0., 18.4, -100, 100 );
-  gblrxvsxpix01_CS1->setTitle( "gbl x resid vs x at plane 0 for CS1;x [#mum];<#sigma_{x}> [#mum]" );
-
-  gblryvsypix01_CS1 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblryvsypix01_CS1", 200, 0., 18.4, -100, 100 );
-  gblryvsypix01_CS1->setTitle( "gbl y resid vs y at plane 0 for CS1;y [#mum];<#sigma_{y}> [#mum]" );
-
-  gblrxvsxpix01_CS2 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblrxvsxpix01_CS2", 200, 0., 18.4, -100, 100 );
-  gblrxvsxpix01_CS2->setTitle( "gbl x resid vs x at plane 0 for CS2;x [#mum];<#sigma_{x}> [#mum]" );
-
-  gblryvsypix01_CS2 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblryvsypix01_CS2", 200, 0., 18.4, -100, 100 );
-  gblryvsypix01_CS2->setTitle( "gbl y resid vs y at plane 0 for CS2;y [#mum];<#sigma_{y}> [#mum]" );
-
-  gblrxvsxpix01_CS3 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblrxvsxpix01_CS3", 200, 0., 18.4, -100, 100 );
-  gblrxvsxpix01_CS3->setTitle( "gbl x resid vs x at plane 0 for CS3;x [#mum];<#sigma_{x}> [#mum]" );
-
-  gblryvsypix01_CS3 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblryvsypix01_CS3", 200, 0.,18.4 , -100, 100 );
-  gblryvsypix01_CS3->setTitle( "gbl y resid vs y at plane 0 for CS3;y [#mum];<#sigma_{y}> [#mum]" );
-
-  gblrxvsxpix01_CS4 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblrxvsxpix01_CS4", 200, 0.,18.4 , -100, 100 );
-  gblrxvsxpix01_CS4->setTitle( "gbl x resid vs x at plane 0 for CS4;x [#mum];<#sigma_{x}> [#mum]" );
-
-  gblryvsypix01_CS4 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblryvsypix01_CS4", 200, 0.,18.4 , -100, 100 );
-  gblryvsypix01_CS4->setTitle( "gbl y resid vs y at plane 0 for CS4;y [#mum];<#sigma_{y}> [#mum]" );
-
-  gblrxvsxpix51_CS1 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblrxvsxpix51_CS1", 200, 0.,18.4 , -100, 100 );
-  gblrxvsxpix51_CS1->setTitle( "gbl x resid vs x at plane 5 for CS1;x [#mum];<#sigma_{x}> [#mum]" );
-
-  gblryvsypix51_CS1 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblryvsypix51_CS1", 200, 0.,18.4 , -100, 100 );
-  gblryvsypix51_CS1->setTitle( "gbl y resid vs y at plane 5 for CS1;y [#mum];<#sigma_{y}> [#mum]" );
-
-  gblrxvsxpix51_CS2 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblrxvsxpix51_CS2", 200, 0.,18.4 , -100, 100 );
-  gblrxvsxpix51_CS2->setTitle( "gbl x resid vs x at plane 5 for CS2;x [#mum];<#sigma_{x}> [#mum]" );
-
-  gblryvsypix51_CS2 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblryvsypix51_CS2", 200, 0.,18.4 , -100, 100 );
-  gblryvsypix51_CS2->setTitle( "gbl y resid vs y at plane 5 for CS2;y [#mum];<#sigma_{y}> [#mum]" );
-
-  gblrxvsxpix51_CS3 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblrxvsxpix51_CS3", 200, 0.,18.4 , -100, 100 );
-  gblrxvsxpix51_CS3->setTitle( "gbl x resid vs x at plane 5 for CS3;x [#mum];<#sigma_{x}> [#mum]" );
-
-  gblryvsypix51_CS3 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblryvsypix51_CS3", 200, 0.,18.4 , -100, 100 );
-  gblryvsypix51_CS3->setTitle( "gbl y resid vs y at plane 5 for CS3;y [#mum];<#sigma_{y}> [#mum]" );
-
-  gblrxvsxpix51_CS4 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblrxvsxpix51_CS4", 200, 0.,18.4 , -100, 100 );
-  gblrxvsxpix51_CS4->setTitle( "gbl x resid vs x at plane 5 for CS4;x [#mum];<#sigma_{x}> [#mum]" );
-
-  gblryvsypix51_CS4 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblryvsypix51_CS4", 200, 0.,18.4 , -100, 100 );
-  gblryvsypix51_CS4->setTitle( "gbl y resid vs y at plane 5 for CS4;y [#mum];<#sigma_{y}> [#mum]" );
-
-
-  gblrxvsxpix31 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblrxvsxpix31", 200, 0.,18.4 , -100, 100 );
-  gblrxvsxpix31->setTitle( "gbl x resid vs x at plane 3;x [#mum];<#sigma_{x}> [#mum]" );
-
-  gblryvsypix31 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblryvsypix31", 200, 0.,18.4 , -100, 100 );
-  gblryvsypix31->setTitle( "gbl y resid vs y at plane 3;y [#mum];<#sigma_{y}> [#mum]" );
-
-  gblrxvsxpix3cs1 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblrxvsxpix3cs1", 200, 0.,18.4 , -100, 100 );
-  gblrxvsxpix3cs1->setTitle( "gbl x resid vs x at plane 3 for CS 1;x [#mum];<#sigma_{x}> [#mum]" );
-
-  gblryvsypix3cs1 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblryvsypix3cs1", 200, 0.,18.4 , -100, 100 );
-  gblryvsypix3cs1->setTitle( "gbl y resid vs y at plane 3 for CS 1;y [#mum];<#sigma_{y}> [#mum]" );
-
-  gblrxvsxpix3cs2 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblrxvsxpix3cs2", 200, 0.,18.4 , -100, 100 );
-  gblrxvsxpix3cs2->setTitle( "gbl x resid vs x at plane 3 for CS 2;x [#mum];<#sigma_{x}> [#mum]" );
-
-  gblryvsypix3cs2 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblryvsypix3cs2", 200, 0.,18.4 , -100, 100 );
-  gblryvsypix3cs2->setTitle( "gbl y resid vs y at plane 3 for CS 2;y [#mum];<#sigma_{y}> [#mum]" );
-
-  gblrxvsxpix3cs3 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblrxvsxpix3cs3", 200, 0.,18.4 , -100, 100 );
-  gblrxvsxpix3cs3->setTitle( "gbl x resid vs x at plane 3 for CS 3;x [#mum];<#sigma_{x}> [#mum]" );
-
-  gblryvsypix3cs3 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblryvsypix3cs3", 200, 0.,18.4 , -100, 100 );
-  gblryvsypix3cs3->setTitle( "gbl y resid vs y at plane 3 for CS 3;y [#mum];<#sigma_{y}> [#mum]" );
-
-  gblrxvsxpix3cs4 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblrxvsxpix3cs4", 200, 0.,18.4 , -100, 100 );
-  gblrxvsxpix3cs4->setTitle( "gbl x resid vs x at plane 3 for CS 4;x [#mum];<#sigma_{x}> [#mum]" );
-
-  gblryvsypix3cs4 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblryvsypix3cs4", 200, 0.,18.4 , -100, 100 );
-  gblryvsypix3cs4->setTitle( "gbl y resid vs y at plane 3 for CS 4;y [#mum];<#sigma_{y}> [#mum]" );
-
-  gblrxvsxpix3cs5 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblrxvsxpix3cs5", 200, 0.,18.4 , -100, 100 );
-  gblrxvsxpix3cs5->setTitle( "gbl x resid vs x at plane 3 for CS 5;x [#mum];<#sigma_{x}> [#mum]" );
-
-  gblryvsypix3cs5 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblryvsypix3cs5", 200, 0.,18.4 , -100, 100 );
-  gblryvsypix3cs5->setTitle( "gbl y resid vs y at plane 3 for CS 5;y [#mum];<#sigma_{y}> [#mum]" );
-
-  gblrxvsxpix3cs6 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblrxvsxpix3cs6", 200, 0.,18.4 , -100, 100 );
-  gblrxvsxpix3cs6->setTitle( "gbl x resid vs x at plane 3 for CS 6;x [#mum];<#sigma_{x}> [#mum]" );
-
-  gblryvsypix3cs6 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblryvsypix3cs6", 200, 0.,18.4 , -100, 100 );
-  gblryvsypix3cs6->setTitle( "gbl y resid vs y at plane 3 for CS 6;y [#mum];<#sigma_{y}> [#mum]" );
-
-  gblax1Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblax1", 100, -1, 1 );
-  gblax1Histo->setTitle( "GBL x angle at plane 1;x angle at plane 1 [mrad];tracks" );
-
-  gbldx1Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbldx1", 10, -10, 10 );
-  gbldx1Histo->setTitle( "GBL x shift at plane 1;x shift at plane 1 [#mum];tracks" );
-
-  gbldx11Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbldx11", 100, -10, 10 );
-  gbldx11Histo->setTitle( "GBL x shift at plane 1;x shift at plane 1 [mm];tracks" );
-
-  gblrx1Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblrx1", 250, -25, 25 );
-  gblrx1Histo->setTitle( "GBL x resid at plane 1;x resid at plane 1 [#mum];tracks" );
-
-  gblry1Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblry1", 250, -25, 25 );
-  gblry1Histo->setTitle( "GBL y resid at plane 1;y resid at plane 1 [#mum];tracks" );
-
-  gblpx1Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpx1", 100, -10, 10 );
-  gblpx1Histo->setTitle( "GBL x pull at plane 1;x pull at plane 1 [#sigma];tracks" );
-
-  gblpx1_unbHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpx1_unb", 100, -10, 10 );
-  gblpx1_unbHisto->setTitle( "GBL x unbiased pull at plane 1;x unbiased pull at plane 1 [#sigma];tracks" );
-
-  gblpy1Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpy1", 100, -10, 10 );
-  gblpy1Histo->setTitle( "GBL y pull at plane 1;y pull at plane 1 [#sigma];tracks" );
-
-  gblpy1_unbHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpy1_unb", 100, -10, 10 );
-  gblpy1_unbHisto->setTitle( "GBL y unbiased pull at plane 1;y unbiased pull at plane 1 [#sigma];tracks" );
-
-  gblqx1Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblqx1", 200, -1, 1 );
-  gblqx1Histo->setTitle( "GBL x kink at plane 1;x kink at plane 1 [mrad];tracks" );
-
-  gblsx1Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblsx1", 200, -10, 10 );
-  gblsx1Histo->setTitle( "GBL x kink at plane 1/error;x kink at plane 1/error;tracks" );
-
-  gbltx1Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbltx1", 200, -10, 10 );
-  gbltx1Histo->setTitle( "GBL x kink pull at plane 1;x kink pull at plane 1;tracks" );
-
-
-  gblax2Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblax2", 100, -1, 1 );
-  gblax2Histo->setTitle( "GBL x angle at plane 2;x angle at plane 2 [mrad];tracks" );
-
-  gbldx2Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbldx2", 100, -10, 10 );
-  gbldx2Histo->setTitle( "GBL x shift at plane 2;x shift at plane 2 [#mum];tracks" );
-
-  gbldx21Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbldx21", 100, -10, 10 );
-  gbldx21Histo->setTitle( "GBL x shift at plane 2;x shift at plane 2 [mm];tracks" );
-
-  gblrx2Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblrx2", 250, -25, 25 );
-  gblrx2Histo->setTitle( "GBL x resid at plane 2;x resid at plane 2 [#mum];tracks" );
-
-  gblry2Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblry2", 250, -25, 25 );
-  gblry2Histo->setTitle( "GBL y resid at plane 2;y resid at plane 2 [#mum];tracks" );
-
-  gblpx2Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpx2", 100, -10, 10 );
-  gblpx2Histo->setTitle( "GBL x pull at plane 2;x pull at plane 2 [#sigma];tracks" );
-
-  gblpx2_unbHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpx2_unb", 100, -10, 10 );
-  gblpx2_unbHisto->setTitle( "GBL x unbiased pull at plane 2;x unbiased pull at plane 2 [#sigma];tracks" );
-
-  gblpy2Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpy2", 100, -10, 10 );
-  gblpy2Histo->setTitle( "GBL y pull at plane 2;y pull at plane 2 [#sigma];tracks" );
-
-  gblpy2_unbHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpy2_unb", 100, -10, 10 );
-  gblpy2_unbHisto->setTitle( "GBL y unbiased pull at plane 2;y unbiased pull at plane 2 [#sigma];tracks" );
-
-  gblqx2Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblqx2", 200, -1, 1 );
-  gblqx2Histo->setTitle( "GBL x kink at plane 2;x kink at plane 2 [mrad];tracks" );
-
-  gblsx2Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblsx2", 200, -10, 10 );
-  gblsx2Histo->setTitle( "GBL x kink at plane 2/error;x kink at plane 2/error;tracks" );
-
-  gbltx2Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbltx2", 200, -10, 10 );
-  gbltx2Histo->setTitle( "GBL x kink pull at plane 2;x kink pull at plane 2;tracks" );
-
-
-  gblax3Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblax3", 100, -1, 1 );
-  gblax3Histo->setTitle( "GBL x angle at plane 3;x angle at plane 3 [mrad];tracks" );
-
-  gbldx3Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbldx3", 100, -10, 10 );
-  gbldx3Histo->setTitle( "GBL x shift at plane 3;x shift at plane 3 [#mum];tracks" );
-
-  gbldx31Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbldx31", 100, -10, 10 );
-  gbldx31Histo->setTitle( "GBL x shift at plane 3;x shift at plane 3 [mm];tracks" );
-
-  gblrx3Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblrx3", 250, -25, 25 );
-  gblrx3Histo->setTitle( "GBL x resid at plane 3;x resid at plane 3 [#mum];tracks" );
-
-  gblry3Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblry3", 250, -25, 25 );
-  gblry3Histo->setTitle( "GBL y resid at plane 3;y resid at plane 3 [#mum];tracks" );
-
-  gblrx3_cs1Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblrx3_cs1", 250, -25, 25 );
-  gblrx3_cs1Histo->setTitle( "GBL x resid at plane 3_cs1;x resid at plane 3 [#mum];tracks" );
-
-  gblry3_cs1Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblry3_cs1", 250, -25, 25 );
-  gblry3_cs1Histo->setTitle( "GBL y resid at plane 3_cs1;y resid at plane 3 [#mum];tracks" );
-
-  gblrx3_cs2Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblrx3_cs2", 250, -25, 25 );
-  gblrx3_cs2Histo->setTitle( "GBL x resid at plane 3_cs2;x resid at plane 3 [#mum];tracks" );
-
-  gblry3_cs2Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblry3_cs2", 250, -25, 25 );
-  gblry3_cs2Histo->setTitle( "GBL y resid at plane 3_cs2;y resid at plane 3 [#mum];tracks" );
-
-  gblrx3_cs3Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblrx3_cs3", 250, -25, 25 );
-  gblrx3_cs3Histo->setTitle( "GBL x resid at plane 3_cs3;x resid at plane 3 [#mum];tracks" );
-
-  gblry3_cs3Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblry3_cs3", 250, -25, 25 );
-  gblry3_cs3Histo->setTitle( "GBL x resid at plane 3_cs3;x resid at plane 3 [#mum];tracks" );
-
-  gblrx3_cs4Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblrx3_cs4", 250, -25, 25 );
-  gblrx3_cs4Histo->setTitle( "GBL y resid at plane 3_cs4;y resid at plane 3 [#mum];tracks" );
-
-  gblry3_cs4Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblry3_cs4", 250, -25, 25 );
-  gblry3_cs4Histo->setTitle( "GBL y resid at plane 3_cs4;y resid at plane 3 [#mum];tracks" );
-
-  gblrx3_cs5Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblrx3_cs5", 250, -25, 25 );
-  gblrx3_cs5Histo->setTitle( "GBL y resid at plane 3_cs5y resid at plane 3 [#mum];tracks" );
-
-  gblry3_cs5Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblry3_cs5", 250, -25, 25 );
-  gblry3_cs5Histo->setTitle( "GBL y resid at plane 3_cs5;y resid at plane 3 [#mum];tracks" );
-
-  gblrx3_cs6Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblrx3_cs6", 250, -25, 25 );
-  gblrx3_cs6Histo->setTitle( "GBL y resid at plane 3_cs>5;y resid at plane 3 [#mum];tracks" );
-
-  gblry3_cs6Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblry3_cs6", 250, -25, 25 );
-  gblry3_cs6Histo->setTitle( "GBL y resid at plane 3_cs>5;y resid at plane 3 [#mum];tracks" );
-
-  gblpx3Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpx3", 100, -10, 10 );
-  gblpx3Histo->setTitle( "GBL x pull at plane 3;x pull at plane 3 [#sigma];tracks" );
-
-  gblpy3Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpy3", 100, -10, 10 );
-  gblpy3Histo->setTitle( "GBL y pull at plane 3;y pull at plane 3 [#sigma];tracks" );
-
-  gblpx3_cs1Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpx3_cs1", 100, -10, 10 );
-  gblpx3_cs1Histo->setTitle( "GBL x pull at plane 3_cs1;x pull at plane 3 [#sigma];tracks" );
-
-  gblpy3_cs1Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpy3_cs1", 100, -10, 10 );
-  gblpy3_cs1Histo->setTitle( "GBL y pull at plane 3_cs1;y pull at plane 3 [#sigma];tracks" );
-
-  gblpx3_cs2Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpx3_cs2", 100, -10, 10 );
-  gblpx3_cs2Histo->setTitle( "GBL x pull at plane 3_cs2;x pull at plane 3 [#sigma];tracks" );
-
-  gblpy3_cs2Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpy3_cs2", 100, -10, 10 );
-  gblpy3_cs2Histo->setTitle( "GBL y pull at plane 3_cs2;y pull at plane 3 [#sigma];tracks" );
-
-  gblpx3_cs3Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpx3_cs3", 100, -10, 10 );
-  gblpx3_cs3Histo->setTitle( "GBL x pull at plane 3_cs3;x pull at plane 3 [#sigma];tracks" );
-
-  gblpy3_cs3Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpy3_cs3", 100, -10, 10 );
-  gblpy3_cs3Histo->setTitle( "GBL y pull at plane 3_cs3;y pull at plane 3 [#sigma];tracks" );
-
-  gblpx3_cs4Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpx3_cs4", 100, -10, 10 );
-  gblpx3_cs4Histo->setTitle( "GBL x pull at plane 3_cs4;x pull at plane 3 [#sigma];tracks" );
-
-  gblpy3_cs4Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpy3_cs4", 100, -10, 10 );
-  gblpy3_cs4Histo->setTitle( "GBL y pull at plane 3_cs4;y pull at plane 3 [#sigma];tracks" );
-
-  gblpx3_cs5Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpx3_cs5", 100, -10, 10 );
-  gblpx3_cs5Histo->setTitle( "GBL x pull at plane 3_cs5;x pull at plane 3 [#sigma];tracks" );
-
-  gblpy3_cs5Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpy3_cs5", 100, -10, 10 );
-  gblpy3_cs5Histo->setTitle( "GBL y pull at plane 3_cs5;y pull at plane 3 [#sigma];tracks" );
-
-  gblpx3_cs6Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpx3_cs6", 100, -10, 10 );
-  gblpx3_cs6Histo->setTitle( "GBL x pull at plane 3_cs>5;x pull at plane 3 [#sigma];tracks" );
-
-  gblpy3_cs6Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpy3_cs6", 100, -10, 10 );
-  gblpy3_cs6Histo->setTitle( "GBL y pull at plane 3_cs>5;y pull at plane 3 [#sigma];tracks" );
-
-  gblpx3_cs7Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpx3_cs7", 100, -10, 10 );
-  gblpx3_cs7Histo->setTitle( "GBL x pull at plane 3_cs>6;x pull at plane 3 [#sigma];tracks" );
-
-  gblpy3_cs7Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpy3_cs7", 100, -10, 10 );
-  gblpy3_cs7Histo->setTitle( "GBL y pull at plane 3_cs>6;y pull at plane 3 [#sigma];tracks" );
-
-  gblpx3_unbHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpx3_unb", 100, -10, 10 );
-  gblpx3_unbHisto->setTitle( "GBL x unbiased pull at plane 3;x unbiased pull at plane 3 [#sigma];tracks" );
-
-  gblpy3_unbHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpy3_unb", 100, -10, 10 );
-  gblpy3_unbHisto->setTitle( "GBL y unbiased pull at plane 3;y unbiased pull at plane 3 [#sigma];tracks" );
-
-  gblqx3Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblqx3", 200, -1, 1 );
-  gblqx3Histo->setTitle( "GBL x kink at plane 3;x kink at plane 3 [mrad];tracks" );
-
-  gblsx3Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblsx3", 200, -10, 10 );
-  gblsx3Histo->setTitle( "GBL x kink at plane 3/error;x kink at plane 3/error;tracks" );
-
-  gbltx3Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbltx3", 200, -10, 10 );
-  gbltx3Histo->setTitle( "GBL x kink pull at plane 3;x kink pull at plane 3;tracks" );
-
-
-  gblax4Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblax4", 100, -1, 1 );
-  gblax4Histo->setTitle( "GBL x angle at plane 4;x angle at plane 4 [mrad];tracks" );
-
-  gbldx4Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbldx4", 100, -10, 10 );
-  gbldx4Histo->setTitle( "GBL x shift at plane 4;x shift at plane 4 [#mum];tracks" );
-
-  gbldx41Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbldx41", 100, -10, 10 );
-  gbldx41Histo->setTitle( "GBL x shift at plane 4;x shift at plane 4 [nm];tracks" );
-
-  gblrx4Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblrx4", 250, -25, 25 );
-  gblrx4Histo->setTitle( "GBL x resid at plane 4;x resid at plane 4 [#mum];tracks" );
-
-  gblry4Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblry4", 250, -25, 25 );
-  gblry4Histo->setTitle( "GBL y resid at plane 4;y resid at plane 4 [#mum];tracks" );
-
-  gblpx4Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpx4", 100, -10, 10 );
-  gblpx4Histo->setTitle( "GBL x pull at plane 4;x pull at plane 4 [#sigma];tracks" );
-
-  gblpx4_unbHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpx4_unb", 100, -10, 10 );
-  gblpx4_unbHisto->setTitle( "GBL x unbiased pull at plane 4;x unbiased pull at plane 4 [#sigma];tracks" );
-
-  gblpy4Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpy4", 100, -10, 10 );
-  gblpy4Histo->setTitle( "GBL y pull at plane 4;y pull at plane 4 [#sigma];tracks" );
-
-  gblpy4_unbHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpy4_unb", 100, -10, 10 );
-  gblpy4_unbHisto->setTitle( "GBL y unbiased pull at plane 4;y unbiased pull at plane 4 [#sigma];tracks" );
-
-  gblqx4Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblqx4", 200, -1, 1 );
-  gblqx4Histo->setTitle( "GBL x kink at plane 4;x kink at plane 4 [mrad];tracks" );
-
-  gblsx4Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblsx4", 200, -10, 10 );
-  gblsx4Histo->setTitle( "GBL x kink at plane 4/error;x kink at plane 4/error;tracks" );
-
-  gbltx4Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbltx4", 200, -10, 10 );
-  gbltx4Histo->setTitle( "GBL x kink pull at plane 4;x kink pull at plane 4;tracks" );
-
-
-  gblax5Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblax5", 100, -1, 1 );
-  gblax5Histo->setTitle( "GBL x angle at plane 5;x angle at plane 5 [mrad];tracks" );
-
-  gbldx5Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbldx5", 100, -10, 10 );
-  gbldx5Histo->setTitle( "GBL x shift at plane 5;x shift at plane 5 [#mum];tracks" );
-
-  gbldx51Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbldx51", 100, -10, 10 );
-  gbldx51Histo->setTitle( "GBL x shift at plane 5;x shift at plane 5 [mm];tracks" );
-
-  gblrx5Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblrx5", 250, -25, 25 );
-  gblrx5Histo->setTitle( "GBL x resid at plane 5;x resid at plane 5 [#mum];tracks" );
-
-  gblry5Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblry5", 250, -25, 25 );
-  gblry5Histo->setTitle( "GBL y resid at plane 5;y resid at plane 5 [#mum];tracks" );
-
-  gblpx5Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpx5", 100, -10, 10 );
-  gblpx5Histo->setTitle( "GBL x pull at plane 5;x pull at plane 5 [#sigma];tracks" );
-
-  gblpx5_unbHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpx5_unb", 100, -10, 10 );
-  gblpx5_unbHisto->setTitle( "GBL x unbiased pull at plane 5;x unbiased pull at plane 5 [#sigma];tracks" );
-
-  gblpy5Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpy5", 100, -10, 10 );
-  gblpy5Histo->setTitle( "GBL y pull at plane 5;y pull at plane 5 [#sigma];tracks" );
-
-  gblpy5_unbHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpy5_unb", 100, -10, 10 );
-  gblpy5_unbHisto->setTitle( "GBL y unbiased pull at plane 5;y unbiased pull at plane 5 [#sigma];tracks" );
-
-  gblqx5Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblqx5", 200, -1, 1 );
-  gblqx5Histo->setTitle( "GBL x kink at plane 5;x kink at plane 5 [mrad];tracks" );
-
-
-  /*gblax6Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblax6", 100, -1, 1 );
-    gblax6Histo->setTitle( "GBL x angle at DUT;x angle at DUT [mrad];tracks" );
-
-    gbldx6Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbldx6", 100, -1000, 1000 );
-    gbldx6Histo->setTitle( "GBL x shift at DUT;x shift at DUT [#mum];tracks" );
-
-    gbldy6Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbldy6", 100, -1000, 1000 );
-    gbldy6Histo->setTitle( "GBL y shift at DUT;y shift at DUT [#mum];tracks" );
-
-    gblrx6Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblrx6", 100, -250, 250 );
-    gblrx6Histo->setTitle( "GBL x resid at DUT;x resid at DUT [#mum];tracks" );
-
-    gblry6Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblry6", 100, -100, 100 );
-    gblry6Histo->setTitle( "GBL y resid at DUT;y resid at DUT [#mum];tracks" );
-
-    gblpx6Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpx6", 100, -10, 10 );
-    gblpx6Histo->setTitle( "GBL x pull at DUT;x pull at DUT [#sigma];tracks" );
-
-    gblpy6Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblpy6", 100, -10, 10 );
-    gblpy6Histo->setTitle( "GBL y pull at DUT;y pull at DUT [#sigma];tracks" );
-
-    gblqx6Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblqx6", 200, -10, 10 );
-    gblqx6Histo->setTitle( "GBL x kink at DUT;x kink at DUT [mrad];tracks" );
-
-    gblsx6Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblsx6", 100, -10, 10 );
-    gblsx6Histo->setTitle( "GBL x kink at DUT/error;x kink at DUT/error;tracks" );
-
-    gbltx6Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbltx6", 100, -10, 10 );
-    gbltx6Histo->setTitle( "GBL x kink pull at DUT;x kink pull at DUT;tracks" );*/
-
-
+*/
   gblkxCentreHisto = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "GBL/gblkxCentre", 200, -0.2, 0.2 );
   gblkxCentreHisto->setTitle( "GBL kink angle at centre;centre kink [mrad];tracks" );
@@ -2720,29 +1880,15 @@ void EUTelGBLFitter::bookHistos()
     createHistogram1D( "GBL/gblkxCentre1", 200, -0.2, 0.2 );
   gblkxCentre1Histo->setTitle( "GBL kink angle at centre in rad;centre kink [rad];tracks" );
 
-  gblkx1Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblkx1", 200, -0.2, 0.2 );
-  gblkx1Histo->setTitle( "GBL kink angle at plane 1;plane 1 kink [mrad];tracks" );
+  for(size_t ix = 1; ix < _nPlanes; ++ix){
+    auto sensorIdString = std::to_string(_sensorIDVec[ix]);
+    std::string histNameKinkX = "GBL/Kinks/gblkx"+sensorIdString;
 
-  gblkx2Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblkx2", 200, -0.2, 0.2 );
-  gblkx2Histo->setTitle( "GBL kink angle at plane 2;plane 2 kink [mrad];tracks" );
-
-  gblkx3Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblkx3", 200, -0.2, 0.2 );
-  gblkx3Histo->setTitle( "GBL kink angle at plane 3;plane 3 kink [mrad];tracks" );
-
-  gblkx4Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblkx4", 200, -0.2, 0.2 );
-  gblkx4Histo->setTitle( "GBL kink angle at plane 4;plane 4 kink [mrad];tracks" );
-
-  gblkx5Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblkx5", 200, -0.2, 0.2 );
-  gblkx5Histo->setTitle( "GBL kink angle at plane 5;plane 5 kink [mrad];tracks" );
-
-  /*gblkx6Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblkx6", 100, -1, 1 );
-    gblkx6Histo->setTitle( "GBL kink angle at plane 6;plane 6 kink [mrad];tracks" );*/
+    gblkxHistos.emplace_back(AIDAProcessor::histogramFactory(this)->
+      createHistogram1D( histNameKinkX, 200, -0.2, 0.2 ));
+    gblkxHistos.back()->setTitle( "GBL kink angle at plane "+sensorIdString+";plane "+sensorIdString+" kink [mrad];tracks" );
+ 
+  }
 
   kinkpixvsxy = AIDAProcessor::histogramFactory(this)->
     createProfile2D( "GBL/kinkpixvsxy", 15, 0., 18.4, 15, 0., 18.4, 0, 100);
