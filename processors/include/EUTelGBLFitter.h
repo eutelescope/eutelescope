@@ -353,13 +353,16 @@ namespace eutelescope {
 
   std::vector<AIDA::IProfile2D*> gblnxy;
   std::vector<AIDA::IHistogram2D*> gblnxy1;
+  std::vector<AIDA::IHistogram2D*> gblcluxvscluy;
 
   AIDA::IProfile2D * gblnxy_plane0;
   AIDA::IHistogram2D * gblnxy1_plane0;
   AIDA::IProfile2D * gblnxy_plane3;
   AIDA::IHistogram2D * gblnxy1_plane3;
 
-  std::vector<std::vector<AIDA::IHistogram2D*>> gblnCSxy;
+  std::vector<std::vector<AIDA::IHistogram2D*>> gblnCSxy_tot;
+  std::vector<std::vector<AIDA::IHistogram2D*>> gblnCSxy_x;
+  std::vector<std::vector<AIDA::IHistogram2D*>> gblnCSxy_y;
 
   AIDA::IHistogram2D * gblnCS1xy_plane0;
   AIDA::IHistogram2D * gblnCS2xy_plane0;

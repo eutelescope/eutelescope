@@ -143,7 +143,7 @@ void EUTelGBLFitter::init() {
     auto const & rad = geo::gGeometry().siPlaneRadLength(sensorID);
 
     if(sensorID < 6) {
-        _planeRadLength.emplace_back(55e-3 / 93.66 + 0.050 / 286.6); // Si + Kapton
+        _planeRadLength.emplace_back(z/rad + 0.050 / 286.6); // Plane from GEAR + Kapton
     } else {
         _planeRadLength.emplace_back(z/rad);
     }
@@ -370,7 +370,6 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
     }
   } // end loop over all hits in given collection
 
-  
   nAllTelHitHisto->fill( hits.size() );
   nAllDUTHitHisto->fill( DUThits.size() );
 
@@ -487,8 +486,6 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
   double track_match_z = _planePosition[3];
   double DUTz = _planePosition[3];
 
-
-
   // Generate new triplet set with planes 0, 1, 2; 2,4,5:
   std::vector<EUTelTripletGBLUtility::triplet> eff_triplets_UP = upstream_triplets;
   //gblutil.FindTriplets(hits, 0, 1, 2, _triplet_res_cut, _slope_cut, eff_triplets_UP);
@@ -583,12 +580,10 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
 
 */
 
-
   //----------------------------------------------------------------------------
   // six: triplets A and driplets B
   // matching and GBL fit
   // kinks: triplets A vs driplets B
-  // scattering point = DUT:
 
   //Match half way between the upstream and downstream arms
   double zMid = 0.5*(_planePosition[_nPlanes-3] + _planePosition[2]);
@@ -644,7 +639,7 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
     // scatter:
     Eigen::Vector2d scat = Eigen::Vector2d::Zero(); //mean is zero
     
-    std::vector<unsigned int> ilab; // 0-5 = telescope
+    std::vector<unsigned int> ilab;
     std::map<size_t, size_t> ilabToSensorID;
 
     size_t DUTCount = _nPlanes-6;
@@ -792,9 +787,6 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
       }
 
       streamlog_out(DEBUG4)  << " Is traj valid? " << traj.isValid() << std::endl;
-      //traj.printPoints();
-      //traj.printTrajectory();
-      //traj.printData();
       _printEventCounter++;
     }
 
@@ -839,11 +831,7 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
     } // OK fit
 
     // look at good fit:
-    //
-    //double chi2_cut = 0.1;
-
     if( probchi > _probchi2_cut){
-      
       _ngbl++;
 
       Eigen::VectorXd aCorrection(2);
@@ -931,26 +919,33 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
         gblryvsypix1[ipl]->fill( ((trackhity[ipl] - aResiduals[1])+invsigny*(abs(ny) +1.)*pixel_size)*1e3, sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
 
         // clustersize-specific plots
-        auto CS = tr.gethit(currentSensor).clustersize;
+        auto CStot = tr.gethit(currentSensor).clustersize;
+        auto CSx = tr.gethit(currentSensor).clustersizex;
+        auto CSy = tr.gethit(currentSensor).clustersizey;
 
         std::array<double,2> modPos;
         modPos[0] = ((corrPos[0])+(invsignx*(abs(nx) +.5) + 0.5) *pixel_size)*1e3;
         modPos[1] = ((corrPos[1])+(invsigny*(abs(ny) +.5) + 0.5) *pixel_size)*1e3;
   
         // overlay of all CSs
-        gblnxy[ipl]->fill(modPos[0], modPos[1], CS );
-        gblnxy1[ipl]->fill(modPos[0], modPos[1], 1 );
+        gblnxy[ipl]->fill(modPos[0], modPos[1], CStot);
+        gblnxy1[ipl]->fill(modPos[0], modPos[1], 1);
+        gblcluxvscluy[ipl]->fill(CSx, CSy, 1);
 
-        size_t CSIndex = (CS > 6) ? 6 : CS-1;
-        gblnCSxy[ipl][CSIndex]->fill(modPos[0], modPos[1] );    
+        size_t CSTotIndex = (CStot > 6) ? 6 : CStot-1;
+        size_t CSXIndex = (CSx > 6) ? 6 : CSx-1;
+        size_t CSYIndex = (CSy > 6) ? 6 : CSy-1;
 
-        if(CSIndex<4){
-          gblrxvsxpix1CS[ipl][CSIndex]->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3);
-          gblryvsypix1CS[ipl][CSIndex]->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3);
+        gblnCSxy_tot[ipl][CSTotIndex]->fill(modPos[0], modPos[1] );    
+        gblnCSxy_x[ipl][CSXIndex]->fill(modPos[0], modPos[1] );    
+        gblnCSxy_y[ipl][CSYIndex]->fill(modPos[0], modPos[1] );    
+
+        if(CSTotIndex < 4){
+          gblrxvsxpix1CS[ipl][CSTotIndex]->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3);
+          gblryvsypix1CS[ipl][CSTotIndex]->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3);
         }  
       } 
 /*
-
       // do some more analysis with kinks. 
       //   Calculate the two angles as corr_n-1 - corr_n-2, corr_n - corr_n-1, corr_n+1 - corr_n -> sum of all =  corr_n+1 - corr_n-2
 
@@ -968,7 +963,6 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
       for(size_t ix = 1; ix < _nPlanes; ++ix) {
         gblkxHistos[ix-1]->fill( (ax[ix] - ax[ix-1])*1E3 );
       }
-      //gblkx6Histo->fill( (ax[6] - ax[5])*1E3 ); // kink at 6 [mrad]
     } // end if good fit 
 
 
@@ -1027,10 +1021,6 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
   } // Loop over found tracks
 
   nsixHisto->fill( telescope_tracks.size() );
-
-  //prevdutrefddt = dutrefddt;
-  // Clear memory
-  //delete telescope_tracks;
 }
 
 
@@ -1119,9 +1109,7 @@ void EUTelGBLFitter::TelescopeCorrelationPlots(std::vector<EUTelTripletGBLUtilit
 }
 
 //------------------------------------------------------------------------------
-void EUTelGBLFitter::bookHistos()
-{
-
+void EUTelGBLFitter::bookHistos(){
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
   // telescope and DUT hits per plane:
@@ -1211,7 +1199,6 @@ void EUTelGBLFitter::bookHistos()
   du45Histo = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "Telescope/du45", 100, -1, 1 );
   du45Histo->setTitle( "x5-x4, |dy| < 1;x_{5}-x_{4} [mm];hit pairs" );
-
 
   // triplets:
   AIDAProcessor::tree(this)->mkdir("Upstream");
@@ -1356,7 +1343,6 @@ void EUTelGBLFitter::bookHistos()
     createHistogram1D( "Upstream/ntri", 31, -0.5, 30.5 );
   ntriHisto->setTitle( "telescope triplets;0-1-2 triplets;events" );
 
-
   // driplets:
   AIDAProcessor::tree(this)->mkdir("Downstream");
 
@@ -1420,8 +1406,6 @@ void EUTelGBLFitter::bookHistos()
     createHistogram1D( "Downstream/drity", 100, -10, 10 );
   drityHisto->setTitle( "driplet slope y;#theta_{y} [mrad];driplets" );
 
-
-
   bacsxaHisto = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "bacsxa", 100, -10, 10 );
   bacsxaHisto->setTitle( "DUT + driplet x;DUT cluster + driplet #Sigmax [mm];DUT clusters" );
@@ -1446,7 +1430,6 @@ void EUTelGBLFitter::bookHistos()
     createHistogram1D( "bacdycq", 100, -500, 500 );
   bacdycqHisto->setTitle( "DUT - driplet y;DUT cluster - driplet #Deltay [mm];DUT clusters" );
 
-
   ndriHisto = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "Downstream/ndri", 31, -0.5, 30.5 );
   ndriHisto->setTitle( "telescope driplets;3-4-5 driplets;events" );
@@ -1469,7 +1452,6 @@ void EUTelGBLFitter::bookHistos()
   effiy1 = AIDAProcessor::histogramFactory(this)->
     createProfile1D( "Effi/effiy1", 60, -6, 6, -0.1, 1.1 );
   effiy1->setTitle( "trip-effi vs y at plane 1;y [mm]; efficiency" );
-
 
   effix2 = AIDAProcessor::histogramFactory(this)->
     createProfile1D( "Effi/effix2", 120, -12, 12, -0.1, 1.1 );
@@ -1504,13 +1486,11 @@ void EUTelGBLFitter::bookHistos()
   effiy5->setTitle( "trip-effi vs y at plane 5;y [mm]; efficiency" );
 
   //driplets-triplets
-  // Tracks
   AIDAProcessor::tree(this)->mkdir("Tracks");
 
   nsixHisto = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "Tracks/nsix", 21, -0.5, 20.5 );
   nsixHisto->setTitle( "telescope six-plane-tracks;six-plane-tracks;events" );
-
 
   AIDAProcessor::tree(this)->mkdir("Tracks/ClusterSize");
   for(size_t ix = 0; ix < _sensorIDVec.size(); ++ix) {
@@ -1765,6 +1745,7 @@ void EUTelGBLFitter::bookHistos()
     std::string histNameYResVsYPix1 = "GBL/ResVsPos/gblryvsypix1_"+sensorIdString;
     std::string histNameClusterSizes = "GBL/ClusterSize/gblnxy_"+sensorIdString;
     std::string histNameWeightClusterSizes = "GBL/ClusterSize/gblnxy1_"+sensorIdString;
+    std::string histNameClusterXYCorrelation = "GBL/ClusterSize/gblcluxvscluy_"+sensorIdString;
 
     gblaxHistos.push_back(AIDAProcessor::histogramFactory(this)->
      createHistogram1D( histNameAngleX, 100, -1, 1 ));
@@ -1834,15 +1815,32 @@ void EUTelGBLFitter::bookHistos()
      createHistogram2D( histNameWeightClusterSizes, 35, 0., 18.4, 35, 0., 18.4));
     gblnxy1.back()->setTitle( "GBL intra-pixel occurrence of all CSs;GBL track x at plane "+sensorIdString+" [#mum];GBL track y at plane [mm];events" );
 
-    std::string histNameCSRaw = "GBL/ClusterSize/CS";
-    gblnCSxy.emplace_back(std::vector<AIDA::IHistogram2D*>(7, nullptr));
-    for(size_t iy = 0; iy < gblnCSxy.back().size(); ++iy){
-      std::string CSString = std::to_string(iy+1);
-      std::string histName = histNameCSRaw+CSString+"_plane"+sensorIdString;
+    gblcluxvscluy.push_back(AIDAProcessor::histogramFactory(this)->
+     createHistogram2D( histNameClusterXYCorrelation, 7, 0.5, 7.5, 7, 0.5, 7.5));
+    gblcluxvscluy.back()->setTitle( "CS X vs. CS Y on plane "+sensorIdString+";Clustersize X;Clustersize Y;clusters" );
 
-      gblnCSxy.back()[iy] = AIDAProcessor::histogramFactory(this)->
-       createHistogram2D( histName, 35, 0., 18.4, 35, 0., 18.4 );
-      gblnCSxy.back()[iy]->setTitle( "GBL in-pixel occurrence of CS"+CSString+";GBL track x at plane "+sensorIdString+" [#mum];GBL track y at plane [mm];events" ); 
+    std::string histNameCSRaw = "GBL/ClusterSize/CS";
+    gblnCSxy_tot.emplace_back(std::vector<AIDA::IHistogram2D*>(7, nullptr));
+    gblnCSxy_x.emplace_back(std::vector<AIDA::IHistogram2D*>(7, nullptr));
+    gblnCSxy_y.emplace_back(std::vector<AIDA::IHistogram2D*>(7, nullptr));
+
+    for(size_t iy = 0; iy < gblnCSxy_tot.back().size(); ++iy){
+      std::string CSString = std::to_string(iy+1);
+      std::string histNameTot = histNameCSRaw+"tot"+CSString+"_plane"+sensorIdString;
+      std::string histNameX = histNameCSRaw+"X"+CSString+"_plane"+sensorIdString;
+      std::string histNameY = histNameCSRaw+"Y"+CSString+"_plane"+sensorIdString;
+
+      gblnCSxy_tot.back()[iy] = AIDAProcessor::histogramFactory(this)->
+       createHistogram2D( histNameTot, 35, 0., 18.4, 35, 0., 18.4 );
+      gblnCSxy_tot.back()[iy]->setTitle( "GBL in-pixel occurrence of CS_{tot} "+CSString+";GBL track x at plane "+sensorIdString+" [#mum];GBL track y at plane [mm];events" ); 
+
+      gblnCSxy_x.back()[iy] = AIDAProcessor::histogramFactory(this)->
+       createHistogram2D( histNameX, 35, 0., 18.4, 35, 0., 18.4 );
+      gblnCSxy_x.back()[iy]->setTitle( "GBL in-pixel occurrence of CS_{x} "+CSString+";GBL track x at plane "+sensorIdString+" [#mum];GBL track y at plane [mm];events" ); 
+
+      gblnCSxy_y.back()[iy] = AIDAProcessor::histogramFactory(this)->
+       createHistogram2D( histNameY, 35, 0., 18.4, 35, 0., 18.4 );
+      gblnCSxy_y.back()[iy]->setTitle( "GBL in-pixel occurrence of CS_{y} "+CSString+";GBL track x at plane "+sensorIdString+" [#mum];GBL track y at plane [mm];events" ); 
     }
 
     std::string histNameResVsPosByCSRawX = "GBL/ResVsPosVsCS/gblrxvsxpix_plane";
@@ -1887,7 +1885,6 @@ void EUTelGBLFitter::bookHistos()
     gblkxHistos.emplace_back(AIDAProcessor::histogramFactory(this)->
       createHistogram1D( histNameKinkX, 200, -0.2, 0.2 ));
     gblkxHistos.back()->setTitle( "GBL kink angle at plane "+sensorIdString+";plane "+sensorIdString+" kink [mrad];tracks" );
- 
   }
 
   kinkpixvsxy = AIDAProcessor::histogramFactory(this)->
@@ -1895,7 +1892,6 @@ void EUTelGBLFitter::bookHistos()
   kinkpixvsxy->setTitle( "GBL intra-pixel kink;GBL track x at plane3 [#mum];GBL track y at plane3 [#mum];sqrt(<kink^{2}>) [mrad]" );
 
   // z intersect:
-
   sixzx3Histo = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "Tracks/sixzx3", 100, -50, 250 );
   sixzx3Histo->setTitle( "intersect z-x, kink > 3 mrad;intersect z(x) - z_{2} [mm];tracks" );
@@ -1940,21 +1936,11 @@ void EUTelGBLFitter::bookHistos()
     createHistogram1D( "Tracks/nIso", 2, -0.5, 1.5 );
   sixkyzyHisto->setTitle( "n Isolated t/driplets;isolation;tracks" );
 
-
   streamlog_out( DEBUG2 ) << "Histogram booking completed \n\n" << std::endl;
 
 #else
-
   streamlog_out( MESSAGE4 ) << "No histogram produced because Marlin doesn't use AIDA" << std::endl;
-
 #endif
-
   return;
 }
-
-
-
-
-
-
 #endif
