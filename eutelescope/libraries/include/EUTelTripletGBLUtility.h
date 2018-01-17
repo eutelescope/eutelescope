@@ -15,10 +15,6 @@
 #include <memory>
 #include "marlin/Processor.h"
 
-// gear includes <.h>
-#include <gear/SiPlanesParameters.h>
-#include <gear/SiPlanesLayerLayout.h>
-
 // lcio includes <.h>
 #include "lcio.h"
 #include <UTIL/CellIDEncoder.h>
@@ -55,6 +51,7 @@
 #include <vector>
 #include <map>
 #include <deque>
+#include <algorithm>
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -68,7 +65,6 @@ using namespace marlin;
 
 namespace eutelescope {
 
-  // does not need to inherit from marlin::Processor, does it?
   //class EUTelTripletGBLUtility : public marlin::Processor {
   class EUTelTripletGBLUtility {
 
@@ -89,6 +85,7 @@ namespace eutelescope {
 
       class hit {
 	public:
+
 	  // Coordinates and their position uncertainty
 	  double x;
 	  double ex;
@@ -100,10 +97,22 @@ namespace eutelescope {
 	  unsigned int plane;
 	  // clustersize of the cluster associated to the hit
 	  int clustersize;
+	  int clustersizex;
+	  int clustersizey;
 	  // local coords
 	  double locx;
 	  double locy;
 	  int id;
+
+	  hit() = default;
+
+	  hit(double const * const pos, int sensorID){
+		x = pos[0];
+		y = pos[1];
+		z = pos[2];
+		plane = static_cast<unsigned>(sensorID);
+		};
+
 	  // Overloading ostream operator for printing hits:
 	  friend std::ostream& operator << (std::ostream& out, const hit& point) // output
 	  {
@@ -124,46 +133,43 @@ namespace eutelescope {
 	  bool linked_dut;
 	  //bool linked_ref;
 
-	  hit getpoint_at(double z);
-
+	  hit getpoint_at(double z) const;
 
 	  // Returns x coordinate of the triplet at given z:
-	  double getx_at(double z);
+	  double getx_at(double z) const;
 
 	  // Return dx = (x_end - x_start) for the full triplet:
-	  double getdx();
+	  double getdx() const;
 
 	  // Returns dx = (x_measure - x_triplet) in the given plane ipl:
-	  double getdx(int ipl);
+	  double getdx(int ipl) const;
 
 	  // Returns dx for a given point:
-	  double getdx(hit point);
-
+	  double getdx(hit point) const;
 
 	  // Returns y coordinate of the triplet at given z:
-	  double gety_at(double z);
+	  double gety_at(double z) const;
 
 	  // Return dy = (y_end - y_start) for the full triplet:
-	  double getdy();
+	  double getdy() const;
 
 	  // Returns dy = (y_measure - y_triplet) in the given plane ipl:
-	  double getdy(int ipl);
+	  double getdy(int ipl) const;
 
 	  // Returns dy for a given point:
-	  double getdy(hit point);
-
+	  double getdy(hit point) const;
 
 	  // Return dz = (z_end - z_start) for the full triplet:
-	  double getdz();
+	  double getdz() const;
 
 	  // Returning the hit for the given plane ID
-	  hit gethit(int plane);
+	  hit const & gethit(int plane) const;
 
 	  //! Returning the center point of the triplet:
-	  hit base();
+	  hit base() const;
 
 	  //! Returning the slope of the triplet (x,y):
-	  hit slope();
+	  hit slope() const;
 
 	  friend std::ostream& operator << (std::ostream& out, triplet trip)
 	  {
@@ -185,7 +191,28 @@ namespace eutelescope {
 	   * We rely on begin() and rbegin() to deliver pointers to the first and last plane of the triplet.
 	   */
 	  std::map<unsigned int,hit> hits;   
-      };
+	  std::map<unsigned int, hit> DUThits; 
+   public:
+	  bool has_DUT(unsigned int ID) {
+	  	return DUThits.find(ID) != DUThits.end();
+	  }
+	  auto get_DUT_Hit(unsigned int ID) const -> decltype(DUThits.at(ID)){
+		return DUThits.at(ID);
+	  }
+
+      auto number_DUTs() const -> decltype(DUThits.size()) {
+		return DUThits.size();
+	  }
+
+      void push_back_DUT(unsigned int ID, hit const & thisHit){
+		DUThits.insert(std::make_pair(ID, thisHit));
+	  }
+
+	  auto DUT_begin() const -> decltype(DUThits.begin()) {return DUThits.begin(); }
+	  auto DUT_end() const -> decltype(DUThits.end()) {return DUThits.end(); }
+
+
+	  };
 
       class track {
 	public:
@@ -202,14 +229,14 @@ namespace eutelescope {
 	  hit intersect();
 
 	  //! Return the track upstream triplet
-	  triplet get_upstream();
+	  triplet& get_upstream();
 
 	  //! Return the track downstream triplet
-	  triplet get_downstream();
+	  triplet& get_downstream();
 
 	  //! Return the track hit in a given plane
-	  hit gethit(int plane);
-
+	  hit const & gethit(int plane);
+	  
 	private:
 	  //! Members to store the up- and downstream triplets
 	  triplet upstream;
@@ -225,13 +252,17 @@ namespace eutelescope {
        *
        * @return a vector of found triplets among the given set of hits.
        */
-      void FindTriplets(std::vector<EUTelTripletGBLUtility::hit> &hits, unsigned int plane0, unsigned int plane1, unsigned int plane2, double trip_res_cut, double trip_slope_cut, std::vector<EUTelTripletGBLUtility::triplet> &trip);
+      void FindTriplets(std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int plane0, unsigned int plane1, unsigned int plane2, double trip_res_cut, double trip_slope_cut, std::vector<EUTelTripletGBLUtility::triplet> &trip, bool onlyBestTriplet = true);
 
       //! Match the upstream and downstream triplets to tracks
-      void MatchTriplets(std::vector<EUTelTripletGBLUtility::triplet> &up, std::vector<EUTelTripletGBLUtility::triplet> &down, double z_match, double trip_matching_cut, std::vector<EUTelTripletGBLUtility::track> &track);
+      void MatchTriplets(std::vector<EUTelTripletGBLUtility::triplet> const & up, std::vector<EUTelTripletGBLUtility::triplet> const & down, double z_match, double trip_matching_cut, std::vector<EUTelTripletGBLUtility::track> &track);
+
+	  bool AttachDUT(EUTelTripletGBLUtility::triplet & triplet, std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int dutID,  double trip_res_cut);
+
+	  //bool AttachDUT(std::vector<EUTelTripletGBLUtility::triplet> & triplets, std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int dutIDs, double trip_res_cut, double trip_slope_cut);
 
       //! Check isolation of triplet within vector of triplets
-      bool IsTripletIsolated(std::vector<EUTelTripletGBLUtility::triplet>::iterator it, std::vector<EUTelTripletGBLUtility::triplet> &trip, double z_match, double isolation = 0.3);
+      bool IsTripletIsolated(EUTelTripletGBLUtility::triplet const & it, std::vector<EUTelTripletGBLUtility::triplet> const &trip, double z_match, double isolation = 0.3);
 
       //! Calculate efficiency of plane
       /*! This creates non-standard triplets and driplets (use only 5 planes to contruct them) and looks for matching hit on plane under test
@@ -276,28 +307,6 @@ namespace eutelescope {
 
 
     protected:
-      //! Silicon planes parameters as described in GEAR
-      /*! This structure actually contains the following:
-       *  @li A reference to the telescope geoemtry and layout
-       *  @li An integer number saying if the telescope is w/ or w/o DUT
-       *  @li An integer number saying the number of planes in the
-       *  telescope.
-       *
-       *  This object is provided by GEAR during the init() phase and
-       *  stored here for local use.
-       */
-      gear::SiPlanesParameters * _siPlanesParameters;
-
-      //! Silicon plane layer layout
-      /*! This is the real geoemetry description. For each layer
-       *  composing the telescope the relevant information are
-       *  available.
-       *
-       *  This object is taken from the _siPlanesParameters during the
-       *  init() phase and stored for local use
-       */
-      gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
-
       std::string _inputCollectionTelescope;
 
       // Histos

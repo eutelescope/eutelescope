@@ -24,6 +24,8 @@
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include "marlin/AIDAProcessor.h"
 #include <AIDA/IHistogram1D.h>
+#include <AIDA/ICloud1D.h>
+#include <AIDA/ICloud2D.h>
 #include <AIDA/IHistogram2D.h>
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/ITree.h>
@@ -102,6 +104,17 @@ namespace eutelescope {
                               "be saved into the output slcio file",
                               _noisyPixelCollectionName,
                               std::string("noisyPixel"));
+
+  registerOptionalParameter("NoisyPixelNoHistogramUpperLimit",
+                              "Upper limit for noisy pixel count versus noise cut histogram",
+                              _noisyPixelVsCutHistUpperLimit, static_cast<double>(0.0006));
+
+   registerOptionalParameter("NoisyPixelNoHistogramBins",
+                              "Bin count for noisy pixel count versus noise cut histogram",
+                              _noisyPixelVsCutHistBins, int(1000));
+
+
+
   }
 
   void EUTelProcessorNoisyPixelFinder::initializeHitMaps() {
@@ -129,14 +142,18 @@ namespace eutelescope {
         // this is the 2-dimensional array used to store all the pixels, it is
         // implemented as a vector of vectors
         // first the x-entries-vector
-        std::vector<std::vector<int>> hitVecP =
-            std::vector<std::vector<int>>(thisSensor.sizeX);
+        std::vector<std::vector<long int>> hitVecP =
+            std::vector<std::vector<long int>>(thisSensor.sizeX);
 
         // and the y-entries vector
         for (auto &i : hitVecP) {
           // resize it now
           i.resize(thisSensor.sizeY, 0);
         }
+
+		//
+	    auto& firingFreqVec = _firingFreqForAllPixels[sensorID];
+	    firingFreqVec.resize(thisSensor.sizeX*thisSensor.sizeY);
 
         // collection to later hold the hot pixels
         std::vector<EUTelGenericSparsePixel> noisyPixelMap;
@@ -197,7 +214,7 @@ namespace eutelescope {
         int sensorID = static_cast<int>(cellDecoder(zsData)["sensorID"]);
 
         sensor *currentSensor = &_sensorMap[sensorID];
-        std::vector<std::vector<int>> *hitArray = &_hitVecMap[sensorID];
+        std::vector<std::vector<long int>> *hitArray = &_hitVecMap[sensorID];
 
         // if this is an excluded sensor go to the next element
         bool foundexcludedsensor = false;
@@ -335,17 +352,19 @@ namespace eutelescope {
                                 << std::endl;
 
         // get the correpsonding hit array-like vector of vectors
-        std::vector<std::vector<int>> *hitVector = &_hitVecMap[sensorID];
+        std::vector<std::vector<long int>> *hitVector = &_hitVecMap[sensorID];
         // and the sensor which stores offsets
         sensor *currentSensor = &_sensorMap[sensorID];
+		auto& firingFreqVec = _firingFreqForAllPixels[sensorID]; 
 
         // loop over all pixels
         for (auto xIt = hitVector->begin(); xIt != hitVector->end(); ++xIt) {
           for (auto yIt = xIt->begin(); yIt != xIt->end(); ++yIt) {
             // compute the firing frequency
-            float fireFreq = (float)*yIt / (float)_iEvt;
+            double fireFreq = (double)*yIt / (double)_iEvt;
             // if it is larger than the allowed one, we write this pixel into a
             // collection
+            firingFreqVec.push_back(fireFreq);
             if (fireFreq > _maxAllowedFiringFreq) {
               streamlog_out(MESSAGE3)
                   << "Pixel: " << xIt - hitVector->begin() + currentSensor->offX
@@ -477,6 +496,42 @@ namespace eutelescope {
 
       tempHistoName = _firing2DHistoName + "_d" + std::to_string(det);
       sensor *currentSensor = &_sensorMap[det];
+
+	  //scatter plot
+      std::string dataPointName = "FiringFreqNoisyPixelDep_d" + std::to_string(det);
+	  auto dataPointSet = marlin::AIDAProcessor::histogramFactory(this)->createCloud1D((basePath+dataPointName).c_str());
+
+	  long double stepsize = _noisyPixelVsCutHistUpperLimit/(long double)_noisyPixelVsCutHistBins;
+
+	  auto HistFF = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath + dataPointName + "_HIST").c_str(), 
+					static_cast<int>(std::ceil(_noisyPixelVsCutHistBins/10)), 0.0-stepsize/2.0, 
+					_noisyPixelVsCutHistUpperLimit-stepsize/2.0);
+	  HistFF->setTitle("Number of noisy pixels for given noise cut; Noise cut; No. noisy pixels");
+
+	  auto& firingFreqVec = _firingFreqForAllPixels[det];
+	  std::sort(firingFreqVec.begin(), firingFreqVec.end(), [](const double a, const double b) {return a > b; });
+
+	  std::vector<long double> cuts;
+
+	  for(int i = 1; i <= _noisyPixelVsCutHistBins; ++i){
+		cuts.emplace_back(i*stepsize);
+      } 
+	  long t = 0;
+            //std::cout << "Sensor " << det << std::endl; 
+	  for(auto it = firingFreqVec.begin(); it != firingFreqVec.end(); ++it){
+		//if(t<100) { std::cout << "Entry: " << *it << std::endl; }
+		if( cuts.back() >= *it){
+			while(cuts.back() >= *it){
+				dataPointSet->fill(cuts.back() , t);
+          		//std::cout << cuts.back() << "|" << t << std::endl; 
+				cuts.pop_back();
+			}
+		}
+        t++;
+	  }
+
+	  dataPointSet->fillHistogram(*HistFF);
+
 
       // determine range for 2D firing histo
       int xBin = currentSensor->sizeX + 1;

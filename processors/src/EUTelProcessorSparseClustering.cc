@@ -130,6 +130,7 @@ void EUTelProcessorSparseClustering::init() {
 }
 
 void EUTelProcessorSparseClustering::processRunHeader(LCRunHeader *rdr) {
+
   std::unique_ptr<EUTelRunHeaderImpl> runHeader =
       std::make_unique<EUTelRunHeaderImpl>(rdr);
   runHeader->addProcessor(type());
@@ -167,8 +168,7 @@ void EUTelProcessorSparseClustering::initializeGeometry(LCEvent *event) throw(
                           << _zsDataCollectionName.c_str() << " !" << std::endl;
     return;
   }
-
-  _isGeometryReady = true;
+    _isGeometryReady = true;
 }
 
 void EUTelProcessorSparseClustering::modifyEvent(LCEvent * /* event */) {
@@ -242,13 +242,20 @@ void EUTelProcessorSparseClustering::processEvent(LCEvent *event) {
   } catch (lcio::DataNotAvailableException &e) {
     pulseCollection = new LCCollectionVec(LCIO::TRACKERPULSE);
   }
+  if(isFirstEvent()) {
+  auto& pulseCollectionParameters = pulseCollection->parameters();
+  IntVec sensorIDVec;
+  pulseCollectionParameters.getIntVals("sensorIDs", sensorIDVec ); 
+  sensorIDVec.insert( sensorIDVec.end(), _sensorIDVec.begin(), _sensorIDVec.end());
+  pulseCollectionParameters.setValues("sensorIDs", sensorIDVec );
+  }  
 
   // HERE WE ACTUALLY CALL THE CLUSTERING ROUTINE:
   sparseClustering(evt, pulseCollection);
 
   // if the pulseCollection is not empty add it to the event
   if (!pulseCollectionExists &&
-      (pulseCollection->size() != _initialPulseCollectionSize)) {
+	((pulseCollection->size() != _initialPulseCollectionSize) || _initialPulseCollectionSize == 0)) {  
     evt->addCollection(pulseCollection, _pulseCollectionName);
   }
 
@@ -260,8 +267,8 @@ void EUTelProcessorSparseClustering::processEvent(LCEvent *event) {
 #endif
 
   if (!pulseCollectionExists &&
-      (pulseCollection->size() == _initialPulseCollectionSize)) {
-    delete pulseCollection;
+	(pulseCollection->size() == _initialPulseCollectionSize) && _initialPulseCollectionSize != 0) { 
+   delete pulseCollection;
   }
   _isFirstEvent = false;
 }

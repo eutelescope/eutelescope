@@ -643,6 +643,33 @@ namespace eutelescope {
       }
     }
 
+
+
+	void copyLCCollectionParameters(LCCollectionVec* to, LCCollectionVec const * const from){
+		auto& paramsFrom = from->getParameters();
+		auto& paramsTo = to->parameters();
+		
+		EVENT::StringVec intKeyVec;
+		EVENT::StringVec floatKeyVec;
+		EVENT::StringVec stringKeyVec;
+		
+		for(auto& key: paramsFrom.getIntKeys(intKeyVec)){
+			EVENT::IntVec vec;
+			paramsFrom.getIntVals(key, vec);
+			paramsTo.setValues(key, vec);			 
+		}
+		for(auto& key: paramsFrom.getFloatKeys(floatKeyVec)){
+			EVENT::FloatVec vec;
+			paramsFrom.getFloatVals(key, vec);
+			paramsTo.setValues(key, vec);			 
+		}
+		for(auto& key: paramsFrom.getStringKeys(stringKeyVec)){
+			EVENT::StringVec vec;
+			paramsFrom.getStringVals(key, vec);
+			paramsTo.setValues(key, vec);			 
+		}
+	}
+
     float DoubleToFloat(double a) { return static_cast<float>(a); }
 
     float *toFloatN(double *a, int N) {

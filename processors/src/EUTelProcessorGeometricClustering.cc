@@ -227,12 +227,20 @@ void EUTelProcessorGeometricClustering::processEvent(LCEvent *event) {
     pulseCollection = new LCCollectionVec(LCIO::TRACKERPULSE);
   }
 
+  if(isFirstEvent()) {
+  auto& pulseCollectionParameters = pulseCollection->parameters();
+  IntVec sensorIDVec;
+  pulseCollectionParameters.getIntVals("sensorIDs", sensorIDVec ); 
+  sensorIDVec.insert( sensorIDVec.end(), _sensorIDVec.begin(), _sensorIDVec.end());
+  pulseCollectionParameters.setValues("sensorIDs", sensorIDVec );
+  }  
+
   // HERE WE ACTUALLY CALL THE CLUSTERING ROUTINE:
   geometricClustering(evt, pulseCollection);
 
   // if the pulseCollection is not empty add it to the event
   if (!pulseCollectionExists &&
-      (pulseCollection->size() != _initialPulseCollectionSize)) {
+      ((pulseCollection->size() != _initialPulseCollectionSize) || _initialPulseCollectionSize == 0)) {
     evt->addCollection(pulseCollection, _pulseCollectionName);
   }
 
@@ -244,7 +252,7 @@ void EUTelProcessorGeometricClustering::processEvent(LCEvent *event) {
 #endif
 
   if (!pulseCollectionExists &&
-      (pulseCollection->size() == _initialPulseCollectionSize)) {
+      (pulseCollection->size() == _initialPulseCollectionSize) && _initialPulseCollectionSize != 0) {
     delete pulseCollection;
   }
   _isFirstEvent = false;
