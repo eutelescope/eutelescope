@@ -116,6 +116,7 @@ namespace eutelescope
 	    bool _dthistos;
 	    bool _dutplanevectors;
 	    bool _pre_alignmentloaded;
+	    bool _x0histos;
 
 	    double _chi2ndfCut;
 	    double _coordinator_x;
