@@ -24,7 +24,7 @@ if [ ! -d $pypath ]; then mkdir $pypath; fi;
 
 # argparse -- needed for python scripts on SL5 machines
 argparsefile="argparse-1.2.1.tar.gz"
-wget --no-check-certificate -P "$tempdir" 'http://argparse.googlecode.com/files/'$argparsefile
+wget --no-check-certificate -P "$tempdir" 'https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/argparse/'$argparsefile
 if [ ! -d "$pypath/argparse" ]; then mkdir "$pypath/argparse"; fi;
 echo "Extracting tar archive..."
 tar --strip-components 1 -C "$pypath/argparse" -xzf "$tempdir/$argparsefile" 
