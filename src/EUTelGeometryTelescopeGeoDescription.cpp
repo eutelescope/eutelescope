@@ -188,9 +188,37 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 	for(int iPlane = 0; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++) {
 		int sensorID = _siPlanesLayerLayout->getID(iPlane);
 		_sensorIDVec.push_back(sensorID);
+		
+		
+		_sensorIDVecMap.insert(std::make_pair(sensorID, iPlane));
+		
+		
 	}
 	_nPlanes = _siPlanesParameters->getSiPlanesNumber();
 	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), doCompare(*this) );	
+	
+	
+	
+	
+	double* keepZPosition = new double[ _siPlanesLayerLayout->getNLayers() ];
+	
+    for (int iPlane = 0; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++) {
+        int sensorID = _siPlanesLayerLayout->getID(iPlane);
+        
+        
+
+        // count number of the sensors to the left of the current one:
+        int sensorsToTheLeft = 0;
+        keepZPosition[ iPlane ] = _siPlanesLayerLayout->getLayerPositionZ(iPlane);
+        for (int jPlane = 0; jPlane < _siPlanesLayerLayout->getNLayers(); jPlane++)
+            if (_siPlanesLayerLayout->getLayerPositionZ(jPlane) + 1e-06 < keepZPosition[ iPlane ]) sensorsToTheLeft++;
+
+        _sensorZOrderToIDMap.insert(std::make_pair(sensorsToTheLeft, sensorID));        
+        _sensorIDtoZOrderMap.insert(std::make_pair(sensorID, sensorsToTheLeft));
+    }
+	
+	    delete [] keepZPosition;
+	
 }
 
 void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
@@ -1279,4 +1307,34 @@ void EUTelGeometryTelescopeGeoDescription::updateGearManager() {
 void EUTelGeometryTelescopeGeoDescription::writeGEARFile(std::string filename) {
 	updateGearManager();
 	gear::GearXML::createXMLFile(marlin::Global::GEAR, filename);
+}
+
+
+/**
+ * Retrieve magnetic field object.
+ * 
+ * @return reference to gear::BField object
+ */
+
+/*
+const gear::BField& EUTelGeometryTelescopeGeoDescription::getMagneticField() const {
+    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getMagneticField() " << std::endl;
+    return marlin::Global::GEAR->getBField();
+}
+*/
+
+int EUTelGeometryTelescopeGeoDescription::sensorIDtoZOrder( int planeID ) const {
+    std::map<int,int>::const_iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) return it->second;
+    return -1;
+}
+
+/** Sensor ID vector ordered according to their position along the Z axis (beam axis)
+ *  Numeration runs from 0 to nPlanes-1 */
+int EUTelGeometryTelescopeGeoDescription::sensorZOrderToID( int znumber ) const {
+    std::map<int,int>::const_iterator it;
+    it = _sensorZOrderToIDMap.find( znumber );
+    if ( it != _sensorZOrderToIDMap.end() ) return it->second;
+    return -1;
 }

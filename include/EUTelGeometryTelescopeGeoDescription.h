@@ -166,6 +166,7 @@ class EUTelGeometryTelescopeGeoDescription
 	static unsigned _counter;
 
   public:
+      //const gear::BField& getMagneticField() const;
 	/** Retrieves the instanstance of geometry.
 	 * Performs lazy intialization if necessary.
 	 * @TODO this routine has to be considered to be constant
@@ -403,8 +404,21 @@ class EUTelGeometryTelescopeGeoDescription
 	bool findNextPlaneEntrance(  TVector3 ,  TVector3, int, float*  );
 
 	int findNextPlane(  double* lpoint,  double* ldir,  float* newpoint );
+	
+            int sensorIDtoZOrder( int ) const;
+            
+int sensorZOrderToID( int ) const;
+
+            /** Map from number along the Z axis (beam axis) to sensor ID */
+std::map<int, int> _sensorZOrderToIDMap;
+
+            /** Map from sensor ID to number along Z */
+std::map<int, int> _sensorIDtoZOrderMap;
+
+            std::map< int, int > _sensorIDVecMap;
 
 private:
+    
 	/** reading initial info from gear: part of contructor */
 	void readSiPlanesLayout();
 

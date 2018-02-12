@@ -276,6 +276,34 @@ namespace eutelescope {
 				return std::unique_ptr<EUTelVirtualCluster>();
 	    	}
         }
+        
+        
+        
+        int GuessSensorID( const EVENT::TrackerHit* hit ) {
+            if ( hit == NULL ) {
+                streamlog_out(ERROR) << "An invalid hit pointer supplied! will exit now\n" << std::endl;
+                return -1;
+            }
+
+            try {
+                std::unique_ptr<EUTelVirtualCluster> cluster = GetClusterFromHit( static_cast< const IMPL::TrackerHitImpl*> (hit) );
+
+                if ( cluster != NULL ) {
+                    int sensorID = cluster->getDetectorID();
+		    
+                    return sensorID;
+                } else {
+                    int sensorID = hit->getCellID0();
+                    return sensorID;
+                }
+            } catch (...) {
+                streamlog_out(ERROR) << "guessSensorID() produced an exception!" << std::endl;
+            }
+
+            return -1;
+}
+        
+        
 
         /**
          * Determine hit's plane id
