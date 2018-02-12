@@ -566,7 +566,7 @@ EUTelMilleGBL::EUTelMilleGBL ( ) : Processor ( "EUTelMilleGBL" )
 
     registerOptionalParameter ( "GeneratePedeSteerfile", "Generate a steering file for pede? 0 = false, 1 = true.", _generatePedeSteerfile, static_cast < int > ( 0 ) );
 
-    registerOptionalParameter ( "IsolationCut", "Maximum allowed hit distance within planes 1 and 4 in um for a hit to be considered isolated.", _isolationCut, static_cast < double > ( 0.1 ) );
+    registerOptionalParameter ( "IsolationCut", "Maximum allowed hit distance within planes 1 and 4 in um for a hit to be considered isolated.", _isolationCut, static_cast < double > ( 40.0 ) );
 
     registerOptionalParameter ( "ManualDUTid", "The sensor id number of the DUT.", _manualDUTid, static_cast < int > ( 6 ) );
 
@@ -601,7 +601,11 @@ EUTelMilleGBL::EUTelMilleGBL ( ) : Processor ( "EUTelMilleGBL" )
 
     registerOptionalParameter ( "TimeDependencyHistos", "Flag to fill dt histograms. Will increase histogram file size quite a bit.", _dthistos, static_cast < bool > ( false ) );
 
+    registerOptionalParameter ( "TrackFitCollectionName", "If we use an external track fit, what is the collection name?", _trackFitCollectionName, std::string ( "TrackCandidateHitCollection" ) );
+
     registerOptionalParameter ( "UseREF", "Use Reference Plane? If so, set the sensor id (usually 7). To deactivate, set to 0 or below.", _useREF, static_cast < int > ( -1 ) );
+
+    registerOptionalParameter ( "UseTrackFit", "Use external track fit?", _useTrackFit, static_cast < bool > ( false ) );
 
     registerOptionalParameter ( "X0Histos", "Flag to enable X0 scattering histograms. Will need lots of memory!", _x0histos, static_cast < bool > ( false ) );
 
@@ -670,19 +674,19 @@ void EUTelMilleGBL::init ( )
     {
 	_BField = true;
 	streamlog_out ( MESSAGE2 ) << "Running WITH magnetic field! " << Bx << " Bx, " << By << " By, " << Bz << " Bz!" <<  endl;
-	streamlog_out ( MESSAGE2 ) << "The residual cuts will be multiplied by 10!" << endl;
-	_driCut = _driCut * 10.0;
-	_driCutREFx = _driCutREFx * 10.0;
-	_driCutREFy = _driCutREFy * 10.0;
-	_sixCut = _sixCut * 10.0;
-	_triCut = _triCut * 10.0;
-	_triCutDUTx = _triCutDUTx* 10.0;
-	_triCutDUTy = _triCutDUTy * 10.0;
-	streamlog_out ( MESSAGE2 ) << "The chi2, slope and prob cuts will be multiplied by 5!" << endl;
-	_chi2ndfCut = _chi2ndfCut * 5.0;
+	streamlog_out ( MESSAGE2 ) << "The residual cuts will be multiplied by 2!" << endl;
+	_driCut = _driCut * 2.0;
+	_driCutREFx = _driCutREFx * 2.0;
+	_driCutREFy = _driCutREFy * 2.0;
+	_sixCut = _sixCut * 2.0;
+	_triCut = _triCut * 2.0;
+	_triCutDUTx = _triCutDUTx* 2.0;
+	_triCutDUTy = _triCutDUTy * 2.0;
+	streamlog_out ( MESSAGE2 ) << "The chi2, slope and prob cuts will be multiplied by 2!" << endl;
+	_chi2ndfCut = _chi2ndfCut * 2.0;
 	_probCut = _probCut * 0.2;
-	_slopecutDUTx = _slopecutDUTx * 5.0;
-	_slopecutDUTy = _slopecutDUTy * 5.0;
+	_slopecutDUTx = _slopecutDUTx * 2.0;
+	_slopecutDUTy = _slopecutDUTy * 2.0;
     }
     else
     {
@@ -2001,7 +2005,1102 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	exit ( -1 );
     }
 
-    if ( _doPreAlignment == 0 )
+    // FIXME Very hacky way of doing this!
+    if (_doPreAlignment == 0 && _useTrackFit == true )
+    {
+	int nmGood = 0;
+	streamlog_out ( DEBUG0 ) << "Using external track fit!" << endl;
+	try
+	{
+	    LCCollection * collection = event -> getCollection ( _trackFitCollectionName );
+
+	    for ( int iTrack = 0; iTrack < collection -> getNumberOfElements ( ); iTrack++ )
+	    {
+		streamlog_out ( DEBUG9 ) << "Reading track " << iTrack << " of " << collection -> getNumberOfElements ( ) << endl;
+		TrackImpl * track = dynamic_cast < TrackImpl* > ( collection -> getElementAt ( iTrack ) );
+		TrackerHitVec hitvec = track -> getTrackerHits ( );
+
+		std::vector < std::vector < EUTelMilleGBL::HitsInPlane > > _fitHitsArray ( maxplanesinsystem, std::vector < EUTelMilleGBL::HitsInPlane > ( ) );
+		std::vector < std::vector < EUTelMilleGBL::HitsInPlane > > _mesHitsArray ( maxplanesinsystem, std::vector < EUTelMilleGBL::HitsInPlane > ( ) );
+
+		for ( size_t iHit = 0; iHit < hitvec.size ( )  ; ++iHit )
+		{
+		    // setup cellIdDecoder to decode the hit properties
+		    CellIDDecoder < TrackerHit > hitCellDecoder ( EUTELESCOPE::HITENCODING );
+
+		    TrackerHitImpl * hit;
+		    if ( ( hit = dynamic_cast < TrackerHitImpl* > ( hitvec[ iHit ] ) ) != 0x0 )
+		    {
+
+			// fit
+			if ( ( hitCellDecoder ( hit ) ["properties"] & kFittedHit ) > 0 )
+			{
+			    HitsInPlane hitsInPlane;
+			    int sensorID = hitCellDecoder ( hit ) ["sensorID"];
+
+			    // FIXME *-1 for some reason
+			    // Getting positions of the hits, conversion to um
+			    hitsInPlane.measuredX = -1000 * hit -> getPosition ( ) [0]; // um
+			    hitsInPlane.measuredY = -1000 * hit -> getPosition ( ) [1]; // um
+			    hitsInPlane.measuredZ = 1000 * hit -> getPosition ( ) [2]; // um
+
+			    _fitHitsArray[sensorID].push_back ( hitsInPlane );
+			    streamlog_out ( DEBUG9 ) << " Read fit: ( " << hitsInPlane.measuredX << " | " << hitsInPlane.measuredY << " | " << hitsInPlane.measuredZ << " )" << endl;
+
+			}
+
+			// measurement
+			if ( ( hitCellDecoder ( hit ) ["properties"] & kFittedHit ) <= 0 )
+			{
+			    HitsInPlane hitsInPlane;
+			    int sensorID = hitCellDecoder ( hit ) ["sensorID"];
+
+			    // Getting positions of the hits, conversion to um
+			    hitsInPlane.measuredX = 1000 * hit -> getPosition ( ) [0]; // um
+			    hitsInPlane.measuredY = 1000 * hit -> getPosition ( ) [1]; // um
+			    hitsInPlane.measuredZ = 1000 * hit -> getPosition ( ) [2]; // um
+
+			    _mesHitsArray[sensorID].push_back ( hitsInPlane );
+			    streamlog_out ( DEBUG9 ) << " Read meas: ( " << hitsInPlane.measuredX << " | " << hitsInPlane.measuredY << " | " << hitsInPlane.measuredZ << " )" << endl;
+			}
+		    }
+
+		    // HACK for now restricted!
+		    if ( iHit >= 13 )
+		    {
+			break ;
+		    }
+
+		} // done hit loop
+
+		// GBL point vector for the trajectory
+		std::vector < gbl::GblPoint > traj_points;
+
+		// gbl::GblTrajectory traj( false ); // curvature = false
+
+		// build up trajectory:
+		std::vector < unsigned int > ilab; // 0-5 = telescope, 6 = DUT
+		vector < double > sPoint;
+
+		double s = 0;
+
+		TMatrixD jacPointToPoint ( 5, 5 );
+
+		TMatrixD proL2m ( 2, 2 );
+		proL2m.UnitMatrix ( );
+
+		TVectorD meas ( 2 );
+
+		// precision = 1 / resolution^2
+		TVectorD measPrec ( 2 );
+		measPrec[0] = 1.0 / _resx / _resx;
+		measPrec[1] = 1.0 / _resy / _resy;
+
+		// different meas precision for dut
+		TVectorD measPrecDut ( 2 );
+		measPrecDut[0] = 1.0 / _resdutx / _resdutx;
+		measPrecDut[1] = 1.0 / _resduty / _resduty;
+
+		// different meas precision for ref
+		TVectorD measPrecRef ( 2 );
+		measPrecRef[0] = 1.0 / _resrefx / _resrefx;
+		measPrecRef[1] = 1.0 / _resrefy / _resrefy;
+
+		// scatter:
+		TVectorD scat( 2 );
+		// mean is zero
+		scat.Zero ( );
+
+		// FIXME this could be read from gear...
+		// beam momentum
+		double p = _eBeam;
+		// Si + Kapton
+		double X0Si = 65E-3 / 94.0;
+		// Si + Kapton
+		double X0SiDUT = 350E-3 / 94.0;
+		double X0Air = 1.0 / 304200.0;
+		double accum_x0 = 0.0;
+
+		// alignment derivatives
+		TMatrixD alDer2 ( 2, 2 );
+		alDer2[0][0] = 1.0; // dx/dx GBL sign convetion
+		alDer2[1][0] = 0.0; // dy/dx
+		alDer2[0][1] = 0.0; // dx/dy
+		alDer2[1][1] = 1.0; // dy/dy
+
+		TMatrixD alDer3 ( 2, 3 ); // alignment derivatives
+		alDer3[0][0] = 1.0; // dx/dx
+		alDer3[1][0] = 0.0; // dy/dx
+		alDer3[0][1] = 0.0; // dx/dy
+		alDer3[1][1] = 1.0; // dy/dy
+
+		TMatrixD alDer3D ( 3, 3 ); // alignment derivatives
+		alDer3D[0][0] = 1.0; // dx/dx
+		alDer3D[1][0] = 0.0; // dy/dx
+		alDer3D[2][0] = 0.0; // dz/dx
+		alDer3D[0][1] = 0.0; // dx/dy
+		alDer3D[1][1] = 1.0; // dy/dy
+		alDer3D[2][1] = 0.0; // dz/dy
+		alDer3D[0][2] = 0.0; // dx/dz
+		alDer3D[1][2] = 0.0; // dy/dz
+		alDer3D[2][2] = 1.0; // dz/dz
+
+		/*
+		TMatrixD alDer4 ( 2, 4 ); // alignment derivatives
+		alDer4[0][0] = 1.0; // dx/dx
+		alDer4[1][0] = 0.0; // dy/dx
+		alDer4[0][1] = 0.0; // dx/dy
+		alDer4[1][1] = 1.0; // dy/dy
+		alDer4[0][3] = sxA[kA]; // dx/dz
+		alDer4[1][3] = syA[kA]; // dy/dz
+		*/
+
+		TMatrixD alDer6 ( 3, 6 ); // alignment derivatives
+
+		// telescope planes 0-5 + DUT + REF:
+		double rx[8];
+		double ry[8];
+		double rz[8];
+
+		int jhit = 0;
+		// first plane, including any pre-alignment
+		double xprev = _mesHitsArray[indexconverter[0]][jhit].measuredX;
+		double yprev = _mesHitsArray[indexconverter[0]][jhit].measuredY;
+		double zprev = _mesHitsArray[indexconverter[0]][jhit].measuredZ;
+
+		// plane loop
+		int looplimit = 7;
+		if ( _useREF > 0 )
+		{
+		    looplimit = 8;
+		}
+		for ( int ipl = 0; ipl < looplimit; ++ipl )
+		{
+
+		             /*
+			// in this case just add scatterer and continue with the next plane
+			if ( _requireDUTHit == 0 && ipl == 3 )
+			{
+
+			    // give correct z from fit!
+			    double xx = dutfitposX;
+			    double yy = dutfitposY;
+			    double zz = dutfitposZ;
+
+			    double stepx = xx - xprev;
+			    double stepy = yy - yprev;
+			    double step = zz - zprev;
+
+			    TVector3 direction ( stepx, stepy, step );
+
+			    double tetSiDUT = 0.0136 * sqrt ( X0SiDUT ) / p * ( 1 + 0.038 * std::log ( X0SiDUT + accum_x0 ) );
+
+			    TVectorD wscatSiDUT ( 2 );
+			    // weight
+			    wscatSiDUT[0] = 1.0 / ( tetSiDUT * tetSiDUT );
+			    wscatSiDUT[1] = 1.0 / ( tetSiDUT * tetSiDUT );
+
+			    jacPointToPoint = Jac55 ( step, direction, _BField );
+			    gbl::GblPoint *point = new gbl::GblPoint ( jacPointToPoint );
+			    point -> addScatterer ( scat, wscatSiDUT );
+			    accum_x0 += X0SiDUT;
+
+			    xprev = xx;
+			    yprev = yy;
+			    zprev = zz;
+			    traj_points.push_back ( *point );
+			    sPoint.push_back ( s );
+			    delete point;
+
+			    streamlog_out ( DEBUG3 ) << "Adding GBL DUT scatterer at z: " << zz << " um in Event " << event -> getEventNumber ( ) << endl;
+			    streamlog_out ( DEBUG3 ) << "Accumulated X0 is " << accum_x0*1E3 << " E-3!" << endl;
+
+			    // also add air
+			    // positions in um
+			    zz = _activeSensorZ[ipl] * 1000.0 + ( _activeSensorZ[ipl+ 1] * 1000.0 - _activeSensorZ[ipl] * 1000.0 ) * 0.21;
+			    step = zz - zprev;
+			    direction[2] = step;
+			    jacPointToPoint = Jac55 ( step, direction, _BField );
+			    gbl::GblPoint *point1 = new gbl::GblPoint ( jacPointToPoint );
+			    s += step;
+			    zprev = zz;
+			    TVectorD wscatAir ( 2 );
+			    // as x0 is in mm, airlength has to be in mm too!
+			    double airlength = ( 0.5 * ( _activeSensorZ[ipl+ 1] - _activeSensorZ[ipl] ) );
+			    double tetAir = 0.0136 * sqrt ( X0Air * airlength ) / p * ( 1 + 0.038 * std::log ( X0Air * airlength + accum_x0 ) );
+			    wscatAir[0] = 1.0 / ( tetAir * tetAir );
+			    wscatAir[1] = 1.0 / ( tetAir * tetAir );
+			    point1 -> addScatterer ( scat, wscatAir );
+			    traj_points.push_back ( *point1 );
+			    sPoint.push_back ( s );
+			    delete point1;
+			    accum_x0 += X0Air * airlength;
+			    streamlog_out ( DEBUG3 ) << "Adding air scatterer at z: " << zz << " um in Event " << event -> getEventNumber ( ) << endl;
+			    streamlog_out ( DEBUG3 ) << "Accumulated X0 is " << accum_x0 * 1E3 << " E-3!" << endl;
+
+			    zz = zprev + ( _activeSensorZ[ipl+ 1] * 1000.0 - _activeSensorZ[ipl] * 1000.0 ) * 0.58;
+			    step = zz - zprev;
+			    direction[2] = step;
+			    jacPointToPoint = Jac55 ( step, direction, _BField );
+			    gbl::GblPoint *point2 = new gbl::GblPoint ( jacPointToPoint );
+			    s += step;
+			    zprev = zz;
+			    tetAir = 0.0136 * sqrt ( X0Air * airlength ) / p * ( 1 + 0.038 * std::log ( X0Air * airlength + accum_x0 ) );
+			    wscatAir[0] = 1.0 / ( tetAir * tetAir );
+			    wscatAir[1] = 1.0 / ( tetAir * tetAir );
+			    point2 -> addScatterer ( scat, wscatAir );
+			    traj_points.push_back ( *point2 );
+			    sPoint.push_back ( s );
+			    delete point2;
+			    accum_x0 += X0Air * airlength;
+			    streamlog_out ( DEBUG3 ) << "Adding air scatterer at z: " << zz << " um in Event " << event -> getEventNumber ( ) << endl;
+			    streamlog_out ( DEBUG3 ) << "Accumulated X0 is " << accum_x0 * 1E3 << " E-3!" << endl;
+
+			    continue;
+			}
+			*/
+
+		    // [um]
+		    double xx = _mesHitsArray[indexconverter[ipl]][jhit].measuredX;
+		    double yy = _mesHitsArray[indexconverter[ipl]][jhit].measuredY;
+		    double zz = _mesHitsArray[indexconverter[ipl]][jhit].measuredZ;
+
+		    double stepx = xx - xprev;
+		    double stepy = yy - yprev;
+		    double step = zz - zprev;
+
+		    TVector3 direction ( stepx, stepy, step );
+
+		    jacPointToPoint = Jac55 ( step, direction, _BField );
+		    gbl::GblPoint *point = new gbl::GblPoint ( jacPointToPoint );
+		    s += step;
+		    xprev = xx;
+		    yprev = yy;
+		    zprev = zz;
+
+		    // extrapolate t/driplet vector A/B to each plane:
+		    double xs = 0.0;
+		    double ys = 0.0;
+		    double zs = 0.0;
+
+		    xs = _fitHitsArray[indexconverter[ipl]][jhit].measuredX;
+		    ys = _fitHitsArray[indexconverter[ipl]][jhit].measuredY;
+		    zs = _fitHitsArray[indexconverter[ipl]][jhit].measuredZ;
+
+		    // resid hit-track
+		    rx[indexconverter[ipl]] = _mesHitsArray[indexconverter[ipl]][jhit].measuredX - xs;
+		    ry[indexconverter[ipl]] = _mesHitsArray[indexconverter[ipl]][jhit].measuredY - ys;
+		    rz[indexconverter[ipl]] = _mesHitsArray[indexconverter[ipl]][jhit].measuredZ - zs;
+
+		    // resid hit-track
+		    meas[0] = _mesHitsArray[indexconverter[ipl]][jhit].measuredX - xs;
+		    meas[1] = _mesHitsArray[indexconverter[ipl]][jhit].measuredY - ys;
+
+		    double tetSi = 0.0136 * sqrt ( X0Si ) / p * ( 1 + 0.038 * std::log ( X0Si + accum_x0 ) );
+		    double tetSiDUT = 0.0136 * sqrt ( X0SiDUT ) / p * ( 1 + 0.038 * std::log ( X0SiDUT + accum_x0 ) );
+
+		    TVectorD wscatSi ( 2 );
+		    wscatSi[0] = 1.0 / ( tetSi * tetSi );
+		    wscatSi[1] = 1.0 / ( tetSi * tetSi );
+
+		    TVectorD wscatSiDUT ( 2 );
+		    wscatSiDUT[0] = 1.0 / ( tetSiDUT * tetSiDUT );
+		    wscatSiDUT[1] = 1.0 / ( tetSiDUT * tetSiDUT );
+
+		    // catch DUT, this has a different meas precision and scattering properties
+		    if ( ipl == 3 )
+		    {
+			// measurement has correct z anyway
+			point -> addMeasurement ( proL2m, meas, measPrecDut );
+			point -> addScatterer ( scat, wscatSiDUT ); //
+			accum_x0 += X0SiDUT;
+		    }
+		    else if ( ipl == 7 )
+		    {
+			point -> addMeasurement ( proL2m, meas, measPrecRef );
+			// don't care about scat...
+			point -> addScatterer ( scat, wscatSiDUT );
+			accum_x0 += X0Si;
+		    }
+		    else // assume all telescope planes are equal
+		    {
+			point -> addMeasurement ( proL2m, meas, measPrec );
+			point -> addScatterer ( scat, wscatSi );
+			accum_x0 += X0Si;
+		    }
+
+		    streamlog_out ( DEBUG6 ) << "Adding GBL measurement: x: " << _mesHitsArray[indexconverter[ipl]][jhit].measuredX << " y: " << _mesHitsArray[indexconverter[ipl]][jhit].measuredY << " z: " << _mesHitsArray[indexconverter[ipl]][jhit].measuredZ << " in Event " << event -> getEventNumber ( ) << endl;
+		    streamlog_out ( DEBUG6 ) << "Accumulated X0 is " << accum_x0 * 1E3 << " E-3!" << endl;
+
+		    // FIXME may not work for 7?
+		    // only x and y shifts
+		    if ( _alignMode == 2 )
+		    {
+			// global labels for MP:
+			std::vector < int > globalLabels ( 2 );
+			globalLabels[0] = 1 + 2 * ipl;
+			globalLabels[1] = 2 + 2 * ipl;
+			// for MillePede alignment
+			point -> addGlobals ( globalLabels, alDer2 );
+		    }
+		    // with rot
+		    else if ( _alignMode == 3 )
+		    {
+			std::vector < int > globalLabels ( 3 );
+			globalLabels[0] = 1 + 3 * ipl; // x
+			globalLabels[1] = 2 + 3 * ipl; // y
+			globalLabels[2] = 3 + 3 * ipl; // rot
+			alDer3[0][2] = -ys; // dx/dphi
+			alDer3[1][2] =  xs; // dy/dphi
+			point -> addGlobals ( globalLabels, alDer3 );
+		    }
+		    /*
+		    // with rot and z shift
+		    else if ( _alignMode == 4 )
+		    {
+			std::vector < int > globalLabels ( 4 );
+			globalLabels[0] = 1 + 4 * ipl;
+			globalLabels[1] = 2 + 4 * ipl;
+			globalLabels[2] = 3 + 4 * ipl;
+			globalLabels[3] = 4 + 4 * ipl; // z
+			alDer4[0][2] = -ys; // dx/dphi
+			alDer4[1][2] =  xs; // dy/dphi
+			point -> addGlobals ( globalLabels, alDer4 );
+
+		    }
+		    // with multiple rot and/or z fixed
+		    else if ( _alignMode == 1 || _alignMode == 5 || _alignMode == 6 || _alignMode == 7 )
+		    {
+			std::vector < int > globalLabels ( 6 );
+			globalLabels[0] = 1 + 6 * ipl;
+			globalLabels[1] = 2 + 6 * ipl;
+			globalLabels[2] = 3 + 6 * ipl;
+			globalLabels[3] = 4 + 6 * ipl;
+			globalLabels[4] = 5 + 6 * ipl;
+			globalLabels[5] = 6 + 6 * ipl;
+
+			// sanity output, deltaz can be non zero due to rotated sensors
+			streamlog_out ( DEBUG3 ) << "Measured z of ipl " << ipl << " is " << _mesHitsArray[indexconverter[ipl]][jhit].measuredZ << " um" << endl;
+			streamlog_out ( DEBUG3 ) << "Gearfile z of ipl " << ipl << " is " << _activeSensorZ[ipl] * 1000.0 << " um" << endl;
+			double deltaz = _mesHitsArray[indexconverter[ipl]][jhit].measuredZ - _activeSensorZ[ipl] * 1000.0;
+			streamlog_out ( DEBUG3 ) << "GBL DeltaZ of ipl " << ipl << " is " << deltaz << " um" << endl;
+
+			// deltaz cannot be zero, otherwise this mode doesn't work
+			// 1e-6 in um is quite small
+			if ( deltaz < 1E-6 )
+			{
+			    deltaz = 1E-6;
+			}
+
+			// derivatives:
+			alDer6[0][0] = 1.0; // dx/dx
+			alDer6[0][1] = 0.0; // dx/dy
+			if ( ipl < 4 )
+			{
+			    er6[0][2] = sxA[kA]; // dx/dz
+			}
+			else
+			{
+			    er6[0][2] = sxB[kB]; // dx/dz
+			}
+			alDer6[0][3] = 0.0; // dx/da
+			alDer6[0][4] = deltaz; // dx/db
+			alDer6[0][5] = -ys; // dx/dg
+			alDer6[1][0] = 0.0; // dy/dx
+			alDer6[1][1] = 1.0; // dy/dy
+			if ( ipl < 4 )
+			{
+			    er6[1][2] = syA[kA]; // dy/dz
+			}
+			else
+			{
+			    er6[1][2] = syB[kB]; // dy/dz
+			}
+			alDer6[1][3] = -deltaz; // dy/da
+			alDer6[1][4] = 0.0; // dy/db
+			alDer6[1][5] = xs; // dy/dg
+
+			alDer6[2][0] = 0.0; // dz/dx
+			alDer6[2][1] = 0.0; // dz/dy
+			alDer6[2][2] = 1.0; // dz/dz
+			alDer6[2][3] = ys; // dz/da
+			alDer6[2][4] = -xs; // dz/db
+			alDer6[2][5] = 0.0; // dz/dg
+
+			//
+			//// from eutelmille *-1 // FIXME crashes sometimes?!
+			//alDer6[0][0] = 1.0;					// dx/dx
+			//alDer6[0][1] = 0.0;					// dx/dy
+			//alDer6[0][2] = 0.0;					// dx/dz
+			//alDer6[0][3] = 0.0;					// dx/da
+			//alDer6[0][4] = deltaz;					// dx/db
+			//alDer6[0][5] = -1.0*_mesHitsArray[ipl][jhit].measuredY;	// dx/dg
+			//
+			//alDer6[1][0] = 0.0;	// dy/dx
+			//alDer6[1][1] = 1.0;	// dy/dy
+			//alDer6[1][2] = 0.0;	// dy/dz
+			//alDer6[1][3] = -1.0*deltaz;	// dy/da
+			//alDer6[1][4] = 0.0;	// dy/db
+			//alDer6[1][5] = 1.0*_mesHitsArray[ipl][jhit].measuredX;	// dy/dg
+			//
+			//alDer6[2][0] = 0.0;	// dz/dx
+			//alDer6[2][1] = 0.0; 	// dz/dy
+			//alDer6[2][2] = 1.0;	// dz/dz
+			//alDer6[2][3] = 1.0*_mesHitsArray[ipl][jhit].measuredX;	// dz/da
+			//alDer6[2][4] = -1.0*_mesHitsArray[ipl][jhit].measuredY;	// dz/db
+			//alDer6[2][5] = 0.0;	// dz/dg
+			//
+
+			point -> addGlobals ( globalLabels, alDer6 );
+		    }
+		    */
+
+		    traj_points.push_back ( *point );
+
+		    sPoint.push_back ( s );
+
+		    streamlog_out ( DEBUG6 ) << "Point pushed to gbl:" << endl; 
+		    streamlog_out ( DEBUG6 ) << " Labels:" << endl;
+		    for ( size_t ic = 0; ic < point -> getGlobalLabels ( ).size ( ); ic++ )
+		    {
+			streamlog_out ( DEBUG6 ) << "  " << ic << " " << point -> getGlobalLabels ( ) .at ( ic ) << endl;
+		    }
+		    streamlog_out ( DEBUG6 ) << " The number of global parameters for this point is " << point -> getNumGlobals ( ) << endl;
+		    streamlog_out ( DEBUG6 ) << " The alignment matrix after adding the point: " << endl;
+		    streamlog_message ( DEBUG2, point -> getGlobalDerivatives ( ) .Print ( );, std::endl; );
+
+		    delete point;
+
+		    // add air after each plane except last one
+		    if ( ipl < ( looplimit - 1 ) )
+		    {
+			// positions in um
+			zz = _activeSensorZ[ipl] * 1000.0 + ( _activeSensorZ[ipl+ 1] * 1000.0 - _activeSensorZ[ipl] * 1000.0 ) * 0.21;
+			step = zz - zprev;
+			direction[2] = step;
+			jacPointToPoint = Jac55 ( step, direction, _BField );
+			gbl::GblPoint *point1 = new gbl::GblPoint ( jacPointToPoint );
+			s += step;
+			zprev = zz;
+			TVectorD wscatAir ( 2 );
+			// as x0 is in mm, airlength has to be in mm too!
+			double airlength = ( 0.5 * ( _activeSensorZ[ipl+ 1] - _activeSensorZ[ipl] ) );
+			double tetAir = 0.0136 * sqrt ( X0Air * airlength ) / p * ( 1 + 0.038 * std::log ( X0Air * airlength + accum_x0 ) );
+			wscatAir[0] = 1.0 / ( tetAir * tetAir );
+			wscatAir[1] = 1.0 / ( tetAir * tetAir );
+			point1 -> addScatterer ( scat, wscatAir );
+			traj_points.push_back ( *point1 );
+			sPoint.push_back ( s );
+			delete point1;
+			accum_x0 += X0Air * airlength;
+			streamlog_out ( DEBUG6 ) << "Adding air scatterer at z: " << zz << " um in Event " << event -> getEventNumber ( ) << endl;
+			streamlog_out ( DEBUG6 ) << "Accumulated X0 is " << accum_x0 * 1E3 << " E-3!" << endl;
+
+			zz = zprev + ( _activeSensorZ[ipl+ 1] * 1000.0 - _activeSensorZ[ipl] * 1000.0 ) * 0.58;
+			step = zz - zprev;
+			direction[2] = step;
+			jacPointToPoint = Jac55 ( step, direction, _BField );
+			gbl::GblPoint *point2 = new gbl::GblPoint ( jacPointToPoint );
+			s += step;
+			zprev = zz;
+			tetAir = 0.0136 * sqrt ( X0Air * airlength ) / p * ( 1 + 0.038 * std::log ( X0Air * airlength + accum_x0 ) );
+			wscatAir[0] = 1.0 / ( tetAir * tetAir );
+			wscatAir[1] = 1.0 / ( tetAir * tetAir );
+			point2 -> addScatterer ( scat, wscatAir );
+			traj_points.push_back ( *point2 );
+			sPoint.push_back ( s );
+			delete point2;
+			accum_x0 += X0Air * airlength;
+			streamlog_out ( DEBUG6 ) << "Adding air scatterer at z: " << zz << " um in Event " << event -> getEventNumber ( ) << endl;
+			streamlog_out ( DEBUG6 ) << "Accumulated X0 is " << accum_x0 * 1E3 << " E-3!" << endl;
+		    } // not last plane
+
+		} // loop over planes
+
+
+		// monitor what we have put into GBL:
+
+		// triplet at telescope centre
+		selxtHist -> fill ( 0.0 );
+		selytHist -> fill ( 0.0 );
+		// track slope
+		selaxtHist -> fill ( 0.0 );
+		selaytHist -> fill ( 0.0 );
+		// driplet at telescope centre
+		selxdHist -> fill ( 0.0 );
+		selydHist -> fill ( 0.0 );
+		// track slope
+		selaxdHist -> fill ( 0.0 );
+		selaydHist -> fill ( 0.0 );
+
+		// triplet-driplet match
+		selrxHist -> fill ( 0.0 );
+		selryHist -> fill ( 0.0 );
+		// triplet-driplet kink
+		selkxHist -> fill ( 0.0 );
+		selkyHist -> fill ( 0.0 );
+
+		selrx0Hist -> fill ( rx[indexconverter[0]] );
+		selry0Hist -> fill ( ry[indexconverter[0]] );
+		selrx1Hist -> fill ( rx[indexconverter[1]] );
+		selry1Hist -> fill ( ry[indexconverter[1]] );
+		selrx2Hist -> fill ( rx[indexconverter[2]] );
+		selry2Hist -> fill ( ry[indexconverter[2]] );
+		selrx6Hist -> fill ( rx[indexconverter[3]] );
+		selry6Hist -> fill ( ry[indexconverter[3]] );
+		selrx3Hist -> fill ( rx[indexconverter[4]] );
+		selry3Hist -> fill ( ry[indexconverter[4]] );
+		selrx4Hist -> fill ( rx[indexconverter[5]] );
+		selry4Hist -> fill ( ry[indexconverter[5]] );
+		selrx5Hist -> fill ( rx[indexconverter[6]] );
+		selry5Hist -> fill ( ry[indexconverter[6]] );
+
+		if ( _useREF > 0 )
+		{
+		    selrx7Hist -> fill ( rx[indexconverter[7]] );
+		    selry7Hist -> fill ( ry[indexconverter[7]] );
+		}
+
+		double Chi2;
+		int Ndf;
+		double lostWeight;
+
+		gbl::GblTrajectory traj ( traj_points, _BField );
+		traj.fit ( Chi2, Ndf, lostWeight );
+		traj.getLabels ( ilab );
+
+		streamlog_out ( DEBUG9 ) << "Fitted track: chi2: " << Chi2 << ", ndf: " << Ndf << endl;
+
+		gblndfHist -> fill ( Ndf );
+		gblchi2Hist -> fill ( Chi2 );
+		double chi2ndf = Chi2 / ( Ndf * 1.0 );
+		gblchi2ndfHist -> fill ( chi2ndf );
+		double probchi = TMath::Prob ( Chi2, Ndf );
+		gblprbHist -> fill ( probchi );
+
+		// possibility to cut on track slope at DUT:
+		TVectorD aCorrection ( 5 );
+		TMatrixDSym aCovariance ( 5 );
+
+		// bad fits:
+		if ( probchi < _probCut || chi2ndf > _chi2ndfCut )
+		{
+		    if ( probchi < _probCut )
+		    {
+			_probCutCount++;
+			streamlog_out ( DEBUG0 ) << "Track failed prob cut!" << endl;
+		    }
+		    if ( chi2ndf > _chi2ndfCut )
+		    {
+			_chi2ndfCutCount++;
+			streamlog_out ( DEBUG0 ) << "Track failed chi2ndf cut!" << endl;
+		    }
+
+		    // triplet at DUT
+		    badxHist -> fill ( 0.0 );
+		    badyHist -> fill ( 0.0 );
+		    // track slope
+		    badaxHist -> fill ( 0.0 );
+		    badayHist -> fill ( 0.0 );
+		    // triplet-driplet match
+		    baddxHist -> fill ( 0.0 );
+		    baddyHist -> fill ( 0.0 );
+		    // triplet-driplet kink
+		    badkxHist -> fill ( 0.0 );
+		    badkyHist -> fill ( 0.0 );
+
+		    baddx0Hist -> fill ( rx[indexconverter[0]] );
+		    baddy0Hist -> fill ( ry[indexconverter[0]] );
+		    baddx1Hist -> fill ( rx[indexconverter[1]] );
+		    baddy1Hist -> fill ( ry[indexconverter[1]] );
+		    baddx2Hist -> fill ( rx[indexconverter[2]] );
+		    baddy2Hist -> fill ( ry[indexconverter[2]] );
+		    baddx6Hist -> fill ( rx[indexconverter[3]] );
+		    baddy6Hist -> fill ( ry[indexconverter[3]] );
+		    baddx3Hist -> fill ( rx[indexconverter[4]] );
+		    baddy3Hist -> fill ( ry[indexconverter[4]] );
+		    baddx4Hist -> fill ( rx[indexconverter[5]] );
+		    baddy4Hist -> fill ( ry[indexconverter[5]] );
+		    baddx5Hist -> fill ( rx[indexconverter[6]] );
+		    baddy5Hist -> fill ( ry[indexconverter[6]] );
+
+		    if ( _useREF > 0 )
+		    {
+			baddx7Hist -> fill ( rx[indexconverter[7]] );
+			baddy7Hist -> fill ( ry[indexconverter[7]] );
+		    }
+
+		}
+		else
+		{
+		    streamlog_out ( DEBUG0 ) << "Good track!" << endl;
+
+		    goodx0Hist -> fill ( rx[indexconverter[0]] );
+		    goody0Hist -> fill ( ry[indexconverter[0]] );
+		    goodx1Hist -> fill ( rx[indexconverter[1]] );
+		    goody1Hist -> fill ( ry[indexconverter[1]] );
+		    goodx2Hist -> fill ( rx[indexconverter[2]] );
+		    goody2Hist -> fill ( ry[indexconverter[2]] );
+		    goodx6Hist -> fill ( rx[indexconverter[3]] );
+		    goody6Hist -> fill ( ry[indexconverter[3]] );
+		    goodx3Hist -> fill ( rx[indexconverter[4]] );
+		    goody3Hist -> fill ( ry[indexconverter[4]] );
+		    goodx4Hist -> fill ( rx[indexconverter[5]] );
+		    goody4Hist -> fill ( ry[indexconverter[5]] );
+		    goodx5Hist -> fill ( rx[indexconverter[6]] );
+		    goody5Hist -> fill ( ry[indexconverter[6]] );
+
+		    if ( _useREF > 0 )
+		    {
+			goodx7Hist -> fill ( rx[indexconverter[7]] );
+			goody7Hist -> fill ( ry[indexconverter[7]] );
+		    }
+
+		    // 6 telescope planes, + 1 dut + 1 ref
+		    double ax[8];
+		    double ay[8];
+		    unsigned int k = 0;
+		    unsigned int ndim = 2;
+
+		    TVectorD aResiduals ( ndim );
+		    TVectorD aMeasErrors ( ndim );
+		    TVectorD aResErrors ( ndim );
+		    TVectorD aDownWeights ( ndim );
+
+		    TVectorD aKinks ( ndim );
+		    TVectorD aKinkErrors ( ndim );
+		    TVectorD kResErrors ( ndim );
+		    TVectorD kDownWeights ( ndim );
+
+		    // prepare an encoder for the hit collection
+		    CellIDEncoder < TrackerHitImpl > fitHitEncoder ( EUTELESCOPE::HITENCODING, fitpointvec );
+
+		    // Set flag for storing track hits in track collection
+		    LCFlagImpl flag ( fittrackvec -> getFlag ( ) );
+		    flag.setBit ( LCIO::TRBIT_HITS );
+		    fittrackvec -> setFlag ( flag.getFlag ( ) );
+
+		    TrackImpl * fittrack = new TrackImpl ( );
+
+		    // curvature of the track
+		    fittrack -> setOmega ( 0.0 );
+		    // impact paramter of the track in (r-phi)
+		    fittrack -> setD0 ( 0.0 );
+		    // impact paramter of the track in (r-z)
+		    fittrack -> setZ0 ( 0.0 );
+		    // phi of the track at reference point
+		    fittrack -> setPhi ( 0.0 );
+		    // dip angle of the track at reference point
+		    fittrack -> setTanLambda ( 0.0 );
+		    // Chi2 of the fit 
+		    fittrack -> setChi2 ( Chi2 );
+		    // number of planes
+		    fittrack -> setNdf ( Ndf );
+
+		    double fitpos[3] = { 0.0, 0.0, 0.0 };
+		    float fitcov[TRKHITNCOVMATRIX] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+
+		    //track = q/p, x', y', x, y
+		    //        0,   1,  2,  3, 4
+
+		    // at plane 0:
+		    int ipos = 0;
+		    traj.getResults ( ipos, aCorrection, aCovariance );
+		    // no results at 0
+		    // traj.getMeasResults ( static_cast < unsigned int > ( ipos ), ndim, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+		    // traj.getScatResults ( static_cast < unsigned int > ( ipos ), ndim, aKinks, aKinkErrors, kResErrors, kDownWeights );
+		    // angle x [mrad]
+		    gblax0Hist -> fill ( 0.0 - aCorrection[1] * 1E3 );
+		    // shift x [um]
+		    gbldx0Hist -> fill ( aCorrection[3] );
+		    // residual x [um]
+		    gblrx0Hist -> fill ( rx[indexconverter[0]] - aCorrection[3] );
+		    // angle y [mrad]
+		    gblay0Hist -> fill ( 0.0 - aCorrection[2] * 1E3 );
+		    // shift y [um]
+		    gbldy0Hist -> fill ( aCorrection[4] );
+		    // residual y [um]
+		    gblry0Hist -> fill ( ry[indexconverter[0]] - aCorrection[4] );
+		    // pull residual x
+		    gblpx0Hist -> fill ( 0.0 );
+		    // pull residual y 
+		    gblpy0Hist -> fill ( 0.0 );
+		    // angle correction at plane, for kinks
+		    ax[k] = aCorrection[1];
+		    // angle correction at plane, for kinks
+		    ay[k] = aCorrection[2];
+
+		    // the fit at this point is the measurement - aCorrection, so we can save these fit hits:
+		    TrackerHitImpl * fitpoint0 = new TrackerHitImpl;
+		    fitHitEncoder["sensorID"] =  0;
+		    fitHitEncoder["properties"] = kFittedHit;
+		    fitHitEncoder.setCellID ( fitpoint0 );
+
+		    // for output go back to mm:
+		    fitpos[0] = ( _mesHitsArray[indexconverter[0]][jhit].measuredX - aCorrection[3] ) / 1000.0;
+		    fitpos[1] = ( _mesHitsArray[indexconverter[0]][jhit].measuredY - aCorrection[4] ) / 1000.0;
+		    fitpos[2] = _mesHitsArray[indexconverter[0]][jhit].measuredZ / 1000.0;
+
+		    fitpoint0 -> setPosition ( fitpos );
+
+		    fitpoint0 -> setCovMatrix ( fitcov );
+		    fitpointvec -> push_back ( fitpoint0 );
+		    fittrack -> addHit ( fitpoint0 );
+
+		    // for plane 0: this is the reference
+		    float refpoint[3];
+		    refpoint[0] = fitpos[0];
+		    refpoint[1] = fitpos[1];
+		    refpoint[2] = fitpos[2];
+
+		    k++;
+
+		    ipos = 1;
+		    traj.getResults ( ipos, aCorrection, aCovariance );
+		    traj.getMeasResults ( static_cast < unsigned int > ( ipos ), ndim, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+		    traj.getScatResults ( static_cast < unsigned int > ( ipos ), ndim, aKinks, aKinkErrors, kResErrors, kDownWeights );
+		    gblax1Hist -> fill ( 0.0 - aCorrection[1] * 1E3 );
+		    gbldx1Hist -> fill ( aCorrection[3] );
+		    gblrx1Hist -> fill ( rx[indexconverter[1]] - aCorrection[3] );
+		    gblay1Hist -> fill ( 0.0 - aCorrection[2] * 1E3 );
+		    gbldy1Hist -> fill ( aCorrection[4] );
+		    gblry1Hist -> fill ( ry[indexconverter[1]] - aCorrection[4] );
+		    gblpx1Hist -> fill ( aResiduals[0] / aResErrors[0] );
+		    gblpy1Hist -> fill ( aResiduals[1] / aResErrors[1] ); 
+		    ax[k] = aCorrection[1];
+		    ay[k] = aCorrection[2];
+
+		    TrackerHitImpl * fitpoint1 = new TrackerHitImpl;
+		    fitHitEncoder["sensorID"] =  1;
+		    fitHitEncoder["properties"] = kFittedHit;
+		    fitHitEncoder.setCellID ( fitpoint1 );
+
+		    // for output go back to mm:
+		    fitpos[0] = ( _mesHitsArray[indexconverter[1]][jhit].measuredX - aCorrection[3] ) / 1000.0;
+		    fitpos[1] = ( _mesHitsArray[indexconverter[1]][jhit].measuredY - aCorrection[4] ) / 1000.0;
+		    fitpos[2] = _mesHitsArray[indexconverter[1]][jhit].measuredZ / 1000.0;
+
+		    fitpoint1 -> setPosition ( fitpos );
+
+		    fitpoint1 -> setCovMatrix ( fitcov );
+		    fitpointvec -> push_back ( fitpoint1 );
+		    fittrack -> addHit ( fitpoint1 );
+
+		    k++;
+
+		    ipos = 2;
+		    traj.getResults ( ipos, aCorrection, aCovariance );
+		    traj.getMeasResults ( static_cast < unsigned int > ( ipos ), ndim, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+		    traj.getScatResults ( static_cast < unsigned int > ( ipos ), ndim, aKinks, aKinkErrors, kResErrors, kDownWeights );
+		    gblax2Hist -> fill ( 0.0 - aCorrection[1] * 1E3 );
+		    gbldx2Hist -> fill ( aCorrection[3] );
+		    gblrx2Hist -> fill ( rx[indexconverter[2]] - aCorrection[3] );
+		    gblay2Hist -> fill ( 0.0 - aCorrection[2] * 1E3 );
+		    gbldy2Hist -> fill ( aCorrection[4] );
+		    gblry2Hist -> fill ( ry[indexconverter[2]] - aCorrection[4] );
+		    gblpx2Hist -> fill ( aResiduals[0] / aResErrors[0] );
+		    gblpy2Hist -> fill ( aResiduals[1] / aResErrors[1] );
+		    ax[k] = aCorrection[1];
+		    ay[k] = aCorrection[2];
+	
+		    TrackerHitImpl * fitpoint2 = new TrackerHitImpl;
+		    fitHitEncoder["sensorID"] =  2;
+		    fitHitEncoder["properties"] = kFittedHit;
+		    fitHitEncoder.setCellID ( fitpoint2 );
+
+		    // for output go back to mm:
+		    fitpos[0] = ( _mesHitsArray[indexconverter[2]][jhit].measuredX - aCorrection[3] ) / 1000.0;
+		    fitpos[1] = ( _mesHitsArray[indexconverter[2]][jhit].measuredY - aCorrection[4] ) / 1000.0;
+		    fitpos[2] = _mesHitsArray[indexconverter[2]][jhit].measuredZ / 1000.0;
+
+		    fitpoint2 -> setPosition ( fitpos );
+
+		    fitpoint2 -> setCovMatrix ( fitcov );
+		    fitpointvec -> push_back ( fitpoint2 );
+		    fittrack -> addHit ( fitpoint2 );
+
+		    k++;
+
+		    ipos = 3; // 6 = DUT
+		    traj.getResults ( ipos, aCorrection, aCovariance );
+		    traj.getMeasResults ( static_cast < unsigned int > ( ipos ), ndim, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+		    traj.getScatResults ( static_cast < unsigned int > ( ipos ), ndim, aKinks, aKinkErrors, kResErrors, kDownWeights );
+		    gblax6Hist -> fill ( 0.0 - aCorrection[1] * 1E3 );
+		    gbldx6Hist -> fill ( aCorrection[3] );
+		    gblrx6Hist -> fill ( rx[indexconverter[3]] - aCorrection[3] );
+		    gblay6Hist -> fill ( 0.0 - aCorrection[2] * 1E3 );
+		    gbldy6Hist -> fill ( aCorrection[4] );
+		    gblry6Hist -> fill ( ry[indexconverter[3]] - aCorrection[4] );
+		    gblpx6Hist -> fill ( aResiduals[0] / aResErrors[0] );
+		    gblpy6Hist -> fill ( aResiduals[1] / aResErrors[1] );
+		    ax[k] = aCorrection[1];
+		    ay[k] = aCorrection[2];
+
+		    TrackerHitImpl * fitpoint3 = new TrackerHitImpl;
+		    fitHitEncoder["sensorID"] =  6;
+		    fitHitEncoder["properties"] = kFittedHit;
+		    fitHitEncoder.setCellID ( fitpoint3 );
+
+		    // for output go back to mm:
+
+		    // for the DUT, the point can come from a measurement or from the fit:
+		    if ( _requireDUTHit == 0 )
+		    {
+			fitpos[0] = _fitHitsArray[indexconverter[3]][jhit].measuredX / 1000.0;
+			fitpos[1] = _fitHitsArray[indexconverter[3]][jhit].measuredY / 1000.0;
+			fitpos[2] = _fitHitsArray[indexconverter[3]][jhit].measuredZ / 1000.0;
+		    }
+		    else
+		    {
+			fitpos[0] = ( _mesHitsArray[indexconverter[3]][jhit].measuredX - aCorrection[3] ) / 1000.0;
+			fitpos[1] = ( _mesHitsArray[indexconverter[3]][jhit].measuredY - aCorrection[4] ) / 1000.0;
+			fitpos[2] = _mesHitsArray[indexconverter[3]][jhit].measuredZ / 1000.0;
+		    }
+
+		    // fill detailed residuals
+		    dutrxxHist -> fill ( rx[indexconverter[3]], fitpos[0] );
+		    dutrxyHist -> fill ( rx[indexconverter[3]], fitpos[1] );
+		    dutrxzHist -> fill ( rx[indexconverter[3]], ( fitpos[2] - ( _dutplane.Z ( ) / 1000.0 ) ) );
+		    dutrxxProf -> Fill ( fitpos[0], rx[indexconverter[3]], 1 );
+		    dutrxyProf -> Fill ( fitpos[1], rx[indexconverter[3]], 1 );
+		    dutrxzProf -> Fill ( ( fitpos[2] - ( _dutplane.Z ( ) / 1000.0 ) ), rx[indexconverter[3]], 1 );
+		    dutrxsxHist -> fill ( rx[indexconverter[3]], 0.0 );
+		    dutrxsyHist -> fill ( rx[indexconverter[3]], 0.0 );
+		    dutrxkxHist -> fill ( rx[indexconverter[3]], 0.0 );
+		    dutrxkyHist -> fill ( rx[indexconverter[3]], 0.0 );
+		    dutrxchi2ndfHist -> fill ( rx[indexconverter[3]], chi2ndf );
+		    dutrxprobHist -> fill ( rx[indexconverter[3]], probchi );
+
+		    dutryxHist -> fill ( ry[indexconverter[3]], fitpos[0] );
+		    dutryyHist -> fill ( ry[indexconverter[3]], fitpos[1] );
+		    dutryzHist -> fill ( ry[indexconverter[3]], ( fitpos[2] - ( _dutplane.Z ( ) / 1000.0 ) ) );
+		    dutryxProf -> Fill ( fitpos[0], ry[indexconverter[3]], 1 );
+		    dutryyProf -> Fill ( fitpos[1], ry[indexconverter[3]], 1 );
+		    dutryzProf -> Fill ( ( fitpos[2] - ( _dutplane.Z ( ) / 1000.0 ) ), ry[indexconverter[3]], 1 );
+		    dutrysxHist -> fill ( ry[indexconverter[3]], 0.0 );
+		    dutrysyHist -> fill ( ry[indexconverter[3]], 0.0 );
+		    dutrykxHist -> fill ( ry[indexconverter[3]], 0.0 );
+		    dutrykyHist -> fill ( ry[indexconverter[3]], 0.0 );
+		    dutrychi2ndfHist -> fill ( ry[indexconverter[3]], chi2ndf );
+		    dutryprobHist -> fill ( ry[indexconverter[3]], probchi );
+
+		    // FIXME
+		    rz[indexconverter[3]] = _fitHitsArray[indexconverter[3]][jhit].measuredZ / 1000.0 - fitpos[2];
+
+		    dutrzxHist -> fill ( rz[indexconverter[3]], fitpos[0] );
+		    dutrzyHist -> fill ( rz[indexconverter[3]], fitpos[1] );
+		    dutrzzHist -> fill ( rz[indexconverter[3]], ( fitpos[2] - ( _dutplane.Z ( ) / 1000.0 ) ) );
+		    dutrzxProf -> Fill ( fitpos[0], rz[indexconverter[3]], 1 );
+		    dutrzyProf -> Fill ( fitpos[1], rz[indexconverter[3]], 1 );
+		    dutrzzProf -> Fill ( ( fitpos[2] - ( _dutplane.Z ( ) / 1000.0 ) ), rz[indexconverter[3]], 1 );
+		    dutrzsxHist -> fill ( rz[indexconverter[3]], 0.0 );
+		    dutrzsyHist -> fill ( rz[indexconverter[3]], 0.0 );
+		    dutrzkxHist -> fill ( rz[indexconverter[3]], 0.0 );
+		    dutrzkyHist -> fill ( rz[indexconverter[3]], 0.0 );
+		    dutrzchi2ndfHist -> fill ( rz[indexconverter[3]], chi2ndf );
+		    dutrzprobHist -> fill ( rz[indexconverter[3]], probchi );
+
+		    // fill kink vs impact map
+		    dutkxmap -> fill ( fitpos[0], fitpos[1], 0.0 );
+		    dutkymap -> fill ( fitpos[0], fitpos[1], 0.0 );
+		    dutkmap -> fill ( fitpos[0], fitpos[1], 0.0 );
+
+		    // hitmap for comparison
+		    duthitmap -> fill ( fitpos[0], fitpos[1] );
+		    duttrackhitmap -> fill ( _fitHitsArray[indexconverter[3]][jhit].measuredX / 1000.0, _fitHitsArray[indexconverter[3]][jhit].measuredY / 1000.0 );
+
+		    fitpoint3 -> setPosition ( fitpos );
+
+		    fitpoint3 -> setCovMatrix ( fitcov );
+		    fitpointvec -> push_back ( fitpoint3 );
+		    fittrack -> addHit ( fitpoint3 );
+	
+		    k++;
+
+		    ipos = 4;
+		    traj.getResults ( ipos, aCorrection, aCovariance );
+		    traj.getMeasResults ( static_cast < unsigned int > ( ipos ), ndim, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+		    traj.getScatResults ( static_cast < unsigned int > ( ipos ), ndim, aKinks, aKinkErrors, kResErrors, kDownWeights );
+		    gblax3Hist -> fill ( 0.0 - aCorrection[1] * 1E3 );
+		    gbldx3Hist -> fill ( aCorrection[3] );
+		    gblrx3Hist -> fill ( rx[indexconverter[4]] - aCorrection[3] );
+		    gblay3Hist -> fill ( 0.0 - aCorrection[2] * 1E3 );
+		    gbldy3Hist -> fill ( aCorrection[4] );
+		    gblry3Hist -> fill ( ry[indexconverter[4]] - aCorrection[4] );
+		    gblpx3Hist -> fill ( aResiduals[0] / aResErrors[0] );
+		    gblpy3Hist -> fill ( aResiduals[1] / aResErrors[1] );
+		    ax[k] = aCorrection[1];
+		    ay[k] = aCorrection[2];
+
+		    TrackerHitImpl * fitpoint4 = new TrackerHitImpl;
+		    fitHitEncoder["sensorID"] =  3;
+		    fitHitEncoder["properties"] = kFittedHit;
+		    fitHitEncoder.setCellID ( fitpoint4 );
+
+		    // for output go back to mm:
+		    fitpos[0] = ( _mesHitsArray[indexconverter[4]][jhit].measuredX - aCorrection[3] ) / 1000.0;
+		    fitpos[1] = ( _mesHitsArray[indexconverter[4]][jhit].measuredY - aCorrection[4] ) / 1000.0;
+		    fitpos[2] = _mesHitsArray[indexconverter[4]][jhit].measuredZ / 1000.0;
+
+		    fitpoint4 -> setPosition ( fitpos );
+
+		    fitpoint4 -> setCovMatrix ( fitcov );
+		    fitpointvec -> push_back ( fitpoint4 );
+		    fittrack -> addHit ( fitpoint4 );
+
+		    k++;
+
+		    ipos = 5;
+		    traj.getResults ( ipos, aCorrection, aCovariance );
+		    traj.getMeasResults ( static_cast < unsigned int > ( ipos ), ndim, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+		    traj.getScatResults ( static_cast < unsigned int > ( ipos ), ndim, aKinks, aKinkErrors, kResErrors, kDownWeights );
+		    gblax4Hist -> fill ( 0.0 - aCorrection[1] * 1E3 );
+		    gbldx4Hist -> fill ( aCorrection[3] );
+		    gblrx4Hist -> fill ( rx[indexconverter[5]] - aCorrection[3] );
+		    gblay4Hist -> fill ( 0.0 - aCorrection[2]* 1E3 );
+		    gbldy4Hist -> fill ( aCorrection[4] );
+		    gblry4Hist -> fill ( ry[indexconverter[5]] - aCorrection[4] );
+		    gblpx4Hist -> fill ( aResiduals[0] / aResErrors[0] );
+		    gblpy4Hist -> fill ( aResiduals[1] / aResErrors[1] );
+		    ax[k] = aCorrection[1];
+		    ay[k] = aCorrection[2];
+
+		    TrackerHitImpl * fitpoint5 = new TrackerHitImpl;
+		    fitHitEncoder["sensorID"] =  4;
+		    fitHitEncoder["properties"] = kFittedHit;
+		    fitHitEncoder.setCellID ( fitpoint5 );
+
+		    // for output go back to mm:
+		    fitpos[0] = ( _mesHitsArray[indexconverter[5]][jhit].measuredX - aCorrection[3] ) / 1000.0;
+		    fitpos[1] = ( _mesHitsArray[indexconverter[5]][jhit].measuredY - aCorrection[4] ) / 1000.0;
+		    fitpos[2] = _mesHitsArray[indexconverter[5]][jhit].measuredZ / 1000.0;
+
+		    fitpoint5 -> setPosition ( fitpos );
+
+		    fitpoint5 -> setCovMatrix ( fitcov );
+		    fitpointvec -> push_back ( fitpoint5 );
+		    fittrack -> addHit ( fitpoint5 );
+
+		    k++;
+	
+		    ipos = 6;
+		    traj.getResults ( ipos, aCorrection, aCovariance );
+		    traj.getMeasResults ( static_cast < unsigned int > ( ipos ), ndim, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+		    traj.getScatResults ( static_cast < unsigned int > ( ipos ), ndim, aKinks, aKinkErrors, kResErrors, kDownWeights );
+		    gblax5Hist -> fill ( 0.0 - aCorrection[1]* 1E3 );
+		    gbldx5Hist -> fill ( aCorrection[3] );
+		    gblrx5Hist -> fill ( rx[indexconverter[6]] - aCorrection[3] );
+		    gblay5Hist -> fill ( 0.0 - aCorrection[2]* 1E3 );
+		    gbldy5Hist -> fill ( aCorrection[4] );
+		    gblry5Hist -> fill ( ry[indexconverter[6]] - aCorrection[4] );
+		    gblpx5Hist -> fill ( aResiduals[0] / aResErrors[0] );
+		    gblpy5Hist -> fill ( aResiduals[1] / aResErrors[1] );
+		    ax[k] = aCorrection[1];
+		    ay[k] = aCorrection[2];
+
+		    TrackerHitImpl * fitpoint6 = new TrackerHitImpl;
+		    fitHitEncoder["sensorID"] =  5;
+		    fitHitEncoder["properties"] = kFittedHit;
+		    fitHitEncoder.setCellID ( fitpoint6 );
+
+		    // for output go back to mm:
+		    fitpos[0] = ( _mesHitsArray[indexconverter[6]][jhit].measuredX - aCorrection[3] ) / 1000.0;
+		    fitpos[1] = ( _mesHitsArray[indexconverter[6]][jhit].measuredY - aCorrection[4] ) / 1000.0;
+		    fitpos[2] = _mesHitsArray[indexconverter[6]][jhit].measuredZ / 1000.0;
+
+		    fitpoint6 -> setPosition ( fitpos );
+
+		    fitpoint6 -> setCovMatrix ( fitcov );
+		    fitpointvec -> push_back ( fitpoint6 );
+		    fittrack -> addHit ( fitpoint6 );
+
+		    k++;
+
+		    if ( _useREF > 0 )
+		    {
+			ipos = 7;
+			traj.getResults ( ipos, aCorrection, aCovariance );
+			traj.getMeasResults ( static_cast < unsigned int > ( ipos ), ndim, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+			traj.getScatResults ( static_cast < unsigned int > ( ipos ), ndim, aKinks, aKinkErrors, kResErrors, kDownWeights );
+			gblax7Hist -> fill ( 0.0 - aCorrection[1]* 1E3 );
+			gbldx7Hist -> fill ( aCorrection[3] );
+			gblrx7Hist -> fill ( rx[indexconverter[7]] - aCorrection[3] );
+			gblay7Hist -> fill ( 0.0 - aCorrection[2]* 1E3 );
+			gbldy7Hist -> fill ( aCorrection[4] );
+			gblry7Hist -> fill ( ry[indexconverter[7]] - aCorrection[4] );
+			gblpx7Hist -> fill ( aResiduals[0] / aResErrors[0] );
+			gblpy7Hist -> fill ( aResiduals[1] / aResErrors[1] );
+			ax[k] = aCorrection[1];
+			ay[k] = aCorrection[2];
+
+			TrackerHitImpl * fitpoint7 = new TrackerHitImpl;
+			fitHitEncoder["sensorID"] =  7;
+			fitHitEncoder["properties"] = kFittedHit;
+			fitHitEncoder.setCellID ( fitpoint7 );
+
+			// for output go back to mm:
+			fitpos[0] = ( _mesHitsArray[indexconverter[7]][jhit].measuredX - aCorrection[3] ) / 1000.0;
+			fitpos[1] = ( _mesHitsArray[indexconverter[7]][jhit].measuredY - aCorrection[4] ) / 1000.0;
+			fitpos[2] = _mesHitsArray[indexconverter[7]][jhit].measuredZ / 1000.0;
+
+			fitpoint7 -> setPosition ( fitpos );
+
+			fitpoint7 -> setCovMatrix ( fitcov );
+			fitpointvec -> push_back ( fitpoint7 );
+			fittrack -> addHit ( fitpoint7 );
+
+			k++;
+		    }
+	
+		    // done with the track
+		    fittrack -> setReferencePoint ( refpoint );
+		    fittrackvec -> addElement ( fittrack );
+
+		    // kinks in x in mrad
+		    gblkx1Hist -> fill ( ( ax[indexconverter[1]] - ax[indexconverter[0]] ) * 1E3 );
+		    gblkx2Hist -> fill ( ( ax[indexconverter[2]] - ax[indexconverter[1]] ) * 1E3 );
+		    gblkx6Hist -> fill ( ( ax[indexconverter[3]] - ax[indexconverter[2]] ) * 1E3 );
+		    gblkx3Hist -> fill ( ( ax[indexconverter[4]] - ax[indexconverter[3]] ) * 1E3 );
+		    gblkx4Hist -> fill ( ( ax[indexconverter[5]] - ax[indexconverter[4]] ) * 1E3 );
+		    gblkx5Hist -> fill ( ( ax[indexconverter[6]] - ax[indexconverter[5]] ) * 1E3 );
+
+		    if ( _useREF > 0 )
+		    {
+			gblkx7Hist -> fill ( ( ax[indexconverter[7]] - ax[indexconverter[7]] ) * 1E3 );
+		    }
+	
+		    // kinks in y in mrad
+		    gblky1Hist -> fill ( ( ay[indexconverter[1]] - ay[indexconverter[0]] ) * 1E3 );
+		    gblky2Hist -> fill ( ( ay[indexconverter[2]] - ay[indexconverter[1]] ) * 1E3 );
+		    gblky6Hist -> fill ( ( ay[indexconverter[3]] - ay[indexconverter[2]] ) * 1E3 );
+		    gblky3Hist -> fill ( ( ay[indexconverter[4]] - ay[indexconverter[3]] ) * 1E3 );
+		    gblky4Hist -> fill ( ( ay[indexconverter[5]] - ay[indexconverter[4]] ) * 1E3 );
+		    gblky5Hist -> fill ( ( ay[indexconverter[6]] - ay[indexconverter[5]] ) * 1E3 );
+
+		    if ( _useREF > 0 )
+		    {
+			gblky7Hist -> fill ( ( ay[indexconverter[7]] - ay[indexconverter[7]] ) * 1E3 );
+		    }
+
+		    // done
+		    streamlog_message ( DEBUG0, traj.printTrajectory ( 10 );, std::endl; );
+
+		    // output to millepede
+		    nmGood++;
+		    traj.milleOut ( *milleGBL );
+		    _nGoodMilleTracks++;
+
+		} // prob and chi2ndf cut
+
+	    } // done track loop
+	}
+	catch ( ... )
+	{
+	    
+	}
+    }
+
+    if ( _doPreAlignment == 0 && _useTrackFit == false )
     {
 	int ntri = 0;
 	double xmA[499];

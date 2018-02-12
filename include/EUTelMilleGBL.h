@@ -116,6 +116,7 @@ namespace eutelescope
 	    bool _dthistos;
 	    bool _dutplanevectors;
 	    bool _pre_alignmentloaded;
+	    bool _useTrackFit;
 	    bool _x0histos;
 
 	    double _chi2ndfCut;
@@ -184,6 +185,7 @@ namespace eutelescope
 	    std::string _outputHitCollectionName;
 	    std::string _outputTrackCollectionName;
 	    std::string _pedeSteerfileName;
+	    std::string _trackFitCollectionName;
 
 	    TVector3 _Xaxis;
 	    TVector3 _Yaxis;
