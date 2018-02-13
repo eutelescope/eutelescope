@@ -104,9 +104,6 @@ namespace eutelescope {
         /** Output Tracks collection name */
         std::string _tracksOutputCollectionName;
 
-        /** Allows user-added commands in the pede steering file */
-				lcio::StringVec _pedeSteerAddCmds;
-
 				EUTelMillepede* _Mille;
 
         /** Alignment constants file name */

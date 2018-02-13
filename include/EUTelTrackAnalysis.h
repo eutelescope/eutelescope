@@ -57,7 +57,7 @@ namespace eutelescope {
 		AIDA::IHistogram1D * _beamEnergy;
 		AIDA::IProfile1D   * _pValueBeamEnergy;
 		AIDA::IProfile1D * _pValueVsBeamEnergy;
-		float calculatePValueForChi2(EUTelTrack track);
+		//float calculatePValueForChi2(EUTelTrack track);
  //       std::string _histoInfoFileName;
 
 

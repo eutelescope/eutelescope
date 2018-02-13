@@ -273,7 +273,7 @@ void EUTelState::setPositionLocal(float position[]){
 }
 
 void EUTelState::setPositionLocal(double position[]){
-    float pos[3] = {position[0],position[1],position[2]};
+    double pos[3] = {position[0],position[1],position[2]};
     _position[0] = pos[0];
     _position[1] = pos[1];
     _position[2] = pos[2];
@@ -340,9 +340,10 @@ TVector3 EUTelState::getMomGlobal() const {
 //WE ALSO GET THE FRACTION OF RADIATION LENGTH THAT EACH PLANE AND VOLUME OF AIR SHOULD GET. 
 //THIS IS ASSOCIATED SO THE AIR INFRONT OF A SENSOR IS ASSOCIATED WITH IT.
 //EXCLUDED PLANES ARE REDUCED TO MORE RADIATION LENGTH IN FRONT OF A NON EXCLUDED PLANE.
+/*
 float EUTelState::computeRadLengthsToEnd( std::map<const int,double> & mapSensor, std::map<const int ,double> & mapAir){
 	//Get the ID of the last sensor
-	int lastPlaneID; // =  	geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at( geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1 );
+	int lastPlaneID = 0; // =  	geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at( geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1 );
 	float intersectionPoint[3];
 	TVector3 momentumAtIntersection;
 	float arcLength;
@@ -352,13 +353,15 @@ float EUTelState::computeRadLengthsToEnd( std::map<const int,double> & mapSensor
 	TVector3 gPos =  getPositionGlobal();
 	//TO DO: At the moment we just use a straight through the sensor in all enviroments. The code is designed to extend this to any straight line but we see some addition of extra radiation length beyond what is expect. This will have to be looked into but not a huge issue at the moment.
 	//NOTE THE Z VALUE FOR THESE ARE NOT USED IN calculateTotalRadiationLengthAndWeights
-	const double start[] = {gPos[0],gPos[1],-0.025+gPos[2]};
-	const double end[]   = {gPos[0],gPos[1],gPos[2]+0.025};//Must make sure we add all silicon.
+	//const double start[] = {gPos[0],gPos[1],-0.025+gPos[2]};
+	//const double end[]   = {gPos[0],gPos[1],gPos[2]+0.025};//Must make sure we add all silicon.
 	//NOW WE CALCULATE THE RADIATION LENGTH FOR THE FULL FLIGHT AND THEN SPLIT THESE INTO LINEAR  COMMPONENTS FOR SCATTERING ESTIMATION. 
 	//We will return the radiation lengths associate with the planes and air. Note excluded planes volume should be added to the air in front of non excluded planes. 
-	float rad =	geo::gGeometry().calculateTotalRadiationLengthAndWeights( start,end,  mapSensor, mapAir);
+	//float rad =	geo::gGeometry().calculateTotalRadiationLengthAndWeights( start,end,  mapSensor, mapAir);
+	float rad =	1.0;
 	return rad;
 }
+*/
 
 
 //print

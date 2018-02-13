@@ -101,7 +101,7 @@ void EUTelMillepede::setGlobalLabels( int iPlane){
 
 }
   
-void EUTelMillepede::writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds){
+void EUTelMillepede::writeMilleSteeringFile(){
 }
 void EUTelMillepede::copyFile(std::string _milleSteeringFilename, std::string _milleSteerNameOldFormat){
 	std::ifstream infile (_milleSteeringFilename.c_str(),std::ifstream::binary);
@@ -183,7 +183,7 @@ bool EUTelMillepede::runPede(){
 	}//END OF IF STATEMENT
 }
 bool EUTelMillepede::findTooManyRejects(std::string output){
-	int found = output.find("Too many rejects (>33.3%)");
+	size_t found = output.find("Too many rejects (>33.3%)");
 	if (found == std::string::npos){
 		streamlog_out(MESSAGE5)<<endl<<"Number of rejects low. Continue with alignment."<<endl;
 		return false;

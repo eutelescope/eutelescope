@@ -63,7 +63,7 @@ void EUTelTrackAnalysis::plotPValueVsBeamEnergy(EUTelTrack track){
 	EUTelState state  = states.at(0);
 	state.print();
 	float omega = -1.0/state.getMomLocal().Mag();	
-	float pValue = calculatePValueForChi2(track);
+	float pValue = 1.0;//calculatePValueForChi2(track);
 	_pValueVsBeamEnergy->fill(-1.0/omega, pValue);
 
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueVsBeamEnergy------------------------------END"<< std::endl;
@@ -105,7 +105,7 @@ void EUTelTrackAnalysis::plotIncidenceAngles(EUTelTrack track){
 }
 void EUTelTrackAnalysis::plotPValueWithIncidenceAngles(EUTelTrack track){
 	streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueWithIncidenceAngles------------------------------BEGIN"<< std::endl;
-	float pValue = calculatePValueForChi2(track);
+	float pValue = 1.0;//calculatePValueForChi2(track);
 	std::vector<EUTelState> states = track.getStates();
 	for(size_t i=0; i<states.size();++i){
 		EUTelState state  = states.at(i);
@@ -141,7 +141,7 @@ void EUTelTrackAnalysis::plotPValueWithIncidenceAngles(EUTelTrack track){
 
 void EUTelTrackAnalysis::plotPValueWithPosition(EUTelTrack track){
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueWithPosition------------------------------BEGIN"<< std::endl;
-	float pValue = calculatePValueForChi2(track);
+	float pValue = 1.0;//calculatePValueForChi2(track);
 	std::vector<EUTelState> states = track.getStates();
 	for(size_t i=0; i<states.size();++i){
 		EUTelState state  = states.at(i);
@@ -160,11 +160,13 @@ void EUTelTrackAnalysis::plotPValueWithPosition(EUTelTrack track){
 	}
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueWithPosition------------------------------END"<< std::endl;
 }
+/*
 float EUTelTrackAnalysis::calculatePValueForChi2(EUTelTrack track){
 //    boost::math::chi_squared mydist(track.getNdf());
 //    float pValue = 1 - boost::math::cdf(mydist,track.getChi2());
     return 1.0;
 }
+*/
 
 //FLOAT EUTelTrackAnalysis::calculatePValueForChi2(EUTelTrack track){
 //  streamlog_out(DEBUG2) << " EUTelTrackAnalysis::calculatePValueForChi2------------------------------BEGIN"<< std::endl;

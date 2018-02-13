@@ -12,14 +12,6 @@ EUTelTrack::EUTelTrack(const EUTelTrack& track){
     setTotalVariance(track.getTotalVariance());
 
 }
-EUTelTrack::EUTelTrack(const EUTelTrack& track, bool copyContents){
-    _chi2=0;
-    _nDF=0;
-    _var=0;
-	setChi2(track.getChi2());
-	setNdf(track.getNdf());
-    setTotalVariance(track.getTotalVariance());
-}
 //getters
 float EUTelTrack::getChi2() const {
     return _chi2;

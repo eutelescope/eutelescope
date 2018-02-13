@@ -872,9 +872,9 @@ using namespace eutelescope;
                
         TVector3 p = getPfromCartesianParameters( ts );
 
-	const double H = h.Mag();
-	const double mm = 1000.;
-        const double k = -0.299792458/mm*_beamQ*H;
+	//const double H = h.Mag();
+	//const double mm = 1000.;
+        //const double k = -0.299792458/mm*_beamQ*H;
         
         const double pt  = sqrt(p.Y()*p.Y() + p.Z()*p.Z());
         
