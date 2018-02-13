@@ -59,11 +59,7 @@ EUTelProcessorTrackingHelixTrackSearch::EUTelProcessorTrackingHelixTrackSearch (
 
     registerOutputCollection ( LCIO::TRACK, "TrackCandHitOutputCollectionName", "Output track collection name", _trackCandidateHitsOutputCollectionName, std::string ( "TrackCandidateHitCollection" ) );
 
-    registerOptionalParameter ( "FitPointCollectionName", "Output fit point collection name", _fitpointcollectionname, std::string ( "fitpointcollection" ) );
-
     registerOptionalParameter ( "MaxMissingHitsPerTrack", "Maximal number of missing hits on a track candidate", _maxMissingHitsPerTrackCand, static_cast < int > ( 0 ) );
-
-    registerOptionalParameter ( "MaxNTracksPerEvent", "Maximal number of track candidates to be found in an event", _maxNTracks, static_cast < int > ( 100 ) );
 
     registerOptionalParameter ( "ResidualsRMax", "Maximal allowed distance in mm between hits in the recognition step", _residualsRMax, static_cast < double > ( 0.4 ) );
 
@@ -71,7 +67,7 @@ EUTelProcessorTrackingHelixTrackSearch::EUTelProcessorTrackingHelixTrackSearch (
 
     registerOptionalParameter ( "BeamCharge", "Beam charge in e", _qBeam, static_cast < double > ( -1 ) );
 
-    registerOptionalParameter ( "BeamSpread", "Angular spread of the beam (horizontal,vertical) in mrad for beam constraint. No beam constraints if negative values are supplied.", _beamSpread, EVENT::FloatVec ( 2.0, 0.0 ) );
+    registerOptionalParameter ( "BeamSpread", "Angular spread of the beam (horizontal,vertical) in mrad for beam constraint. No beam constraints if negative values are supplied.", _beamSpread, EVENT::FloatVec ( 2.0, 2.0 ) );
 
     registerOptionalParameter ( "BeamEnergyUncertainty", "Uncertainty of the beam energy in %", _eBeamUncertatinty, static_cast < double > ( 0.0 ) );
 
@@ -143,7 +139,7 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent ( LCEvent * evt )
     if ( event -> getEventType ( ) == kEORE )
     {
 	streamlog_out ( MESSAGE4 ) << "EORE found: nothing else to do." << std::endl;
-        return;
+	return;
     }
     else if ( event -> getEventType ( ) == kUNKNOWN )
     {
@@ -191,7 +187,7 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent ( LCEvent * evt )
 	    streamlog_out ( DEBUG0 ) << "Trying to find tracks..." << std::endl;
 	    LCCollectionVec * myoutvec;
 	    myoutvec = new LCCollectionVec ( LCIO::TRACKERHIT );
-	    
+
 	    LCCollectionVec * tempvec = new LCCollectionVec ( LCIO::TRACKERHIT );
 
 	    _trackFitter -> FitTracks ( );
@@ -218,77 +214,57 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent ( LCEvent * evt )
 		    streamlog_out ( DEBUG0 ) << "Hit with sensor id = " << ( *itrk )->id( ) << ", local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << "," << uvpos[3] << ")" << std::endl;
 		}
 
-		//myoutvec -> insert ( myoutvec -> end ( ), static_cast < EUTelKalmanFilter* > ( _trackFitter ) -> getFitHits ( ) -> begin( ), static_cast < EUTelKalmanFilter* > ( _trackFitter ) -> getFitHits ( ) -> end ( ) );
-		
-		//LCCollectionVec * myoutvec = new LCCollectionVec ( LCIO::TRACKERHIT );
-		
 		myoutvec = static_cast < EUTelKalmanFilter* > ( _trackFitter ) -> getFitHits ( );
-		
-		for (size_t ihit = 0; ihit < myoutvec -> size ( ); ihit++ )
+
+		for ( size_t ihit = 0; ihit < myoutvec -> size ( ); ihit++ )
 		{
 		    CellIDEncoder < TrackerHitImpl > fitHitEncoder ( EUTELESCOPE::HITENCODING, tempvec );
 		    CellIDDecoder < TrackerHitImpl > inputCellIDDecoder ( EUTELESCOPE::HITENCODING );
-		    TrackerHitImpl * inputHit = dynamic_cast < TrackerHitImpl* > (myoutvec -> getElementAt (ihit) );
+		    TrackerHitImpl * inputHit = dynamic_cast < TrackerHitImpl* > ( myoutvec -> getElementAt ( ihit ) );
 		    TrackerHitImpl * newHit = new TrackerHitImpl;
 
-		    const int sensorID = inputCellIDDecoder(inputHit)["sensorID"];
-		    std::cout << "id " << sensorID << std::endl;
-		    
-		    
-		    
-			fitHitEncoder["sensorID"] =  sensorID*2;
-			fitHitEncoder["properties"] = 99;
-			//fitHitEncoder.setCellID ( newHit );
-		    
-    // copy hit position
-    const double* hitPos = inputHit -> getPosition ( );
-    newHit -> setPosition ( &hitPos[0] );
+		    const int sensorID = inputCellIDDecoder ( inputHit ) ["sensorID"];
+		    streamlog_out ( DEBUG0 ) << "id " << sensorID << std::endl;
+		    fitHitEncoder["sensorID"] =  sensorID * 2;
+		    fitHitEncoder["properties"] = 99;
+		    //fitHitEncoder.setCellID ( newHit );
 
-    // copy cov. matrix
-    newHit -> setCovMatrix ( inputHit -> getCovMatrix ( ) );
+		    // copy hit position
+		    const double* hitPos = inputHit -> getPosition ( );
+		    newHit -> setPosition ( &hitPos[0] );
 
-    // copy type
-    newHit -> setType ( inputHit -> getType ( ) );
+		    // copy cov. matrix
+		    newHit -> setCovMatrix ( inputHit -> getCovMatrix ( ) );
 
-    // copy rawhits
-    LCObjectVec clusterVec = inputHit -> getRawHits ( );
-    newHit -> rawHits ( ) = clusterVec;
+		    // copy type
+		    newHit -> setType ( inputHit -> getType ( ) );
 
-    // copy cell IDs
-    newHit -> setCellID0 ( inputHit -> getCellID0 ( ) );
-    newHit -> setCellID1 ( inputHit -> getCellID1 ( ) );
+		    // copy rawhits
+		    LCObjectVec clusterVec = inputHit -> getRawHits ( );
+		    newHit -> rawHits ( ) = clusterVec;
 
-    // copy EDep
-    newHit -> setEDep ( inputHit -> getEDep ( ) );
+		    // copy cell IDs
+		    newHit -> setCellID0 ( inputHit -> getCellID0 ( ) );
+		    newHit -> setCellID1 ( inputHit -> getCellID1 ( ) );
 
-    // copy EDepError
-    newHit -> setEDepError ( inputHit -> getEDepError ( ) );
+		    // copy EDep
+		    newHit -> setEDep ( inputHit -> getEDep ( ) );
 
-    // copy Time
-    newHit -> setTime ( inputHit -> getTime ( ) );
+		    // copy EDepError
+		    newHit -> setEDepError ( inputHit -> getEDepError ( ) );
 
-    // copy Quality
-    newHit -> setQuality ( inputHit -> getQuality ( ) );
-    
-    newHit -> setCovMatrix( inputHit -> getCovMatrix ( ) );
-		
-		tempvec -> push_back ( newHit );
-		
-		
-		
-		
-		( *itrk ) -> addHit ( newHit );
+		    // copy Time
+		    newHit -> setTime ( inputHit -> getTime ( ) );
+
+		    // copy Quality
+		    newHit -> setQuality ( inputHit -> getQuality ( ) );
+
+		    newHit -> setCovMatrix( inputHit -> getCovMatrix ( ) );
+
+		    tempvec -> push_back ( newHit );
+
+		    ( *itrk ) -> addHit ( newHit );
 		}
-		
-		
-		
-		
-		
-		
-		
-		
-
-
 
 		hitTrackHist -> fill ( nHitsOnTrack );
 	    }
@@ -297,11 +273,10 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent ( LCEvent * evt )
 	    if ( nTracks > 0 )
 	    {
 		addTrackCandidateToCollection ( evt, trackCandidates );
-		evt -> addCollection ( tempvec, "testing2" );
+		//evt -> addCollection ( tempvec, "testing2" );
 
 	    }
 
-	    
 	}
 	_nProcessedEvents++;
 
@@ -363,105 +338,26 @@ void EUTelProcessorTrackingHelixTrackSearch::addTrackCandidateToCollection ( LCE
     {
 	streamlog_out ( WARNING2 ) << "Can't allocate output collection!" << endl;
     }
-	
-	
-	LCCollectionVec * myoutvec = new LCCollectionVec ( LCIO::TRACKERHIT );
 
     // fill track parameters
     std::vector < IMPL::TrackImpl* > ::iterator itrk;
     for ( itrk = trackCandidates.begin ( ); itrk != trackCandidates.end ( ); ++itrk )
     {
-	streamlog_out ( DEBUG9 ) << "Track has " << ( *itrk ) -> getTrackerHits ( ) .size ( ) << " hits" << endl;
+	streamlog_out ( DEBUG1 ) << "Track has " << ( *itrk ) -> getTrackerHits ( ) .size ( ) << " hits" << endl;
 	trkCandCollection -> push_back ( ( *itrk ) );
-	
-	//for (size_t i =0; i<( *itrk ) -> getTrackerHits ( ) .size ( ); i++)
-	//{
-	    //TrackerHitImpl * inputHit = dynamic_cast < TrackerHitImpl* > (( *itrk ) -> getTrackerHits ( )[i] );
-//	    myoutvec -> insert ( myoutvec -> end ( ), static_cast < EUTelKalmanFilter* > ( _trackFitter ) -> getFitHits ( ) -> begin( ), static_cast < EUTelKalmanFilter* > ( _trackFitter ) -> getFitHits ( ) -> end ( ) );
-	    //myoutvec -> push_back (inputHit);
-	//}
-	
-	
-	
 
     }
-    
-    /*
-    
-		LCCollectionVec * tempvec = new LCCollectionVec ( LCIO::TRACKERHIT );
-
-		for (size_t ihit = 0; ihit < myoutvec -> size ( ); ihit++ )
-		{
-		    CellIDEncoder < TrackerHitImpl > fitHitEncoder ( EUTELESCOPE::HITENCODING, tempvec );
-		    CellIDDecoder < TrackerHitImpl > inputCellIDDecoder ( EUTELESCOPE::HITENCODING );
-		    TrackerHitImpl * inputHit = dynamic_cast < TrackerHitImpl* > (myoutvec -> getElementAt (ihit) );
-		    TrackerHitImpl * newHit = new TrackerHitImpl;
-
-		    const int sensorID = inputCellIDDecoder(inputHit)["sensorID"];
-		    std::cout << "id " << sensorID << std::endl;
-		    
-		    
-		    
-			fitHitEncoder["sensorID"] =  sensorID;
-			fitHitEncoder["properties"] = kFittedHit;
-			//fitHitEncoder.setCellID ( newHit );
-		    
-    // copy hit position
-    const double* hitPos = inputHit -> getPosition ( );
-    newHit -> setPosition ( &hitPos[0] );
-
-    // copy cov. matrix
-    newHit -> setCovMatrix ( inputHit -> getCovMatrix ( ) );
-
-    // copy type
-    newHit -> setType ( inputHit -> getType ( ) );
-
-    // copy rawhits
-    LCObjectVec clusterVec = inputHit -> getRawHits ( );
-    newHit -> rawHits ( ) = clusterVec;
-
-    // copy cell IDs
-    newHit -> setCellID0 ( inputHit -> getCellID0 ( ) );
-    newHit -> setCellID1 ( inputHit -> getCellID1 ( ) );
-
-    // copy EDep
-    newHit -> setEDep ( inputHit -> getEDep ( ) );
-
-    // copy EDepError
-    newHit -> setEDepError ( inputHit -> getEDepError ( ) );
-
-    // copy Time
-    newHit -> setTime ( inputHit -> getTime ( ) );
-
-    // copy Quality
-    newHit -> setQuality ( inputHit -> getQuality ( ) );
-    
-    newHit -> setCovMatrix( inputHit -> getCovMatrix ( ) );
-		
-		tempvec -> push_back ( newHit );
-		
-		
-		
-		
-		//( *itrk ) -> addHit ( newHit );
-		}
-    
-    
-    */
-    
 
     // write collection
     try
     {
 	streamlog_out ( DEBUG0 ) << "Getting collection " << _trackCandidateHitsOutputCollectionName << endl;
 	evt -> getCollection ( _trackCandidateHitsOutputCollectionName );
-	//evt -> getCollection ( "testing2" );
     }
     catch ( ... )
     {
 	streamlog_out ( DEBUG0 ) << "Adding collection " << _trackCandidateHitsOutputCollectionName << endl;
 	evt -> addCollection ( trkCandCollection, _trackCandidateHitsOutputCollectionName );
-	//evt -> addCollection ( tempvec, "testing2" );
     }
 
 }

@@ -59,8 +59,6 @@ namespace eutelescope
 
 	    int _maxMissingHitsPerTrackCand;
 
-	    int _maxNTracks;
-
 	    string _tgeoFileName;
 
 	public:

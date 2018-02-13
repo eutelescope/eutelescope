@@ -2016,7 +2016,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 
 	    for ( int iTrack = 0; iTrack < collection -> getNumberOfElements ( ); iTrack++ )
 	    {
-		streamlog_out ( DEBUG9 ) << "Reading track " << iTrack << " of " << collection -> getNumberOfElements ( ) << endl;
+		streamlog_out ( DEBUG7 ) << "Reading track " << iTrack << " of " << collection -> getNumberOfElements ( ) << endl;
 		TrackImpl * track = dynamic_cast < TrackImpl* > ( collection -> getElementAt ( iTrack ) );
 		TrackerHitVec hitvec = track -> getTrackerHits ( );
 
@@ -2045,7 +2045,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			    hitsInPlane.measuredZ = 1000 * hit -> getPosition ( ) [2]; // um
 
 			    _fitHitsArray[sensorID].push_back ( hitsInPlane );
-			    streamlog_out ( DEBUG9 ) << " Read fit: ( " << hitsInPlane.measuredX << " | " << hitsInPlane.measuredY << " | " << hitsInPlane.measuredZ << " )" << endl;
+			    streamlog_out ( DEBUG7 ) << " Read fit: ( " << hitsInPlane.measuredX << " | " << hitsInPlane.measuredY << " | " << hitsInPlane.measuredZ << " )" << endl;
 
 			}
 
@@ -2061,7 +2061,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			    hitsInPlane.measuredZ = 1000 * hit -> getPosition ( ) [2]; // um
 
 			    _mesHitsArray[sensorID].push_back ( hitsInPlane );
-			    streamlog_out ( DEBUG9 ) << " Read meas: ( " << hitsInPlane.measuredX << " | " << hitsInPlane.measuredY << " | " << hitsInPlane.measuredZ << " )" << endl;
+			    streamlog_out ( DEBUG7 ) << " Read meas: ( " << hitsInPlane.measuredX << " | " << hitsInPlane.measuredY << " | " << hitsInPlane.measuredZ << " )" << endl;
 			}
 		    }
 
@@ -2569,7 +2569,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		traj.fit ( Chi2, Ndf, lostWeight );
 		traj.getLabels ( ilab );
 
-		streamlog_out ( DEBUG9 ) << "Fitted track: chi2: " << Chi2 << ", ndf: " << Ndf << endl;
+		streamlog_out ( DEBUG7 ) << "Fitted track: chi2: " << Chi2 << ", ndf: " << Ndf << endl;
 
 		gblndfHist -> fill ( Ndf );
 		gblchi2Hist -> fill ( Chi2 );
@@ -2901,9 +2901,12 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		    dutrzprobHist -> fill ( rz[indexconverter[3]], probchi );
 
 		    // fill kink vs impact map
-		    dutkxmap -> fill ( fitpos[0], fitpos[1], 0.0 );
-		    dutkymap -> fill ( fitpos[0], fitpos[1], 0.0 );
-		    dutkmap -> fill ( fitpos[0], fitpos[1], 0.0 );
+		    if ( _x0histos == true )
+		    {
+			dutkxmap -> fill ( fitpos[0], fitpos[1], 0.0 );
+			dutkymap -> fill ( fitpos[0], fitpos[1], 0.0 );
+			dutkmap -> fill ( fitpos[0], fitpos[1], 0.0 );
+		    }
 
 		    // hitmap for comparison
 		    duthitmap -> fill ( fitpos[0], fitpos[1] );
