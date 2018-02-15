@@ -6483,10 +6483,10 @@ void EUTelMilleGBL::bookHistos ( )
 	    {
 
 		dx27Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "InputHits/dx27", 100, -5000, 5000 );
-		dx27Hist -> setTitle ( "Hit Shift REF - Plane 1 in x;x_{7}-x_{2} [um];hit pairs" );
+		dx27Hist -> setTitle ( "Hit Shift REF - Plane 2 in x;x_{7}-x_{2} [um];hit pairs" );
 
 		dy27Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "InputHits/dy27", 100, -5000, 5000 );
-		dy27Hist -> setTitle ( "Hit Shift REF - Plane 1 in y;y_{7}-y_{2} [um];hit pairs" );
+		dy27Hist -> setTitle ( "Hit Shift REF - Plane 2 in y;y_{7}-y_{2} [um];hit pairs" );
 	    }
 
 
