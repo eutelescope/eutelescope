@@ -6865,13 +6865,13 @@ void EUTelMilleGBL::bookHistos ( )
 
 	    }
 
-	    unbiasedDUTrx = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/DUT/unbiasedrx", 100, -500, 500 );
+	    unbiasedDUTrx = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/DUT/unbiasedrx", 500, -500, 500 );
 	    unbiasedDUTrx -> setTitle ( "Unbiased Track Residual at DUT in x;#Deltax [#mum];tracks" );
 
-	    unbiasedDUTry = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/DUT/unbiasedry", 100, -500, 500 );
+	    unbiasedDUTry = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/DUT/unbiasedry", 500, -500, 500 );
 	    unbiasedDUTry -> setTitle ( "Unbiased Track Residual at DUT in y;#Deltay [#mum];tracks" );
 
-	    unbiasedDUTrz = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/DUT/unbiasedrz", 100, -500, 500 );
+	    unbiasedDUTrz = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/DUT/unbiasedrz", 500, -500, 500 );
 	    unbiasedDUTrz -> setTitle ( "Unbiased Track Residual at DUT in z;#Deltaz [#mum];tracks" );
 
 	    dutrxxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutrxx", 100, -500, 500, 100, -15, 15 );
@@ -6949,10 +6949,10 @@ void EUTelMilleGBL::bookHistos ( )
 	    dutrxprobHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutrxprob", 100, -500, 500, 1000, 0, 1 );
 	    dutrxprobHist -> setTitle ( "Track Residual at DUT in x vs Track prob;#Deltax [#mum];prob" );
 
-	    dutryprobHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutryprob", 100, -500, 500, 1000, 0, 1 );
+	    dutryprobHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsY/dutryprob", 100, -500, 500, 1000, 0, 1 );
 	    dutryprobHist -> setTitle ( "Track Residual at DUT in y vs Track prob;#Deltay [#mum];prob" );
 
-	    dutrzprobHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutrzprob", 100, -500, 500, 1000, 0, 1 );
+	    dutrzprobHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsZ/dutrzprob", 100, -500, 500, 1000, 0, 1 );
 	    dutrzprobHist -> setTitle ( "Track Residual at DUT in z vs Track prob;#Deltaz [#mum];prob" );
 
 	    if ( _x0histos == true )
