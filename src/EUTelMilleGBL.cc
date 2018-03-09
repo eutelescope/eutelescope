@@ -214,6 +214,13 @@ AIDA::IHistogram1D * sixryHist;
 AIDA::IHistogram1D * sixkxHist;
 AIDA::IHistogram1D * sixkyHist;
 
+AIDA::IHistogram1D * tfitd0Hist;
+AIDA::IHistogram1D * tfitphiHist;
+AIDA::IHistogram1D * tfitomegaHist;
+AIDA::IHistogram1D * tfitz0Hist;
+AIDA::IHistogram1D * tfittanlambdaHist;
+AIDA::IHistogram1D * tfitchi2ndfHist;
+
 AIDA::IHistogram1D * selxtHist;
 AIDA::IHistogram1D * selytHist;
 AIDA::IHistogram1D * selaxtHist;
@@ -1264,6 +1271,11 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
     LCCollectionVec *fittrackvec = new LCCollectionVec ( LCIO::TRACK );
     LCCollectionVec *fitpointvec = new LCCollectionVec ( LCIO::TRACKERHIT );
 
+    // Mykyta: store the normal vector
+    LCCollectionVec *dutnormalvec = new LCCollectionVec ( LCIO::LCGENERICOBJECT );
+    dutnormalvec -> parameters ( ) .setValue ( "DataDescription", "PosX:d,PosY:d,PosZ:d,NormX:d,NormY:d,NormZ:d" );
+    dutnormalvec -> parameters ( ) .setValue ( "TypeName", "DUT Position and Normal Vector" ); 
+
     // load the alignment only once
     if ( _alignmentloaded == false )
     {
@@ -1287,6 +1299,16 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	getDUTNormal ( );
 	_dutplanevectors = true;
 	streamlog_out ( MESSAGE1 ) <<  "DUT position calculated..." << endl;
+
+	// Mykyta: store it
+	LCGenericObjectImpl* dutVec = new LCGenericObjectImpl ( 0, 0, 6 );
+	dutVec -> setDoubleVal ( 0, _dutplane[0] );
+	dutVec -> setDoubleVal ( 1, _dutplane[1] );
+	dutVec -> setDoubleVal ( 2, _dutplane[2] );
+	dutVec -> setDoubleVal ( 3, _normalvector[0] );
+	dutVec -> setDoubleVal ( 4, _normalvector[1] );
+	dutVec -> setDoubleVal ( 5, _normalvector[2] );
+	dutnormalvec -> addElement ( dutVec );
     }
 
     if ( _iEvt % 1000 == 0 && _doPreAlignment == 0 )
@@ -2019,6 +2041,22 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		streamlog_out ( DEBUG7 ) << "Reading track " << iTrack << " of " << collection -> getNumberOfElements ( ) << endl;
 		TrackImpl * track = dynamic_cast < TrackImpl* > ( collection -> getElementAt ( iTrack ) );
 		TrackerHitVec hitvec = track -> getTrackerHits ( );
+		
+		double d0 = track -> getD0 ( );
+		double phi = track -> getPhi ( );
+		double omega = track -> getOmega ( );
+		double z0 = track -> getZ0 ( );
+		double tanlambda = track -> getTanLambda ( );
+		double chi2 = track -> getChi2 ( );
+		double ndf = track -> getNdf ( );
+		streamlog_out ( DEBUG7 )  << " d0: " << d0 << " phi: " << phi << " omega: " << omega << " z0: " << z0 << " tanlambda: " << tanlambda << " chi2/ndf: " << chi2 / ( ndf * 1.0 ) << " in event: "  << event -> getEventNumber ( ) << endl;
+		
+		tfitd0Hist -> fill ( d0 );
+		tfitphiHist -> fill ( phi );
+		tfitomegaHist -> fill ( omega );
+		tfitz0Hist -> fill ( z0 );
+		tfittanlambdaHist -> fill ( tanlambda );
+		tfitchi2ndfHist -> fill ( chi2 / ( ndf * 1.0 ) );
 
 		std::vector < std::vector < EUTelMilleGBL::HitsInPlane > > _fitHitsArray ( maxplanesinsystem, std::vector < EUTelMilleGBL::HitsInPlane > ( ) );
 		std::vector < std::vector < EUTelMilleGBL::HitsInPlane > > _mesHitsArray ( maxplanesinsystem, std::vector < EUTelMilleGBL::HitsInPlane > ( ) );
@@ -2520,26 +2558,6 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 
 		// monitor what we have put into GBL:
 
-		// triplet at telescope centre
-		selxtHist -> fill ( 0.0 );
-		selytHist -> fill ( 0.0 );
-		// track slope
-		selaxtHist -> fill ( 0.0 );
-		selaytHist -> fill ( 0.0 );
-		// driplet at telescope centre
-		selxdHist -> fill ( 0.0 );
-		selydHist -> fill ( 0.0 );
-		// track slope
-		selaxdHist -> fill ( 0.0 );
-		selaydHist -> fill ( 0.0 );
-
-		// triplet-driplet match
-		selrxHist -> fill ( 0.0 );
-		selryHist -> fill ( 0.0 );
-		// triplet-driplet kink
-		selkxHist -> fill ( 0.0 );
-		selkyHist -> fill ( 0.0 );
-
 		selrx0Hist -> fill ( rx[indexconverter[0]] );
 		selry0Hist -> fill ( ry[indexconverter[0]] );
 		selrx1Hist -> fill ( rx[indexconverter[1]] );
@@ -2597,18 +2615,6 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		    }
 
 		    // triplet at DUT
-		    badxHist -> fill ( 0.0 );
-		    badyHist -> fill ( 0.0 );
-		    // track slope
-		    badaxHist -> fill ( 0.0 );
-		    badayHist -> fill ( 0.0 );
-		    // triplet-driplet match
-		    baddxHist -> fill ( 0.0 );
-		    baddyHist -> fill ( 0.0 );
-		    // triplet-driplet kink
-		    badkxHist -> fill ( 0.0 );
-		    badkyHist -> fill ( 0.0 );
-
 		    baddx0Hist -> fill ( rx[indexconverter[0]] );
 		    baddy0Hist -> fill ( ry[indexconverter[0]] );
 		    baddx1Hist -> fill ( rx[indexconverter[1]] );
@@ -4804,6 +4810,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
     {
 	event -> addCollection ( fittrackvec, _outputTrackCollectionName );
 	event -> addCollection ( fitpointvec, _outputHitCollectionName );
+	event -> addCollection ( dutnormalvec, "dutnormal" );
     }
 
     // fill the rate histos
@@ -5752,6 +5759,7 @@ void EUTelMilleGBL::end ( )
 		} //millepede OK
 
 		event -> addCollection ( constantsCollection, _alignmentConstantCollectionName );
+
 		lcWriter -> writeEvent ( event );
 		delete event;
 
@@ -6563,145 +6571,179 @@ void EUTelMilleGBL::bookHistos ( )
 		dy67Hist -> setTitle ( "Hit Shift REF - DUT in y;y_{7}-y_{6} [um];hit pairs" );
 	    }
 
-
-	    AIDAProcessor::tree ( this ) -> mkdir ( "TripletsDriplets" );
-
-	    trirxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/trirx", 100, -1000, 1000 );
-	    trirxHist -> setTitle ( "Triplet Residual in x;x_{1}-x_{02} [um];triplets" );
-
-	    triryHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/triry", 100, -1000, 1000 );
-	    triryHist -> setTitle ( "Triplet Residual in y;y_{1}-y_{02} [um];triplets" );
-
-	    ntriHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/ntri", 21, -0.5, 20.5 );
-	    ntriHist -> setTitle ( "Number of Triplets;triplets;events" );
-
-
-	    trirxdutHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/tridutrx", 100, -1000, 1000 );
-	    trirxdutHist -> setTitle ( "Triplet DUT Extrapolation Residual in x;x_{6}-x_{02extrap} [um];triplets" );
-
-	    trirydutHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/tridutry", 100, -1000, 1000 );
-	    trirydutHist -> setTitle ( "Triplet DUT Extrapolation Residual in y;y_{6}-y_{02extrap} [um];triplets" );
-
-
-	    drirxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/dridx", 100, -1000, 1000 );
-	    drirxHist -> setTitle ( "Driplet Residual in x;x_{4}-x_{35} [um];driplets" );
-
-	    driryHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/dridy", 100, -1000, 1000 );
-	    driryHist -> setTitle ( "Driplet Residual in y;y_{4}-y_{35} [um];driplets" );
-
-	    ndriHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/ndri", 21, -0.5, 20.5 );
-	    ndriHist -> setTitle ( "Number of Driplets;driplets;events" );
-
-	    if ( _useREF > 0 )
+	    if ( _useTrackFit == true )
 	    {
 
-		drirxrefHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/drirefrx", 100, -1000, 1000 );
-		drirxrefHist -> setTitle ( "Driplet REF Extrapolation Residual in x;x_{7}-x_{35extrap} [um];driplets" );
+		AIDAProcessor::tree ( this ) -> mkdir ( "TrackFit" );
 
-		driryrefHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/drirefry", 100, -1000, 1000 );
-		driryrefHist -> setTitle ( "Driplet REF Extrapolation Residual in y;y_{7}-y_{35extrap} [um];driplets" );
+		tfitd0Hist =  AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TrackFit/tfitd0", 100, -10, 10 );
+		tfitd0Hist -> setTitle ( "Track Fit - d0;d0;entries" );
+
+		tfitphiHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TrackFit/tfitphi", 100, -10, 10 );
+		tfitphiHist -> setTitle ( "Track Fit - #Phi;#Phi;entries" );
+
+		tfitomegaHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TrackFit/tfitomega", 100, -10, 10 );
+		tfitomegaHist -> setTitle ( "Track Fit - #Omega;#Omega;entries" );
+
+		tfitz0Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TrackFit/tfitz0", 100, -10, 10 );
+		tfitz0Hist -> setTitle ( "Track Fit - z0;z0;entries" );
+
+		tfittanlambdaHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TrackFit/tfittanlambda", 100, -1, 1 );
+		tfittanlambdaHist -> setTitle ( "Track Fit - tan #lambda;tan #lambda;entries" );
+
+		tfitchi2ndfHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TrackFit/tfitchi2ndf", 100, 0, 99 );
+		tfitchi2ndfHist -> setTitle ( "Track Fit - #chi^2/ndf;#chi^2/ndf;entries" );
 
 	    }
 
-	    sixrxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/sixrx", 100, -1000, 1000 );
-	    sixrxHist -> setTitle ( "Tri-Driplet Residual in x;x_{A}-x_{B} [um];triplet/driplet pairs" );
+	    if ( _useTrackFit == false )
+	    {
 
-	    sixryHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/sixry", 100, -1000, 1000 );
-	    sixryHist -> setTitle ( "Tri-Driplet Residual in y;y_{A}-y_{B} [um];triplet/driplet pairs" );
+		AIDAProcessor::tree ( this ) -> mkdir ( "TripletsDriplets" );
 
-	    sixkxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/sixkx", 100, -25, 25 );
-	    sixkxHist -> setTitle ( "Tri-Driplet Kink Angle in x;x kink angle [mrad];triplet/driplet pairs" );
+		trirxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/trirx", 100, -1000, 1000 );
+		trirxHist -> setTitle ( "Input Triplet Residual in x;x_{1}-x_{02} [um];triplets" );
 
-	    sixkyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/sixky", 100, -25, 25 );
-	    sixkyHist -> setTitle ( "Tri-Driplet Kink Angle in y;y kink angle [mrad];triplet/driplet pairs" );
+		triryHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/triry", 100, -1000, 1000 );
+		triryHist -> setTitle ( "Input Triplet Residual in y;y_{1}-y_{02} [um];triplets" );
+
+		ntriHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/ntri", 21, -0.5, 20.5 );
+		ntriHist -> setTitle ( "Number of Input Triplets;triplets;events" );
+
+
+		trirxdutHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/tridutrx", 100, -1000, 1000 );
+		trirxdutHist -> setTitle ( "Input Triplet DUT Extrapolation Residual in x;x_{6}-x_{02extrap} [um];triplets" );
+
+		trirydutHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/tridutry", 100, -1000, 1000 );
+		trirydutHist -> setTitle ( "Input Triplet DUT Extrapolation Residual in y;y_{6}-y_{02extrap} [um];triplets" );
+
+
+		drirxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/dridx", 100, -1000, 1000 );
+		drirxHist -> setTitle ( "Input Driplet Residual in x;x_{4}-x_{35} [um];driplets" );
+
+		driryHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/dridy", 100, -1000, 1000 );
+		driryHist -> setTitle ( "Input Driplet Residual in y;y_{4}-y_{35} [um];driplets" );
+
+		ndriHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/ndri", 21, -0.5, 20.5 );
+		ndriHist -> setTitle ( "Number of Input Driplets;driplets;events" );
+
+		if ( _useREF > 0 )
+		{
+
+		    drirxrefHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/drirefrx", 100, -1000, 1000 );
+		    drirxrefHist -> setTitle ( "Input Driplet REF Extrapolation Residual in x;x_{7}-x_{35extrap} [um];driplets" );
+
+		    driryrefHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/drirefry", 100, -1000, 1000 );
+		    driryrefHist -> setTitle ( "Input Driplet REF Extrapolation Residual in y;y_{7}-y_{35extrap} [um];driplets" );
+
+		}
+
+		sixrxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/sixrx", 100, -1000, 1000 );
+		sixrxHist -> setTitle ( "Input Tri-Driplet Residual in x;x_{A}-x_{B} [um];triplet/driplet pairs" );
+
+		sixryHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/sixry", 100, -1000, 1000 );
+		sixryHist -> setTitle ( "Input Tri-Driplet Residual in y;y_{A}-y_{B} [um];triplet/driplet pairs" );
+
+		sixkxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/sixkx", 100, -25, 25 );
+		sixkxHist -> setTitle ( "Input Tri-Driplet Kink Angle in x;x kink angle [mrad];triplet/driplet pairs" );
+
+		sixkyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/sixky", 100, -25, 25 );
+		sixkyHist -> setTitle ( "Input Tri-Driplet Kink Angle in y;y kink angle [mrad];triplet/driplet pairs" );
+
+	    }
 
 	    AIDAProcessor::tree ( this ) -> mkdir ( "GBLInput" );
 
-	    selxtHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selxt", 150, -15, 15 );
-	    selxtHist -> setTitle ( "Triplet Track x at Telescope Centre;x [mm];tracks" );
+	    if ( _useTrackFit == false )
+	    {
 
-	    selytHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selyt", 100, -10, 10 );
-	    selytHist -> setTitle ( "Triplet Track y at Telescope Centre;y [mm];tracks" );
+		selxtHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selxt", 150, -15, 15 );
+		selxtHist -> setTitle ( "GBL Input Triplet Track x at Telescope Centre;x [mm];tracks" );
 
-	    selaxtHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selaxt", 100, -25, 25 );
-	    selaxtHist -> setTitle ( "Triplet Track Angle in x;x angle [mrad];tracks" );
+		selytHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selyt", 100, -10, 10 );
+		selytHist -> setTitle ( "GBL Input Triplet Track y at Telescope Centre;y [mm];tracks" );
 
-	    selaytHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selayt", 100, -25, 25 );
-	    selaytHist -> setTitle ( "Triplet Track Angle in y;y angle [mrad];tracks" );
+		selaxtHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selaxt", 100, -25, 25 );
+		selaxtHist -> setTitle ( "GBL Input Triplet Track Angle in x;x angle [mrad];tracks" );
 
-	    selxdHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selxd", 150, -15, 15 );
-	    selxdHist -> setTitle ( "Driplet Track x at Telescope Centre;x [mm];tracks" );
+		selaytHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selayt", 100, -25, 25 );
+		selaytHist -> setTitle ( "GBL Input Triplet Track Angle in y;y angle [mrad];tracks" );
 
-	    selydHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selyd", 100, -10, 10 );
-	    selydHist -> setTitle ( "Driplet Track y at Telescope Centre;y [mm];tracks" );
+		selxdHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selxd", 150, -15, 15 );
+		selxdHist -> setTitle ( "GBL Input Driplet Track x at Telescope Centre;x [mm];tracks" );
 
-	    selaxdHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selaxd", 100, -25, 25 );
-	    selaxdHist -> setTitle ( "Driplet Track Angle in x;x angle [mrad];tracks" );
+		selydHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selyd", 100, -10, 10 );
+		selydHist -> setTitle ( "GBL Input Driplet Track y at Telescope Centre;y [mm];tracks" );
 
-	    selaydHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selayd", 100, -25, 25 );
-	    selaydHist -> setTitle ( "Driplet Track Angle in y;y angle [mrad];tracks" );
+		selaxdHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selaxd", 100, -25, 25 );
+		selaxdHist -> setTitle ( "GBL Input Driplet Track Angle in x;x angle [mrad];tracks" );
 
-	    selrxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selrx", 100, -5000, 5000 );
-	    selrxHist -> setTitle ( "Triplet-Driplet Track Match Residual in x;#Deltax [#mum];tracks" );
+		selaydHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selayd", 100, -25, 25 );
+		selaydHist -> setTitle ( "GBL Input Driplet Track Angle in y;y angle [mrad];tracks" );
 
-	    selryHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selry", 100, -5000, 5000 );
-	    selryHist -> setTitle ( "Triplet-Driplet Track Match Residual in y;#Deltay [#mum];tracks" );
+		selrxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selrx", 100, -5000, 5000 );
+		selrxHist -> setTitle ( "GBL Input Triplet-Driplet Track Match Residual in x;#Deltax [#mum];tracks" );
 
-	    selkxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selkx", 100, -25, 25 );
-	    selkxHist -> setTitle ( "Triplet-Driplet Track Match Kink in x;kink x [mrad];tracks" );
+		selryHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selry", 100, -5000, 5000 );
+		selryHist -> setTitle ( "GBL Input Triplet-Driplet Track Match Residual in y;#Deltay [#mum];tracks" );
 
-	    selkyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selky", 100, -25, 25 );
-	    selkyHist -> setTitle ( "Triplet-Driplet Track Match Kink in y;kink y [mrad];tracks" );
+		selkxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selkx", 100, -25, 25 );
+		selkxHist -> setTitle ( "GBL Input Triplet-Driplet Track Match Kink in x;kink x [mrad];tracks" );
+
+		selkyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selky", 100, -25, 25 );
+		selkyHist -> setTitle ( "GBL Input Triplet-Driplet Track Match Kink in y;kink y [mrad];tracks" );
+
+	    }
 
 	    selrx0Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selrx0", 100, -500, 500 );
-	    selrx0Hist -> setTitle ( "Triplet-Driplet Residual at Plane 0 in x;#Deltax [#mum];tracks" );
+	    selrx0Hist -> setTitle ( "GBL Input Residual at Plane 0 in x;#Deltax [#mum];tracks" );
 
 	    selry0Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selry0", 100, -500, 500 );
-	    selry0Hist -> setTitle ( "Triplet-Driplet Residual at Plane 0 in y;#Deltay [#mum];tracks" );
+	    selry0Hist -> setTitle ( "GBL Input Residual at Plane 0 in y;#Deltay [#mum];tracks" );
 
 	    selrx1Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selrx1", 100, -500, 500 );
-	    selrx1Hist -> setTitle ( "Triplet-Driplet Residual at Plane 1 in x;#Deltax [#mum];tracks" );
+	    selrx1Hist -> setTitle ( "GBL Input Residual at Plane 1 in x;#Deltax [#mum];tracks" );
 
 	    selry1Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selry1", 100, -500, 500 );
-	    selry1Hist -> setTitle ( "Triplet-Driplet Residual at Plane 1 in y;#Deltay [#mum];tracks" );
+	    selry1Hist -> setTitle ( "GBL Input Residual at Plane 1 in y;#Deltay [#mum];tracks" );
 
 	    selrx2Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selrx2", 100, -500, 500 );
-	    selrx2Hist -> setTitle ( "Triplet-Driplet Residual at Plane 2 in x;#Deltax [#mum];tracks" );
+	    selrx2Hist -> setTitle ( "GBL Input Residual at Plane 2 in x;#Deltax [#mum];tracks" );
 
 	    selry2Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selry2", 100, -500, 500 );
-	    selry2Hist -> setTitle ( "Triplet-Driplet Residual at Plane 2 in y;#Deltay [#mum];tracks" );
+	    selry2Hist -> setTitle ( "GBL Input Residual at Plane 2 in y;#Deltay [#mum];tracks" );
 
 	    selrx3Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selrx3", 100, -500, 500 );
-	    selrx3Hist -> setTitle ( "Triplet-Driplet Residual at Plane 3 in x;#Deltax [#mum];tracks" );
+	    selrx3Hist -> setTitle ( "GBL Input Residual at Plane 3 in x;#Deltax [#mum];tracks" );
 
 	    selry3Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selry3", 100, -500, 500 );
-	    selry3Hist -> setTitle ( "Triplet-Driplet Residual at Plane 3 in y;#Deltay [#mum];tracks" );
+	    selry3Hist -> setTitle ( "GBL Input Residual at Plane 3 in y;#Deltay [#mum];tracks" );
 
 	    selrx4Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selrx4", 100, -500, 500 );
-	    selrx4Hist -> setTitle ( "Triplet-Driplet Residual at Plane 4 in x;#Deltax [#mum];tracks" );
+	    selrx4Hist -> setTitle ( "GBL Input Residual at Plane 4 in x;#Deltax [#mum];tracks" );
 
 	    selry4Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selry4", 100, -500, 500 );
-	    selry4Hist -> setTitle ( "Triplet-Driplet Residual at Plane 4 in y;#Deltay [#mum];tracks" );
+	    selry4Hist -> setTitle ( "GBL Input Residual at Plane 4 in y;#Deltay [#mum];tracks" );
 
 	    selrx5Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selrx5", 100, -500, 500 );
-	    selrx5Hist -> setTitle ( "Triplet-Driplet Residual at Plane 5 in x;#Deltax [#mum];tracks" );
+	    selrx5Hist -> setTitle ( "GBL Input Residual at Plane 5 in x;#Deltax [#mum];tracks" );
 
 	    selry5Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selry5", 100, -500, 500 );
-	    selry5Hist -> setTitle ( "Triplet-Driplet Residual at Plane 5 in y;#Deltay [#mum];tracks" );
+	    selry5Hist -> setTitle ( "GBL Input Residual at Plane 5 in y;#Deltay [#mum];tracks" );
 
 	    selrx6Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selrx6", 100, -500, 500 );
-	    selrx6Hist -> setTitle ( "Triplet-Driplet Residual at the DUT in x;#Deltax [#mum];tracks" );
+	    selrx6Hist -> setTitle ( "GBL Input Residual at the DUT in x;#Deltax [#mum];tracks" );
 
 	    selry6Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selry6", 100, -500, 500 );
-	    selry6Hist -> setTitle ( "Triplet-Driplet Residual at the DUT in y;#Deltay [#mum];tracks" );
+	    selry6Hist -> setTitle ( "GBL Input Residual at the DUT in y;#Deltay [#mum];tracks" );
 
 	    if ( _useREF > 0 )
 	    {
 		selrx7Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selrx7", 100, -500, 500 );
-		selrx7Hist -> setTitle ( "Triplet-Driplet Residual at the REF in x;#Deltax [#mum];tracks" );
+		selrx7Hist -> setTitle ( "GBL Input Residual at the REF in x;#Deltax [#mum];tracks" );
 
 		selry7Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selry7", 100, -500, 500 );
-		selry7Hist -> setTitle ( "Triplet-Driplet Residual at the REF in y;#Deltay [#mum];tracks" );
+		selry7Hist -> setTitle ( "GBL Input Residual at the REF in y;#Deltay [#mum];tracks" );
 	    }
 
 	    AIDAProcessor::tree ( this ) -> mkdir ( "GBLOutput" );
@@ -6720,29 +6762,32 @@ void EUTelMilleGBL::bookHistos ( )
 
 	    AIDAProcessor::tree ( this ) -> mkdir ( "GBLOutput/Bad" );
 
-	    badxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/badx", 150, -15, 15 );
-	    badxHist -> setTitle ( "x at DUT, bad GBL;x [mm];tracks" );
+	    if ( _useTrackFit == false )
+	    {
+		badxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/badx", 150, -15, 15 );
+		badxHist -> setTitle ( "x at DUT, bad GBL;x [mm];tracks" );
 
-	    badyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/bady", 100, -10, 10 );
-	    badyHist -> setTitle ( "y at DUT, bad GBL;y [mm];tracks" );
+		badyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/bady", 100, -10, 10 );
+		badyHist -> setTitle ( "y at DUT, bad GBL;y [mm];tracks" );
 
-	    badaxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/badax", 100, -25, 25 );
-	    badaxHist -> setTitle ( "track angle x, bad GBL;x angle [mrad];tracks" );
+		badaxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/badax", 100, -25, 25 );
+		badaxHist -> setTitle ( "track angle x, bad GBL;x angle [mrad];tracks" );
 
-	    badayHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/baday", 100, -25, 25 );
-	    badayHist -> setTitle ( "track angle y, bad GBL;y angle [mrad];tracks" );
+		badayHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/baday", 100, -25, 25 );
+		badayHist -> setTitle ( "track angle y, bad GBL;y angle [mrad];tracks" );
 
-	    baddxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/baddx", 100, -5000, 5000 );
-	    baddxHist -> setTitle ( "track match x, bad GBL;#Deltax [#mum];tracks" );
+		baddxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/baddx", 100, -5000, 5000 );
+		baddxHist -> setTitle ( "track match x, bad GBL;#Deltax [#mum];tracks" );
 
-	    baddyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/baddy", 100, -5000, 5000 );
-	    baddyHist -> setTitle ( "track match y, bad GBL;#Deltay [#mum];tracks" );
+		baddyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/baddy", 100, -5000, 5000 );
+		baddyHist -> setTitle ( "track match y, bad GBL;#Deltay [#mum];tracks" );
 
-	    badkxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/badkx", 100, -25, 25 );
-	    badkxHist -> setTitle ( "kink x, bad GBL;kink x [mrad];tracks" );
+		badkxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/badkx", 100, -25, 25 );
+		badkxHist -> setTitle ( "kink x, bad GBL;kink x [mrad];tracks" );
 
-	    badkyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/badky", 100, -25, 25 );
-	    badkyHist -> setTitle ( "kink y, bad GBL;kink y [mrad];tracks" );
+		badkyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/badky", 100, -25, 25 );
+		badkyHist -> setTitle ( "kink y, bad GBL;kink y [mrad];tracks" );
+	    }
 
 	    baddx0Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/baddx0", 100, -500, 500 );
 	    baddx0Hist -> setTitle ( "triplet resid x at 0, bad GBL;#Deltax [#mum];tracks" );
