@@ -231,7 +231,8 @@ using namespace eutelescope;
       streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYPredictionPrecision()" << std::endl;
       
       TMatrixDSym Ckkm1 = getTrackStateCov(ts);
-      double xyPrec = _residualsRMax;//sqrt( Ckkm1[0][0]*Ckkm1[0][0] + Ckkm1[1][1]*Ckkm1[1][1] );
+      //double xyPrec = _residualsRMax;//sqrt( Ckkm1[0][0]*Ckkm1[0][0] + Ckkm1[1][1]*Ckkm1[1][1] );
+      double xyPrec = 1.0 / sqrt( Ckkm1[0][0]*Ckkm1[0][0] + Ckkm1[1][1]*Ckkm1[1][1] );
       
       streamlog_out(DEBUG0) << "Minimal combined UV resolution : " << xyPrec << std::endl;
       streamlog_out(DEBUG2) << "----------------------EUTelKalmanFilter::getXYPredictionPrecision()------------------------" << std::endl;
@@ -1178,6 +1179,7 @@ void EUTelKalmanFilter::FitTracks ( )
 
 	if ( isGoodTrack )
 	{
+	    streamlog_out ( DEBUG5 ) << "Found good track candidate!" << std::endl;
 	    state -> setLocation ( EUTelTrackStateImpl::AtLastHit );
 	    _tracks.push_back ( cartesian2LCIOTrack ( *itTrk ) );
 	    delete ( *itTrk );
