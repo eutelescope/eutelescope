@@ -5,7 +5,6 @@
 #include "EUTELESCOPE.h"
 #include "EUTelEventImpl.h"
 #include "EUTelExceptions.h"
-#include "EUTelReferenceHit.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelVirtualCluster.h"
