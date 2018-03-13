@@ -6,7 +6,7 @@ namespace eutelescope {
     Mimosa26::Mimosa26()
         : EUTelGenericPixGeoDescr(21.2, 10.6, 0.02, // size X, Y, Z
                                   0, 1151, 0, 575,  // min max X,Y
-                                  9.3660734)        // rad length
+                                  93.660734)        // rad length
     {
       // Create the material for the sensor
       matSi =

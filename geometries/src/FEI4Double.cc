@@ -6,7 +6,7 @@ namespace eutelescope {
     FEI4Double::FEI4Double()
         : EUTelGenericPixGeoDescr(40.40, 16.8, 0.025, // size X, Y, Z
                                   0, 159, 0, 335,     // min max X,Y
-                                  9.3660734)          // rad length
+                                  93.660734)          // rad length
     {
       // Create the material for the sensor
       matSi =
