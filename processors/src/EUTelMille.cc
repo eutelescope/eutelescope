@@ -1847,17 +1847,7 @@ void EUTelMille::processEvent(LCEvent *event) {
               const double la = -1.0 * b0 * c0 - b1 * c1 + c0 * x + c1 * y +
                                 sqrt(1 - c0 * c0 - c1 * c1) * z;
               lambda.push_back(la);
-              /*
-                                if (_referenceHitVec == 0){
-                                //determine the residuals without reference
-                 vector
-                                _waferResidX[help] = b0 + la*c0 - x;
-                                _waferResidY[help] = b1 + la*c1 - y;
-                                _waferResidZ[help] = la*sqrt(1.0 - c0*c0 -
-                 c1*c1) - z;
 
-                                } else {
-              */
               // use reference vector
               TVector3 vpoint(b0, b1, 0.);
               TVector3 vvector(c0, c1, c2);
@@ -2210,7 +2200,7 @@ void EUTelMille::processEvent(LCEvent *event) {
                 x_sensor = geo::gGeometry().siPlaneXPosition(sensorID);
                 y_sensor = geo::gGeometry().siPlaneYPosition(sensorID);
                 z_sensor = geo::gGeometry().siPlaneZPosition(sensorID);
-                // std::cout << "Retrived: " << x_sensor << ", " << y_sensor
+                
                 // << ", " << z_sensor << std::endl;
                 x_sensor *= 1000.;
                 y_sensor *= 1000.;

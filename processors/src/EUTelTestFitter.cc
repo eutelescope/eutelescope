@@ -213,8 +213,6 @@ EUTelTestFitter::EUTelTestFitter()
                              "Name of the histogram information file",
                              _histoInfoFileName, string("histoinfo.xml"));
 
-  // optional parameters
-
   // ------- Parameters added to allow correlation band info 02 August 2010
   // libov@mail.desy.de -------
   registerOptionalParameter("UseSlope", "Use expected track direction to "
@@ -3130,7 +3128,6 @@ int EUTelTestFitter::guessSensorID(double *hit) {
     }
 
     return sensorID;
-
 }
 
 #endif

@@ -288,7 +288,6 @@ double EUTelDafFitter::getZfromRefHit(int plane, int sensorID, double *pos) {
   TVector3 hitInPlane;
   TVector3 norm2Plane;
 
-  // Name is misleading, is actually true if refHit is NOT set
   hitInPlane.SetXYZ(geo::gGeometry().siPlaneXPosition(sensorID),
                     geo::gGeometry().siPlaneYPosition(sensorID),
                     geo::gGeometry().siPlaneZPosition(sensorID));

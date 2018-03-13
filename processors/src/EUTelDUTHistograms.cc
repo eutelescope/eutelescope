@@ -81,8 +81,8 @@ using namespace marlin;
 using namespace eutelescope;
 
 EUTelDUTHistograms::EUTelDUTHistograms()
-    : Processor("EUTelDUTHistograms"), _histoInfoFileName(""), 
-      _inputTrackColName(""), _inputHitColName(""),
+    : Processor("EUTelDUTHistograms"), 
+      _histoInfoFileName(""), _inputTrackColName(""), _inputHitColName(""),
       _inputRecHitColName(""), _inputFitHitColName(""), _iDUT(0), _nRun(0),
       _zDUT(0.0), _distMax(0.0), _pitchX(0.0), _pitchY(0.0), _clusterSizeX(),
       _clusterSizeY(), _subMatrix(), _maptrackid(0), _trackhitposX(),
