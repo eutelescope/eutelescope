@@ -6,7 +6,7 @@ namespace eutelescope {
     FEI4Single400uEdge::FEI4Single400uEdge()
         : EUTelGenericPixGeoDescr(20.30, 16.8, 0.025, // size X, Y, Z
                                   0, 79, 0, 335,      // min max X,Y
-                                  9.3660734)          // rad length
+                                  93.660734)          // rad length
     {
       // Create the material for the sensor
       matSi =
