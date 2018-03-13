@@ -17,7 +17,6 @@
 #include "EUTelEventImpl.h"
 #include "EUTelExceptions.h"
 #include "EUTelHistogramManager.h"
-#include "EUTelReferenceHit.h"
 #include "EUTelRunHeaderImpl.h"
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -102,8 +101,7 @@ EUTelTestFitter::EUTelTestFitter()
       _AlignLayerRotZ(), _WindowLayerIDs(), _WindowMinX(), _WindowMaxX(),
       _WindowMinY(), _WindowMaxY(), _MaskLayerIDs(), _MaskMinX(), _MaskMaxX(),
       _MaskMinY(), _MaskMaxY(), _resolutionX(), _resolutionY(), _resolutionZ(),
-      _referenceHitCollectionName(""), _useReferenceHitCollection(false),
-      _referenceHitVec(NULL), _allowMissingHits(0), _allowSkipHits(0),
+      _allowMissingHits(0), _allowSkipHits(0),
       _maxPlaneHits(0), _searchMultipleTracks(false),
       _allowAmbiguousHits(false), _maximumAmbiguousHits(false),
       _missingHitPenalty(0.0), _skipHitPenalty(0.0), _chi2Max(0.0),
@@ -216,15 +214,6 @@ EUTelTestFitter::EUTelTestFitter()
                              _histoInfoFileName, string("histoinfo.xml"));
 
   // optional parameters
-
-  registerOptionalParameter(
-      "ReferenceCollection", "reference hit collection name ",
-      _referenceHitCollectionName, static_cast<string>("referenceHit"));
-
-  registerOptionalParameter(
-      "UseReferenceCollection", "Do you want the reference hit collection to "
-                                "be used for coordinate transformations?",
-      _useReferenceHitCollection, static_cast<bool>(true));
 
   // ------- Parameters added to allow correlation band info 02 August 2010
   // libov@mail.desy.de -------
@@ -373,10 +362,7 @@ void EUTelTestFitter::init() {
 
   _nRun = 0;
   _nEvt = 0;
-
   _isFirstEvent = true;
-
-  _referenceHitVec = 0;
 
 // check if Marlin was built with GEAR support or not
 #ifndef USE_GEAR
@@ -854,10 +840,6 @@ void EUTelTestFitter::processEvent(LCEvent *event) {
   CellIDDecoder<TrackerHit> hitCellDecoder(EUTELESCOPE::HITENCODING);
 
   if (_isFirstEvent) {
-    if (_useReferenceHitCollection) {
-      _referenceHitVec = dynamic_cast<LCCollectionVec *>(
-          event->getCollection(_referenceHitCollectionName));
-    }
 
     // apply all GEAR/alignment offsets to get corrected X,Y,Z position of the
     // sensor center
@@ -3128,7 +3110,6 @@ int EUTelTestFitter::guessSensorID(double *hit) {
   int sensorID = -1;
   double minDistance = numeric_limits<double>::max();
 
-  if (_referenceHitVec == 0 || _useReferenceHitCollection == false) {
     // use z information of planes instead of reference vector
     for (int iPlane = 0; iPlane < _siPlanesLayerLayout->getNLayers();
          ++iPlane) {
@@ -3149,26 +3130,7 @@ int EUTelTestFitter::guessSensorID(double *hit) {
     }
 
     return sensorID;
-  }
 
-  for (int ii = 0; ii < _referenceHitVec->getNumberOfElements(); ii++) {
-    EUTelReferenceHit *refhit =
-        static_cast<EUTelReferenceHit *>(_referenceHitVec->getElementAt(ii));
-
-    TVector3 hit3d(hit[0], hit[1], hit[2]);
-    TVector3 hitInPlane(refhit->getXOffset(), refhit->getYOffset(),
-                        refhit->getZOffset());
-    TVector3 norm2Plane(refhit->getAlpha(), refhit->getBeta(),
-                        refhit->getGamma());
-
-    double distance = abs(norm2Plane.Dot(hit3d - hitInPlane));
-    if (distance < minDistance) {
-      minDistance = distance;
-      sensorID = refhit->getSensorID();
-    }
-  }
-
-  return sensorID;
 }
 
 #endif

@@ -18,7 +18,6 @@
 #include "EUTelEventImpl.h"
 #include "EUTelExceptions.h"
 #include "EUTelHistogramManager.h"
-#include "EUTelReferenceHit.h"
 #include "EUTelRunHeaderImpl.h"
 // for cluster operations:
 #include "EUTelBrickedClusterImpl.h"
@@ -82,9 +81,8 @@ using namespace marlin;
 using namespace eutelescope;
 
 EUTelDUTHistograms::EUTelDUTHistograms()
-    : Processor("EUTelDUTHistograms"), _referenceHitCollectionName(""),
-      _useReferenceHitCollection(false), _referenceHitVec(NULL),
-      _histoInfoFileName(""), _inputTrackColName(""), _inputHitColName(""),
+    : Processor("EUTelDUTHistograms"), _histoInfoFileName(""), 
+      _inputTrackColName(""), _inputHitColName(""),
       _inputRecHitColName(""), _inputFitHitColName(""), _iDUT(0), _nRun(0),
       _zDUT(0.0), _distMax(0.0), _pitchX(0.0), _pitchY(0.0), _clusterSizeX(),
       _clusterSizeY(), _subMatrix(), _maptrackid(0), _trackhitposX(),
@@ -147,14 +145,6 @@ EUTelDUTHistograms::EUTelDUTHistograms()
   registerProcessorParameter("DUTpitchY", "DUT sensor pitch in Y", _pitchY,
                              static_cast<double>(0.0184));
 
-  registerOptionalParameter(
-      "ReferenceCollection", "reference hit collection name ",
-      _referenceHitCollectionName, static_cast<string>("referenceHit"));
-  registerOptionalParameter(
-      "UseReferenceCollection", "Do you want the reference hit collection to "
-                                "be used for coordinate transformations?",
-      _useReferenceHitCollection, static_cast<bool>(true));
-
   std::vector<float> initAlign;
   initAlign.push_back(0.);
   initAlign.push_back(0.);
@@ -189,7 +179,6 @@ void EUTelDUTHistograms::init() {
   // usually a good idea to
   printParameters();
   _nRun = 0;
-  _referenceHitVec = 0;
   _maptrackid = 0;
 
   _zDUT = geo::gGeometry().siPlaneZPosition(_iDUT);
@@ -229,32 +218,6 @@ void EUTelDUTHistograms::processEvent(LCEvent *event) {
 
   streamlog_out(DEBUG5) << "EUTelDUTHistograms::processEvent " << endl;
 
-  {
-    if (_useReferenceHitCollection) {
-      _referenceHitVec = dynamic_cast<LCCollectionVec *>(
-          event->getCollection(_referenceHitCollectionName));
-
-      if (streamlog_level(DEBUG5)) {
-        for (size_t ii = 0;
-             ii < static_cast<size_t>(_referenceHitVec->getNumberOfElements());
-             ii++) {
-          streamlog_out(DEBUG5)
-              << " check output_refhit at : " << _referenceHitVec << " ";
-          EUTelReferenceHit *output_refhit = static_cast<EUTelReferenceHit *>(
-              _referenceHitVec->getElementAt(ii));
-          streamlog_out(DEBUG5) << " at : " << output_refhit << endl;
-          streamlog_out(DEBUG5)
-              << "CHK sensorID: " << output_refhit->getSensorID()
-              << " x    :" << output_refhit->getXOffset()
-              << " y    :" << output_refhit->getYOffset()
-              << " z    :" << output_refhit->getZOffset()
-              << " alfa :" << output_refhit->getAlpha()
-              << " beta :" << output_refhit->getBeta()
-              << " gamma:" << output_refhit->getGamma() << endl;
-        }
-      }
-    }
-  }
   EUTelEventImpl *euEvent = static_cast<EUTelEventImpl *>(event);
   if (euEvent->getEventType() == kEORE) {
     message<DEBUG5>("EORE found: nothing else to do.");

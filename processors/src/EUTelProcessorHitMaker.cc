@@ -29,7 +29,6 @@
 
 #include "EUTelAlignmentConstant.h"
 #include "EUTelExceptions.h"
-#include "EUTelReferenceHit.h"
 
 // marlin includes ".h"
 #include "marlin/Global.h"
@@ -77,9 +76,7 @@ std::string EUTelProcessorHitMaker::_clusterCenterYHistoName = "ClusterCenterY";
 
 EUTelProcessorHitMaker::EUTelProcessorHitMaker()
     : Processor("EUTelProcessorHitMaker"), _pulseCollectionName(),
-      _hitCollectionName(), _referenceHitCollectionName("referenceHit"),
-      _referenceHitCollectionVec(), _wantLocalCoordinates(false),
-      _referenceHitLCIOFile("reference.slcio"), _iRun(0), _iEvt(0),
+      _hitCollectionName(), _wantLocalCoordinates(false), _iRun(0), _iEvt(0),
       _conversionIdMap(), _alreadyBookedSensorID(), _aidaHistoMap(),
       _histogramSwitch(true), _orderedSensorIDVec() {
   // modify processor description
@@ -100,17 +97,6 @@ EUTelProcessorHitMaker::EUTelProcessorHitMaker()
       "Hit coordinates are calculated in local reference frame of sensor",
       _wantLocalCoordinates, static_cast<bool>(false));
 
-  registerOptionalParameter(
-      "ReferenceCollection",
-      "This is the name of the reference hit collection initialized in this "
-      "processor. This collection provides the reference vector to correctly "
-      "determine a plane corresponding to a global hit coordiante.",
-      _referenceHitCollectionName, static_cast<string>("referenceHit"));
-
-  registerOptionalParameter(
-      "ReferenceHitFile",
-      "This is the file where the reference hit collection is stored",
-      _referenceHitLCIOFile, std::string("reference.slcio"));
 }
 
 void EUTelProcessorHitMaker::init() {
@@ -125,92 +111,6 @@ void EUTelProcessorHitMaker::init() {
 
   _histogramSwitch = true;
 
-  // only for global coord we need a refhit collection
-  if (!_wantLocalCoordinates) {
-    DumpReferenceHitDB();
-  }
-}
-
-void EUTelProcessorHitMaker::DumpReferenceHitDB() {
-  // create a reference hit collection file (DB)
-  LCWriter *lcWriter = LCFactory::getInstance()->createLCWriter();
-  try {
-    lcWriter->open(_referenceHitLCIOFile, LCIO::WRITE_NEW);
-  } catch (IOException &e) {
-    streamlog_out(ERROR4) << e.what() << endl;
-    exit(-1);
-  }
-
-  streamlog_out(MESSAGE5) << "Writing to " << _referenceHitLCIOFile
-                          << std::endl;
-
-  LCRunHeaderImpl *lcHeader = new LCRunHeaderImpl;
-  lcHeader->setRunNumber(0);
-  lcWriter->writeRunHeader(lcHeader);
-  delete lcHeader;
-  LCEventImpl *event = new LCEventImpl;
-  event->setRunNumber(0);
-  event->setEventNumber(0);
-  LCTime *now = new LCTime;
-  event->setTimeStamp(now->timeStamp());
-  delete now;
-
-  LCCollectionVec *referenceHitCollection =
-      new LCCollectionVec(LCIO::LCGENERICOBJECT);
-  double refVec[3];
-
-  EVENT::IntVec sensorIDVec = geo::gGeometry().sensorIDsVec();
-
-  for (EVENT::IntVec::iterator it = sensorIDVec.begin();
-       it != sensorIDVec.end(); it++) {
-    EUTelReferenceHit *refhit = new EUTelReferenceHit();
-
-    int sensorID = *it;
-    refhit->setSensorID(sensorID);
-    refhit->setXOffset(geo::gGeometry().siPlaneXPosition(sensorID));
-    refhit->setYOffset(geo::gGeometry().siPlaneYPosition(sensorID));
-    refhit->setZOffset(geo::gGeometry().siPlaneZPosition(sensorID) +
-                       0.5 * geo::gGeometry().siPlaneZSize(sensorID));
-
-    refVec[0] = 0.;
-    refVec[1] = 0.;
-    refVec[2] = 1.;
-
-    double gRotation[3] = {0., 0., 0.};                         // not rotated
-    gRotation[0] = geo::gGeometry().siPlaneZRotation(sensorID); // Euler alpha ;
-    gRotation[1] = geo::gGeometry().siPlaneYRotation(sensorID); // Euler alpha ;
-    gRotation[2] = geo::gGeometry().siPlaneXRotation(sensorID); // Euler alpha ;
-    streamlog_out(DEBUG5) << "GEAR rotations: " << gRotation[0] << " "
-                          << gRotation[1] << " " << gRotation[2] << endl;
-    gRotation[0] = gRotation[0] * 3.1415926 / 180.; //
-    gRotation[1] = gRotation[1] * 3.1415926 / 180.; //
-    gRotation[2] = gRotation[2] * 3.1415926 / 180.; //
-
-    TVector3 _RotatedVector(refVec[0], refVec[1], refVec[2]);
-    TVector3 _Xaxis(1.0, 0.0, 0.0);
-    TVector3 _Yaxis(0.0, 1.0, 0.0);
-    TVector3 _Zaxis(0.0, 0.0, 1.0);
-
-    if (TMath::Abs(gRotation[2]) > 1e-6) {
-      _RotatedVector.Rotate(gRotation[2], _Xaxis); // in ZY
-    }
-    if (TMath::Abs(gRotation[1]) > 1e-6) {
-      _RotatedVector.Rotate(gRotation[1], _Yaxis); // in ZX
-    }
-    if (TMath::Abs(gRotation[0]) > 1e-6) {
-      _RotatedVector.Rotate(gRotation[0], _Zaxis); // in XY
-    }
-
-    refhit->setAlpha(_RotatedVector[0]);
-    refhit->setBeta(_RotatedVector[1]);
-    refhit->setGamma(_RotatedVector[2]);
-    referenceHitCollection->push_back(refhit);
-  }
-  event->addCollection(referenceHitCollection, _referenceHitCollectionName);
-
-  lcWriter->writeEvent(event);
-  delete event;
-  lcWriter->close();
 }
 
 void EUTelProcessorHitMaker::processRunHeader(LCRunHeader *rdr) {
