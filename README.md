@@ -9,7 +9,7 @@ svn co https://svnsrv.desy.de/public/ilctools/ilcinstall/branches/eutel-git ilci
 
 Should you have any questions regarding EUTelescope, please check our
 online support pages, especially the forums and the FAQ or contact us
-via mail: eutelescope-coordinators@desy.de
+via mail: telescope-coor@desy.de
 
 For feature requests or bug reports please open a new issue on the issue tracker on GitHub.
 
