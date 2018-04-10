@@ -65,7 +65,7 @@
 				</layer>
 				<!-- 2CBC2 DUT top sensor -->
 				<layer>
-					<ladder ID="60"
+					<ladder ID="61"
 						positionX="0.069799"	positionY="0.00"		positionZ="369.001218"
 						rotationZY="0.00"	rotationZX="2.0"		rotationXY="0.0"
 						sizeX="22.86"		sizeY="10.6"			thickness="0.12"
@@ -101,7 +101,7 @@
 				</layer>
 				<!-- 2CBC2 DUT bottom sensor -->
 				<layer>
-					<ladder ID="61"
+					<ladder ID="60"
 						positionX="-0.069799"	positionY="0.00"		positionZ="372.998782"
 						rotationZY="0.00"	rotationZX="2.0"		rotationXY="0.0"
 						sizeX="22.86"		sizeY="10.6"			thickness="0.12"

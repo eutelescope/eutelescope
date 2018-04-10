@@ -65,13 +65,13 @@
 				</layer>
 				<!-- 2CBC2 DUT top sensor -->
 				<layer>
-					<ladder ID="60"
+					<ladder ID="61"
 						positionX="0.900197"	positionY="0.00"		positionZ="369.214042"
 						rotationZY="0.00"	rotationZX="26.75"		rotationXY="0.0"
 						sizeX="22.86"		sizeY="10.6"			thickness="0.12"
 						radLength="93.660734"
 					/>
-					<sensitive ID="60"
+					<sensitive ID="61"
 						positionX="0.900197"	positionY="0.00"		positionZ="369.214042"
 						sizeX="22.86"		sizeY="10.6"			thickness="0.2"
 						npixelX="254"		npixelY="576"
@@ -101,13 +101,13 @@
 				</layer>
 				<!-- 2CBC2 DUT bottom sensor -->
 				<layer>
-					<ladder ID="61"
+					<ladder ID="60"
 						positionX="-0.900197"	positionY="0.00"		positionZ="372.785958"
 						rotationZY="0.00"	rotationZX="26.75"		rotationXY="0.0"
 						sizeX="22.86"		sizeY="10.6"			thickness="0.12"
 						radLength="93.660734"
 					/>
-					<sensitive ID="61"
+					<sensitive ID="60"
 						positionX="-0.900197"	positionY="0.00"		positionZ="372.785958"
 						sizeX="22.86"		sizeY="10.6"			thickness="0.2"
 						npixelX="254"		npixelY="576"
