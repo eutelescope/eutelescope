@@ -200,7 +200,7 @@ void EUTelPreAlign::init () {
 }
 
 void EUTelPreAlign::processRunHeader (LCRunHeader * rdr) {
-  auto_ptr<EUTelRunHeaderImpl> runHeader ( new EUTelRunHeaderImpl( rdr ) ) ;
+  auto runHeader = std::make_unique < EUTelRunHeaderImpl > ( rdr );
   runHeader->addProcessor( type() );
   ++_iRun;
 }
@@ -234,7 +234,7 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
 
            if( type  ==  kEUTelSimpleSparsePixel )
            {  
-              auto_ptr<EUTelSparseClusterImpl< EUTelSimpleSparsePixel > > m26Data( new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >   ( hotPixelData ) );
+	      auto m26Data = std::make_unique <EUTelSparseClusterImpl< EUTelSimpleSparsePixel > > ( hotPixelData );
 
               std::vector<EUTelSimpleSparsePixel*> m26PixelVec;
 	      EUTelSimpleSparsePixel m26Pixel;

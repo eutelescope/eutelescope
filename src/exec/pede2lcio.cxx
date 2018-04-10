@@ -190,7 +190,7 @@ int main( int argc, char ** argv ) {
 
 
 
-  auto_ptr< AnyOption > option( new AnyOption );
+  unique_ptr< AnyOption > option( new AnyOption );
 
   string usageString = 
     "\n"

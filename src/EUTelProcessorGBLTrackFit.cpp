@@ -186,10 +186,10 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 				track.setNdf(ndf);
 				_chi2NdfVec.push_back(chi2/static_cast<float>(ndf));
 				std::map<int, std::vector<double> >  mapSensorIDToCorrectionVec;//This is not used now. However it maybe useful to be able to access the corrections that GBL makes to the original track. Since if this is too large then GBL may give th wrong trajectory. Since all the equations are only to first order. 
-				_trackFitter->updateTrackFromGBLTrajectory(traj,track,mapSensorIDToCorrectionVec);
+				_trackFitter->updateTrackFromGBLTrajectory(traj,track);
 				std::map< int, std::map< float, float > >  SensorResidual; 
 				std::map< int, std::map< float, float > >  SensorResidualError; 
-				_trackFitter->getResidualOfTrackandHits(traj, pointList,track, SensorResidual, SensorResidualError);
+				_trackFitter->getResidualOfTrackandHits(traj, pointList, SensorResidual, SensorResidualError);
 				if(chi2/static_cast<float>(ndf) < 5){
 				  plotResidual(SensorResidual,SensorResidualError);
 				}
@@ -351,7 +351,7 @@ void EUTelProcessorGBLTrackFit::bookHistograms() {
 
         std::unique_ptr<EUTelHistogramManager> histoMgr = std::make_unique<EUTelHistogramManager>(_histoInfoFileName);
         EUTelHistogramInfo    * histoInfo;
-        bool                    isHistoManagerAvailable;
+        bool                    isHistoManagerAvailable = histoMgr->init();
 
 ////////////////////////////////////////////////////////This is for the residual//Thi si a hack must fix so can accept any number of planes. Really should be a separate processor
 

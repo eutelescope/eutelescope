@@ -58,6 +58,7 @@
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/IHistogram1D.h>
 #include <AIDA/IHistogram2D.h>
+#include <AIDA/IHistogram3D.h>
 #include <AIDA/IProfile2D.h>
 #include <AIDA/ITree.h>
 #include <AIDA/IAxis.h>
@@ -213,6 +214,13 @@ AIDA::IHistogram1D * sixryHist;
 AIDA::IHistogram1D * sixkxHist;
 AIDA::IHistogram1D * sixkyHist;
 
+AIDA::IHistogram1D * tfitd0Hist;
+AIDA::IHistogram1D * tfitphiHist;
+AIDA::IHistogram1D * tfitomegaHist;
+AIDA::IHistogram1D * tfitz0Hist;
+AIDA::IHistogram1D * tfittanlambdaHist;
+AIDA::IHistogram1D * tfitchi2ndfHist;
+
 AIDA::IHistogram1D * selxtHist;
 AIDA::IHistogram1D * selytHist;
 AIDA::IHistogram1D * selaxtHist;
@@ -334,9 +342,49 @@ AIDA::IProfile2D * dutkmap;
 AIDA::IProfile2D * dutkxmap;
 AIDA::IProfile2D * dutkymap;
 
+AIDA::IProfile2D * dutkmap10;
+AIDA::IProfile2D * dutkxmap10;
+AIDA::IProfile2D * dutkymap10;
+
 AIDA::IProfile2D * dutkmap20;
 AIDA::IProfile2D * dutkxmap20;
 AIDA::IProfile2D * dutkymap20;
+
+AIDA::IProfile2D * dutkmap30;
+AIDA::IProfile2D * dutkxmap30;
+AIDA::IProfile2D * dutkymap30;
+
+AIDA::IProfile2D * dutkmap40;
+AIDA::IProfile2D * dutkxmap40;
+AIDA::IProfile2D * dutkymap40;
+
+AIDA::IProfile2D * dutkmap50;
+AIDA::IProfile2D * dutkxmap50;
+AIDA::IProfile2D * dutkymap50;
+
+AIDA::IProfile2D * dutkmap60;
+AIDA::IProfile2D * dutkxmap60;
+AIDA::IProfile2D * dutkymap60;
+
+AIDA::IProfile2D * dutkmap70;
+AIDA::IProfile2D * dutkxmap70;
+AIDA::IProfile2D * dutkymap70;
+
+AIDA::IProfile2D * dutkmap80;
+AIDA::IProfile2D * dutkxmap80;
+AIDA::IProfile2D * dutkymap80;
+
+AIDA::IProfile2D * dutkmap90;
+AIDA::IProfile2D * dutkxmap90;
+AIDA::IProfile2D * dutkymap90;
+
+AIDA::IProfile2D * dutkmap100;
+AIDA::IProfile2D * dutkxmap100;
+AIDA::IProfile2D * dutkymap100;
+
+AIDA::IHistogram3D * dutkmap3D;
+AIDA::IHistogram3D * dutkxmap3D;
+AIDA::IHistogram3D * dutkymap3D;
 
 AIDA::IHistogram2D * duttrackhitmap;
 
@@ -345,6 +393,13 @@ AIDA::IHistogram2D * duthitmap;
 AIDA::IHistogram1D * unbiasedDUTrx;
 AIDA::IHistogram1D * unbiasedDUTry;
 AIDA::IHistogram1D * unbiasedDUTrz;
+
+AIDA::IHistogram2D * refrxxHist;
+AIDA::IHistogram2D * refrxyHist;
+AIDA::IHistogram2D * refrxzHist;
+AIDA::IHistogram2D * refryxHist;
+AIDA::IHistogram2D * refryyHist;
+AIDA::IHistogram2D * refryzHist;
 
 AIDA::IHistogram1D * gblax0Hist;
 AIDA::IHistogram1D * gbldx0Hist;
@@ -518,9 +573,11 @@ EUTelMilleGBL::EUTelMilleGBL ( ) : Processor ( "EUTelMilleGBL" )
 
     registerOptionalParameter ( "GeneratePedeSteerfile", "Generate a steering file for pede? 0 = false, 1 = true.", _generatePedeSteerfile, static_cast < int > ( 0 ) );
 
+    registerOptionalParameter ( "IsolationCut", "Maximum allowed hit distance within planes 1 and 4 in um for a hit to be considered isolated.", _isolationCut, static_cast < double > ( 40.0 ) );
+
     registerOptionalParameter ( "ManualDUTid", "The sensor id number of the DUT.", _manualDUTid, static_cast < int > ( 6 ) );
 
-    registerOptionalParameter ( "MaxTrackCandidatesTotal", "Maximal number of track candidates in the whole run.",_maxTrackCandidatesTotal, static_cast < int > ( 10000000 ) );
+    registerOptionalParameter ( "MaxTrackCandidatesTotal", "Maximal number of track candidates in the whole run, set to less than 0 to deactivate.",_maxTrackCandidatesTotal, static_cast < int > ( 10000000 ) );
 
     registerOptionalParameter ( "OutputHitCollection", "The name of the output fit hit collection.", _outputHitCollectionName, std::string ( "fithits" ) );
 
@@ -551,7 +608,13 @@ EUTelMilleGBL::EUTelMilleGBL ( ) : Processor ( "EUTelMilleGBL" )
 
     registerOptionalParameter ( "TimeDependencyHistos", "Flag to fill dt histograms. Will increase histogram file size quite a bit.", _dthistos, static_cast < bool > ( false ) );
 
+    registerOptionalParameter ( "TrackFitCollectionName", "If we use an external track fit, what is the collection name?", _trackFitCollectionName, std::string ( "TrackCandidateHitCollection" ) );
+
     registerOptionalParameter ( "UseREF", "Use Reference Plane? If so, set the sensor id (usually 7). To deactivate, set to 0 or below.", _useREF, static_cast < int > ( -1 ) );
+
+    registerOptionalParameter ( "UseTrackFit", "Use external track fit?", _useTrackFit, static_cast < bool > ( false ) );
+
+    registerOptionalParameter ( "X0Histos", "Flag to enable X0 scattering histograms. Will need lots of memory!", _x0histos, static_cast < bool > ( false ) );
 
     registerOptionalParameter ( "driCut", "Downstream triplet residual cut [um].", _driCut, static_cast < double > ( 400.0 ) );
 
@@ -572,28 +635,24 @@ EUTelMilleGBL::EUTelMilleGBL ( ) : Processor ( "EUTelMilleGBL" )
 
 void EUTelMilleGBL::init ( )
 {
-    
-    
-    
-    const rlim_t kStackSize = 16 * 1024 * 1024;   // min stack size = 16 MB
+    // min stack size = 16 MB
+    const rlim_t kStackSize = 16 * 1024 * 1024;
     struct rlimit rl;
     int result;
 
-    result = getrlimit(RLIMIT_STACK, &rl);
-    if (result == 0)
+    result = getrlimit ( RLIMIT_STACK, &rl );
+    if ( result == 0 )
     {
-        if (rl.rlim_cur < kStackSize)
-        {
-            rl.rlim_cur = kStackSize;
-            result = setrlimit(RLIMIT_STACK, &rl);
-            if (result != 0)
-            {
-                fprintf(stderr, "setrlimit returned result = %d\n", result);
+	if ( rl.rlim_cur < kStackSize )
+	{
+	    rl.rlim_cur = kStackSize;
+	    result = setrlimit ( RLIMIT_STACK, &rl );
+	    if ( result != 0 )
+	    {
+		streamlog_out ( ERROR5 ) << "setrlimit returned result " << result << endl;;
             }
         }
     }
-    
-    
 
     // check if Marlin was built with GEAR support or not
     #ifndef USE_GEAR
@@ -622,19 +681,19 @@ void EUTelMilleGBL::init ( )
     {
 	_BField = true;
 	streamlog_out ( MESSAGE2 ) << "Running WITH magnetic field! " << Bx << " Bx, " << By << " By, " << Bz << " Bz!" <<  endl;
-	streamlog_out ( MESSAGE2 ) << "The residual cuts will be multiplied by 10!" << endl;
-	_driCut = _driCut * 10.0;
-	_driCutREFx = _driCutREFx * 10.0;
-	_driCutREFy = _driCutREFy * 10.0;
-	_sixCut = _sixCut * 10.0;
-	_triCut = _triCut * 10.0;
-	_triCutDUTx = _triCutDUTx* 10.0;
-	_triCutDUTy = _triCutDUTy * 10.0;
-	streamlog_out ( MESSAGE2 ) << "The chi2, slope and prob cuts will be multiplied by 5!" << endl;
-	_chi2ndfCut = _chi2ndfCut * 5.0;
+	streamlog_out ( MESSAGE2 ) << "The residual cuts will be multiplied by 2!" << endl;
+	_driCut = _driCut * 2.0;
+	_driCutREFx = _driCutREFx * 2.0;
+	_driCutREFy = _driCutREFy * 2.0;
+	_sixCut = _sixCut * 2.0;
+	_triCut = _triCut * 2.0;
+	_triCutDUTx = _triCutDUTx* 2.0;
+	_triCutDUTy = _triCutDUTy * 2.0;
+	streamlog_out ( MESSAGE2 ) << "The chi2, slope and prob cuts will be multiplied by 2!" << endl;
+	_chi2ndfCut = _chi2ndfCut * 2.0;
 	_probCut = _probCut * 0.2;
-	_slopecutDUTx = _slopecutDUTx * 5.0;
-	_slopecutDUTy = _slopecutDUTy * 5.0;
+	_slopecutDUTx = _slopecutDUTx * 2.0;
+	_slopecutDUTy = _slopecutDUTy * 2.0;
     }
     else
     {
@@ -1212,6 +1271,11 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
     LCCollectionVec *fittrackvec = new LCCollectionVec ( LCIO::TRACK );
     LCCollectionVec *fitpointvec = new LCCollectionVec ( LCIO::TRACKERHIT );
 
+    // Mykyta: store the normal vector
+    LCCollectionVec *dutnormalvec = new LCCollectionVec ( LCIO::LCGENERICOBJECT );
+    dutnormalvec -> parameters ( ) .setValue ( "DataDescription", "PosX:d,PosY:d,PosZ:d,NormX:d,NormY:d,NormZ:d" );
+    dutnormalvec -> parameters ( ) .setValue ( "TypeName", "DUT Position and Normal Vector" ); 
+
     // load the alignment only once
     if ( _alignmentloaded == false )
     {
@@ -1235,6 +1299,16 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	getDUTNormal ( );
 	_dutplanevectors = true;
 	streamlog_out ( MESSAGE1 ) <<  "DUT position calculated..." << endl;
+
+	// Mykyta: store it
+	LCGenericObjectImpl* dutVec = new LCGenericObjectImpl ( 0, 0, 6 );
+	dutVec -> setDoubleVal ( 0, _dutplane[0] );
+	dutVec -> setDoubleVal ( 1, _dutplane[1] );
+	dutVec -> setDoubleVal ( 2, _dutplane[2] );
+	dutVec -> setDoubleVal ( 3, _normalvector[0] );
+	dutVec -> setDoubleVal ( 4, _normalvector[1] );
+	dutVec -> setDoubleVal ( 5, _normalvector[2] );
+	dutnormalvec -> addElement ( dutVec );
     }
 
     if ( _iEvt % 1000 == 0 && _doPreAlignment == 0 )
@@ -1242,7 +1316,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	streamlog_out ( MESSAGE1 ) << "Processing event " << setw ( 6 ) << setiosflags ( ios::right ) << event -> getEventNumber ( ) << " in run " << setw ( 6 ) << setiosflags ( ios::right ) << event -> getRunNumber ( ) << ", with " << setw ( 6 ) << setiosflags ( ios::right ) << _nMilleTracks << " tracks, " << setw ( 6 ) << setiosflags ( ios::right ) << _nGoodMilleTracks << "  good" << endl;
     }
 
-    if ( _nMilleTracks > _maxTrackCandidatesTotal )
+    if ( _nMilleTracks > _maxTrackCandidatesTotal && _maxTrackCandidatesTotal > 0 )
     {
 	throw StopProcessingException ( this );
     }
@@ -1953,7 +2027,1089 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	exit ( -1 );
     }
 
-    if ( _doPreAlignment == 0 )
+    // FIXME Very hacky way of doing this!
+    if (_doPreAlignment == 0 && _useTrackFit == true )
+    {
+	int nmGood = 0;
+	streamlog_out ( DEBUG0 ) << "Using external track fit!" << endl;
+	try
+	{
+	    LCCollection * collection = event -> getCollection ( _trackFitCollectionName );
+
+	    for ( int iTrack = 0; iTrack < collection -> getNumberOfElements ( ); iTrack++ )
+	    {
+		streamlog_out ( DEBUG7 ) << "Reading track " << iTrack << " of " << collection -> getNumberOfElements ( ) << endl;
+		TrackImpl * track = dynamic_cast < TrackImpl* > ( collection -> getElementAt ( iTrack ) );
+		TrackerHitVec hitvec = track -> getTrackerHits ( );
+		
+		double d0 = track -> getD0 ( );
+		double phi = track -> getPhi ( );
+		double omega = track -> getOmega ( );
+		double z0 = track -> getZ0 ( );
+		double tanlambda = track -> getTanLambda ( );
+		double chi2 = track -> getChi2 ( );
+		double ndf = track -> getNdf ( );
+		streamlog_out ( DEBUG7 )  << " d0: " << d0 << " phi: " << phi << " omega: " << omega << " z0: " << z0 << " tanlambda: " << tanlambda << " chi2/ndf: " << chi2 / ( ndf * 1.0 ) << " in event: "  << event -> getEventNumber ( ) << endl;
+		
+		tfitd0Hist -> fill ( d0 );
+		tfitphiHist -> fill ( phi );
+		tfitomegaHist -> fill ( omega );
+		tfitz0Hist -> fill ( z0 );
+		tfittanlambdaHist -> fill ( tanlambda );
+		tfitchi2ndfHist -> fill ( chi2 / ( ndf * 1.0 ) );
+
+		std::vector < std::vector < EUTelMilleGBL::HitsInPlane > > _fitHitsArray ( maxplanesinsystem, std::vector < EUTelMilleGBL::HitsInPlane > ( ) );
+		std::vector < std::vector < EUTelMilleGBL::HitsInPlane > > _mesHitsArray ( maxplanesinsystem, std::vector < EUTelMilleGBL::HitsInPlane > ( ) );
+
+		for ( size_t iHit = 0; iHit < hitvec.size ( )  ; ++iHit )
+		{
+		    // setup cellIdDecoder to decode the hit properties
+		    CellIDDecoder < TrackerHit > hitCellDecoder ( EUTELESCOPE::HITENCODING );
+
+		    TrackerHitImpl * hit;
+		    if ( ( hit = dynamic_cast < TrackerHitImpl* > ( hitvec[ iHit ] ) ) != 0x0 )
+		    {
+
+			// fit
+			if ( ( hitCellDecoder ( hit ) ["properties"] & kFittedHit ) > 0 )
+			{
+			    HitsInPlane hitsInPlane;
+			    int sensorID = hitCellDecoder ( hit ) ["sensorID"];
+
+			    // FIXME *-1 for some reason
+			    // Getting positions of the hits, conversion to um
+			    hitsInPlane.measuredX = -1000 * hit -> getPosition ( ) [0]; // um
+			    hitsInPlane.measuredY = -1000 * hit -> getPosition ( ) [1]; // um
+			    hitsInPlane.measuredZ = 1000 * hit -> getPosition ( ) [2]; // um
+
+			    _fitHitsArray[sensorID].push_back ( hitsInPlane );
+			    streamlog_out ( DEBUG7 ) << " Read fit: ( " << hitsInPlane.measuredX << " | " << hitsInPlane.measuredY << " | " << hitsInPlane.measuredZ << " )" << endl;
+
+			}
+
+			// measurement
+			if ( ( hitCellDecoder ( hit ) ["properties"] & kFittedHit ) <= 0 )
+			{
+			    HitsInPlane hitsInPlane;
+			    int sensorID = hitCellDecoder ( hit ) ["sensorID"];
+
+			    // Getting positions of the hits, conversion to um
+			    hitsInPlane.measuredX = 1000 * hit -> getPosition ( ) [0]; // um
+			    hitsInPlane.measuredY = 1000 * hit -> getPosition ( ) [1]; // um
+			    hitsInPlane.measuredZ = 1000 * hit -> getPosition ( ) [2]; // um
+
+			    _mesHitsArray[sensorID].push_back ( hitsInPlane );
+			    streamlog_out ( DEBUG7 ) << " Read meas: ( " << hitsInPlane.measuredX << " | " << hitsInPlane.measuredY << " | " << hitsInPlane.measuredZ << " )" << endl;
+			}
+		    }
+
+		    // HACK for now restricted!
+		    if ( iHit >= 13 )
+		    {
+			break ;
+		    }
+
+		} // done hit loop
+
+		// GBL point vector for the trajectory
+		std::vector < gbl::GblPoint > traj_points;
+
+		// gbl::GblTrajectory traj( false ); // curvature = false
+
+		// build up trajectory:
+		std::vector < unsigned int > ilab; // 0-5 = telescope, 6 = DUT
+		vector < double > sPoint;
+
+		double s = 0;
+
+		TMatrixD jacPointToPoint ( 5, 5 );
+
+		TMatrixD proL2m ( 2, 2 );
+		proL2m.UnitMatrix ( );
+
+		TVectorD meas ( 2 );
+
+		// precision = 1 / resolution^2
+		TVectorD measPrec ( 2 );
+		measPrec[0] = 1.0 / _resx / _resx;
+		measPrec[1] = 1.0 / _resy / _resy;
+
+		// different meas precision for dut
+		TVectorD measPrecDut ( 2 );
+		measPrecDut[0] = 1.0 / _resdutx / _resdutx;
+		measPrecDut[1] = 1.0 / _resduty / _resduty;
+
+		// different meas precision for ref
+		TVectorD measPrecRef ( 2 );
+		measPrecRef[0] = 1.0 / _resrefx / _resrefx;
+		measPrecRef[1] = 1.0 / _resrefy / _resrefy;
+
+		// scatter:
+		TVectorD scat( 2 );
+		// mean is zero
+		scat.Zero ( );
+
+		// FIXME this could be read from gear...
+		// beam momentum
+		double p = _eBeam;
+		// Si + Kapton
+		double X0Si = 65E-3 / 94.0;
+		// Si + Kapton
+		double X0SiDUT = 350E-3 / 94.0;
+		double X0Air = 1.0 / 304200.0;
+		double accum_x0 = 0.0;
+
+		// alignment derivatives
+		TMatrixD alDer2 ( 2, 2 );
+		alDer2[0][0] = 1.0; // dx/dx GBL sign convetion
+		alDer2[1][0] = 0.0; // dy/dx
+		alDer2[0][1] = 0.0; // dx/dy
+		alDer2[1][1] = 1.0; // dy/dy
+
+		TMatrixD alDer3 ( 2, 3 ); // alignment derivatives
+		alDer3[0][0] = 1.0; // dx/dx
+		alDer3[1][0] = 0.0; // dy/dx
+		alDer3[0][1] = 0.0; // dx/dy
+		alDer3[1][1] = 1.0; // dy/dy
+
+		TMatrixD alDer3D ( 3, 3 ); // alignment derivatives
+		alDer3D[0][0] = 1.0; // dx/dx
+		alDer3D[1][0] = 0.0; // dy/dx
+		alDer3D[2][0] = 0.0; // dz/dx
+		alDer3D[0][1] = 0.0; // dx/dy
+		alDer3D[1][1] = 1.0; // dy/dy
+		alDer3D[2][1] = 0.0; // dz/dy
+		alDer3D[0][2] = 0.0; // dx/dz
+		alDer3D[1][2] = 0.0; // dy/dz
+		alDer3D[2][2] = 1.0; // dz/dz
+
+		/*
+		TMatrixD alDer4 ( 2, 4 ); // alignment derivatives
+		alDer4[0][0] = 1.0; // dx/dx
+		alDer4[1][0] = 0.0; // dy/dx
+		alDer4[0][1] = 0.0; // dx/dy
+		alDer4[1][1] = 1.0; // dy/dy
+		alDer4[0][3] = sxA[kA]; // dx/dz
+		alDer4[1][3] = syA[kA]; // dy/dz
+		*/
+
+		TMatrixD alDer6 ( 3, 6 ); // alignment derivatives
+
+		// telescope planes 0-5 + DUT + REF:
+		double rx[8];
+		double ry[8];
+		double rz[8];
+
+		int jhit = 0;
+		// first plane, including any pre-alignment
+		double xprev = _mesHitsArray[indexconverter[0]][jhit].measuredX;
+		double yprev = _mesHitsArray[indexconverter[0]][jhit].measuredY;
+		double zprev = _mesHitsArray[indexconverter[0]][jhit].measuredZ;
+
+		// plane loop
+		int looplimit = 7;
+		if ( _useREF > 0 )
+		{
+		    looplimit = 8;
+		}
+		for ( int ipl = 0; ipl < looplimit; ++ipl )
+		{
+
+		             /*
+			// in this case just add scatterer and continue with the next plane
+			if ( _requireDUTHit == 0 && ipl == 3 )
+			{
+
+			    // give correct z from fit!
+			    double xx = dutfitposX;
+			    double yy = dutfitposY;
+			    double zz = dutfitposZ;
+
+			    double stepx = xx - xprev;
+			    double stepy = yy - yprev;
+			    double step = zz - zprev;
+
+			    TVector3 direction ( stepx, stepy, step );
+
+			    double tetSiDUT = 0.0136 * sqrt ( X0SiDUT ) / p * ( 1 + 0.038 * std::log ( X0SiDUT + accum_x0 ) );
+
+			    TVectorD wscatSiDUT ( 2 );
+			    // weight
+			    wscatSiDUT[0] = 1.0 / ( tetSiDUT * tetSiDUT );
+			    wscatSiDUT[1] = 1.0 / ( tetSiDUT * tetSiDUT );
+
+			    jacPointToPoint = Jac55 ( step, direction, _BField );
+			    gbl::GblPoint *point = new gbl::GblPoint ( jacPointToPoint );
+			    point -> addScatterer ( scat, wscatSiDUT );
+			    accum_x0 += X0SiDUT;
+
+			    xprev = xx;
+			    yprev = yy;
+			    zprev = zz;
+			    traj_points.push_back ( *point );
+			    sPoint.push_back ( s );
+			    delete point;
+
+			    streamlog_out ( DEBUG3 ) << "Adding GBL DUT scatterer at z: " << zz << " um in Event " << event -> getEventNumber ( ) << endl;
+			    streamlog_out ( DEBUG3 ) << "Accumulated X0 is " << accum_x0*1E3 << " E-3!" << endl;
+
+			    // also add air
+			    // positions in um
+			    zz = _activeSensorZ[ipl] * 1000.0 + ( _activeSensorZ[ipl+ 1] * 1000.0 - _activeSensorZ[ipl] * 1000.0 ) * 0.21;
+			    step = zz - zprev;
+			    direction[2] = step;
+			    jacPointToPoint = Jac55 ( step, direction, _BField );
+			    gbl::GblPoint *point1 = new gbl::GblPoint ( jacPointToPoint );
+			    s += step;
+			    zprev = zz;
+			    TVectorD wscatAir ( 2 );
+			    // as x0 is in mm, airlength has to be in mm too!
+			    double airlength = ( 0.5 * ( _activeSensorZ[ipl+ 1] - _activeSensorZ[ipl] ) );
+			    double tetAir = 0.0136 * sqrt ( X0Air * airlength ) / p * ( 1 + 0.038 * std::log ( X0Air * airlength + accum_x0 ) );
+			    wscatAir[0] = 1.0 / ( tetAir * tetAir );
+			    wscatAir[1] = 1.0 / ( tetAir * tetAir );
+			    point1 -> addScatterer ( scat, wscatAir );
+			    traj_points.push_back ( *point1 );
+			    sPoint.push_back ( s );
+			    delete point1;
+			    accum_x0 += X0Air * airlength;
+			    streamlog_out ( DEBUG3 ) << "Adding air scatterer at z: " << zz << " um in Event " << event -> getEventNumber ( ) << endl;
+			    streamlog_out ( DEBUG3 ) << "Accumulated X0 is " << accum_x0 * 1E3 << " E-3!" << endl;
+
+			    zz = zprev + ( _activeSensorZ[ipl+ 1] * 1000.0 - _activeSensorZ[ipl] * 1000.0 ) * 0.58;
+			    step = zz - zprev;
+			    direction[2] = step;
+			    jacPointToPoint = Jac55 ( step, direction, _BField );
+			    gbl::GblPoint *point2 = new gbl::GblPoint ( jacPointToPoint );
+			    s += step;
+			    zprev = zz;
+			    tetAir = 0.0136 * sqrt ( X0Air * airlength ) / p * ( 1 + 0.038 * std::log ( X0Air * airlength + accum_x0 ) );
+			    wscatAir[0] = 1.0 / ( tetAir * tetAir );
+			    wscatAir[1] = 1.0 / ( tetAir * tetAir );
+			    point2 -> addScatterer ( scat, wscatAir );
+			    traj_points.push_back ( *point2 );
+			    sPoint.push_back ( s );
+			    delete point2;
+			    accum_x0 += X0Air * airlength;
+			    streamlog_out ( DEBUG3 ) << "Adding air scatterer at z: " << zz << " um in Event " << event -> getEventNumber ( ) << endl;
+			    streamlog_out ( DEBUG3 ) << "Accumulated X0 is " << accum_x0 * 1E3 << " E-3!" << endl;
+
+			    continue;
+			}
+			*/
+
+		    // [um]
+		    double xx = _mesHitsArray[indexconverter[ipl]][jhit].measuredX;
+		    double yy = _mesHitsArray[indexconverter[ipl]][jhit].measuredY;
+		    double zz = _mesHitsArray[indexconverter[ipl]][jhit].measuredZ;
+
+		    double stepx = xx - xprev;
+		    double stepy = yy - yprev;
+		    double step = zz - zprev;
+
+		    TVector3 direction ( stepx, stepy, step );
+
+		    jacPointToPoint = Jac55 ( step, direction, _BField );
+		    gbl::GblPoint *point = new gbl::GblPoint ( jacPointToPoint );
+		    s += step;
+		    xprev = xx;
+		    yprev = yy;
+		    zprev = zz;
+
+		    // extrapolate t/driplet vector A/B to each plane:
+		    double xs = 0.0;
+		    double ys = 0.0;
+		    double zs = 0.0;
+
+		    xs = _fitHitsArray[indexconverter[ipl]][jhit].measuredX;
+		    ys = _fitHitsArray[indexconverter[ipl]][jhit].measuredY;
+		    zs = _fitHitsArray[indexconverter[ipl]][jhit].measuredZ;
+
+		    // resid hit-track
+		    rx[indexconverter[ipl]] = _mesHitsArray[indexconverter[ipl]][jhit].measuredX - xs;
+		    ry[indexconverter[ipl]] = _mesHitsArray[indexconverter[ipl]][jhit].measuredY - ys;
+		    rz[indexconverter[ipl]] = _mesHitsArray[indexconverter[ipl]][jhit].measuredZ - zs;
+
+		    // resid hit-track
+		    meas[0] = _mesHitsArray[indexconverter[ipl]][jhit].measuredX - xs;
+		    meas[1] = _mesHitsArray[indexconverter[ipl]][jhit].measuredY - ys;
+
+		    double tetSi = 0.0136 * sqrt ( X0Si ) / p * ( 1 + 0.038 * std::log ( X0Si + accum_x0 ) );
+		    double tetSiDUT = 0.0136 * sqrt ( X0SiDUT ) / p * ( 1 + 0.038 * std::log ( X0SiDUT + accum_x0 ) );
+
+		    TVectorD wscatSi ( 2 );
+		    wscatSi[0] = 1.0 / ( tetSi * tetSi );
+		    wscatSi[1] = 1.0 / ( tetSi * tetSi );
+
+		    TVectorD wscatSiDUT ( 2 );
+		    wscatSiDUT[0] = 1.0 / ( tetSiDUT * tetSiDUT );
+		    wscatSiDUT[1] = 1.0 / ( tetSiDUT * tetSiDUT );
+
+		    // catch DUT, this has a different meas precision and scattering properties
+		    if ( ipl == 3 )
+		    {
+			// measurement has correct z anyway
+			point -> addMeasurement ( proL2m, meas, measPrecDut );
+			point -> addScatterer ( scat, wscatSiDUT ); //
+			accum_x0 += X0SiDUT;
+		    }
+		    else if ( ipl == 7 )
+		    {
+			point -> addMeasurement ( proL2m, meas, measPrecRef );
+			// don't care about scat...
+			point -> addScatterer ( scat, wscatSiDUT );
+			accum_x0 += X0Si;
+		    }
+		    else // assume all telescope planes are equal
+		    {
+			point -> addMeasurement ( proL2m, meas, measPrec );
+			point -> addScatterer ( scat, wscatSi );
+			accum_x0 += X0Si;
+		    }
+
+		    streamlog_out ( DEBUG6 ) << "Adding GBL measurement: x: " << _mesHitsArray[indexconverter[ipl]][jhit].measuredX << " y: " << _mesHitsArray[indexconverter[ipl]][jhit].measuredY << " z: " << _mesHitsArray[indexconverter[ipl]][jhit].measuredZ << " in Event " << event -> getEventNumber ( ) << endl;
+		    streamlog_out ( DEBUG6 ) << "Accumulated X0 is " << accum_x0 * 1E3 << " E-3!" << endl;
+
+		    // FIXME may not work for 7?
+		    // only x and y shifts
+		    if ( _alignMode == 2 )
+		    {
+			// global labels for MP:
+			std::vector < int > globalLabels ( 2 );
+			globalLabels[0] = 1 + 2 * ipl;
+			globalLabels[1] = 2 + 2 * ipl;
+			// for MillePede alignment
+			point -> addGlobals ( globalLabels, alDer2 );
+		    }
+		    // with rot
+		    else if ( _alignMode == 3 )
+		    {
+			std::vector < int > globalLabels ( 3 );
+			globalLabels[0] = 1 + 3 * ipl; // x
+			globalLabels[1] = 2 + 3 * ipl; // y
+			globalLabels[2] = 3 + 3 * ipl; // rot
+			alDer3[0][2] = -ys; // dx/dphi
+			alDer3[1][2] =  xs; // dy/dphi
+			point -> addGlobals ( globalLabels, alDer3 );
+		    }
+		    /*
+		    // with rot and z shift
+		    else if ( _alignMode == 4 )
+		    {
+			std::vector < int > globalLabels ( 4 );
+			globalLabels[0] = 1 + 4 * ipl;
+			globalLabels[1] = 2 + 4 * ipl;
+			globalLabels[2] = 3 + 4 * ipl;
+			globalLabels[3] = 4 + 4 * ipl; // z
+			alDer4[0][2] = -ys; // dx/dphi
+			alDer4[1][2] =  xs; // dy/dphi
+			point -> addGlobals ( globalLabels, alDer4 );
+
+		    }
+		    // with multiple rot and/or z fixed
+		    else if ( _alignMode == 1 || _alignMode == 5 || _alignMode == 6 || _alignMode == 7 )
+		    {
+			std::vector < int > globalLabels ( 6 );
+			globalLabels[0] = 1 + 6 * ipl;
+			globalLabels[1] = 2 + 6 * ipl;
+			globalLabels[2] = 3 + 6 * ipl;
+			globalLabels[3] = 4 + 6 * ipl;
+			globalLabels[4] = 5 + 6 * ipl;
+			globalLabels[5] = 6 + 6 * ipl;
+
+			// sanity output, deltaz can be non zero due to rotated sensors
+			streamlog_out ( DEBUG3 ) << "Measured z of ipl " << ipl << " is " << _mesHitsArray[indexconverter[ipl]][jhit].measuredZ << " um" << endl;
+			streamlog_out ( DEBUG3 ) << "Gearfile z of ipl " << ipl << " is " << _activeSensorZ[ipl] * 1000.0 << " um" << endl;
+			double deltaz = _mesHitsArray[indexconverter[ipl]][jhit].measuredZ - _activeSensorZ[ipl] * 1000.0;
+			streamlog_out ( DEBUG3 ) << "GBL DeltaZ of ipl " << ipl << " is " << deltaz << " um" << endl;
+
+			// deltaz cannot be zero, otherwise this mode doesn't work
+			// 1e-6 in um is quite small
+			if ( deltaz < 1E-6 )
+			{
+			    deltaz = 1E-6;
+			}
+
+			// derivatives:
+			alDer6[0][0] = 1.0; // dx/dx
+			alDer6[0][1] = 0.0; // dx/dy
+			if ( ipl < 4 )
+			{
+			    er6[0][2] = sxA[kA]; // dx/dz
+			}
+			else
+			{
+			    er6[0][2] = sxB[kB]; // dx/dz
+			}
+			alDer6[0][3] = 0.0; // dx/da
+			alDer6[0][4] = deltaz; // dx/db
+			alDer6[0][5] = -ys; // dx/dg
+			alDer6[1][0] = 0.0; // dy/dx
+			alDer6[1][1] = 1.0; // dy/dy
+			if ( ipl < 4 )
+			{
+			    er6[1][2] = syA[kA]; // dy/dz
+			}
+			else
+			{
+			    er6[1][2] = syB[kB]; // dy/dz
+			}
+			alDer6[1][3] = -deltaz; // dy/da
+			alDer6[1][4] = 0.0; // dy/db
+			alDer6[1][5] = xs; // dy/dg
+
+			alDer6[2][0] = 0.0; // dz/dx
+			alDer6[2][1] = 0.0; // dz/dy
+			alDer6[2][2] = 1.0; // dz/dz
+			alDer6[2][3] = ys; // dz/da
+			alDer6[2][4] = -xs; // dz/db
+			alDer6[2][5] = 0.0; // dz/dg
+
+			//
+			//// from eutelmille *-1 // FIXME crashes sometimes?!
+			//alDer6[0][0] = 1.0;					// dx/dx
+			//alDer6[0][1] = 0.0;					// dx/dy
+			//alDer6[0][2] = 0.0;					// dx/dz
+			//alDer6[0][3] = 0.0;					// dx/da
+			//alDer6[0][4] = deltaz;					// dx/db
+			//alDer6[0][5] = -1.0*_mesHitsArray[ipl][jhit].measuredY;	// dx/dg
+			//
+			//alDer6[1][0] = 0.0;	// dy/dx
+			//alDer6[1][1] = 1.0;	// dy/dy
+			//alDer6[1][2] = 0.0;	// dy/dz
+			//alDer6[1][3] = -1.0*deltaz;	// dy/da
+			//alDer6[1][4] = 0.0;	// dy/db
+			//alDer6[1][5] = 1.0*_mesHitsArray[ipl][jhit].measuredX;	// dy/dg
+			//
+			//alDer6[2][0] = 0.0;	// dz/dx
+			//alDer6[2][1] = 0.0; 	// dz/dy
+			//alDer6[2][2] = 1.0;	// dz/dz
+			//alDer6[2][3] = 1.0*_mesHitsArray[ipl][jhit].measuredX;	// dz/da
+			//alDer6[2][4] = -1.0*_mesHitsArray[ipl][jhit].measuredY;	// dz/db
+			//alDer6[2][5] = 0.0;	// dz/dg
+			//
+
+			point -> addGlobals ( globalLabels, alDer6 );
+		    }
+		    */
+
+		    traj_points.push_back ( *point );
+
+		    sPoint.push_back ( s );
+
+		    streamlog_out ( DEBUG6 ) << "Point pushed to gbl:" << endl; 
+		    streamlog_out ( DEBUG6 ) << " Labels:" << endl;
+		    for ( size_t ic = 0; ic < point -> getGlobalLabels ( ).size ( ); ic++ )
+		    {
+			streamlog_out ( DEBUG6 ) << "  " << ic << " " << point -> getGlobalLabels ( ) .at ( ic ) << endl;
+		    }
+		    streamlog_out ( DEBUG6 ) << " The number of global parameters for this point is " << point -> getNumGlobals ( ) << endl;
+		    streamlog_out ( DEBUG6 ) << " The alignment matrix after adding the point: " << endl;
+		    streamlog_message ( DEBUG2, point -> getGlobalDerivatives ( ) .Print ( );, std::endl; );
+
+		    delete point;
+
+		    // add air after each plane except last one
+		    if ( ipl < ( looplimit - 1 ) )
+		    {
+			// positions in um
+			zz = _activeSensorZ[ipl] * 1000.0 + ( _activeSensorZ[ipl+ 1] * 1000.0 - _activeSensorZ[ipl] * 1000.0 ) * 0.21;
+			step = zz - zprev;
+			direction[2] = step;
+			jacPointToPoint = Jac55 ( step, direction, _BField );
+			gbl::GblPoint *point1 = new gbl::GblPoint ( jacPointToPoint );
+			s += step;
+			zprev = zz;
+			TVectorD wscatAir ( 2 );
+			// as x0 is in mm, airlength has to be in mm too!
+			double airlength = ( 0.5 * ( _activeSensorZ[ipl+ 1] - _activeSensorZ[ipl] ) );
+			double tetAir = 0.0136 * sqrt ( X0Air * airlength ) / p * ( 1 + 0.038 * std::log ( X0Air * airlength + accum_x0 ) );
+			wscatAir[0] = 1.0 / ( tetAir * tetAir );
+			wscatAir[1] = 1.0 / ( tetAir * tetAir );
+			point1 -> addScatterer ( scat, wscatAir );
+			traj_points.push_back ( *point1 );
+			sPoint.push_back ( s );
+			delete point1;
+			accum_x0 += X0Air * airlength;
+			streamlog_out ( DEBUG6 ) << "Adding air scatterer at z: " << zz << " um in Event " << event -> getEventNumber ( ) << endl;
+			streamlog_out ( DEBUG6 ) << "Accumulated X0 is " << accum_x0 * 1E3 << " E-3!" << endl;
+
+			zz = zprev + ( _activeSensorZ[ipl+ 1] * 1000.0 - _activeSensorZ[ipl] * 1000.0 ) * 0.58;
+			step = zz - zprev;
+			direction[2] = step;
+			jacPointToPoint = Jac55 ( step, direction, _BField );
+			gbl::GblPoint *point2 = new gbl::GblPoint ( jacPointToPoint );
+			s += step;
+			zprev = zz;
+			tetAir = 0.0136 * sqrt ( X0Air * airlength ) / p * ( 1 + 0.038 * std::log ( X0Air * airlength + accum_x0 ) );
+			wscatAir[0] = 1.0 / ( tetAir * tetAir );
+			wscatAir[1] = 1.0 / ( tetAir * tetAir );
+			point2 -> addScatterer ( scat, wscatAir );
+			traj_points.push_back ( *point2 );
+			sPoint.push_back ( s );
+			delete point2;
+			accum_x0 += X0Air * airlength;
+			streamlog_out ( DEBUG6 ) << "Adding air scatterer at z: " << zz << " um in Event " << event -> getEventNumber ( ) << endl;
+			streamlog_out ( DEBUG6 ) << "Accumulated X0 is " << accum_x0 * 1E3 << " E-3!" << endl;
+		    } // not last plane
+
+		} // loop over planes
+
+
+		// monitor what we have put into GBL:
+
+		selrx0Hist -> fill ( rx[indexconverter[0]] );
+		selry0Hist -> fill ( ry[indexconverter[0]] );
+		selrx1Hist -> fill ( rx[indexconverter[1]] );
+		selry1Hist -> fill ( ry[indexconverter[1]] );
+		selrx2Hist -> fill ( rx[indexconverter[2]] );
+		selry2Hist -> fill ( ry[indexconverter[2]] );
+		selrx6Hist -> fill ( rx[indexconverter[3]] );
+		selry6Hist -> fill ( ry[indexconverter[3]] );
+		selrx3Hist -> fill ( rx[indexconverter[4]] );
+		selry3Hist -> fill ( ry[indexconverter[4]] );
+		selrx4Hist -> fill ( rx[indexconverter[5]] );
+		selry4Hist -> fill ( ry[indexconverter[5]] );
+		selrx5Hist -> fill ( rx[indexconverter[6]] );
+		selry5Hist -> fill ( ry[indexconverter[6]] );
+
+		if ( _useREF > 0 )
+		{
+		    selrx7Hist -> fill ( rx[indexconverter[7]] );
+		    selry7Hist -> fill ( ry[indexconverter[7]] );
+		}
+
+		double Chi2;
+		int Ndf;
+		double lostWeight;
+
+		gbl::GblTrajectory traj ( traj_points, _BField );
+		traj.fit ( Chi2, Ndf, lostWeight );
+		traj.getLabels ( ilab );
+
+		streamlog_out ( DEBUG7 ) << "Fitted track: chi2: " << Chi2 << ", ndf: " << Ndf << endl;
+
+		gblndfHist -> fill ( Ndf );
+		gblchi2Hist -> fill ( Chi2 );
+		double chi2ndf = Chi2 / ( Ndf * 1.0 );
+		gblchi2ndfHist -> fill ( chi2ndf );
+		double probchi = TMath::Prob ( Chi2, Ndf );
+		gblprbHist -> fill ( probchi );
+
+		// possibility to cut on track slope at DUT:
+		TVectorD aCorrection ( 5 );
+		TMatrixDSym aCovariance ( 5 );
+
+		// bad fits:
+		if ( probchi < _probCut || chi2ndf > _chi2ndfCut )
+		{
+		    if ( probchi < _probCut )
+		    {
+			_probCutCount++;
+			streamlog_out ( DEBUG0 ) << "Track failed prob cut!" << endl;
+		    }
+		    if ( chi2ndf > _chi2ndfCut )
+		    {
+			_chi2ndfCutCount++;
+			streamlog_out ( DEBUG0 ) << "Track failed chi2ndf cut!" << endl;
+		    }
+
+		    // triplet at DUT
+		    baddx0Hist -> fill ( rx[indexconverter[0]] );
+		    baddy0Hist -> fill ( ry[indexconverter[0]] );
+		    baddx1Hist -> fill ( rx[indexconverter[1]] );
+		    baddy1Hist -> fill ( ry[indexconverter[1]] );
+		    baddx2Hist -> fill ( rx[indexconverter[2]] );
+		    baddy2Hist -> fill ( ry[indexconverter[2]] );
+		    baddx6Hist -> fill ( rx[indexconverter[3]] );
+		    baddy6Hist -> fill ( ry[indexconverter[3]] );
+		    baddx3Hist -> fill ( rx[indexconverter[4]] );
+		    baddy3Hist -> fill ( ry[indexconverter[4]] );
+		    baddx4Hist -> fill ( rx[indexconverter[5]] );
+		    baddy4Hist -> fill ( ry[indexconverter[5]] );
+		    baddx5Hist -> fill ( rx[indexconverter[6]] );
+		    baddy5Hist -> fill ( ry[indexconverter[6]] );
+
+		    if ( _useREF > 0 )
+		    {
+			baddx7Hist -> fill ( rx[indexconverter[7]] );
+			baddy7Hist -> fill ( ry[indexconverter[7]] );
+		    }
+
+		}
+		else
+		{
+		    streamlog_out ( DEBUG0 ) << "Good track!" << endl;
+
+		    goodx0Hist -> fill ( rx[indexconverter[0]] );
+		    goody0Hist -> fill ( ry[indexconverter[0]] );
+		    goodx1Hist -> fill ( rx[indexconverter[1]] );
+		    goody1Hist -> fill ( ry[indexconverter[1]] );
+		    goodx2Hist -> fill ( rx[indexconverter[2]] );
+		    goody2Hist -> fill ( ry[indexconverter[2]] );
+		    goodx6Hist -> fill ( rx[indexconverter[3]] );
+		    goody6Hist -> fill ( ry[indexconverter[3]] );
+		    goodx3Hist -> fill ( rx[indexconverter[4]] );
+		    goody3Hist -> fill ( ry[indexconverter[4]] );
+		    goodx4Hist -> fill ( rx[indexconverter[5]] );
+		    goody4Hist -> fill ( ry[indexconverter[5]] );
+		    goodx5Hist -> fill ( rx[indexconverter[6]] );
+		    goody5Hist -> fill ( ry[indexconverter[6]] );
+
+		    if ( _useREF > 0 )
+		    {
+			goodx7Hist -> fill ( rx[indexconverter[7]] );
+			goody7Hist -> fill ( ry[indexconverter[7]] );
+		    }
+
+		    // 6 telescope planes, + 1 dut + 1 ref
+		    double ax[8];
+		    double ay[8];
+		    unsigned int k = 0;
+		    unsigned int ndim = 2;
+
+		    TVectorD aResiduals ( ndim );
+		    TVectorD aMeasErrors ( ndim );
+		    TVectorD aResErrors ( ndim );
+		    TVectorD aDownWeights ( ndim );
+
+		    TVectorD aKinks ( ndim );
+		    TVectorD aKinkErrors ( ndim );
+		    TVectorD kResErrors ( ndim );
+		    TVectorD kDownWeights ( ndim );
+
+		    // prepare an encoder for the hit collection
+		    CellIDEncoder < TrackerHitImpl > fitHitEncoder ( EUTELESCOPE::HITENCODING, fitpointvec );
+
+		    // Set flag for storing track hits in track collection
+		    LCFlagImpl flag ( fittrackvec -> getFlag ( ) );
+		    flag.setBit ( LCIO::TRBIT_HITS );
+		    fittrackvec -> setFlag ( flag.getFlag ( ) );
+
+		    TrackImpl * fittrack = new TrackImpl ( );
+
+		    // curvature of the track
+		    fittrack -> setOmega ( 0.0 );
+		    // impact paramter of the track in (r-phi)
+		    fittrack -> setD0 ( 0.0 );
+		    // impact paramter of the track in (r-z)
+		    fittrack -> setZ0 ( 0.0 );
+		    // phi of the track at reference point
+		    fittrack -> setPhi ( 0.0 );
+		    // dip angle of the track at reference point
+		    fittrack -> setTanLambda ( 0.0 );
+		    // Chi2 of the fit 
+		    fittrack -> setChi2 ( Chi2 );
+		    // number of planes
+		    fittrack -> setNdf ( Ndf );
+
+		    double fitpos[3] = { 0.0, 0.0, 0.0 };
+		    float fitcov[TRKHITNCOVMATRIX] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+
+		    //track = q/p, x', y', x, y
+		    //        0,   1,  2,  3, 4
+
+		    // at plane 0:
+		    int ipos = 0;
+		    traj.getResults ( ipos, aCorrection, aCovariance );
+		    // no results at 0
+		    // traj.getMeasResults ( static_cast < unsigned int > ( ipos ), ndim, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+		    // traj.getScatResults ( static_cast < unsigned int > ( ipos ), ndim, aKinks, aKinkErrors, kResErrors, kDownWeights );
+		    // angle x [mrad]
+		    gblax0Hist -> fill ( 0.0 - aCorrection[1] * 1E3 );
+		    // shift x [um]
+		    gbldx0Hist -> fill ( aCorrection[3] );
+		    // residual x [um]
+		    gblrx0Hist -> fill ( rx[indexconverter[0]] - aCorrection[3] );
+		    // angle y [mrad]
+		    gblay0Hist -> fill ( 0.0 - aCorrection[2] * 1E3 );
+		    // shift y [um]
+		    gbldy0Hist -> fill ( aCorrection[4] );
+		    // residual y [um]
+		    gblry0Hist -> fill ( ry[indexconverter[0]] - aCorrection[4] );
+		    // pull residual x
+		    gblpx0Hist -> fill ( 0.0 );
+		    // pull residual y 
+		    gblpy0Hist -> fill ( 0.0 );
+		    // angle correction at plane, for kinks
+		    ax[k] = aCorrection[1];
+		    // angle correction at plane, for kinks
+		    ay[k] = aCorrection[2];
+
+		    // the fit at this point is the measurement - aCorrection, so we can save these fit hits:
+		    TrackerHitImpl * fitpoint0 = new TrackerHitImpl;
+		    fitHitEncoder["sensorID"] =  0;
+		    fitHitEncoder["properties"] = kFittedHit;
+		    fitHitEncoder.setCellID ( fitpoint0 );
+
+		    // for output go back to mm:
+		    fitpos[0] = ( _mesHitsArray[indexconverter[0]][jhit].measuredX - aCorrection[3] ) / 1000.0;
+		    fitpos[1] = ( _mesHitsArray[indexconverter[0]][jhit].measuredY - aCorrection[4] ) / 1000.0;
+		    fitpos[2] = _mesHitsArray[indexconverter[0]][jhit].measuredZ / 1000.0;
+
+		    fitpoint0 -> setPosition ( fitpos );
+
+		    fitpoint0 -> setCovMatrix ( fitcov );
+		    fitpointvec -> push_back ( fitpoint0 );
+		    fittrack -> addHit ( fitpoint0 );
+
+		    // for plane 0: this is the reference
+		    float refpoint[3];
+		    refpoint[0] = fitpos[0];
+		    refpoint[1] = fitpos[1];
+		    refpoint[2] = fitpos[2];
+
+		    k++;
+
+		    ipos = 1;
+		    traj.getResults ( ipos, aCorrection, aCovariance );
+		    traj.getMeasResults ( static_cast < unsigned int > ( ipos ), ndim, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+		    traj.getScatResults ( static_cast < unsigned int > ( ipos ), ndim, aKinks, aKinkErrors, kResErrors, kDownWeights );
+		    gblax1Hist -> fill ( 0.0 - aCorrection[1] * 1E3 );
+		    gbldx1Hist -> fill ( aCorrection[3] );
+		    gblrx1Hist -> fill ( rx[indexconverter[1]] - aCorrection[3] );
+		    gblay1Hist -> fill ( 0.0 - aCorrection[2] * 1E3 );
+		    gbldy1Hist -> fill ( aCorrection[4] );
+		    gblry1Hist -> fill ( ry[indexconverter[1]] - aCorrection[4] );
+		    gblpx1Hist -> fill ( aResiduals[0] / aResErrors[0] );
+		    gblpy1Hist -> fill ( aResiduals[1] / aResErrors[1] ); 
+		    ax[k] = aCorrection[1];
+		    ay[k] = aCorrection[2];
+
+		    TrackerHitImpl * fitpoint1 = new TrackerHitImpl;
+		    fitHitEncoder["sensorID"] =  1;
+		    fitHitEncoder["properties"] = kFittedHit;
+		    fitHitEncoder.setCellID ( fitpoint1 );
+
+		    // for output go back to mm:
+		    fitpos[0] = ( _mesHitsArray[indexconverter[1]][jhit].measuredX - aCorrection[3] ) / 1000.0;
+		    fitpos[1] = ( _mesHitsArray[indexconverter[1]][jhit].measuredY - aCorrection[4] ) / 1000.0;
+		    fitpos[2] = _mesHitsArray[indexconverter[1]][jhit].measuredZ / 1000.0;
+
+		    fitpoint1 -> setPosition ( fitpos );
+
+		    fitpoint1 -> setCovMatrix ( fitcov );
+		    fitpointvec -> push_back ( fitpoint1 );
+		    fittrack -> addHit ( fitpoint1 );
+
+		    k++;
+
+		    ipos = 2;
+		    traj.getResults ( ipos, aCorrection, aCovariance );
+		    traj.getMeasResults ( static_cast < unsigned int > ( ipos ), ndim, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+		    traj.getScatResults ( static_cast < unsigned int > ( ipos ), ndim, aKinks, aKinkErrors, kResErrors, kDownWeights );
+		    gblax2Hist -> fill ( 0.0 - aCorrection[1] * 1E3 );
+		    gbldx2Hist -> fill ( aCorrection[3] );
+		    gblrx2Hist -> fill ( rx[indexconverter[2]] - aCorrection[3] );
+		    gblay2Hist -> fill ( 0.0 - aCorrection[2] * 1E3 );
+		    gbldy2Hist -> fill ( aCorrection[4] );
+		    gblry2Hist -> fill ( ry[indexconverter[2]] - aCorrection[4] );
+		    gblpx2Hist -> fill ( aResiduals[0] / aResErrors[0] );
+		    gblpy2Hist -> fill ( aResiduals[1] / aResErrors[1] );
+		    ax[k] = aCorrection[1];
+		    ay[k] = aCorrection[2];
+	
+		    TrackerHitImpl * fitpoint2 = new TrackerHitImpl;
+		    fitHitEncoder["sensorID"] =  2;
+		    fitHitEncoder["properties"] = kFittedHit;
+		    fitHitEncoder.setCellID ( fitpoint2 );
+
+		    // for output go back to mm:
+		    fitpos[0] = ( _mesHitsArray[indexconverter[2]][jhit].measuredX - aCorrection[3] ) / 1000.0;
+		    fitpos[1] = ( _mesHitsArray[indexconverter[2]][jhit].measuredY - aCorrection[4] ) / 1000.0;
+		    fitpos[2] = _mesHitsArray[indexconverter[2]][jhit].measuredZ / 1000.0;
+
+		    fitpoint2 -> setPosition ( fitpos );
+
+		    fitpoint2 -> setCovMatrix ( fitcov );
+		    fitpointvec -> push_back ( fitpoint2 );
+		    fittrack -> addHit ( fitpoint2 );
+
+		    k++;
+
+		    ipos = 3; // 6 = DUT
+		    traj.getResults ( ipos, aCorrection, aCovariance );
+		    traj.getMeasResults ( static_cast < unsigned int > ( ipos ), ndim, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+		    traj.getScatResults ( static_cast < unsigned int > ( ipos ), ndim, aKinks, aKinkErrors, kResErrors, kDownWeights );
+		    gblax6Hist -> fill ( 0.0 - aCorrection[1] * 1E3 );
+		    gbldx6Hist -> fill ( aCorrection[3] );
+		    gblrx6Hist -> fill ( rx[indexconverter[3]] - aCorrection[3] );
+		    gblay6Hist -> fill ( 0.0 - aCorrection[2] * 1E3 );
+		    gbldy6Hist -> fill ( aCorrection[4] );
+		    gblry6Hist -> fill ( ry[indexconverter[3]] - aCorrection[4] );
+		    gblpx6Hist -> fill ( aResiduals[0] / aResErrors[0] );
+		    gblpy6Hist -> fill ( aResiduals[1] / aResErrors[1] );
+		    ax[k] = aCorrection[1];
+		    ay[k] = aCorrection[2];
+
+		    TrackerHitImpl * fitpoint3 = new TrackerHitImpl;
+		    fitHitEncoder["sensorID"] =  6;
+		    fitHitEncoder["properties"] = kFittedHit;
+		    fitHitEncoder.setCellID ( fitpoint3 );
+
+		    // for output go back to mm:
+
+		    // for the DUT, the point can come from a measurement or from the fit:
+		    if ( _requireDUTHit == 0 )
+		    {
+			fitpos[0] = _fitHitsArray[indexconverter[3]][jhit].measuredX / 1000.0;
+			fitpos[1] = _fitHitsArray[indexconverter[3]][jhit].measuredY / 1000.0;
+			fitpos[2] = _fitHitsArray[indexconverter[3]][jhit].measuredZ / 1000.0;
+		    }
+		    else
+		    {
+			fitpos[0] = ( _mesHitsArray[indexconverter[3]][jhit].measuredX - aCorrection[3] ) / 1000.0;
+			fitpos[1] = ( _mesHitsArray[indexconverter[3]][jhit].measuredY - aCorrection[4] ) / 1000.0;
+			fitpos[2] = _mesHitsArray[indexconverter[3]][jhit].measuredZ / 1000.0;
+		    }
+
+		    // fill detailed residuals
+		    dutrxxHist -> fill ( rx[indexconverter[3]], fitpos[0] );
+		    dutrxyHist -> fill ( rx[indexconverter[3]], fitpos[1] );
+		    dutrxzHist -> fill ( rx[indexconverter[3]], ( fitpos[2] - ( _dutplane.Z ( ) / 1000.0 ) ) );
+		    dutrxxProf -> Fill ( fitpos[0], rx[indexconverter[3]], 1 );
+		    dutrxyProf -> Fill ( fitpos[1], rx[indexconverter[3]], 1 );
+		    dutrxzProf -> Fill ( ( fitpos[2] - ( _dutplane.Z ( ) / 1000.0 ) ), rx[indexconverter[3]], 1 );
+		    dutrxsxHist -> fill ( rx[indexconverter[3]], 0.0 );
+		    dutrxsyHist -> fill ( rx[indexconverter[3]], 0.0 );
+		    dutrxkxHist -> fill ( rx[indexconverter[3]], 0.0 );
+		    dutrxkyHist -> fill ( rx[indexconverter[3]], 0.0 );
+		    dutrxchi2ndfHist -> fill ( rx[indexconverter[3]], chi2ndf );
+		    dutrxprobHist -> fill ( rx[indexconverter[3]], probchi );
+
+		    dutryxHist -> fill ( ry[indexconverter[3]], fitpos[0] );
+		    dutryyHist -> fill ( ry[indexconverter[3]], fitpos[1] );
+		    dutryzHist -> fill ( ry[indexconverter[3]], ( fitpos[2] - ( _dutplane.Z ( ) / 1000.0 ) ) );
+		    dutryxProf -> Fill ( fitpos[0], ry[indexconverter[3]], 1 );
+		    dutryyProf -> Fill ( fitpos[1], ry[indexconverter[3]], 1 );
+		    dutryzProf -> Fill ( ( fitpos[2] - ( _dutplane.Z ( ) / 1000.0 ) ), ry[indexconverter[3]], 1 );
+		    dutrysxHist -> fill ( ry[indexconverter[3]], 0.0 );
+		    dutrysyHist -> fill ( ry[indexconverter[3]], 0.0 );
+		    dutrykxHist -> fill ( ry[indexconverter[3]], 0.0 );
+		    dutrykyHist -> fill ( ry[indexconverter[3]], 0.0 );
+		    dutrychi2ndfHist -> fill ( ry[indexconverter[3]], chi2ndf );
+		    dutryprobHist -> fill ( ry[indexconverter[3]], probchi );
+
+		    // FIXME
+		    rz[indexconverter[3]] = _fitHitsArray[indexconverter[3]][jhit].measuredZ / 1000.0 - fitpos[2];
+
+		    dutrzxHist -> fill ( rz[indexconverter[3]], fitpos[0] );
+		    dutrzyHist -> fill ( rz[indexconverter[3]], fitpos[1] );
+		    dutrzzHist -> fill ( rz[indexconverter[3]], ( fitpos[2] - ( _dutplane.Z ( ) / 1000.0 ) ) );
+		    dutrzxProf -> Fill ( fitpos[0], rz[indexconverter[3]], 1 );
+		    dutrzyProf -> Fill ( fitpos[1], rz[indexconverter[3]], 1 );
+		    dutrzzProf -> Fill ( ( fitpos[2] - ( _dutplane.Z ( ) / 1000.0 ) ), rz[indexconverter[3]], 1 );
+		    dutrzsxHist -> fill ( rz[indexconverter[3]], 0.0 );
+		    dutrzsyHist -> fill ( rz[indexconverter[3]], 0.0 );
+		    dutrzkxHist -> fill ( rz[indexconverter[3]], 0.0 );
+		    dutrzkyHist -> fill ( rz[indexconverter[3]], 0.0 );
+		    dutrzchi2ndfHist -> fill ( rz[indexconverter[3]], chi2ndf );
+		    dutrzprobHist -> fill ( rz[indexconverter[3]], probchi );
+
+		    // fill kink vs impact map
+		    if ( _x0histos == true )
+		    {
+			dutkxmap -> fill ( fitpos[0], fitpos[1], 0.0 );
+			dutkymap -> fill ( fitpos[0], fitpos[1], 0.0 );
+			dutkmap -> fill ( fitpos[0], fitpos[1], 0.0 );
+		    }
+
+		    // hitmap for comparison
+		    duthitmap -> fill ( fitpos[0], fitpos[1] );
+		    duttrackhitmap -> fill ( _fitHitsArray[indexconverter[3]][jhit].measuredX / 1000.0, _fitHitsArray[indexconverter[3]][jhit].measuredY / 1000.0 );
+
+		    fitpoint3 -> setPosition ( fitpos );
+
+		    fitpoint3 -> setCovMatrix ( fitcov );
+		    fitpointvec -> push_back ( fitpoint3 );
+		    fittrack -> addHit ( fitpoint3 );
+	
+		    k++;
+
+		    ipos = 4;
+		    traj.getResults ( ipos, aCorrection, aCovariance );
+		    traj.getMeasResults ( static_cast < unsigned int > ( ipos ), ndim, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+		    traj.getScatResults ( static_cast < unsigned int > ( ipos ), ndim, aKinks, aKinkErrors, kResErrors, kDownWeights );
+		    gblax3Hist -> fill ( 0.0 - aCorrection[1] * 1E3 );
+		    gbldx3Hist -> fill ( aCorrection[3] );
+		    gblrx3Hist -> fill ( rx[indexconverter[4]] - aCorrection[3] );
+		    gblay3Hist -> fill ( 0.0 - aCorrection[2] * 1E3 );
+		    gbldy3Hist -> fill ( aCorrection[4] );
+		    gblry3Hist -> fill ( ry[indexconverter[4]] - aCorrection[4] );
+		    gblpx3Hist -> fill ( aResiduals[0] / aResErrors[0] );
+		    gblpy3Hist -> fill ( aResiduals[1] / aResErrors[1] );
+		    ax[k] = aCorrection[1];
+		    ay[k] = aCorrection[2];
+
+		    TrackerHitImpl * fitpoint4 = new TrackerHitImpl;
+		    fitHitEncoder["sensorID"] =  3;
+		    fitHitEncoder["properties"] = kFittedHit;
+		    fitHitEncoder.setCellID ( fitpoint4 );
+
+		    // for output go back to mm:
+		    fitpos[0] = ( _mesHitsArray[indexconverter[4]][jhit].measuredX - aCorrection[3] ) / 1000.0;
+		    fitpos[1] = ( _mesHitsArray[indexconverter[4]][jhit].measuredY - aCorrection[4] ) / 1000.0;
+		    fitpos[2] = _mesHitsArray[indexconverter[4]][jhit].measuredZ / 1000.0;
+
+		    fitpoint4 -> setPosition ( fitpos );
+
+		    fitpoint4 -> setCovMatrix ( fitcov );
+		    fitpointvec -> push_back ( fitpoint4 );
+		    fittrack -> addHit ( fitpoint4 );
+
+		    k++;
+
+		    ipos = 5;
+		    traj.getResults ( ipos, aCorrection, aCovariance );
+		    traj.getMeasResults ( static_cast < unsigned int > ( ipos ), ndim, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+		    traj.getScatResults ( static_cast < unsigned int > ( ipos ), ndim, aKinks, aKinkErrors, kResErrors, kDownWeights );
+		    gblax4Hist -> fill ( 0.0 - aCorrection[1] * 1E3 );
+		    gbldx4Hist -> fill ( aCorrection[3] );
+		    gblrx4Hist -> fill ( rx[indexconverter[5]] - aCorrection[3] );
+		    gblay4Hist -> fill ( 0.0 - aCorrection[2]* 1E3 );
+		    gbldy4Hist -> fill ( aCorrection[4] );
+		    gblry4Hist -> fill ( ry[indexconverter[5]] - aCorrection[4] );
+		    gblpx4Hist -> fill ( aResiduals[0] / aResErrors[0] );
+		    gblpy4Hist -> fill ( aResiduals[1] / aResErrors[1] );
+		    ax[k] = aCorrection[1];
+		    ay[k] = aCorrection[2];
+
+		    TrackerHitImpl * fitpoint5 = new TrackerHitImpl;
+		    fitHitEncoder["sensorID"] =  4;
+		    fitHitEncoder["properties"] = kFittedHit;
+		    fitHitEncoder.setCellID ( fitpoint5 );
+
+		    // for output go back to mm:
+		    fitpos[0] = ( _mesHitsArray[indexconverter[5]][jhit].measuredX - aCorrection[3] ) / 1000.0;
+		    fitpos[1] = ( _mesHitsArray[indexconverter[5]][jhit].measuredY - aCorrection[4] ) / 1000.0;
+		    fitpos[2] = _mesHitsArray[indexconverter[5]][jhit].measuredZ / 1000.0;
+
+		    fitpoint5 -> setPosition ( fitpos );
+
+		    fitpoint5 -> setCovMatrix ( fitcov );
+		    fitpointvec -> push_back ( fitpoint5 );
+		    fittrack -> addHit ( fitpoint5 );
+
+		    k++;
+	
+		    ipos = 6;
+		    traj.getResults ( ipos, aCorrection, aCovariance );
+		    traj.getMeasResults ( static_cast < unsigned int > ( ipos ), ndim, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+		    traj.getScatResults ( static_cast < unsigned int > ( ipos ), ndim, aKinks, aKinkErrors, kResErrors, kDownWeights );
+		    gblax5Hist -> fill ( 0.0 - aCorrection[1]* 1E3 );
+		    gbldx5Hist -> fill ( aCorrection[3] );
+		    gblrx5Hist -> fill ( rx[indexconverter[6]] - aCorrection[3] );
+		    gblay5Hist -> fill ( 0.0 - aCorrection[2]* 1E3 );
+		    gbldy5Hist -> fill ( aCorrection[4] );
+		    gblry5Hist -> fill ( ry[indexconverter[6]] - aCorrection[4] );
+		    gblpx5Hist -> fill ( aResiduals[0] / aResErrors[0] );
+		    gblpy5Hist -> fill ( aResiduals[1] / aResErrors[1] );
+		    ax[k] = aCorrection[1];
+		    ay[k] = aCorrection[2];
+
+		    TrackerHitImpl * fitpoint6 = new TrackerHitImpl;
+		    fitHitEncoder["sensorID"] =  5;
+		    fitHitEncoder["properties"] = kFittedHit;
+		    fitHitEncoder.setCellID ( fitpoint6 );
+
+		    // for output go back to mm:
+		    fitpos[0] = ( _mesHitsArray[indexconverter[6]][jhit].measuredX - aCorrection[3] ) / 1000.0;
+		    fitpos[1] = ( _mesHitsArray[indexconverter[6]][jhit].measuredY - aCorrection[4] ) / 1000.0;
+		    fitpos[2] = _mesHitsArray[indexconverter[6]][jhit].measuredZ / 1000.0;
+
+		    fitpoint6 -> setPosition ( fitpos );
+
+		    fitpoint6 -> setCovMatrix ( fitcov );
+		    fitpointvec -> push_back ( fitpoint6 );
+		    fittrack -> addHit ( fitpoint6 );
+
+		    k++;
+
+		    if ( _useREF > 0 )
+		    {
+			ipos = 7;
+			traj.getResults ( ipos, aCorrection, aCovariance );
+			traj.getMeasResults ( static_cast < unsigned int > ( ipos ), ndim, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+			traj.getScatResults ( static_cast < unsigned int > ( ipos ), ndim, aKinks, aKinkErrors, kResErrors, kDownWeights );
+			gblax7Hist -> fill ( 0.0 - aCorrection[1]* 1E3 );
+			gbldx7Hist -> fill ( aCorrection[3] );
+			gblrx7Hist -> fill ( rx[indexconverter[7]] - aCorrection[3] );
+			gblay7Hist -> fill ( 0.0 - aCorrection[2]* 1E3 );
+			gbldy7Hist -> fill ( aCorrection[4] );
+			gblry7Hist -> fill ( ry[indexconverter[7]] - aCorrection[4] );
+			gblpx7Hist -> fill ( aResiduals[0] / aResErrors[0] );
+			gblpy7Hist -> fill ( aResiduals[1] / aResErrors[1] );
+			ax[k] = aCorrection[1];
+			ay[k] = aCorrection[2];
+
+			TrackerHitImpl * fitpoint7 = new TrackerHitImpl;
+			fitHitEncoder["sensorID"] =  7;
+			fitHitEncoder["properties"] = kFittedHit;
+			fitHitEncoder.setCellID ( fitpoint7 );
+
+			// for output go back to mm:
+			fitpos[0] = ( _mesHitsArray[indexconverter[7]][jhit].measuredX - aCorrection[3] ) / 1000.0;
+			fitpos[1] = ( _mesHitsArray[indexconverter[7]][jhit].measuredY - aCorrection[4] ) / 1000.0;
+			fitpos[2] = _mesHitsArray[indexconverter[7]][jhit].measuredZ / 1000.0;
+
+			fitpoint7 -> setPosition ( fitpos );
+
+			fitpoint7 -> setCovMatrix ( fitcov );
+			fitpointvec -> push_back ( fitpoint7 );
+			fittrack -> addHit ( fitpoint7 );
+
+			k++;
+		    }
+	
+		    // done with the track
+		    fittrack -> setReferencePoint ( refpoint );
+		    fittrackvec -> addElement ( fittrack );
+
+		    // kinks in x in mrad
+		    gblkx1Hist -> fill ( ( ax[indexconverter[1]] - ax[indexconverter[0]] ) * 1E3 );
+		    gblkx2Hist -> fill ( ( ax[indexconverter[2]] - ax[indexconverter[1]] ) * 1E3 );
+		    gblkx6Hist -> fill ( ( ax[indexconverter[3]] - ax[indexconverter[2]] ) * 1E3 );
+		    gblkx3Hist -> fill ( ( ax[indexconverter[4]] - ax[indexconverter[3]] ) * 1E3 );
+		    gblkx4Hist -> fill ( ( ax[indexconverter[5]] - ax[indexconverter[4]] ) * 1E3 );
+		    gblkx5Hist -> fill ( ( ax[indexconverter[6]] - ax[indexconverter[5]] ) * 1E3 );
+
+		    if ( _useREF > 0 )
+		    {
+			gblkx7Hist -> fill ( ( ax[indexconverter[7]] - ax[indexconverter[7]] ) * 1E3 );
+		    }
+	
+		    // kinks in y in mrad
+		    gblky1Hist -> fill ( ( ay[indexconverter[1]] - ay[indexconverter[0]] ) * 1E3 );
+		    gblky2Hist -> fill ( ( ay[indexconverter[2]] - ay[indexconverter[1]] ) * 1E3 );
+		    gblky6Hist -> fill ( ( ay[indexconverter[3]] - ay[indexconverter[2]] ) * 1E3 );
+		    gblky3Hist -> fill ( ( ay[indexconverter[4]] - ay[indexconverter[3]] ) * 1E3 );
+		    gblky4Hist -> fill ( ( ay[indexconverter[5]] - ay[indexconverter[4]] ) * 1E3 );
+		    gblky5Hist -> fill ( ( ay[indexconverter[6]] - ay[indexconverter[5]] ) * 1E3 );
+
+		    if ( _useREF > 0 )
+		    {
+			gblky7Hist -> fill ( ( ay[indexconverter[7]] - ay[indexconverter[7]] ) * 1E3 );
+		    }
+
+		    // done
+		    streamlog_message ( DEBUG0, traj.printTrajectory ( 10 );, std::endl; );
+
+		    // output to millepede
+		    nmGood++;
+		    traj.milleOut ( *milleGBL );
+		    _nGoodMilleTracks++;
+
+		} // prob and chi2ndf cut
+
+	    } // done track loop
+	}
+	catch ( ... )
+	{
+	    
+	}
+    }
+
+    if ( _doPreAlignment == 0 && _useTrackFit == false )
     {
 	int ntri = 0;
 	double xmA[499];
@@ -2004,6 +3160,23 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 
 		    double dx = _hitsArray[i1][j1].measuredX - xs;
 		    double dy = _hitsArray[i1][j1].measuredY - ys;
+
+		    bool notisolated = false;
+		    for ( size_t j1a = j1 + 1; j1a < _hitsArray[i1].size ( ); j1a++ )
+		    {
+			if ( fabs ( _hitsArray[i1][j1].measuredX - _hitsArray[i1][j1a].measuredX ) < _isolationCut )
+			{
+			    notisolated = true;
+			}
+			if ( fabs ( _hitsArray[i1][j1].measuredY - _hitsArray[i1][j1a].measuredY ) < _isolationCut )
+			{
+			    notisolated = true;
+			}
+		    }
+		    if ( notisolated == true )
+		    {
+			continue;
+		    }
 
 		    // require DUT hit?
 		    if ( _requireDUTHit == 1 )
@@ -2197,6 +3370,23 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		    double dx = _hitsArray[i4][j4].measuredX - xs;
 		    double dy = _hitsArray[i4][j4].measuredY - ys;
 
+		    bool notisolated = false;
+		    for ( size_t j4a = j4 + 1; j4a < _hitsArray[i4].size ( ); j4a++ )
+		    {
+			if ( fabs ( _hitsArray[i4][j4].measuredX - _hitsArray[i4][j4a].measuredX ) < _isolationCut )
+			{
+			    notisolated = true;
+			}
+			if ( fabs ( _hitsArray[i4][j4].measuredY - _hitsArray[i4][j4a].measuredY ) < _isolationCut )
+			{
+			    notisolated = true;
+			}
+		    }
+		    if ( notisolated == true )
+		    {
+			continue;
+		    }
+
 		    if ( _useREF <= 0 )
 		    {
 
@@ -2277,7 +3467,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			    if ( abs ( dx ) < _driCut  && abs ( dy ) < _driCut && abs ( dx7 ) < _driCutREFx && abs ( dy7 ) < _driCutREFy )
 			    {
 
-// 				streamlog_out ( DEBUG2 ) << "Passed all driplet cuts, now having "<< ndri << " driplets." << endl;
+				streamlog_out ( DEBUG2 ) << "Passed all driplet cuts, now having "<< ndri << " driplets." << endl;
 
 				if ( ndri < 499 )
 				{
@@ -2867,7 +4057,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 
 			streamlog_out ( DEBUG2 ) << "Point pushed to gbl:" << endl; 
 			streamlog_out ( DEBUG2 ) << " Labels:" << endl;
-			for ( size_t ic=0; ic < point -> getGlobalLabels ( ).size ( ); ic++ )
+			for ( size_t ic = 0; ic < point -> getGlobalLabels ( ).size ( ); ic++ )
 			{
 			    streamlog_out ( DEBUG2 ) << "  " << ic << " " << point -> getGlobalLabels ( ) .at ( ic ) << endl;
 			}
@@ -3357,13 +4547,60 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			dutrzprobHist -> fill ( rz[indexconverter[3]], probchi );
 
 			// fill kink vs impact map
-			dutkxmap -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
-			dutkymap -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
-			dutkmap -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+			if ( _x0histos == true )
+			{
 
-			dutkxmap20 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
-			dutkymap20 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
-			dutkmap20 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+			    dutkxmap -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			    dutkymap -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			    dutkmap -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+
+			    dutkxmap10 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			    dutkymap10 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			    dutkmap10 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+
+			    dutkxmap20 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			    dutkymap20 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			    dutkmap20 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+
+			    dutkxmap30 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			    dutkymap30 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			    dutkmap30 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+
+			    dutkxmap40 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			    dutkymap40 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			    dutkmap40 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+
+			    dutkxmap50 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			    dutkymap50 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			    dutkmap50 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+
+			    dutkxmap60 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			    dutkymap60 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			    dutkmap60 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+
+			    dutkxmap70 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			    dutkymap70 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			    dutkmap70 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+
+			    dutkxmap80 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			    dutkymap80 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			    dutkmap80 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+
+			    dutkxmap90 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			    dutkymap90 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			    dutkmap90 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+
+			    dutkxmap100 -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			    dutkymap100 -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			    dutkmap100 -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+
+			    //dutkxmap3D -> fill ( fitpos[0], fitpos[1], fabs ( kx * 1E3 ) );
+			    //dutkymap3D -> fill ( fitpos[0], fitpos[1], fabs ( ky * 1E3 ) );
+			    //dutkmap3D -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 * kx * 1E3 + ky * 1E3 * ky * 1E3 ) );
+			    dutkmap3D -> fill ( fitpos[0], fitpos[1], ( kx * 1E3 ) );
+			    dutkmap3D -> fill ( fitpos[0], fitpos[1], ( ky * 1E3 ) );
+
+			}
 
 			// hitmap for comparison
 			duthitmap -> fill ( fitpos[0], fitpos[1] );
@@ -3521,6 +4758,13 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			    fitpointvec -> push_back ( fitpoint7 );
 			    fittrack -> addHit ( fitpoint7 );
 
+			    refrxxHist -> fill ( rx[indexconverter[7]], fitpos[0] );
+			    refrxyHist -> fill ( rx[indexconverter[7]], fitpos[1] );
+			    refrxzHist -> fill ( rx[indexconverter[7]], fitpos[2] );
+			    refryxHist -> fill ( ry[indexconverter[7]], fitpos[0] );
+			    refryyHist -> fill ( ry[indexconverter[7]], fitpos[1] );
+			    refryzHist -> fill ( ry[indexconverter[7]], fitpos[2] );
+
 			    k++;
 			}
 	
@@ -3566,6 +4810,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
     {
 	event -> addCollection ( fittrackvec, _outputTrackCollectionName );
 	event -> addCollection ( fitpointvec, _outputHitCollectionName );
+	event -> addCollection ( dutnormalvec, "dutnormal" );
     }
 
     // fill the rate histos
@@ -4514,6 +5759,7 @@ void EUTelMilleGBL::end ( )
 		} //millepede OK
 
 		event -> addCollection ( constantsCollection, _alignmentConstantCollectionName );
+
 		lcWriter -> writeEvent ( event );
 		delete event;
 
@@ -5245,10 +6491,10 @@ void EUTelMilleGBL::bookHistos ( )
 	    {
 
 		dx27Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "InputHits/dx27", 100, -5000, 5000 );
-		dx27Hist -> setTitle ( "Hit Shift REF - Plane 1 in x;x_{7}-x_{2} [um];hit pairs" );
+		dx27Hist -> setTitle ( "Hit Shift REF - Plane 2 in x;x_{7}-x_{2} [um];hit pairs" );
 
 		dy27Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "InputHits/dy27", 100, -5000, 5000 );
-		dy27Hist -> setTitle ( "Hit Shift REF - Plane 1 in y;y_{7}-y_{2} [um];hit pairs" );
+		dy27Hist -> setTitle ( "Hit Shift REF - Plane 2 in y;y_{7}-y_{2} [um];hit pairs" );
 	    }
 
 
@@ -5325,145 +6571,179 @@ void EUTelMilleGBL::bookHistos ( )
 		dy67Hist -> setTitle ( "Hit Shift REF - DUT in y;y_{7}-y_{6} [um];hit pairs" );
 	    }
 
-
-	    AIDAProcessor::tree ( this ) -> mkdir ( "TripletsDriplets" );
-
-	    trirxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/trirx", 100, -1000, 1000 );
-	    trirxHist -> setTitle ( "Triplet Residual in x;x_{1}-x_{02} [um];triplets" );
-
-	    triryHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/triry", 100, -1000, 1000 );
-	    triryHist -> setTitle ( "Triplet Residual in y;y_{1}-y_{02} [um];triplets" );
-
-	    ntriHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/ntri", 21, -0.5, 20.5 );
-	    ntriHist -> setTitle ( "Number of Triplets;triplets;events" );
-
-
-	    trirxdutHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/tridutrx", 100, -1000, 1000 );
-	    trirxdutHist -> setTitle ( "Triplet DUT Extrapolation Residual in x;x_{6}-x_{02extrap} [um];triplets" );
-
-	    trirydutHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/tridutry", 100, -1000, 1000 );
-	    trirydutHist -> setTitle ( "Triplet DUT Extrapolation Residual in y;y_{6}-y_{02extrap} [um];triplets" );
-
-
-	    drirxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/dridx", 100, -1000, 1000 );
-	    drirxHist -> setTitle ( "Driplet Residual in x;x_{4}-x_{35} [um];driplets" );
-
-	    driryHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/dridy", 100, -1000, 1000 );
-	    driryHist -> setTitle ( "Driplet Residual in y;y_{4}-y_{35} [um];driplets" );
-
-	    ndriHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/ndri", 21, -0.5, 20.5 );
-	    ndriHist -> setTitle ( "Number of Driplets;driplets;events" );
-
-	    if ( _useREF > 0 )
+	    if ( _useTrackFit == true )
 	    {
 
-		drirxrefHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/drirefrx", 100, -1000, 1000 );
-		drirxrefHist -> setTitle ( "Driplet REF Extrapolation Residual in x;x_{7}-x_{35extrap} [um];driplets" );
+		AIDAProcessor::tree ( this ) -> mkdir ( "TrackFit" );
 
-		driryrefHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/drirefry", 100, -1000, 1000 );
-		driryrefHist -> setTitle ( "Driplet REF Extrapolation Residual in y;y_{7}-y_{35extrap} [um];driplets" );
+		tfitd0Hist =  AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TrackFit/tfitd0", 100, -10, 10 );
+		tfitd0Hist -> setTitle ( "Track Fit - d0;d0;entries" );
+
+		tfitphiHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TrackFit/tfitphi", 100, -10, 10 );
+		tfitphiHist -> setTitle ( "Track Fit - #Phi;#Phi;entries" );
+
+		tfitomegaHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TrackFit/tfitomega", 100, -10, 10 );
+		tfitomegaHist -> setTitle ( "Track Fit - #Omega;#Omega;entries" );
+
+		tfitz0Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TrackFit/tfitz0", 100, -10, 10 );
+		tfitz0Hist -> setTitle ( "Track Fit - z0;z0;entries" );
+
+		tfittanlambdaHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TrackFit/tfittanlambda", 100, -1, 1 );
+		tfittanlambdaHist -> setTitle ( "Track Fit - tan #lambda;tan #lambda;entries" );
+
+		tfitchi2ndfHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TrackFit/tfitchi2ndf", 100, 0, 99 );
+		tfitchi2ndfHist -> setTitle ( "Track Fit - #chi^2/ndf;#chi^2/ndf;entries" );
 
 	    }
 
-	    sixrxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/sixrx", 100, -1000, 1000 );
-	    sixrxHist -> setTitle ( "Tri-Driplet Residual in x;x_{A}-x_{B} [um];triplet/driplet pairs" );
+	    if ( _useTrackFit == false )
+	    {
 
-	    sixryHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/sixry", 100, -1000, 1000 );
-	    sixryHist -> setTitle ( "Tri-Driplet Residual in y;y_{A}-y_{B} [um];triplet/driplet pairs" );
+		AIDAProcessor::tree ( this ) -> mkdir ( "TripletsDriplets" );
 
-	    sixkxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/sixkx", 100, -25, 25 );
-	    sixkxHist -> setTitle ( "Tri-Driplet Kink Angle in x;x kink angle [mrad];triplet/driplet pairs" );
+		trirxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/trirx", 100, -1000, 1000 );
+		trirxHist -> setTitle ( "Input Triplet Residual in x;x_{1}-x_{02} [um];triplets" );
 
-	    sixkyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/sixky", 100, -25, 25 );
-	    sixkyHist -> setTitle ( "Tri-Driplet Kink Angle in y;y kink angle [mrad];triplet/driplet pairs" );
+		triryHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/triry", 100, -1000, 1000 );
+		triryHist -> setTitle ( "Input Triplet Residual in y;y_{1}-y_{02} [um];triplets" );
+
+		ntriHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/ntri", 21, -0.5, 20.5 );
+		ntriHist -> setTitle ( "Number of Input Triplets;triplets;events" );
+
+
+		trirxdutHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/tridutrx", 100, -1000, 1000 );
+		trirxdutHist -> setTitle ( "Input Triplet DUT Extrapolation Residual in x;x_{6}-x_{02extrap} [um];triplets" );
+
+		trirydutHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/tridutry", 100, -1000, 1000 );
+		trirydutHist -> setTitle ( "Input Triplet DUT Extrapolation Residual in y;y_{6}-y_{02extrap} [um];triplets" );
+
+
+		drirxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/dridx", 100, -1000, 1000 );
+		drirxHist -> setTitle ( "Input Driplet Residual in x;x_{4}-x_{35} [um];driplets" );
+
+		driryHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/dridy", 100, -1000, 1000 );
+		driryHist -> setTitle ( "Input Driplet Residual in y;y_{4}-y_{35} [um];driplets" );
+
+		ndriHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/ndri", 21, -0.5, 20.5 );
+		ndriHist -> setTitle ( "Number of Input Driplets;driplets;events" );
+
+		if ( _useREF > 0 )
+		{
+
+		    drirxrefHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/drirefrx", 100, -1000, 1000 );
+		    drirxrefHist -> setTitle ( "Input Driplet REF Extrapolation Residual in x;x_{7}-x_{35extrap} [um];driplets" );
+
+		    driryrefHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/drirefry", 100, -1000, 1000 );
+		    driryrefHist -> setTitle ( "Input Driplet REF Extrapolation Residual in y;y_{7}-y_{35extrap} [um];driplets" );
+
+		}
+
+		sixrxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/sixrx", 100, -1000, 1000 );
+		sixrxHist -> setTitle ( "Input Tri-Driplet Residual in x;x_{A}-x_{B} [um];triplet/driplet pairs" );
+
+		sixryHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/sixry", 100, -1000, 1000 );
+		sixryHist -> setTitle ( "Input Tri-Driplet Residual in y;y_{A}-y_{B} [um];triplet/driplet pairs" );
+
+		sixkxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/sixkx", 100, -25, 25 );
+		sixkxHist -> setTitle ( "Input Tri-Driplet Kink Angle in x;x kink angle [mrad];triplet/driplet pairs" );
+
+		sixkyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/sixky", 100, -25, 25 );
+		sixkyHist -> setTitle ( "Input Tri-Driplet Kink Angle in y;y kink angle [mrad];triplet/driplet pairs" );
+
+	    }
 
 	    AIDAProcessor::tree ( this ) -> mkdir ( "GBLInput" );
 
-	    selxtHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selxt", 150, -15, 15 );
-	    selxtHist -> setTitle ( "Triplet Track x at Telescope Centre;x [mm];tracks" );
+	    if ( _useTrackFit == false )
+	    {
 
-	    selytHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selyt", 100, -10, 10 );
-	    selytHist -> setTitle ( "Triplet Track y at Telescope Centre;y [mm];tracks" );
+		selxtHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selxt", 150, -15, 15 );
+		selxtHist -> setTitle ( "GBL Input Triplet Track x at Telescope Centre;x [mm];tracks" );
 
-	    selaxtHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selaxt", 100, -25, 25 );
-	    selaxtHist -> setTitle ( "Triplet Track Angle in x;x angle [mrad];tracks" );
+		selytHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selyt", 100, -10, 10 );
+		selytHist -> setTitle ( "GBL Input Triplet Track y at Telescope Centre;y [mm];tracks" );
 
-	    selaytHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selayt", 100, -25, 25 );
-	    selaytHist -> setTitle ( "Triplet Track Angle in y;y angle [mrad];tracks" );
+		selaxtHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selaxt", 100, -25, 25 );
+		selaxtHist -> setTitle ( "GBL Input Triplet Track Angle in x;x angle [mrad];tracks" );
 
-	    selxdHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selxd", 150, -15, 15 );
-	    selxdHist -> setTitle ( "Driplet Track x at Telescope Centre;x [mm];tracks" );
+		selaytHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selayt", 100, -25, 25 );
+		selaytHist -> setTitle ( "GBL Input Triplet Track Angle in y;y angle [mrad];tracks" );
 
-	    selydHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selyd", 100, -10, 10 );
-	    selydHist -> setTitle ( "Driplet Track y at Telescope Centre;y [mm];tracks" );
+		selxdHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selxd", 150, -15, 15 );
+		selxdHist -> setTitle ( "GBL Input Driplet Track x at Telescope Centre;x [mm];tracks" );
 
-	    selaxdHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selaxd", 100, -25, 25 );
-	    selaxdHist -> setTitle ( "Driplet Track Angle in x;x angle [mrad];tracks" );
+		selydHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selyd", 100, -10, 10 );
+		selydHist -> setTitle ( "GBL Input Driplet Track y at Telescope Centre;y [mm];tracks" );
 
-	    selaydHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selayd", 100, -25, 25 );
-	    selaydHist -> setTitle ( "Driplet Track Angle in y;y angle [mrad];tracks" );
+		selaxdHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selaxd", 100, -25, 25 );
+		selaxdHist -> setTitle ( "GBL Input Driplet Track Angle in x;x angle [mrad];tracks" );
 
-	    selrxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selrx", 100, -5000, 5000 );
-	    selrxHist -> setTitle ( "Triplet-Driplet Track Match Residual in x;#Deltax [#mum];tracks" );
+		selaydHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selayd", 100, -25, 25 );
+		selaydHist -> setTitle ( "GBL Input Driplet Track Angle in y;y angle [mrad];tracks" );
 
-	    selryHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selry", 100, -5000, 5000 );
-	    selryHist -> setTitle ( "Triplet-Driplet Track Match Residual in y;#Deltay [#mum];tracks" );
+		selrxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selrx", 100, -5000, 5000 );
+		selrxHist -> setTitle ( "GBL Input Triplet-Driplet Track Match Residual in x;#Deltax [#mum];tracks" );
 
-	    selkxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selkx", 100, -25, 25 );
-	    selkxHist -> setTitle ( "Triplet-Driplet Track Match Kink in x;kink x [mrad];tracks" );
+		selryHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selry", 100, -5000, 5000 );
+		selryHist -> setTitle ( "GBL Input Triplet-Driplet Track Match Residual in y;#Deltay [#mum];tracks" );
 
-	    selkyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selky", 100, -25, 25 );
-	    selkyHist -> setTitle ( "Triplet-Driplet Track Match Kink in y;kink y [mrad];tracks" );
+		selkxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selkx", 100, -25, 25 );
+		selkxHist -> setTitle ( "GBL Input Triplet-Driplet Track Match Kink in x;kink x [mrad];tracks" );
+
+		selkyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selky", 100, -25, 25 );
+		selkyHist -> setTitle ( "GBL Input Triplet-Driplet Track Match Kink in y;kink y [mrad];tracks" );
+
+	    }
 
 	    selrx0Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selrx0", 100, -500, 500 );
-	    selrx0Hist -> setTitle ( "Triplet-Driplet Residual at Plane 0 in x;#Deltax [#mum];tracks" );
+	    selrx0Hist -> setTitle ( "GBL Input Residual at Plane 0 in x;#Deltax [#mum];tracks" );
 
 	    selry0Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selry0", 100, -500, 500 );
-	    selry0Hist -> setTitle ( "Triplet-Driplet Residual at Plane 0 in y;#Deltay [#mum];tracks" );
+	    selry0Hist -> setTitle ( "GBL Input Residual at Plane 0 in y;#Deltay [#mum];tracks" );
 
 	    selrx1Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selrx1", 100, -500, 500 );
-	    selrx1Hist -> setTitle ( "Triplet-Driplet Residual at Plane 1 in x;#Deltax [#mum];tracks" );
+	    selrx1Hist -> setTitle ( "GBL Input Residual at Plane 1 in x;#Deltax [#mum];tracks" );
 
 	    selry1Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selry1", 100, -500, 500 );
-	    selry1Hist -> setTitle ( "Triplet-Driplet Residual at Plane 1 in y;#Deltay [#mum];tracks" );
+	    selry1Hist -> setTitle ( "GBL Input Residual at Plane 1 in y;#Deltay [#mum];tracks" );
 
 	    selrx2Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selrx2", 100, -500, 500 );
-	    selrx2Hist -> setTitle ( "Triplet-Driplet Residual at Plane 2 in x;#Deltax [#mum];tracks" );
+	    selrx2Hist -> setTitle ( "GBL Input Residual at Plane 2 in x;#Deltax [#mum];tracks" );
 
 	    selry2Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selry2", 100, -500, 500 );
-	    selry2Hist -> setTitle ( "Triplet-Driplet Residual at Plane 2 in y;#Deltay [#mum];tracks" );
+	    selry2Hist -> setTitle ( "GBL Input Residual at Plane 2 in y;#Deltay [#mum];tracks" );
 
 	    selrx3Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selrx3", 100, -500, 500 );
-	    selrx3Hist -> setTitle ( "Triplet-Driplet Residual at Plane 3 in x;#Deltax [#mum];tracks" );
+	    selrx3Hist -> setTitle ( "GBL Input Residual at Plane 3 in x;#Deltax [#mum];tracks" );
 
 	    selry3Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selry3", 100, -500, 500 );
-	    selry3Hist -> setTitle ( "Triplet-Driplet Residual at Plane 3 in y;#Deltay [#mum];tracks" );
+	    selry3Hist -> setTitle ( "GBL Input Residual at Plane 3 in y;#Deltay [#mum];tracks" );
 
 	    selrx4Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selrx4", 100, -500, 500 );
-	    selrx4Hist -> setTitle ( "Triplet-Driplet Residual at Plane 4 in x;#Deltax [#mum];tracks" );
+	    selrx4Hist -> setTitle ( "GBL Input Residual at Plane 4 in x;#Deltax [#mum];tracks" );
 
 	    selry4Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selry4", 100, -500, 500 );
-	    selry4Hist -> setTitle ( "Triplet-Driplet Residual at Plane 4 in y;#Deltay [#mum];tracks" );
+	    selry4Hist -> setTitle ( "GBL Input Residual at Plane 4 in y;#Deltay [#mum];tracks" );
 
 	    selrx5Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selrx5", 100, -500, 500 );
-	    selrx5Hist -> setTitle ( "Triplet-Driplet Residual at Plane 5 in x;#Deltax [#mum];tracks" );
+	    selrx5Hist -> setTitle ( "GBL Input Residual at Plane 5 in x;#Deltax [#mum];tracks" );
 
 	    selry5Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selry5", 100, -500, 500 );
-	    selry5Hist -> setTitle ( "Triplet-Driplet Residual at Plane 5 in y;#Deltay [#mum];tracks" );
+	    selry5Hist -> setTitle ( "GBL Input Residual at Plane 5 in y;#Deltay [#mum];tracks" );
 
 	    selrx6Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selrx6", 100, -500, 500 );
-	    selrx6Hist -> setTitle ( "Triplet-Driplet Residual at the DUT in x;#Deltax [#mum];tracks" );
+	    selrx6Hist -> setTitle ( "GBL Input Residual at the DUT in x;#Deltax [#mum];tracks" );
 
 	    selry6Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selry6", 100, -500, 500 );
-	    selry6Hist -> setTitle ( "Triplet-Driplet Residual at the DUT in y;#Deltay [#mum];tracks" );
+	    selry6Hist -> setTitle ( "GBL Input Residual at the DUT in y;#Deltay [#mum];tracks" );
 
 	    if ( _useREF > 0 )
 	    {
 		selrx7Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selrx7", 100, -500, 500 );
-		selrx7Hist -> setTitle ( "Triplet-Driplet Residual at the REF in x;#Deltax [#mum];tracks" );
+		selrx7Hist -> setTitle ( "GBL Input Residual at the REF in x;#Deltax [#mum];tracks" );
 
 		selry7Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selry7", 100, -500, 500 );
-		selry7Hist -> setTitle ( "Triplet-Driplet Residual at the REF in y;#Deltay [#mum];tracks" );
+		selry7Hist -> setTitle ( "GBL Input Residual at the REF in y;#Deltay [#mum];tracks" );
 	    }
 
 	    AIDAProcessor::tree ( this ) -> mkdir ( "GBLOutput" );
@@ -5482,29 +6762,32 @@ void EUTelMilleGBL::bookHistos ( )
 
 	    AIDAProcessor::tree ( this ) -> mkdir ( "GBLOutput/Bad" );
 
-	    badxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/badx", 150, -15, 15 );
-	    badxHist -> setTitle ( "x at DUT, bad GBL;x [mm];tracks" );
+	    if ( _useTrackFit == false )
+	    {
+		badxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/badx", 150, -15, 15 );
+		badxHist -> setTitle ( "x at DUT, bad GBL;x [mm];tracks" );
 
-	    badyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/bady", 100, -10, 10 );
-	    badyHist -> setTitle ( "y at DUT, bad GBL;y [mm];tracks" );
+		badyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/bady", 100, -10, 10 );
+		badyHist -> setTitle ( "y at DUT, bad GBL;y [mm];tracks" );
 
-	    badaxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/badax", 100, -25, 25 );
-	    badaxHist -> setTitle ( "track angle x, bad GBL;x angle [mrad];tracks" );
+		badaxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/badax", 100, -25, 25 );
+		badaxHist -> setTitle ( "track angle x, bad GBL;x angle [mrad];tracks" );
 
-	    badayHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/baday", 100, -25, 25 );
-	    badayHist -> setTitle ( "track angle y, bad GBL;y angle [mrad];tracks" );
+		badayHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/baday", 100, -25, 25 );
+		badayHist -> setTitle ( "track angle y, bad GBL;y angle [mrad];tracks" );
 
-	    baddxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/baddx", 100, -5000, 5000 );
-	    baddxHist -> setTitle ( "track match x, bad GBL;#Deltax [#mum];tracks" );
+		baddxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/baddx", 100, -5000, 5000 );
+		baddxHist -> setTitle ( "track match x, bad GBL;#Deltax [#mum];tracks" );
 
-	    baddyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/baddy", 100, -5000, 5000 );
-	    baddyHist -> setTitle ( "track match y, bad GBL;#Deltay [#mum];tracks" );
+		baddyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/baddy", 100, -5000, 5000 );
+		baddyHist -> setTitle ( "track match y, bad GBL;#Deltay [#mum];tracks" );
 
-	    badkxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/badkx", 100, -25, 25 );
-	    badkxHist -> setTitle ( "kink x, bad GBL;kink x [mrad];tracks" );
+		badkxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/badkx", 100, -25, 25 );
+		badkxHist -> setTitle ( "kink x, bad GBL;kink x [mrad];tracks" );
 
-	    badkyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/badky", 100, -25, 25 );
-	    badkyHist -> setTitle ( "kink y, bad GBL;kink y [mrad];tracks" );
+		badkyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/badky", 100, -25, 25 );
+		badkyHist -> setTitle ( "kink y, bad GBL;kink y [mrad];tracks" );
+	    }
 
 	    baddx0Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/baddx0", 100, -500, 500 );
 	    baddx0Hist -> setTitle ( "triplet resid x at 0, bad GBL;#Deltax [#mum];tracks" );
@@ -5565,6 +6848,10 @@ void EUTelMilleGBL::bookHistos ( )
 	    AIDAProcessor::tree ( this ) -> mkdir ( "GBLOutput/Good/Plane4" );
 	    AIDAProcessor::tree ( this ) -> mkdir ( "GBLOutput/Good/Plane5" );
 	    AIDAProcessor::tree ( this ) -> mkdir ( "GBLOutput/Good/DUT" );
+	    AIDAProcessor::tree ( this ) -> mkdir ( "GBLOutput/Good/DUT/ResidualsX" );
+	    AIDAProcessor::tree ( this ) -> mkdir ( "GBLOutput/Good/DUT/ResidualsY" );
+	    AIDAProcessor::tree ( this ) -> mkdir ( "GBLOutput/Good/DUT/ResidualsZ" );
+	    AIDAProcessor::tree ( this ) -> mkdir ( "GBLOutput/Good/DUT/KinkMaps" );
 
 	    if ( _useREF > 0 )
 	    {
@@ -5623,113 +6910,208 @@ void EUTelMilleGBL::bookHistos ( )
 
 	    }
 
-	    unbiasedDUTrx = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/DUT/unbiasedrx", 100, -500, 500 );
+	    unbiasedDUTrx = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/DUT/unbiasedrx", 500, -500, 500 );
 	    unbiasedDUTrx -> setTitle ( "Unbiased Track Residual at DUT in x;#Deltax [#mum];tracks" );
 
-	    unbiasedDUTry = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/DUT/unbiasedry", 100, -500, 500 );
+	    unbiasedDUTry = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/DUT/unbiasedry", 500, -500, 500 );
 	    unbiasedDUTry -> setTitle ( "Unbiased Track Residual at DUT in y;#Deltay [#mum];tracks" );
 
-	    unbiasedDUTrz = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/DUT/unbiasedrz", 100, -500, 500 );
+	    unbiasedDUTrz = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/DUT/unbiasedrz", 500, -500, 500 );
 	    unbiasedDUTrz -> setTitle ( "Unbiased Track Residual at DUT in z;#Deltaz [#mum];tracks" );
 
-	    dutrxxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrxx", 100, -500, 500, 100, -15, 15 );
+	    dutrxxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutrxx", 100, -500, 500, 100, -15, 15 );
 	    dutrxxHist -> setTitle ( "Track Residual at DUT in x vs Track x;#Deltax [#mum];track_{x} [mm]" );
 
-	    dutrxyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrxy", 100, -500, 500, 100, -15, 15 );
+	    dutrxyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutrxy", 100, -500, 500, 100, -15, 15 );
 	    dutrxyHist -> setTitle ( "Track Residual at DUT in x vs Track y;#Deltax [#mum];track_{y} [mm]" );
 
-	    dutrxzHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrxz", 100, -500, 500, 100, -15, 15 );
+	    dutrxzHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutrxz", 100, -500, 500, 100, -15, 15 );
 	    dutrxzHist -> setTitle ( "Track Residual at DUT in x vs Track z;#Deltax [#mum];track_{z} [mm]" );
 
-	    dutryxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutryx", 100, -500, 500, 100, -15, 15 );
+	    dutryxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsY/dutryx", 100, -500, 500, 100, -15, 15 );
 	    dutryxHist -> setTitle ( "Track Residual at DUT in y vs Track x;#Deltay [#mum];track_{x} [mm]" );
 
-	    dutryyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutryy", 100, -500, 500, 100, -15, 15 );
+	    dutryyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsY/dutryy", 100, -500, 500, 100, -15, 15 );
 	    dutryyHist -> setTitle ( "Track Residual at DUT in y vs Track y;#Deltay [#mum];track_{y} [mm]" );
 
-	    dutryzHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutryz", 100, -500, 500, 100, -15, 15 );
+	    dutryzHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsY/dutryz", 100, -500, 500, 100, -15, 15 );
 	    dutryzHist -> setTitle ( "Track Residual at DUT in y vs Track z;#Deltay [#mum];track_{z} [mm]" );
 
-	    dutrzxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrzx", 100, -500, 500, 100, -15, 15 );
+	    dutrzxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsZ/dutrzx", 100, -500, 500, 100, -15, 15 );
 	    dutrzxHist -> setTitle ( "Track Residual at DUT in z vs Track x;#Deltaz [#mum];track_{x} [mm]" );
 
-	    dutrzyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrzy", 100, -500, 500, 100, -15, 15 );
+	    dutrzyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsZ/dutrzy", 100, -500, 500, 100, -15, 15 );
 	    dutrzyHist -> setTitle ( "Track Residual at DUT in z vs Track y;#Deltaz [#mum];track_{y} [mm]" );
 
-	    dutrzzHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrzz", 100, -500, 500, 100, -15, 15 );
+	    dutrzzHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsZ/dutrzz", 100, -500, 500, 100, -15, 15 );
 	    dutrzzHist -> setTitle ( "Track Residual at DUT in z vs Track z;#Deltaz [#mum];track_{z} [mm]" );
 
-	    dutrxsxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrxsx", 100, -500, 500, 100, -5.0, 5.0 );
+	    dutrxsxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutrxsx", 100, -500, 500, 100, -5.0, 5.0 );
 	    dutrxsxHist -> setTitle ( "Track Residual at DUT in x vs Track Slope in x;#Deltax [#mum];angle_{x} [mrad]" );
 
-	    dutrxsyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrxsy", 100, -500, 500, 100, -5.0, 5.0 );
+	    dutrxsyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutrxsy", 100, -500, 500, 100, -5.0, 5.0 );
 	    dutrxsyHist -> setTitle ( "Track Residual at DUT in x vs Track Slope in y;#Deltax [#mum];angle_{y} [mrad]" );
 
-	    dutrysxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrysx", 100, -500, 500, 100, -5.0, 5.0 );
+	    dutrysxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsY/dutrysx", 100, -500, 500, 100, -5.0, 5.0 );
 	    dutrysxHist -> setTitle ( "Track Residual at DUT in y vs Track Slope in x;#Deltay [#mum];angle_{x} [mrad]" );
 
-	    dutrysyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrysy", 100, -500, 500, 100, -5.0, 5.0 );
+	    dutrysyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsY/dutrysy", 100, -500, 500, 100, -5.0, 5.0 );
 	    dutrysyHist -> setTitle ( "Track Residual at DUT in y vs Track Slope in y;#Deltay [#mum];angle_{y} [mrad]" );
 
-	    dutrzsxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrzsx", 100, -500, 500, 100, -5.0, 5.0 );
+	    dutrzsxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsZ/dutrzsx", 100, -500, 500, 100, -5.0, 5.0 );
 	    dutrzsxHist -> setTitle ( "Track Residual at DUT in z vs Track Slope in x;#Deltaz [#mum];angle_{x} [mrad]" );
 
-	    dutrzsyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrzsy", 100, -500, 500, 100, -5.0, 5.0 );
+	    dutrzsyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsZ/dutrzsy", 100, -500, 500, 100, -5.0, 5.0 );
 	    dutrzsyHist -> setTitle ( "Track Residual at DUT in z vs Track Slope in y;#Deltaz [#mum];angle_{y} [mrad]" );
 
-	    dutrxkxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrxkx", 100, -500, 500, 100, -25, 25 );
+	    dutrxkxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutrxkx", 100, -500, 500, 100, -25, 25 );
 	    dutrxkxHist -> setTitle ( "Track Residual at DUT in x vs Kink Angle in x;#Deltax [#mum];angle_{x} [mrad]" );
 
-	    dutrxkyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrxky", 100, -500, 500, 100, -25, 25 );
+	    dutrxkyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutrxky", 100, -500, 500, 100, -25, 25 );
 	    dutrxkyHist -> setTitle ( "Track Residual at DUT in x vs Kink Angle in y;#Deltax [#mum];angle_{y} [mrad]" );
 
-	    dutrykxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrykx", 100, -500, 500, 100, -25, 25 );
+	    dutrykxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsY/dutrykx", 100, -500, 500, 100, -25, 25 );
 	    dutrykxHist -> setTitle ( "Track Residual at DUT in y vs Kink Angle in x;#Deltay [#mum];angle_{x} [mrad]" );
 
-	    dutrykyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutryky", 100, -500, 500, 100, -25, 25 );
+	    dutrykyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsY/dutryky", 100, -500, 500, 100, -25, 25 );
 	    dutrykyHist -> setTitle ( "Track Residual at DUT in y vs Kink Angle in y;#Deltay [#mum];angle_{y} [mrad]" );
 
-	    dutrzkxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrzkx", 100, -500, 500, 100, -25, 25 );
+	    dutrzkxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsZ/dutrzkx", 100, -500, 500, 100, -25, 25 );
 	    dutrzkxHist -> setTitle ( "Track Residual at DUT in z vs Kink Angle in x;#Deltaz [#mum];angle_{x} [mrad]" );
 
-	    dutrzkyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrzky", 100, -500, 500, 100, -25, 25 );
+	    dutrzkyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsZ/dutrzky", 100, -500, 500, 100, -25, 25 );
 	    dutrzkyHist -> setTitle ( "Track Residual at DUT in z vs Kink Angle in y;#Deltaz [#mum];angle_{y} [mrad]" );
 
-	    dutrxchi2ndfHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrxchi2ndf", 100, -500, 500, 100, 0, 50 );
+	    dutrxchi2ndfHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutrxchi2ndf", 100, -500, 500, 100, 0, 50 );
 	    dutrxchi2ndfHist -> setTitle ( "Track Residual at DUT in x vs Track chi2/NDF;#Deltax [#mum];chi2/NDF" );
 
-	    dutrychi2ndfHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrychi2ndf", 100, -500, 500, 100, 0, 50 );
+	    dutrychi2ndfHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsY/dutrychi2ndf", 100, -500, 500, 100, 0, 50 );
 	    dutrychi2ndfHist -> setTitle ( "Track Residual at DUT in y vs Track chi2/NDF;#Deltay [#mum];chi2/NDF" );
 
-	    dutrzchi2ndfHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrzchi2ndf", 100, -500, 500, 100, 0, 50 );
+	    dutrzchi2ndfHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsZ/dutrzchi2ndf", 100, -500, 500, 100, 0, 50 );
 	    dutrzchi2ndfHist -> setTitle ( "Track Residual at DUT in z vs Track chi2/NDF;#Deltaz [#mum];chi2/NDF" );
 
-	    dutrxprobHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrxprob", 100, -500, 500, 1000, 0, 1 );
+	    dutrxprobHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsX/dutrxprob", 100, -500, 500, 1000, 0, 1 );
 	    dutrxprobHist -> setTitle ( "Track Residual at DUT in x vs Track prob;#Deltax [#mum];prob" );
 
-	    dutryprobHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutryprob", 100, -500, 500, 1000, 0, 1 );
+	    dutryprobHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsY/dutryprob", 100, -500, 500, 1000, 0, 1 );
 	    dutryprobHist -> setTitle ( "Track Residual at DUT in y vs Track prob;#Deltay [#mum];prob" );
 
-	    dutrzprobHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/dutrzprob", 100, -500, 500, 1000, 0, 1 );
+	    dutrzprobHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/ResidualsZ/dutrzprob", 100, -500, 500, 1000, 0, 1 );
 	    dutrzprobHist -> setTitle ( "Track Residual at DUT in z vs Track prob;#Deltaz [#mum];prob" );
 
-	    dutkmap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap", 3000, -15, 15, 3000, -15, 15, 0, 50 );
-	    dutkmap -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+	    if ( _x0histos == true )
+	    {
 
-	    dutkxmap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap", 3000, -15, 15, 3000, -15, 15, 0, 50 );
-	    dutkxmap -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+		dutkmap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap", 1500, -15, 15, 1500, -15, 15 );
+		dutkmap -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
 
-	    dutkymap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap", 3000, -15, 15, 3000, -15, 15, 0, 50 );
-	    dutkymap -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+		dutkxmap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap", 1500, -15, 15, 1500, -15, 15 );
+		dutkxmap -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
 
-	    dutkmap20 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkmap20", 1500, -15, 15, 1500, -15, 15, 0, 20 );
-	    dutkmap20 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+		dutkymap = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap", 1500, -15, 15, 1500, -15, 15 );
+		dutkymap -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
 
-	    dutkxmap20 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkxmap20", 1500, -15, 15, 1500, -15, 15, 0, 20 );
-	    dutkxmap20 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+		dutkmap10 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap10", 1500, -15, 15, 1500, -15, 15, 0, 10 );
+		dutkmap10 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
 
-	    dutkymap20 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/dutkymap20", 1500, -15, 15, 1500, -15, 15, 0, 20 );
-	    dutkymap20 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+		dutkxmap10 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap10", 1500, -15, 15, 1500, -15, 15, 0, 10 );
+		dutkxmap10 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+
+		dutkymap10 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap10", 1500, -15, 15, 1500, -15, 15, 0, 10 );
+		dutkymap10 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+
+		dutkmap20 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap20", 1500, -15, 15, 1500, -15, 15, 0, 20 );
+		dutkmap20 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+
+		dutkxmap20 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap20", 1500, -15, 15, 1500, -15, 15, 0, 20 );
+		dutkxmap20 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+
+		dutkymap20 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap20", 1500, -15, 15, 1500, -15, 15, 0, 20 );
+		dutkymap20 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+
+		dutkmap30 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap30", 1500, -15, 15, 1500, -15, 15, 0, 30 );
+		dutkmap30 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+
+		dutkxmap30 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap30", 1500, -15, 15, 1500, -15, 15, 0, 30 );
+		dutkxmap30 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+
+		dutkymap30 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap30", 1500, -15, 15, 1500, -15, 15, 0, 30 );
+		dutkymap30 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+
+		dutkmap40 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap40", 1500, -15, 15, 1500, -15, 15, 0, 40 );
+		dutkmap40 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+
+		dutkxmap40 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap40", 1500, -15, 15, 1500, -15, 15, 0, 40 );
+		dutkxmap40 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+
+		dutkymap40 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap40", 1500, -15, 15, 1500, -15, 15, 0, 40 );
+		dutkymap40 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+
+		dutkmap50 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap50", 1500, -15, 15, 1500, -15, 15, 0, 50 );
+		dutkmap50 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+
+		dutkxmap50 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap50", 1500, -15, 15, 1500, -15, 15, 0, 50 );
+		dutkxmap50 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+
+		dutkymap50 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap50", 1500, -15, 15, 1500, -15, 15, 0, 50 );
+		dutkymap50 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+
+		dutkmap60 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap60", 1500, -15, 15, 1500, -15, 15, 0, 60 );
+		dutkmap60 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+
+		dutkxmap60 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap60", 1500, -15, 15, 1500, -15, 15, 0, 60 );
+		dutkxmap60 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+
+		dutkymap60 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap60", 1500, -15, 15, 1500, -15, 15, 0, 60 );
+		dutkymap60 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+
+		dutkmap70 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap70", 1500, -15, 15, 1500, -15, 15, 0, 70 );
+		dutkmap70 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+
+		dutkxmap70 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap70", 1500, -15, 15, 1500, -15, 15, 0, 70 );
+		dutkxmap70 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+
+		dutkymap70 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap70", 1500, -15, 15, 1500, -15, 15, 0, 70 );
+		dutkymap70 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+
+		dutkmap80 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap80", 1500, -15, 15, 1500, -15, 15, 0, 80 );
+		dutkmap80 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+
+		dutkxmap80 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap80", 1500, -15, 15, 1500, -15, 15, 0, 80 );
+		dutkxmap80 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+
+		dutkymap80 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap80", 1500, -15, 15, 1500, -15, 15, 0, 80 );
+		dutkymap80 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+
+		dutkmap90 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap90", 1500, -15, 15, 1500, -15, 15, 0, 90 );
+		dutkmap90 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+
+		dutkxmap90 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap90", 1500, -15, 15, 1500, -15, 15, 0, 90 );
+		dutkxmap90 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+
+		dutkymap90 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap90", 1500, -15, 15, 1500, -15, 15, 0, 90 );
+		dutkymap90 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+
+		dutkmap100 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap100", 1500, -15, 15, 1500, -15, 15, 0, 100 );
+		dutkmap100 -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];<kink^{2}> [mrad^{2}]" );
+
+		dutkxmap100 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap100", 1500, -15, 15, 1500, -15, 15, 0, 100 );
+		dutkxmap100 -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+
+		dutkymap100 = AIDAProcessor::histogramFactory ( this ) -> createProfile2D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap100", 1500, -15, 15, 1500, -15, 15, 0, 100 );
+		dutkymap100 -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+
+		dutkmap3D = AIDAProcessor::histogramFactory ( this ) -> createHistogram3D ( "GBLOutput/Good/DUT/KinkMaps/dutkmap3D", 600, -15, 15, 400, -10, 10, 200, -40, 40 );
+		dutkmap3D -> setTitle ( "Track Kink at DUT;track_{x} [mm];track_{y} [mm];kink [mrad]" );
+
+		//dutkxmap3D = AIDAProcessor::histogramFactory ( this ) -> createHistogram3D ( "GBLOutput/Good/DUT/KinkMaps/dutkxmap3D", 600, -15, 15, 400, -10, 10, 200, -40, 40 );
+		//dutkxmap3D -> setTitle ( "Track Kink in x at DUT;track_{x} [mm];track_{y} [mm];kink_{x} [mrad]" );
+
+		//dutkymap3D = AIDAProcessor::histogramFactory ( this ) -> createHistogram3D ( "GBLOutput/Good/DUT/KinkMaps/dutkymap3D", 600, -15, 15, 400, -10, 10, 200, -40, 40 );
+		//dutkymap3D -> setTitle ( "Track Kink in y at DUT;track_{x} [mm];track_{y} [mm];kink_{y} [mrad]" );
+
+	    }
 
 	    duthitmap = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/duthitmap", 1000, -15, 15, 1000, -15, 15 );
 	    duthitmap -> setTitle (  "DUT Good Hits Map;hit_{x} [mm];hit_{y} [mm]" );
@@ -5908,6 +7290,24 @@ void EUTelMilleGBL::bookHistos ( )
 
 	    if ( _useREF > 0 )
 	    {
+		refrxxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/REF/refrxx", 100, -500, 500, 100, -15, 15 );
+		refrxxHist -> setTitle ( "Track Residual at REF in x vs Track x;#Deltax [#mum];track_{x} [mm]" );
+
+		refrxyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/REF/refrxy", 100, -500, 500, 100, -15, 15 );
+		refrxyHist -> setTitle ( "Track Residual at REF in x vs Track y;#Deltax [#mum];track_{y} [mm]" );
+
+		refrxzHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/REF/refrxz", 100, -500, 500, 100, -15, 15 );
+		refrxzHist -> setTitle ( "Track Residual at REF in x vs Track z;#Deltax [#mum];track_{z} [mm]" );
+
+		refryxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/REF/refryx", 100, -500, 500, 100, -15, 15 );
+		refryxHist -> setTitle ( "Track Residual at REF in y vs Track x;#Deltay [#mum];track_{x} [mm]" );
+
+		refryyHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/REF/refryy", 100, -500, 500, 100, -15, 15 );
+		refryyHist -> setTitle ( "Track Residual at REF in y vs Track y;#Deltay [#mum];track_{y} [mm]" );
+
+		refryzHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/REF/refryz", 100, -500, 500, 100, -15, 15 );
+		refryzHist -> setTitle ( "Track Residual at REF in y vs Track z;#Deltay [#mum];track_{z} [mm]" );
+
 		gblax7Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/REF/gblax7", 100, -25, 25 );
 		gblax7Hist -> setTitle ( "GBL angle at REF;x angle at REF [mrad];tracks" );
 

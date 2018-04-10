@@ -200,6 +200,8 @@ namespace eutelescope {
 		std::unique_ptr<EUTelVirtualCluster> GetClusterFromHit(const IMPL::TrackerHitImpl*);
 
         int getSensorIDfromHit( EVENT::TrackerHit* hit);
+	
+	 int GuessSensorID(const EVENT::TrackerHit* hit);
 
         /** Highland's formula for multiple scattering */
         double getThetaRMSHighland( double, double );

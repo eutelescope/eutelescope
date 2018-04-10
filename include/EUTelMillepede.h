@@ -44,7 +44,7 @@ public:
 	void setGlobalLabels(EUTelState& state);
 	void setGlobalLabels(int iPlane);
 	void FillMilleParametersLabels();
-	void writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds);
+	void writeMilleSteeringFile();
 
 	bool runPede();
 
