@@ -1,12 +1,12 @@
 /*
- * Created by Eda Yildirim
+ * Created by Thomas Eichhorn
  *  (2014 DESY)
  *
- *  email:eda.yildirim@cern.ch
+ *  email:thomas.eichhorn@cern.ch
  */
 
-#ifndef ALIBAVAPEDESTALNOISEPROCESSOR_H
-#define ALIBAVAPEDESTALNOISEPROCESSOR_H 1
+#ifndef ALIBAVAMERGER_H
+#define ALIBAVAMERGER_H 1
 
 // alibava includes ".h"
 #include "AlibavaBaseProcessor.h"
@@ -28,27 +28,27 @@
 
 namespace alibava {
 	
-	//! Pedestal and noise  processor for Marlin.
+	//! Alibava merge processor for Marlin.
 
 	
-	class AlibavaPedestalNoiseProcessor:public alibava::AlibavaBaseProcessor   {
+	class AlibavaMerger:public alibava::AlibavaBaseProcessor   {
 		
 	public:
 		
 		
-		//! Returns a new instance of AlibavaPedestalNoiseProcessor
+		//! Returns a new instance of AlibavaMerger
 		/*! This method returns an new instance of the this processor.  It
 		 *  is called by Marlin execution framework and it shouldn't be
 		 *  called/used by the final user.
 		 *
-		 *  @return a new AlibavaPedestalNoiseProcessor.
+		 *  @return a new AlibavaMerger.
 		 */
 		virtual Processor * newProcessor () {
-			return new AlibavaPedestalNoiseProcessor;
+			return new AlibavaMerger;
 		}
 		
 		//! Default constructor
-		AlibavaPedestalNoiseProcessor ();
+		AlibavaMerger ();
 		
 		//! Called at the job beginning.
 		/*! This is executed only once in the whole execution. It prints
@@ -75,8 +75,8 @@ namespace alibava {
 		/*! Since the behavior of the PedestalNoise processor is different
 		 *  if this is the first or one of the following loop, this method
 		 *  is just calling
-		 *  AlibavaPedestalNoiseProcessor::firstLoop(LCEvent*) or
-		 *  AlibavaPedestalNoiseProcessor::otherLoop(LCEvent*)
+		 *  AlibavaMerger::firstLoop(LCEvent*) or
+		 *  AlibavaMerger::otherLoop(LCEvent*)
 		 *
 		 *  @param evt the current LCEvent event as passed by the
 		 *  ProcessMgr
@@ -102,7 +102,7 @@ namespace alibava {
 		 *  histograms. Histogram pointers are stored into
 		 *  EUTelPedestalNoiseProcess::_rootObjectMap so that they can be
 		 *  recalled and filled from anywhere in the code.  Apart from the
-		 *  histograms listed in AlibavaPedestalNoiseProcessor::fillHistos()
+		 *  histograms listed in AlibavaMerger::fillHistos()
 		 *  there is also a common mode histo described here below:
 		 *
 		 *  \li commonModeHisto: 1D histogram to store the calculated
@@ -112,7 +112,7 @@ namespace alibava {
 		 *  This histo is not filled with the other because it needs to be
 		 *  updated every event.
 		 *
-		 *  @see AlibavaPedestalNoiseProcessor::fillHistos() for the todos
+		 *  @see AlibavaMerger::fillHistos() for the todos
 		 */
 		void bookHistos();
 		
@@ -120,7 +120,7 @@ namespace alibava {
 		/*! This method is used to fill in histograms for each channel. 
 		 *
 		 */
-		void fillHistos(TrackerDataImpl * trkdata);
+		void fillHistos();
 		
 
 		//! Called after data processing.
@@ -133,66 +133,67 @@ namespace alibava {
 		 *  just have to crosscheck if _iLoop is equal to noOfCMIterations.
 		 */
 		virtual void end();
+
+		//! The alibava file we want to read
+		std::string _alibavaFile;
+
+		//! The telescope file we want to read
+		std::string _telescopeFile;
+
+		//! The alibava collection name we want to read
+		std::string _alibavaCollectionName;
+
+		//! The telescope collection name
+		std::string _telescopeCollectionName;
+
+		//! The alibava collection name no2
+		std::string _alibavaCollectionName2;
+
+		//! The telescope collection name no2
+		std::string _telescopeCollectionName2;
+
+		//! The output collection names
+		std::string _outputCollectionName;
+
+		//! The output collection names no2
+		std::string _outputCollectionName2;
+
+		//! The output collection names no3
+		std::string _outputCollectionName3;
+
+		//! How do we want to output?
+		int _outputmode;
+
+		//! Move telescope sensor id?
+		int _teleplaneshift;
+
+		//! The reading instance
+		LCReader* lcReader;
+
+		//! The flag if the file is open
+		bool _telescopeopen;
+
+		//! The reading function
+		LCEvent *readTelescope ();
 		
+		void addCorrelation(float ali_x, float ali_y, float ali_z, float tele_x, float tele_y, float tele_z, int event);
+		
+		//! The unsensitive axis of our strip sensor
+		std::string _nonsensitiveaxis;
+		
+		//! Difference between the systems
+		int _eventdifferenceTelescope;
+		int _eventdifferenceAlibava;
 		
 		
 	protected:
-										
-		//! Name of the Pedestal histogram 
-		/*!
-		 */
-		std::string _pedestalHistoName;
-		
-		//! Name of the Noise histogram 
-		/*! 
-		 */
-		std::string _noiseHistoName;
-
-		//! Name of the Temperature histogram
-		/*!
-		 */
-		std::string _temperatureHistoName;
-		
-		//! The name of the histogram used to calculate pedestal and noise
-		/*! For every channel a histogram will be created
-		 *  and filled with the readings of that channel
-		 *  
-		 *  The actual name of the histogram will be 
-		 *  _chanRawDataHistoName+chanNum
-		 */
-		std::string _chanDataHistoName;
-		
-		//! The name of the fits used to calculate pedestal and noise
-		/*! For every channel a histogram will be created
-		 *  and filled with the readings of that channel
-		 *
-		 *  The actual name of the histogram will be
-		 *  _chanRawDataFitName+"_chip"+chipnum+"_chan"+chanNum
-		 */
-		std::string _chanDataFitName;
-
-		//! The function that returns name of the histogram for each channel
-		std::string getChanDataHistoName(unsigned int ichip, unsigned int ichan);
+			
 	
-		//! The function that returns name of the fit for each channel
-		std::string getChanDataFitName(unsigned int ichip, unsigned int ichan);
-
-		//! The function that returns name of the pedestal histogram for each chip
-		std::string getPedestalHistoName(unsigned int ichip);
-		
-		//! The function that returns name of the noise histogram for each chip
-		std::string getNoiseHistoName(unsigned int ichip);
-				
-		//! Calculates and saves pedestal and noise values
-		/*! Fills the histograms
-		 */		
-		void calculatePedestalNoise();
-
 		
 	};
 	
 	//! A global instance of the processor
-	AlibavaPedestalNoiseProcessor gAlibavaPedestalNoiseProcessor;
+	AlibavaMerger gAlibavaMerger;
 	
 }
 

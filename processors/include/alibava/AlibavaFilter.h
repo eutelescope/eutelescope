@@ -5,8 +5,8 @@
  *  email:eda.yildirim@cern.ch
  */
 
-#ifndef ALIBAVAPEDESTALSUBTRACTION_H
-#define ALIBAVAPEDESTALSUBTRACTION_H 1
+#ifndef AlibavaFilter_H
+#define AlibavaFilter_H 1
 
 // alibava includes ".h"
 #include "AlibavaBaseProcessor.h"
@@ -31,24 +31,24 @@ namespace alibava {
 	//! Example Alibava processor for Marlin.
 
 	
-	class AlibavaPedestalSubtraction:public alibava::AlibavaBaseProcessor   {
+	class AlibavaFilter:public alibava::AlibavaBaseProcessor   {
 		
 	public:
 		
 		
-		//! Returns a new instance of AlibavaPedestalSubtraction
+		//! Returns a new instance of AlibavaFilter
 		/*! This method returns an new instance of the this processor.  It
 		 *  is called by Marlin execution framework and it shouldn't be
 		 *  called/used by the final user.
 		 *
-		 *  @return a new AlibavaPedestalSubtraction.
+		 *  @return a new AlibavaFilter.
 		 */
 		virtual Processor * newProcessor () {
-			return new AlibavaPedestalSubtraction;
+			return new AlibavaFilter;
 		}
 		
 		//! Default constructor
-		AlibavaPedestalSubtraction ();
+		AlibavaFilter ();
 		
 		//! Called at the job beginning.
 		/*! This is executed only once in the whole execution. It prints
@@ -75,8 +75,8 @@ namespace alibava {
 		/*! Since the behavior of the PedestalNoise processor is different
 		 *  if this is the first or one of the following loop, this method
 		 *  is just calling
-		 *  AlibavaPedestalSubtraction::firstLoop(LCEvent*) or
-		 *  AlibavaPedestalSubtraction::otherLoop(LCEvent*)
+		 *  AlibavaFilter::firstLoop(LCEvent*) or
+		 *  AlibavaFilter::otherLoop(LCEvent*)
 		 *
 		 *  @param evt the current LCEvent event as passed by the
 		 *  ProcessMgr
@@ -85,20 +85,33 @@ namespace alibava {
 		
 		
 		//! Check event method
-		/*! Does Nothing
+		/*! This method is called by the Marlin execution framework as
+		 *  soon as the processEvent is over. It can be used to fill check
+		 *  plots. For the time being there is nothing to check and do in
+		 *  this slot.
+		 *
+		 *  @param evt The LCEvent event as passed by the ProcessMgr
 		 *
 		 */
 		virtual void check (LCEvent * evt);
 		
 		
+		
 		//! Book histograms
-		/*! Nothing is done here
+		/*! This method is used to prepare the needed directory structure
+		 *  within the current ITree folder and books all required
+		 *  histograms. Histogram pointers are stored into
+		 *  AlibavaBaseProcessor::_rootObjectMap so that they can be
+		 *  recalled and filled from anywhere in the code.  Apart from the
+		 *  histograms listed in AlibavaFilter::fillHistos()
+		 *  there is also a common mode histo described here below:
 		 *
+		 *  @see AlibavaFilter::fillHistos() for the todos
 		 */
 		void bookHistos();
 		
 		//! Fill histograms
-		/*! Nothing is done here
+		/*! This method is used to fill in histograms for each channel. 
 		 *
 		 */
 		void fillHistos(TrackerDataImpl * trkdata);
@@ -114,15 +127,42 @@ namespace alibava {
 		 *  just have to crosscheck if _iLoop is equal to noOfCMIterations.
 		 */
 		virtual void end();
-				
-	protected:
 		
+		
+		bool _simplemethod;
+		
+		bool _readcoefficients;
+
+		double _readcoefficient1;
+		double _readcoefficient2;
+		float _initcoefficient1;
+		float _initcoefficient2;
+		
+		std::string _filteredCollectionName;
+		
+		std::string _filterFileName;
+		
+		bool _rghcorrection;
+		float _minrghnoise;
+		float _maxrghadc;
+		float _maxsignalfactor;
+		
+		float _seedcut;
+		int _maxsuspects;
+		
+		int _dropsuspectcount;
+		
+		float _rghnegnoisecut;
+		
+		
+	protected:
+			
 	
 		
 	};
 	
 	//! A global instance of the processor
-	AlibavaPedestalSubtraction gAlibavaPedestalSubtraction;
+	AlibavaFilter gAlibavaFilter;
 	
 }
 
