@@ -213,7 +213,6 @@ EUTelTestFitter::EUTelTestFitter()
                              "Name of the histogram information file",
                              _histoInfoFileName, string("histoinfo.xml"));
 
-
   // ------- Parameters added to allow correlation band info 02 August 2010
   // libov@mail.desy.de -------
   registerOptionalParameter("UseSlope", "Use expected track direction to "
@@ -361,7 +360,6 @@ void EUTelTestFitter::init() {
 
   _nRun = 0;
   _nEvt = 0;
-
   _isFirstEvent = true;
 
 // check if Marlin was built with GEAR support or not

@@ -322,7 +322,6 @@ EUTelMille::EUTelMille() : Processor("EUTelMille") {
                      "sensors and NOT according to the sensor id.",
       _resolutionZ, FloatVec(static_cast<int>(6), 10.));
 
-
   registerOptionalParameter(
       "FixParameter",
       "Fixes the given alignment parameters in the fit if alignMode==3 is "
@@ -2202,7 +2201,6 @@ void EUTelMille::processEvent(LCEvent *event) {
                 y_sensor = geo::gGeometry().siPlaneYPosition(sensorID);
                 z_sensor = geo::gGeometry().siPlaneZPosition(sensorID);
                 
-		// std::cout << "Retrived: " << x_sensor << ", " << y_sensor
                 // << ", " << z_sensor << std::endl;
                 x_sensor *= 1000.;
                 y_sensor *= 1000.;
@@ -2496,17 +2494,11 @@ TVector3 EUTelMille::Line2Plane(int iplane, const TVector3 &lpoint,
   TVector3 hitInPlane;
   TVector3 norm2Plane;
 
-    int sensorID = _orderedSensorID[iplane];
-    hitInPlane.SetXYZ(geo::gGeometry().siPlaneXPosition(sensorID) * 1000,
-                      geo::gGeometry().siPlaneYPosition(sensorID) * 1000,
-                      geo::gGeometry().siPlaneZPosition(sensorID) * 1000);
-    norm2Plane = geo::gGeometry().siPlaneNormal(sensorID);
-
-    // std::cout << "Retrived (offset): " << sensorID << ":" << hitInPlane(0) <<
-    // ", " << hitInPlane(1) << ", " << hitInPlane(2) << std::endl;
-    // std::cout << "Retrived (angle): "<< sensorID  << ":" << norm2Plane(0) <<
-    // ", " << norm2Plane(1) << ", " << norm2Plane(2) << std::endl;
-
+  int sensorID = _orderedSensorID[iplane];
+  hitInPlane.SetXYZ(geo::gGeometry().siPlaneXPosition(sensorID) * 1000,
+                    geo::gGeometry().siPlaneYPosition(sensorID) * 1000,
+                    geo::gGeometry().siPlaneZPosition(sensorID) * 1000);
+  norm2Plane = geo::gGeometry().siPlaneNormal(sensorID);
 
   TVector3 point(1., 1., 1.);
 

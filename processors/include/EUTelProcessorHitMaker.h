@@ -413,7 +413,6 @@ namespace eutelescope {
      */
     std::vector<int> _orderedSensorIDVec;
 
-    void DumpReferenceHitDB();
   };
 
   //! A global instance of the processor
