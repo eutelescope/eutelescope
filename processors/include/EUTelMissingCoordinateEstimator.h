@@ -3,6 +3,11 @@
  *  (2015 DESY)
  *
  *  email:eda.yildirim@cern.ch
+ *
+ * Updated by Thomas Eichhorn
+ *  (2017 DESY)
+ *
+ *  email:thomas.eichhorn@desy.de
  */
 
 #ifndef EUTELMISSINGCOORDINATEESTIMATOR_H
@@ -15,171 +20,94 @@
 #include "marlin/Processor.h"
 
 // lcio includes <.h>
-#include <EVENT/LCCollection.h>
-#include <EVENT/LCEvent.h>
 #include <EVENT/LCRunHeader.h>
+#include <EVENT/LCEvent.h>
+#include <EVENT/LCCollection.h>
 #include <IMPL/LCCollectionVec.h>
 
 // system includes <>
-#include <map>
-#include <set>
 #include <string>
 #include <vector>
+#include <map>
+#include <set>
 
-namespace eutelescope {
+namespace eutelescope
+{
 
-  //! Missing Coordinate Estimator
-  /*! As the name suggest this processor is finds the estimated
-   *  position of the missing coordinate on your sensor
-   *  How it works is simple, it gets the hits from specified two sensors
-   *  finds the closest hit pairs, make a straight line out of it and find
-   *  the estimated position in one axis on your sensor you want.
-   *  No promises that this will work with tilted sensors and/or with magnetic
-   * field
-   *  One needs to used this with merged hits and after pre-alignment
-   */
-
-  class EUTelMissingCoordinateEstimator : public marlin::Processor {
-
-  private:
-    DISALLOW_COPY_AND_ASSIGN(EUTelMissingCoordinateEstimator)
-
-  public:
-    //! Returns a new instance of EUTelMissingCoordinateEstimator
-    /*! This method returns a new instance of this processor.  It is
-     *  called by Marlin execution framework and it shouldn't be
-     *  called/used by the final user.
-     *
-     *  @return a new EUTelMissingCoordinateEstimator.
+    //! Missing Coordinate Estimator
+    /*! As the name suggests this processor finds the estimated
+     *  position of the missing coordinate on your strip sensor.
+     *  How it works is: it gets the hits from two specified reference sensors,
+     *  finds the closest hit pairs, make a straight line and finds
+     *  the estimated position in one axis on your sensor.
+     *  No promises that this will work with tilted sensors and/or with magnetic field
+     *  One needs to used this with merged hits and after pre-alignment
      */
-    virtual Processor *newProcessor() {
-      return new EUTelMissingCoordinateEstimator;
-    }
 
-    //! Default constructor
-    EUTelMissingCoordinateEstimator();
+    class EUTelMissingCoordinateEstimator : public marlin::Processor
+    {
 
-    //! Called at the job beginning.
-    /*! This is executed only once in the whole execution. It prints
-     *  out the processor parameters and check that the GEAR
-     *  environment is properly set up and accessible from Marlin.
-     */
-    virtual void init();
+	private:
+	    DISALLOW_COPY_AND_ASSIGN ( EUTelMissingCoordinateEstimator )
 
-    //! Called for every run.
-    /*! It is called for every run, and consequently the run counter
-     *  is incremented. The geometry ID of the file is compared with
-     *  the one provided by the GEAR geometry description. In case the
-     *  two are different, the user is asked to decide to quit or to
-     *  continue with a description that might be wrong.
-     *
-     *  @param run the LCRunHeader of the this current run
-     */
-    virtual void processRunHeader(LCRunHeader *run);
+	public:
 
-    //! Called every event
-    /*! This is called for each event in the file. Each element of the
-     *  pulse collection is scanned and the center of the cluster is
-     *  translated into the external frame of reference thanks to the
-     *  GEAR geometry description.
-     *
-     *  The cluster center might be calculate using a standard linear
-     *  charge center of gravity algortihm or applying a more
-     *  sophisticated non linear eta function. This behaviour is
-     *  regulated by the user from the steering file.
-     *
-     *  @throw UnknownDataTypeException if the cluster type is unknown
-     *
-     *  @param evt the current LCEvent event as passed by the
-     *  ProcessMgr
-     */
-    virtual void processEvent(LCEvent *evt);
+	    virtual Processor * newProcessor ( )
+	    {
+		return new EUTelMissingCoordinateEstimator;
+	    }
 
-    //! Called after data processing.
-    /*! This method is called when the loop on events is
-     *  finished.
-     */
-    virtual void end();
+	    EUTelMissingCoordinateEstimator ();
 
-    //! Histogram booking
-    /*! Does nothing
-     */
-    void bookHistos();
+	    virtual void init ( );
 
-  protected:
-    //! Input TrackerHit collection name
-    /*! This is the name the user wants to give to the input hit
-     *  collection.
-     */
-    std::string _inputHitCollectionName;
+	    virtual void processRunHeader ( LCRunHeader * run );
 
-    //! Output TrackerHit collection name
-    /*! This is the name the user wants to give to the output hit
-     *  collection.
-     */
-    std::string _outputHitCollectionName;
+	    virtual void processEvent ( LCEvent * evt );
 
-    //! Reference planes
-    /*! This is the list of sensorIDs that their hits will be used
-     *  to estimate the missing coordinate on your DUT. You have to
-     *  give exactly 2 sensorIDs. For better results use the ones
-     *  that are closest to your DUT
-     */
-    EVENT::IntVec _referencePlanes;
+	    virtual void end ( );
 
-    //! DUT Planes
-    /*! This is the list of sensorIDs that missing coordinate of their
-     *  hits needs to be found. Notice that if the specified coordinate
-     *  already exists it will be overwritten
-     */
-    EVENT::IntVec _dutPlanes;
+	    void bookHistos ( );
 
-    //! Missing Coordinate
-    /*! The coordinate axis that needs to be estimated.
-     *  You have to set this to either X or Y.
-     */
-    std::string _missingCoordinate;
+	protected:
 
-    //! Max Residual
-    /*! This processor will look for a closest hits (in known coordinate)
-     *  to determine if the hits are correlated
-     *  The hits will be considered as correlated if the residual is smaller
-     *  than MaxResidual
-     */
-    float _maxResidual;
+	    std::string _inputHitCollectionName;
 
-    //! Clone Hit
-    /*! This method is used to clone TrackerHitImpl object
-     */
-    TrackerHitImpl *cloneHit(TrackerHitImpl *inputHit);
+	    std::string _outputHitCollectionName;
 
-  private:
-    //! Run number
-    int _iRun;
+	    EVENT::IntVec _referencePlanes;
 
-    //! Event number
-    int _iEvt;
+	    EVENT::IntVec _dutPlanes;
 
-    //! Missing hit position
-    unsigned int _missingHitPos;
+	    std::string _missingCoordinate;
 
-    //! Known hit position
-    unsigned int _knownHitPos;
+	    float _maxResidual;
 
-    //! Number of DUT hits
-    unsigned int _nDutHits;
+	    TrackerHitImpl* cloneHit ( TrackerHitImpl *inputHit );
 
-    //! Number of Dut hits created
-    unsigned int _nDutHitsCreated;
+	private:
 
-    //! Number of Expected created hit per DUT hit
-    unsigned int _maxExpectedCreatedHitPerDUTHit;
+	    bool _multihitmode;
 
-    //! Count number of created hit per DUT Hit
-    std::vector<unsigned int> _numberOfCreatedHitPerDUTHit;
-  };
+	    unsigned int _missingHitPos;
 
-  //! A global instance of the processor
-  EUTelMissingCoordinateEstimator gEUTelMissingCoordinateEstimator;
+	    unsigned int _knownHitPos;
+
+	    unsigned int _nDutHits;
+
+	    unsigned int _nDutHitsCreated;
+
+	    unsigned int _maxExpectedCreatedHitPerDUTHit;
+
+	    unsigned int _nNoReferenceCount;
+
+	    unsigned int _nResidualFailCount;
+
+	    unsigned int _numberOfCreatedHitsPerDUTHit[10];
+    };
+
+    EUTelMissingCoordinateEstimator gEUTelMissingCoordinateEstimator;
+
 }
+
 #endif
