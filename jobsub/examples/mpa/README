@@ -1,14 +1,13 @@
 =============================================================================
 
-CBC Analysis with EUTelescope
+MPA Analysis with EUTelescope
 
-Thomas Eichhorn 2017
+Thomas Eichhorn 2018
 thomas.eichhorn@desy.de
 
 =============================================================================
 
-This is the example full analysis and reconstruction of two strip sensors as
-DUTs, read out with one or multiple CBC chips.
+This is the example analysis and reconstruction of a CMS MPA chip and sensor as DUT
 
 =============================================================================
 
@@ -43,19 +42,6 @@ running multiple runs.
 
   This file.
 
-/x_<name>.sh:
+/x_mpa.sh:
 
-  Scripts for performing a specific task on one run. They should be called with 
-sh scriptname.sh <runnumber> . Further information is in the scripts.
-
-/z_<name>.sh:
-
-  Similar scripts that parse the runlist.csv and thus loop over all (or a 
-certain subset of runs) therein. Again, further information is in each script.
-
-=============================================================================
-
-Processors and analysis chain:
-
-...
-
+  Script to run through the reconstruction. Call with sh mpa.sh <runnumber> .
