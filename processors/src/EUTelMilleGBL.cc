@@ -301,6 +301,15 @@ AIDA::IHistogram1D * goody6Hist;
 AIDA::IHistogram1D * goodx7Hist;
 AIDA::IHistogram1D * goody7Hist;
 
+AIDA::IHistogram2D * hitmap0Hist;
+AIDA::IHistogram2D * hitmap1Hist;
+AIDA::IHistogram2D * hitmap2Hist;
+AIDA::IHistogram2D * hitmap3Hist;
+AIDA::IHistogram2D * hitmap4Hist;
+AIDA::IHistogram2D * hitmap5Hist;
+AIDA::IHistogram2D * hitmap6Hist;
+AIDA::IHistogram2D * hitmap7Hist;
+
 AIDA::IHistogram2D * dutrxxHist;
 AIDA::IHistogram2D * dutrxyHist;
 AIDA::IHistogram2D * dutrxzHist;
@@ -577,7 +586,7 @@ EUTelMilleGBL::EUTelMilleGBL ( ) : Processor ( "EUTelMilleGBL" )
 
     registerOptionalParameter ( "IsolationCut", "Maximum allowed hit distance within planes 1 and 4 in um for a hit to be considered isolated.", _isolationCut, static_cast < double > ( 40.0 ) );
 
-    registerOptionalParameter ( "ManualDUTid", "The sensor id number of the DUT.", _manualDUTid, static_cast < int > ( 6 ) );
+    registerOptionalParameter ( "ManualDUTid", "The sensor id number of the DUT.", _manualDUTid, static_cast < int > ( -1 ) );
 
     registerOptionalParameter ( "MaxTrackCandidatesTotal", "Maximal number of track candidates in the whole run, set to less than 0 to deactivate.",_maxTrackCandidatesTotal, static_cast < int > ( 10000000 ) );
 
@@ -604,6 +613,16 @@ EUTelMilleGBL::EUTelMilleGBL ( ) : Processor ( "EUTelMilleGBL" )
 
     registerOptionalParameter ( "SlopeCutDUTy", "Track slope cut in y, tracks below are accepted.", _slopecutDUTy, static_cast < double > ( 10.0 ) );
 
+    std::vector < int > initTelPlanes;
+    initTelPlanes.push_back ( 0 );
+    initTelPlanes.push_back ( 1 );
+    initTelPlanes.push_back ( 2 );
+    initTelPlanes.push_back ( 3 );
+    initTelPlanes.push_back ( 4 );
+    initTelPlanes.push_back ( 5 );
+
+    registerOptionalParameter ( "TelescopePlanes", "Which sensor IDs belong to the telescope? This should be used if there are non-standard (0,1,2,3,4,5) telescope plane sensor IDs in the setup.", _TelescopePlanes_sensorIDs, initTelPlanes );
+
     registerOptionalParameter ( "TelescopeResX", "Telescope resolution in x [um].", _resx, static_cast < double > ( 15.0 ) );
 
     registerOptionalParameter ( "TelescopeResY", "Telescope resolution in y [um].", _resy, static_cast < double > ( 15.0 ) );
@@ -612,7 +631,7 @@ EUTelMilleGBL::EUTelMilleGBL ( ) : Processor ( "EUTelMilleGBL" )
 
     registerOptionalParameter ( "TrackFitCollectionName", "If we use an external track fit, what is the collection name?", _trackFitCollectionName, std::string ( "TrackCandidateHitCollection" ) );
 
-    registerOptionalParameter ( "UseREF", "Use Reference Plane? If so, set the sensor id (usually 7). To deactivate, set to 0 or below.", _useREF, static_cast < int > ( -1 ) );
+    registerOptionalParameter ( "UseREF", "Use Reference Plane? If so, set the sensor id (usually 7). To deactivate, set to below 0.", _useREF, static_cast < int > ( -1 ) );
 
     registerOptionalParameter ( "UseTrackFit", "Use external track fit?", _useTrackFit, static_cast < bool > ( false ) );
 
@@ -706,11 +725,16 @@ void EUTelMilleGBL::init ( )
     streamlog_out ( MESSAGE2 ) << "Assumed beam energy is " << _eBeam << " GeV!" <<  endl;
 
     // get the number of planes
-    _nPlanes = _siPlanesParameters -> getSiPlanesNumber ( );
-    if ( _siPlanesParameters -> getSiPlanesType ( ) == _siPlanesParameters -> TelescopeWithDUT )
+    _nPlanes = _TelescopePlanes_sensorIDs.size ( );
+    if ( _useREF >= 0 )
     {
-	++_nPlanes;
+	_nPlanes++;
     }
+    if ( _manualDUTid >= 0 )
+    {
+	_nPlanes++;
+    }
+    _nPlanes += _excludePlanes_sensorIDs.size();
 
     // an associative map for getting the sensorID ordered
     map < double, int > sensorIDMap;
@@ -725,6 +749,21 @@ void EUTelMilleGBL::init ( )
 	{
 	    streamlog_out ( ERROR5 ) << "You are using a setup with a sensor id larger than " << maxplanesinsystem << "! maxplanesinsystem in EUTelMilleGBL.cc is not large enough!" << endl;
 	    exit ( -1 );
+	}
+
+	bool isteleplane = false;
+	// if a plane is not a telescope plane, not a dut and not a reference, it is excluded
+	for ( size_t ii = 0; ii < _TelescopePlanes_sensorIDs.size ( ); ii++ )
+	{
+	    if ( ( _siPlanesLayerLayout -> getID ( iPlane ) ) == _TelescopePlanes_sensorIDs.at ( ii ) )
+	    {
+		isteleplane = true;
+	    }
+	}
+	if ( !isteleplane && ( _siPlanesLayerLayout -> getID ( iPlane ) != _useREF ) && ( _siPlanesLayerLayout -> getID ( iPlane ) != _manualDUTid ) )
+	{
+	   _excludePlanes_sensorIDs.push_back ( _siPlanesLayerLayout -> getID ( iPlane ) );
+	   streamlog_out ( MESSAGE2 ) << "Excluding unused plane " <<  _siPlanesLayerLayout -> getID ( iPlane ) << endl;
 	}
     }
 
@@ -813,12 +852,14 @@ void EUTelMilleGBL::init ( )
 	streamlog_out ( MESSAGE2 ) << " Plane " << _activeSensorID.at ( j ) << " active at z " << _activeSensorZ.at ( j ) << " mm" << endl;
     }
 
+    /*
     if ( ( int ) _siPlaneZPosition.size ( ) != _nPlanes )
     {
 	streamlog_out ( ERROR5 ) << "The number of detected planes is " << _nPlanes << ", but " << _siPlaneZPosition.size ( ) << " layer z positions were found!" << endl;
 	streamlog_out ( ERROR5 ) << "Check the GEAR file!" << endl;
 	exit ( -1 );
     }
+    */
 
     #endif
 
@@ -1347,41 +1388,21 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
     these positions are now mapped to the sensorid of the plane in question with the indexconverter array
     */
 
-    // HACK
-    // assuming the telescope has planes 0 to 5...
-
-    int icounter = 0;
-    for ( int i = 0; i < ( _nPlanes ); i++ )
+    indexconverter[0] = _TelescopePlanes_sensorIDs.at ( 0 );
+    indexconverter[1] = _TelescopePlanes_sensorIDs.at ( 1 );
+    indexconverter[2] = _TelescopePlanes_sensorIDs.at ( 2 );
+    if ( _manualDUTid >= 0 )
     {
-
-	if ( i < 3 )
-	{
-	    indexconverter[i] = icounter;
-	    icounter++;
-	}
-	if ( i == 3 )
-	{
-	    indexconverter[i] = _manualDUTid;
-	}
-	if ( i == 4 )
-	{
-	    indexconverter[i] = 3;
-	}
-	if ( i == 5 )
-	{
-	    indexconverter[i] = 4;
-	}
-	if ( i == 6 )
-	{
-	    indexconverter[i] = 5;
-	}
-	if ( i == 7 && _useREF > 0 )
-	{
-	    indexconverter[i] = _useREF;
-	}
-	streamlog_out ( DEBUG1 ) << "Indexconverter " << i << " " << indexconverter[i] << endl;
+	indexconverter[3] = _manualDUTid;
     }
-
+    indexconverter[4] = _TelescopePlanes_sensorIDs.at ( 3 );
+    indexconverter[5] = _TelescopePlanes_sensorIDs.at ( 4 );
+    indexconverter[6] = _TelescopePlanes_sensorIDs.at ( 5 );
+    if ( _useREF >= 0 )
+    {
+	indexconverter[7] = _useREF;
+    }
+ 
     for ( size_t i = 0; i < _hitCollectionName.size ( ); i++ )
     {
 
@@ -1464,15 +1485,18 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	} //loop hits jB
 
 	// plane 6 = DUT
-	iB = indexconverter[3];
-
-	for ( size_t jB = 0; jB < _hitsArray[iB].size ( ); jB++ )
+	if ( _manualDUTid >= 0 )
 	{
-	    double dx = _hitsArray[iB][jB].measuredX - _hitsArray[iA][jA].measuredX;
-	    double dy = _hitsArray[iB][jB].measuredY - _hitsArray[iA][jA].measuredY;
-	    dx06Hist -> fill ( dx );
-	    dy06Hist -> fill ( dy );
-	} //loop hits jB
+	    iB = indexconverter[3];
+
+	    for ( size_t jB = 0; jB < _hitsArray[iB].size ( ); jB++ )
+	    {
+		double dx = _hitsArray[iB][jB].measuredX - _hitsArray[iA][jA].measuredX;
+		double dy = _hitsArray[iB][jB].measuredY - _hitsArray[iA][jA].measuredY;
+		dx06Hist -> fill ( dx );
+		dy06Hist -> fill ( dy );
+	    } //loop hits jB
+	}
 
 	// plane 3
 	iB = indexconverter[4];
@@ -1508,7 +1532,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	} //loop hits jB
 
 	// REF
-	if ( _useREF > 0 )
+	if ( _useREF >= 0 )
 	{
 	    iB = indexconverter[7];
 
@@ -1550,15 +1574,18 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	    } //loop hits jB
 
 	    // plane 6 = DUT
-	    iB = indexconverter[3];
-
-	    for ( size_t jB = 0; jB < _hitsArray[iB].size ( ); jB++ )
+	    if ( _manualDUTid >= 0 )
 	    {
-		double dx = _hitsArray[iB][jB].measuredX - _hitsArray[iA][jA].measuredX;
-		double dy = _hitsArray[iB][jB].measuredY - _hitsArray[iA][jA].measuredY;
-		dx16Hist -> fill ( dx );
-		dy16Hist -> fill ( dy );
-	    } //loop hits jB
+		iB = indexconverter[3];
+
+		for ( size_t jB = 0; jB < _hitsArray[iB].size ( ); jB++ )
+		{
+		    double dx = _hitsArray[iB][jB].measuredX - _hitsArray[iA][jA].measuredX;
+		    double dy = _hitsArray[iB][jB].measuredY - _hitsArray[iA][jA].measuredY;
+		    dx16Hist -> fill ( dx );
+		    dy16Hist -> fill ( dy );
+		} //loop hits jB
+	    }
 
 	    // plane 3
 	    iB = indexconverter[4];
@@ -1594,7 +1621,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	    } //loop hits jB
 
 	    // REF
-	    if ( _useREF > 0 )
+	    if ( _useREF >= 0 )
 	    {
 		iB = indexconverter[7];
 
@@ -1622,23 +1649,26 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	{
 
 	    // plane 6 = DUT
-	    int iB = indexconverter[3];
-
-	    for ( size_t jB = 0; jB < _hitsArray[iB].size ( ); jB++ )
+	    if ( _manualDUTid >= 0 )
 	    {
-		double dx = _hitsArray[iB][jB].measuredX - _hitsArray[iA][jA].measuredX;
-		double dy = _hitsArray[iB][jB].measuredY - _hitsArray[iA][jA].measuredY;
-		dx26Hist -> fill ( dx );
-		dy26Hist -> fill ( dy );
-		if ( _dthistos == true )
+		int iB = indexconverter[3];
+
+		for ( size_t jB = 0; jB < _hitsArray[iB].size ( ); jB++ )
 		{
-		    dx26dtHist -> fill ( event -> getEventNumber ( ), dx );
-		    dy26dtHist -> fill ( event -> getEventNumber ( ), dy );
-		}
-	    } //loop hits jB
+		    double dx = _hitsArray[iB][jB].measuredX - _hitsArray[iA][jA].measuredX;
+		    double dy = _hitsArray[iB][jB].measuredY - _hitsArray[iA][jA].measuredY;
+		    dx26Hist -> fill ( dx );
+		    dy26Hist -> fill ( dy );
+		    if ( _dthistos == true )
+		    {
+			dx26dtHist -> fill ( event -> getEventNumber ( ), dx );
+			dy26dtHist -> fill ( event -> getEventNumber ( ), dy );
+		    }
+		} //loop hits jB
+	    }
 
 	    // plane 3
-	    iB = indexconverter[4];
+	    int iB = indexconverter[4];
 
 	    for ( size_t jB = 0; jB < _hitsArray[iB].size ( ); jB++ )
 	    {
@@ -1676,7 +1706,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	    } //loop hits jB
 
 	    // REF
-	    if ( _useREF > 0 )
+	    if ( _useREF >= 0 )
 	    {
 		iB = indexconverter[7];
 
@@ -1704,18 +1734,21 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	{
 
 	    // plane 6 = DUT
-	    int iB = indexconverter[3];
-
-	    for ( size_t jB = 0; jB < _hitsArray[iB].size ( ); jB++ )
+	    if ( _manualDUTid >= 0 )
 	    {
-		double dx = _hitsArray[iB][jB].measuredX - _hitsArray[iA][jA].measuredX;
-		double dy = _hitsArray[iB][jB].measuredY - _hitsArray[iA][jA].measuredY;
-		dx36Hist -> fill ( dx );
-		dy36Hist -> fill ( dy );
-	    } //loop hits jB
+		int iB = indexconverter[3];
+
+		for ( size_t jB = 0; jB < _hitsArray[iB].size ( ); jB++ )
+		{
+		    double dx = _hitsArray[iB][jB].measuredX - _hitsArray[iA][jA].measuredX;
+		    double dy = _hitsArray[iB][jB].measuredY - _hitsArray[iA][jA].measuredY;
+		    dx36Hist -> fill ( dx );
+		    dy36Hist -> fill ( dy );
+		} //loop hits jB
+	    }
 
 	    // plane 4
-	    iB = indexconverter[5];
+	    int iB = indexconverter[5];
 
 	    for ( size_t jB = 0; jB < _hitsArray[iB].size ( ); jB++ )
 	    {
@@ -1742,7 +1775,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	    } //loop hits jB
 
 	    // REF
-	    if ( _useREF > 0 )
+	    if ( _useREF >= 0 )
 	    {
 		iB = indexconverter[7];
 
@@ -1770,18 +1803,21 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	{
 
 	    // plane 6 = DUT
-	    int iB = indexconverter[3];
-
-	    for ( size_t jB = 0; jB < _hitsArray[iB].size ( ); jB++ )
+	    if ( _manualDUTid >= 0 )
 	    {
-		double dx = _hitsArray[iB][jB].measuredX - _hitsArray[iA][jA].measuredX;
-		double dy = _hitsArray[iB][jB].measuredY - _hitsArray[iA][jA].measuredY;
-		dx46Hist -> fill ( dx );
-		dy46Hist -> fill ( dy );
-	    } //loop hits jB
+		int iB = indexconverter[3];
+
+		for ( size_t jB = 0; jB < _hitsArray[iB].size ( ); jB++ )
+		{
+		    double dx = _hitsArray[iB][jB].measuredX - _hitsArray[iA][jA].measuredX;
+		    double dy = _hitsArray[iB][jB].measuredY - _hitsArray[iA][jA].measuredY;
+		    dx46Hist -> fill ( dx );
+		    dy46Hist -> fill ( dy );
+		} //loop hits jB
+	    }
 
 	    // plane 5
-	    iB = indexconverter[6];
+	    int iB = indexconverter[6];
 
 	    for ( size_t jB = 0; jB < _hitsArray[iB].size ( ); jB++ )
 	    {
@@ -1797,7 +1833,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	    } //loop hits jB
 
 	    // REF
-	    if ( _useREF > 0 )
+	    if ( _useREF >= 0 )
 	    {
 		iB = indexconverter[7];
 
@@ -1825,20 +1861,23 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	{
 
 	    // plane 6 = DUT
-	    int iB = indexconverter[3];
-
-	    for ( size_t jB = 0; jB < _hitsArray[iB].size ( ); jB++ )
+	    if ( _manualDUTid >= 0 )
 	    {
-		double dx = _hitsArray[iB][jB].measuredX - _hitsArray[iA][jA].measuredX;
-		double dy = _hitsArray[iB][jB].measuredY - _hitsArray[iA][jA].measuredY;
-		dx56Hist -> fill ( dx );
-		dy56Hist -> fill ( dy );
-	    } //loop hits jB
+		int iB = indexconverter[3];
+
+		for ( size_t jB = 0; jB < _hitsArray[iB].size ( ); jB++ )
+		{
+		    double dx = _hitsArray[iB][jB].measuredX - _hitsArray[iA][jA].measuredX;
+		    double dy = _hitsArray[iB][jB].measuredY - _hitsArray[iA][jA].measuredY;
+		    dx56Hist -> fill ( dx );
+		    dy56Hist -> fill ( dy );
+		} //loop hits jB
+	    }
 
 	    // REF
-	    if ( _useREF > 0 )
+	    if ( _useREF >= 0 )
 	    {
-		iB = indexconverter[7];
+		int iB = indexconverter[7];
 
 		for ( size_t jB = 0; jB < _hitsArray[iB].size ( ); jB++ )
 		{
@@ -1859,7 +1898,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 
     } // iA valid
 
-    if ( _useREF > 0 )
+    if ( _useREF >= 0 && _manualDUTid >= 0 )
     {
 
 	iA = indexconverter[3]; // DUT
@@ -1902,11 +1941,13 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
     int i4 = indexconverter[5]; // plane 4
     int i5 = indexconverter[6]; // plane 5
     int i7 = -1;
-    if ( _useREF > 0 )
+    if ( _useREF >= 0 )
     {
 	i7 = indexconverter[7]; // REF
     }
 
+    // fixme this can go?!
+    
     // if we exclude telescope planes, then we do some mapping of the ix's
     // since telescope planes are hard coded anyway, we can work with sensor ids
     int telexc[6] = { 1 };
@@ -2030,6 +2071,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	exit ( -1 );
     }
 
+    /*
     // FIXME Very hacky way of doing this!
     if (_doPreAlignment == 0 && _useTrackFit == true )
     {
@@ -2183,7 +2225,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		alDer3D ( 1, 2 ) = 0.0; // dy/dz
 		alDer3D ( 2, 2 ) = 1.0; // dz/dz
 
-		/*
+		
 		TMatrixD alDer4 ( 2, 4 ); // alignment derivatives
 		alDer4[0][0] = 1.0; // dx/dx
 		alDer4[1][0] = 0.0; // dy/dx
@@ -2191,8 +2233,8 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		alDer4[1][1] = 1.0; // dy/dy
 		alDer4[0][3] = sxA[kA]; // dx/dz
 		alDer4[1][3] = syA[kA]; // dy/dz
-		*/
-
+		
+                
 		Eigen::Matrix < double, 3, 6 > alDer6; // alignment derivatives
 
 		// telescope planes 0-5 + DUT + REF:
@@ -2208,14 +2250,14 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 
 		// plane loop
 		int looplimit = 7;
-		if ( _useREF > 0 )
+		if ( _useREF >= 0 )
 		{
 		    looplimit = 8;
 		}
 		for ( int ipl = 0; ipl < looplimit; ++ipl )
 		{
 
-		             /*
+		             
 			// in this case just add scatterer and continue with the next plane
 			if ( _requireDUTHit == 0 && ipl == 3 )
 			{
@@ -2297,7 +2339,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			    continue;
 			}
 			*/
-
+                          /*
 		    // [um]
 		    double xx = _mesHitsArray[indexconverter[ipl]][jhit].measuredX;
 		    double yy = _mesHitsArray[indexconverter[ipl]][jhit].measuredY;
@@ -2392,7 +2434,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			alDer3 ( 1, 2 ) =  xs; // dy/dphi
 			point -> addGlobals ( globalLabels, alDer3 );
 		    }
-		    /*
+		    
 		    // with rot and z shift
 		    else if ( _alignMode == 4 )
 		    {
@@ -2492,7 +2534,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			point -> addGlobals ( globalLabels, alDer6 );
 		    }
 		    */
-
+                    /*
 		    traj_points.push_back ( *point );
 
 		    sPoint.push_back ( s );
@@ -2500,7 +2542,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		    streamlog_out ( DEBUG6 ) << "Point pushed to gbl:" << endl; 
 		    streamlog_out ( DEBUG6 ) << " Labels:" << endl;
 
-		    /*
+		    
 		    for ( size_t ic = 0; ic < point -> getGlobalLabels ( ).size ( ); ic++ )
 		    {
 			streamlog_out ( DEBUG6 ) << "  " << ic << " " << point -> getGlobalLabels ( ) .at ( ic ) << endl;
@@ -2508,8 +2550,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		    streamlog_out ( DEBUG6 ) << " The number of global parameters for this point is " << point -> getNumGlobals ( ) << endl;
 		    streamlog_out ( DEBUG6 ) << " The alignment matrix after adding the point: " << endl;
 		    streamlog_message ( DEBUG2, point -> getGlobalDerivatives ( ) .Print ( );, std::endl; );
-		    */
-
+		    
 		    delete point;
 
 		    // add air after each plane except last one
@@ -2576,7 +2617,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		selrx5Hist -> fill ( rx[indexconverter[6]] );
 		selry5Hist -> fill ( ry[indexconverter[6]] );
 
-		if ( _useREF > 0 )
+		if ( _useREF >= 0 )
 		{
 		    selrx7Hist -> fill ( rx[indexconverter[7]] );
 		    selry7Hist -> fill ( ry[indexconverter[7]] );
@@ -2633,7 +2674,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		    baddx5Hist -> fill ( rx[indexconverter[6]] );
 		    baddy5Hist -> fill ( ry[indexconverter[6]] );
 
-		    if ( _useREF > 0 )
+		    if ( _useREF >= 0 )
 		    {
 			baddx7Hist -> fill ( rx[indexconverter[7]] );
 			baddy7Hist -> fill ( ry[indexconverter[7]] );
@@ -2658,11 +2699,22 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		    goody4Hist -> fill ( ry[indexconverter[5]] );
 		    goodx5Hist -> fill ( rx[indexconverter[6]] );
 		    goody5Hist -> fill ( ry[indexconverter[6]] );
+		    hitmap0Hist -> fill ( _mesHitsArray[indexconverter[0]][jhit].measuredX / 1000.0, _mesHitsArray[indexconverter[0]][jhit].measuredY / 1000.0 );
+		    hitmap1Hist -> fill ( _mesHitsArray[indexconverter[1]][jhit].measuredX / 1000.0, _mesHitsArray[indexconverter[1]][jhit].measuredY / 1000.0 );
+		    hitmap2Hist -> fill ( _mesHitsArray[indexconverter[2]][jhit].measuredX / 1000.0, _mesHitsArray[indexconverter[2]][jhit].measuredY / 1000.0 );
+		    if ( _requireDUTHit == 1 )
+		    {
+			hitmap6Hist -> fill ( _mesHitsArray[indexconverter[3]][jhit].measuredX / 1000.0, _mesHitsArray[indexconverter[3]][jhit].measuredY / 1000.0 );
+		    }
+		    hitmap3Hist -> fill ( _mesHitsArray[indexconverter[4]][jhit].measuredX / 1000.0, _mesHitsArray[indexconverter[4]][jhit].measuredY / 1000.0 );
+		    hitmap4Hist -> fill ( _mesHitsArray[indexconverter[5]][jhit].measuredX / 1000.0, _mesHitsArray[indexconverter[5]][jhit].measuredY / 1000.0 );
+		    hitmap5Hist -> fill ( _mesHitsArray[indexconverter[6]][jhit].measuredX / 1000.0, _mesHitsArray[indexconverter[6]][jhit].measuredY / 1000.0 );
 
-		    if ( _useREF > 0 )
+		    if ( _useREF >= 0 )
 		    {
 			goodx7Hist -> fill ( rx[indexconverter[7]] );
 			goody7Hist -> fill ( ry[indexconverter[7]] );
+			hitmap7Hist -> fill ( _mesHitsArray[indexconverter[7]][jhit].measuredX / 1000.0, _mesHitsArray[indexconverter[7]][jhit].measuredY / 1000.0 );
 		    }
 
 		    // 6 telescope planes, + 1 dut + 1 ref
@@ -3028,7 +3080,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 
 		    k++;
 
-		    if ( _useREF > 0 )
+		    if ( _useREF >= 0 )
 		    {
 			ipos = 7;
 			traj.getResults ( ipos, aCorrection, aCovariance );
@@ -3076,7 +3128,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		    gblkx4Hist -> fill ( ( ax[indexconverter[5]] - ax[indexconverter[4]] ) * 1E3 );
 		    gblkx5Hist -> fill ( ( ax[indexconverter[6]] - ax[indexconverter[5]] ) * 1E3 );
 
-		    if ( _useREF > 0 )
+		    if ( _useREF >= 0 )
 		    {
 			gblkx7Hist -> fill ( ( ax[indexconverter[7]] - ax[indexconverter[7]] ) * 1E3 );
 		    }
@@ -3089,7 +3141,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		    gblky4Hist -> fill ( ( ay[indexconverter[5]] - ay[indexconverter[4]] ) * 1E3 );
 		    gblky5Hist -> fill ( ( ay[indexconverter[6]] - ay[indexconverter[5]] ) * 1E3 );
 
-		    if ( _useREF > 0 )
+		    if ( _useREF >= 0 )
 		    {
 			gblky7Hist -> fill ( ( ay[indexconverter[7]] - ay[indexconverter[7]] ) * 1E3 );
 		    }
@@ -3112,6 +3164,8 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	}
     }
 
+    */
+		    
     if ( _doPreAlignment == 0 && _useTrackFit == false )
     {
 	int ntri = 0;
@@ -3182,7 +3236,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		    }
 
 		    // require DUT hit?
-		    if ( _requireDUTHit == 1 )
+		    if ( _requireDUTHit == 1 && _manualDUTid >= 0 )
 		    {
 
 			for ( size_t j6 = 0; j6 < _hitsArray[i6].size ( ); j6++ )
@@ -3390,7 +3444,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			continue;
 		    }
 
-		    if ( _useREF <= 0 )
+		    if ( _useREF < 0 )
 		    {
 
 			if ( abs ( dx ) < _driCut )
@@ -3430,7 +3484,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			}//valid driplet
 
 		    } // without REF
-		    if ( _useREF > 0 )
+		    if ( _useREF >= 0 )
 		    {
 			for ( size_t j7 = 0; j7 < _hitsArray[i7].size ( ); j7++ )
 			{
@@ -3749,10 +3803,14 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		    double zprev = _hitsArray[indexconverter[0]][jhit].measuredZ;
 
 		    // plane loop
-		    int looplimit = 7;
-		    if ( _useREF > 0 )
+		    int looplimit = 6;
+		    if ( _useREF >= 0 )
 		    {
-			looplimit = 8;
+			looplimit++;
+		    }
+		    if ( _manualDUTid >=0 )
+		    {
+			looplimit++;
 		    }
 		    for ( int ipl = 0; ipl < looplimit; ++ipl )
 		    {
@@ -4151,7 +4209,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 		    selrx5Hist -> fill ( rx[indexconverter[6]] * 1.0 );
 		    selry5Hist -> fill ( ry[indexconverter[6]] * 1.0 );
 
-		    if ( _useREF > 0 )
+		    if ( _useREF >= 0 )
 		    {
 			selrx7Hist -> fill ( rx[indexconverter[7]] * 1.0 );
 			selry7Hist -> fill ( ry[indexconverter[7]] * 1.0 );
@@ -4227,7 +4285,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			baddx5Hist -> fill ( rx[indexconverter[6]] );
 			baddy5Hist -> fill ( ry[indexconverter[6]] );
 
-			if ( _useREF > 0 )
+			if ( _useREF >= 0 )
 			{
 			    baddx7Hist -> fill ( rx[indexconverter[7]] );
 			    baddy7Hist -> fill ( ry[indexconverter[7]] );
@@ -4252,11 +4310,22 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 			goody4Hist -> fill ( ry[indexconverter[5]] );
 			goodx5Hist -> fill ( rx[indexconverter[6]] );
 			goody5Hist -> fill ( ry[indexconverter[6]] );
+			hitmap0Hist -> fill ( _hitsArray[indexconverter[0]][jhit].measuredX / 1000.0, _hitsArray[indexconverter[0]][jhit].measuredY / 1000.0 );
+			hitmap1Hist -> fill ( _hitsArray[indexconverter[1]][jhit].measuredX / 1000.0, _hitsArray[indexconverter[1]][jhit].measuredY / 1000.0 );
+			hitmap2Hist -> fill ( _hitsArray[indexconverter[2]][jhit].measuredX / 1000.0, _hitsArray[indexconverter[2]][jhit].measuredY / 1000.0 );
+			if ( _requireDUTHit == 1 )
+			{
+			    hitmap6Hist -> fill ( _hitsArray[indexconverter[3]][jhit].measuredX / 1000.0, _hitsArray[indexconverter[3]][jhit].measuredY / 1000.0 );
+			}
+			hitmap3Hist -> fill ( _hitsArray[indexconverter[4]][jhit].measuredX / 1000.0, _hitsArray[indexconverter[4]][jhit].measuredY / 1000.0 );
+			hitmap4Hist -> fill ( _hitsArray[indexconverter[5]][jhit].measuredX / 1000.0, _hitsArray[indexconverter[5]][jhit].measuredY / 1000.0 );
+			hitmap5Hist -> fill ( _hitsArray[indexconverter[6]][jhit].measuredX / 1000.0, _hitsArray[indexconverter[6]][jhit].measuredY / 1000.0 );
 
-			if ( _useREF > 0 )
+			if ( _useREF >= 0 )
 			{
 			    goodx7Hist -> fill ( rx[indexconverter[7]] );
 			    goody7Hist -> fill ( ry[indexconverter[7]] );
+			    hitmap7Hist -> fill ( _hitsArray[indexconverter[7]][jhit].measuredX / 1000.0, _hitsArray[indexconverter[7]][jhit].measuredY / 1000.0 );
 			}
 
 			unsigned int k = 0;
@@ -4722,7 +4791,7 @@ void EUTelMilleGBL::processEvent ( LCEvent * event )
 	
 			k++;
 
-			if ( _useREF > 0 )
+			if ( _useREF >= 0 )
 			{
 			    ipos = 7;
 			    traj.getResults ( ipos, aCorrection, aCovariance );
@@ -4884,10 +4953,21 @@ void EUTelMilleGBL::end ( )
 
 	    int counter = 0;
 	    int nfix = 0;
+	    
+	    /* has to be earlier?!
+	    // HACK
+	    if ( _requireDUTHit == 0 )
+	    {
+		_FixedPlanes.push_back ( _manualDUTid );
+		cout << "fixed dut, nplanes " << _nPlanes << " fixed size " << _FixedPlanes.size() << endl;
+		
+	    }
+	    */
 
 	    // loop over all planes:
 	    for ( int ipl = 0; ipl < _nPlanes; ipl++ )
 	    {
+		cout << "mille plane " << ipl << " of " << _nPlanes << endl;
 		// flag for excluded planes
 		int excluded = 0;
 
@@ -5484,6 +5564,8 @@ void EUTelMilleGBL::end ( )
 		    int thisparameter = -1;
 		    int previousparameter = 0;
 		    bool readprevious = false;
+		    int previousreads = 0;
+		    bool readzeros = false;
 
 		    while ( !millepede.eof ( ) )
 		    {
@@ -5521,7 +5603,7 @@ void EUTelMilleGBL::end ( )
 				tokens.clear ( );
 				tokenizer.clear ( );
 				tokenizer.str ( line );
-				streamlog_out ( DEBUG2 ) << "Millepede tokenizer: " << tokenizer.str ( ) << endl;
+				streamlog_out ( DEBUG3 ) << "Millepede tokenizer: " << tokenizer.str ( ) << endl;
 
 				double buffer;
 				// check that all parts of the line are non zero
@@ -5533,9 +5615,39 @@ void EUTelMilleGBL::end ( )
 				// catch missing line
 				if ( ( thisparameter - previousparameter ) > 1 )
 				{
-				    streamlog_out ( WARNING2 ) << "Missing line detected in the millepede.res file! This might be due to a wrong alignment mode with too many free parameters!" << endl;
+				    streamlog_out ( WARNING2 ) << "Missing line detected in the millepede.res file! This might be due to a wrong alignment mode with too many free parameters or a plane misconfiguration!" << endl;
 				    temp_tokens = tokens;
 				    readprevious = true;
+				    if ( _alignMode == 1 )
+				    {
+					previousreads = 1;
+				    }
+				    if ( _alignMode == 2 )
+				    {
+					previousreads = 2;
+				    }
+				    if ( _alignMode == 3 )
+				    {
+					previousreads = 3;
+				    }
+				    if ( _alignMode == 4 )
+				    {
+					previousreads = 4;
+				    }
+				    if ( _alignMode == 5 )
+				    {
+					// 1 2 3 4 5 6 fail
+					previousreads = 1;
+				    }
+				    if ( _alignMode == 6 )
+				    {
+					previousreads = 6;
+				    }
+				    if ( _alignMode == 7 )
+				    {
+					previousreads = 3;
+				    }
+				    readzeros = true;
 				    double mylist[] = { previousparameter * 1.0 + 1.0, 0.0, 0.0 };
 				    tokens.assign ( mylist, mylist + 3 );
 				}
@@ -5551,8 +5663,13 @@ void EUTelMilleGBL::end ( )
 			    }
 			    else
 			    {
+				previousreads--;
 				tokens = temp_tokens;
-				readprevious = false;
+				if ( previousreads == 0 )
+				{
+				    readprevious = false;
+				    readzeros = false;
+				}
 			    }
 
 			    bool isFixed = ( tokens.size ( ) == 3 );
@@ -5562,24 +5679,45 @@ void EUTelMilleGBL::end ( )
 			    {
 				if ( iParam == 0 )
 				{
-				    constant -> setXOffset ( tokens[1] / 1000.0 );
-				    if ( ! isFixed )
+				    if ( !readzeros )
+				    {
+					constant -> setXOffset ( tokens[1] / 1000.0 );
+				    }
+				    else
+				    {
+					constant -> setXOffset ( 0.0 );
+				    }
+				    if ( ! isFixed && !readzeros )
 				    {
 					constant -> setXOffsetError ( tokens[4] / 1000.0 );
 				    }
 				}
 				if ( iParam == 1 )
 				{
-				    constant -> setYOffset ( tokens[1] / 1000.0 );
-				    if ( ! isFixed )
+				    if ( !readzeros )
+				    {
+					constant -> setYOffset ( tokens[1] / 1000.0 );
+				    }
+				    else
+				    {
+					constant -> setYOffset ( 0.0 );
+				    }
+				    if ( ! isFixed && !readzeros )
 				    {
 					constant -> setYOffsetError ( tokens[4] / 1000.0 );
 				    }
 				}
 				if ( iParam == 2 )
 				{
-				    constant -> setZOffset ( tokens[1] / 1000.0 );
-				    if ( ! isFixed )
+				    if ( !readzeros )
+				    {
+					constant -> setZOffset ( tokens[1] / 1000.0 );
+				    }
+				    else
+				    {
+					constant -> setZOffset ( 0.0 );
+				    }
+				    if ( ! isFixed && !readzeros )
 				    {
 					constant -> setZOffsetError ( tokens[4] / 1000.0 );
 				    }
@@ -5590,24 +5728,45 @@ void EUTelMilleGBL::end ( )
 			    {
 				if ( iParam == 0 )
 				{
-				    constant -> setXOffset ( tokens[1] / 1000. );
-				    if ( ! isFixed )
+				    if ( !readzeros )
+				    {
+					constant -> setXOffset ( tokens[1] / 1000.0 );
+				    }
+				    else
+				    {
+					constant -> setXOffset ( 0.0 );
+				    }
+				    if ( ! isFixed && !readzeros )
 				    {
 					constant -> setXOffsetError ( tokens[4] / 1000. );
 				    }
 				}
 				if ( iParam == 1 )
 				{
-				    constant -> setYOffset ( tokens[1] / 1000. );
-				    if ( ! isFixed )
+				    if ( !readzeros )
+				    {
+					constant -> setYOffset ( tokens[1] / 1000.0 );
+				    }
+				    else
+				    {
+					constant -> setYOffset ( 0.0 );
+				    }
+				    if ( ! isFixed && !readzeros )
 				    {
 					constant -> setYOffsetError ( tokens[4] / 1000. );
 				    }
 				}
 				if ( iParam == 2 )
 				{
-				    constant -> setGamma ( tokens[1] );
-				    if ( ! isFixed )
+				    if ( !readzeros )
+				    {
+					constant -> setGamma ( tokens[1] );
+				    }
+				    else
+				    {
+					constant -> setGamma ( 0.0 );
+				    }
+				    if ( ! isFixed && !readzeros )
 				    {
 					constant -> setGammaError ( tokens[4] );
 				    }
@@ -5618,32 +5777,60 @@ void EUTelMilleGBL::end ( )
 			    {
 				if ( iParam == 0 )
 				{
-				    constant -> setXOffset ( tokens[1] / 1000. );
-				    if ( ! isFixed )
+				    if ( !readzeros )
+				    {
+					constant -> setXOffset ( tokens[1] / 1000.0 );
+				    }
+				    else
+				    {
+					constant -> setXOffset ( 0.0 );
+				    }
+				    if ( ! isFixed && !readzeros )
 				    {
 					constant -> setXOffsetError ( tokens[4] / 1000. );
 				    }
 				}
 				if ( iParam == 1 )
 				{
-				    constant -> setYOffset ( tokens[1] / 1000. );
-				    if ( ! isFixed )
+				    if ( !readzeros )
+				    {
+					constant -> setYOffset ( tokens[1] / 1000.0 );
+				    }
+				    else
+				    {
+					constant -> setYOffset ( 0.0 );
+				    }
+				    if ( ! isFixed && !readzeros )
 				    {
 					constant -> setYOffsetError ( tokens[4] / 1000. );
 				    }
 				}
 				if ( iParam == 2 )
 				{
-				    constant -> setGamma ( tokens[1] );
-				    if ( ! isFixed )
+				    if ( !readzeros )
+				    {
+					constant -> setGamma ( tokens[1] );
+				    }
+				    else
+				    {
+					constant -> setGamma ( 0.0 );
+				    }
+				    if ( ! isFixed && !readzeros )
 				    {
 					constant -> setGammaError ( tokens[4] );
 				    }
 				}
 				if ( iParam == 3 )
 				{
-				    constant -> setZOffset ( tokens[1] / 1000. );
-				    if ( ! isFixed )
+				    if ( !readzeros )
+				    {
+					constant -> setZOffset ( tokens[1] / 1000.0 );
+				    }
+				    else
+				    {
+					constant -> setZOffset ( 0.0 );
+				    }
+				    if ( ! isFixed && !readzeros )
 				    {
 					constant -> setZOffsetError ( tokens[4] / 1000. );
 				    }
@@ -5654,48 +5841,90 @@ void EUTelMilleGBL::end ( )
 			    {
 				if ( iParam == 0 )
 				{
-				    constant -> setXOffset ( tokens[1] / 1000. );
-				    if ( ! isFixed )
+				    if ( !readzeros )
+				    {
+					constant -> setXOffset ( tokens[1] / 1000.0 );
+				    }
+				    else
+				    {
+					constant -> setXOffset ( 0.0 );
+				    }
+				    if ( ! isFixed && !readzeros )
 				    {
 					constant -> setXOffsetError ( tokens[4] / 1000. );
 				    }
 				}
 				if ( iParam == 1 )
 				{
-				    constant -> setYOffset ( tokens[1] / 1000. );
-				    if ( ! isFixed )
+				    if ( !readzeros )
+				    {
+					constant -> setYOffset ( tokens[1] / 1000.0 );
+				    }
+				    else
+				    {
+					constant -> setYOffset ( 0.0 );
+				    }
+				    if ( ! isFixed && !readzeros )
 				    {
 					constant -> setYOffsetError ( tokens[4] / 1000. );
 				    }
 				}
 				if ( iParam == 2 )
 				{
-				    constant -> setZOffset ( tokens[1] / 1000. );
-				    if ( ! isFixed )
+				    if ( !readzeros )
+				    {
+					constant -> setZOffset ( tokens[1] / 1000.0 );
+				    }
+				    else
+				    {
+					constant -> setZOffset ( 0.0 );
+				    }
+				    if ( ! isFixed && !readzeros )
 				    {
 					constant -> setZOffsetError ( tokens[4] / 1000. );
 				    }
 				}
 				if ( iParam == 3 )
 				{
-				    constant -> setAlpha ( tokens[1]  );
-				    if ( ! isFixed )
+				    if ( !readzeros )
+				    {
+					constant -> setAlpha ( tokens[1] );
+				    }
+				    else
+				    {
+					constant -> setAlpha ( 0.0 );
+				    }
+				    if ( ! isFixed && !readzeros )
 				    {
 					constant -> setAlphaError ( tokens[4] );
 				    }
 				}
 				if ( iParam == 4 )
 				{
-				    constant -> setBeta ( tokens[1]  );
-				    if ( ! isFixed )
+				    if ( !readzeros )
+				    {
+					constant -> setBeta ( tokens[1] );
+				    }
+				    else
+				    {
+					constant -> setBeta ( 0.0 );
+				    }
+				    if ( ! isFixed && !readzeros )
 				    {
 					constant -> setBetaError ( tokens[4] );
 				    }
 				}
 				if ( iParam == 5 )
 				{
-				    constant -> setGamma ( tokens[1]  );
-				    if ( ! isFixed )
+				    if ( !readzeros )
+				    {
+					constant -> setGamma ( tokens[1] );
+				    }
+				    else
+				    {
+					constant -> setGamma ( 0.0 );
+				    }
+				    if ( ! isFixed && !readzeros )
 				    {
 					constant -> setGammaError ( tokens[4] );
 				    }
@@ -6208,7 +6437,7 @@ void EUTelMilleGBL::end ( )
 	prealigny[6] = temp;
 	streamlog_out ( MESSAGE1 ) << " mm, y: " << temp << " mm." << endl;
 
-	if ( _useREF > 0 )
+	if ( _useREF >= 0 )
 	{
 	    nb = dx07Hist -> axis ( ) .bins ( );
 	    nmax = 0;
@@ -6400,7 +6629,7 @@ void EUTelMilleGBL::bookHistos ( )
 	    dy26dtHist -> setTitle ( "Hit Shift DUT - Plane 2 in y;Event Number;y_{6}-y_{2} [um]" );
 	}
 
-	if ( _useREF > 0 )
+	if ( _useREF >= 0 )
 	{
 
 	    dx07Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "InputHits/dx07", 100, -5000, 5000 );
@@ -6452,7 +6681,7 @@ void EUTelMilleGBL::bookHistos ( )
 	    dy16Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "InputHits/dy16", 100, -5000, 5000 );
 	    dy16Hist -> setTitle ( "Hit Shift DUT - Plane 1 in y;y_{6}-y_{1} [um];hit pairs" );
 
-	    if ( _useREF > 0 )
+	    if ( _useREF >= 0 )
 	    {
 
 		dx17Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "InputHits/dx17", 100, -5000, 5000 );
@@ -6487,7 +6716,7 @@ void EUTelMilleGBL::bookHistos ( )
 	    dy26Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "InputHits/dy26", 100, -5000, 5000 );
 	    dy26Hist -> setTitle ( "Hit Shift DUT - Plane 2 in y;y_{6}-y_{2} [um];hit pairs" );
 
-	    if ( _useREF > 0 )
+	    if ( _useREF >= 0 )
 	    {
 
 		dx27Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "InputHits/dx27", 100, -5000, 5000 );
@@ -6516,7 +6745,7 @@ void EUTelMilleGBL::bookHistos ( )
 	    dy36Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "InputHits/dy36", 100, -5000, 5000 );
 	    dy36Hist -> setTitle ( "Hit Shift DUT - Plane 3 in y;y_{6}-y_{3} [um];hit pairs" );
 
-	    if ( _useREF > 0 )
+	    if ( _useREF >= 0 )
 	    {
 
 		dx37Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "InputHits/dx37", 100, -5000, 5000 );
@@ -6538,7 +6767,7 @@ void EUTelMilleGBL::bookHistos ( )
 	    dy46Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "InputHits/dy46", 100, -5000, 5000 );
 	    dy46Hist -> setTitle ( "Hit Shift DUT - Plane 4 in y;y_{6}-y_{4} [um];hit pairs" );
 
-	    if ( _useREF > 0 )
+	    if ( _useREF >= 0 )
 	    {
 
 		dx47Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "InputHits/dx47", 100, -5000, 5000 );
@@ -6555,7 +6784,7 @@ void EUTelMilleGBL::bookHistos ( )
 	    dy56Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "InputHits/dy56", 100, -5000, 5000 );
 	    dy56Hist -> setTitle ( "Hit Shift DUT - Plane 5 in y;y_{6}-y_{5} [um];hit pairs" );
 
-	    if ( _useREF > 0 )
+	    if ( _useREF >= 0 )
 	    {
 
 		dx57Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "InputHits/dx57", 100, -5000, 5000 );
@@ -6627,7 +6856,7 @@ void EUTelMilleGBL::bookHistos ( )
 		ndriHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/ndri", 21, -0.5, 20.5 );
 		ndriHist -> setTitle ( "Number of Input Driplets;driplets;events" );
 
-		if ( _useREF > 0 )
+		if ( _useREF >= 0 )
 		{
 
 		    drirxrefHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "TripletsDriplets/drirefrx", 100, -1000, 1000 );
@@ -6737,7 +6966,7 @@ void EUTelMilleGBL::bookHistos ( )
 	    selry6Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selry6", 100, -500, 500 );
 	    selry6Hist -> setTitle ( "GBL Input Residual at the DUT in y;#Deltay [#mum];tracks" );
 
-	    if ( _useREF > 0 )
+	    if ( _useREF >= 0 )
 	    {
 		selrx7Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLInput/selrx7", 100, -500, 500 );
 		selrx7Hist -> setTitle ( "GBL Input Residual at the REF in x;#Deltax [#mum];tracks" );
@@ -6831,7 +7060,7 @@ void EUTelMilleGBL::bookHistos ( )
 	    baddy6Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/baddy6", 100, -500, 500 );
 	    baddy6Hist -> setTitle ( "triplet resid y at DUT, bad GBL;#Deltay [#mum];tracks" );
 
-	    if ( _useREF > 0 )
+	    if ( _useREF >= 0 )
 	    {
 		baddx7Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Bad/baddx7", 100, -500, 500 );
 		baddx7Hist -> setTitle ( "triplet resid x at REF, bad GBL;#Deltax [#mum];tracks" );
@@ -6853,7 +7082,7 @@ void EUTelMilleGBL::bookHistos ( )
 	    AIDAProcessor::tree ( this ) -> mkdir ( "GBLOutput/Good/DUT/ResidualsZ" );
 	    AIDAProcessor::tree ( this ) -> mkdir ( "GBLOutput/Good/DUT/KinkMaps" );
 
-	    if ( _useREF > 0 )
+	    if ( _useREF >= 0 )
 	    {
 		AIDAProcessor::tree ( this ) -> mkdir ( "GBLOutput/Good/REF" );
 	    }
@@ -6864,11 +7093,17 @@ void EUTelMilleGBL::bookHistos ( )
 	    goody0Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/Plane0/goody0", 100, -500, 500 );
 	    goody0Hist -> setTitle ( "triplet resid y at 0, good GBL;#Deltay [#mum];tracks" );
 
+	    hitmap0Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/Plane0/hitmap0", 100, -15, 15, 100, -15, 15 );
+	    hitmap0Hist -> setTitle ( "Track Hitmap on Plane 0;track_{x} [mm];track_{y} [mm];tracks" );
+
 	    goodx1Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/Plane1/goodx1", 100, -500, 500 );
 	    goodx1Hist -> setTitle ( "triplet resid x at 1, good GBL;#Deltax [#mum];tracks" );
 
 	    goody1Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/Plane1/goody1", 100, -500, 500 );
 	    goody1Hist -> setTitle ( "triplet resid y at 1, good GBL;#Deltay [#mum];tracks" );
+
+	    hitmap1Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/Plane1/hitmap1", 100, -15, 15, 100, -15, 15 );
+	    hitmap1Hist -> setTitle ( "Track Hitmap on Plane 1;track_{x} [mm];track_{y} [mm];tracks" );
 
 	    goodx2Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/Plane2/goodx2", 100, -500, 500 );
 	    goodx2Hist -> setTitle ( "triplet resid x at 2, good GBL;#Deltax [#mum];tracks" );
@@ -6876,11 +7111,17 @@ void EUTelMilleGBL::bookHistos ( )
 	    goody2Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/Plane2/goody2", 100, -500, 500 );
 	    goody2Hist -> setTitle ( "triplet resid y at 2, good GBL;#Deltay [#mum];tracks" );
 
+	    hitmap2Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/Plane2/hitmap2", 100, -15, 15, 100, -15, 15 );
+	    hitmap2Hist -> setTitle ( "Track Hitmap on Plane 2;track_{x} [mm];track_{y} [mm];tracks" );
+
 	    goodx3Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/Plane3/goodx3", 100, -500, 500 );
 	    goodx3Hist -> setTitle ( "driplet resid x at 3, good GBL;#Deltax [#mum];tracks" );
 
 	    goody3Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/Plane3/goody3", 100, -500, 500 );
 	    goody3Hist -> setTitle ( "driplet resid y at 3, good GBL;#Deltay [#mum];tracks" );
+
+	    hitmap3Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/Plane3/hitmap3", 100, -15, 15, 100, -15, 15 );
+	    hitmap3Hist -> setTitle ( "Track Hitmap on Plane 3;track_{x} [mm];track_{y} [mm];tracks" );
 
 	    goodx4Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/Plane4/goodx4", 100, -500, 500 );
 	    goodx4Hist -> setTitle ( "driplet resid x at 4, good GBL;#Deltax [#mum];tracks" );
@@ -6888,11 +7129,17 @@ void EUTelMilleGBL::bookHistos ( )
 	    goody4Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/Plane4/goody4", 100, -500, 500 );
 	    goody4Hist -> setTitle ( "driplet resid y at 4, good GBL;#Deltay [#mum];tracks" );
 
+	    hitmap4Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/Plane4/hitmap4", 100, -15, 15, 100, -15, 15 );
+	    hitmap4Hist -> setTitle ( "Track Hitmap on Plane 4;track_{x} [mm];track_{y} [mm];tracks" );
+
 	    goodx5Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/Plane5/goodx5", 100, -500, 500 );
 	    goodx5Hist -> setTitle ( "driplet resid x at 5, good GBL;#Deltax [#mum];tracks" );
 
 	    goody5Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/Plane5/goody5", 100, -500, 500 );
 	    goody5Hist -> setTitle ( "driplet resid y at 5, good GBL;#Deltay [#mum];tracks" );
+
+	    hitmap5Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/Plane5/hitmap5", 100, -15, 15, 100, -15, 15 );
+	    hitmap5Hist -> setTitle ( "Track Hitmap on Plane 5;track_{x} [mm];track_{y} [mm];tracks" );
 
 	    goodx6Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/DUT/goodx6", 100, -500, 500 );
 	    goodx6Hist -> setTitle ( "triplet resid x at DUT, good GBL;#Deltax [#mum];tracks" );
@@ -6900,13 +7147,19 @@ void EUTelMilleGBL::bookHistos ( )
 	    goody6Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/DUT/goody6", 100, -500, 500 );
 	    goody6Hist -> setTitle ( "triplet resid y at DUT, good GBL;#Deltay [#mum];tracks" );
 
-	    if ( _useREF > 0 )
+	    hitmap6Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/DUT/hitmap6", 100, -15, 15, 100, -15, 15 );
+	    hitmap6Hist -> setTitle ( "Track Hitmap on the DUT;track_{x} [mm];track_{y} [mm];tracks" );
+
+	    if ( _useREF >= 0 )
 	    {
 		goodx7Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/REF/goodx7", 100, -500, 500 );
 		goodx7Hist -> setTitle ( "driplet resid x at REF, good GBL;#Deltax [#mum];tracks" );
 
 		goody7Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/REF/goody7", 100, -500, 500 );
 		goody7Hist -> setTitle ( "driplet resid y at REF, good GBL;#Deltay [#mum];tracks" );
+
+		hitmap7Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/REF/hitmap7", 100, -15, 15, 100, -15, 15 );
+		hitmap7Hist -> setTitle ( "Track Hitmap on the REF;track_{x} [mm];track_{y} [mm];tracks" );
 
 	    }
 
@@ -7288,7 +7541,7 @@ void EUTelMilleGBL::bookHistos ( )
 	    gblpy6Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/DUT/gblpy6", 100, -10, 10 );
 	    gblpy6Hist -> setTitle ( "GBL y pull at DUT;y pull at DUT [#sigma];tracks" );
 
-	    if ( _useREF > 0 )
+	    if ( _useREF >= 0 )
 	    {
 		refrxxHist = AIDAProcessor::histogramFactory ( this ) -> createHistogram2D ( "GBLOutput/Good/REF/refrxx", 100, -500, 500, 100, -15, 15 );
 		refrxxHist -> setTitle ( "Track Residual at REF in x vs Track x;#Deltax [#mum];track_{x} [mm]" );
@@ -7351,7 +7604,7 @@ void EUTelMilleGBL::bookHistos ( )
 	    gblkx6Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/DUT/gblkx6", 100, -5, 5 );
 	    gblkx6Hist -> setTitle ( "GBL kink angle at plane 6;plane 6 kink [mrad];tracks" );
 
-	    if ( _useREF > 0 )
+	    if ( _useREF >= 0 )
 	    {
 		gblkx7Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/REF/gblkx7", 100, -5, 5 );
 		gblkx7Hist -> setTitle ( "GBL kink angle at plane 7;plane 7 kink [mrad];tracks" );
@@ -7375,7 +7628,7 @@ void EUTelMilleGBL::bookHistos ( )
 	    gblky6Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/DUT/gblky6", 100, -5, 5 );
 	    gblky6Hist -> setTitle ( "GBL kink angle at plane 6;plane 6 kink [mrad];tracks" );
 
-	    if ( _useREF > 0 )
+	    if ( _useREF >= 0 )
 	    {
 		gblky7Hist = AIDAProcessor::histogramFactory ( this ) -> createHistogram1D ( "GBLOutput/Good/REF/gblky7", 100, -5, 5 );
 		gblky7Hist -> setTitle ( "GBL kink angle at plane 7;plane 7 kink [mrad];tracks" );

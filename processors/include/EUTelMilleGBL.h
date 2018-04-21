@@ -195,6 +195,7 @@ namespace eutelescope
 	    std::vector < int > _excludePlanes_sensorIDs;
 	    std::vector < int > _FixedPlanes;
 	    std::vector < int > _FixedPlanes_sensorIDs;
+	    std::vector < int > _TelescopePlanes_sensorIDs;
 	    std::vector < int > _orderedSensorID;
 	    std::vector < int > _activeSensorID;
 	    std::vector < int > _activeSensorZ;
