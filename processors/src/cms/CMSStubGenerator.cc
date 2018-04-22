@@ -102,6 +102,8 @@ void CMSStubGenerator::init ( )
     bookHistos ( );
 
     _totalstubs = 0;
+    _totalpl1 = 0;
+    _totalpl2 = 0;
 
 }
 
@@ -322,6 +324,8 @@ void CMSStubGenerator::processEvent ( LCEvent * event )
 		}
 	    }
 	}
+	_totalpl1 += dutPlane1Hits.size ();
+	_totalpl2 += dutPlane2Hits.size ();
     }
 
     try
@@ -381,7 +385,7 @@ TrackerHitImpl* CMSStubGenerator::cloneHit ( TrackerHitImpl *inputHit )
 void CMSStubGenerator::end ( )
 {
 
-    streamlog_out ( MESSAGE4 ) << "Created " << _totalstubs << " stubs!" << endl;
+    streamlog_out ( MESSAGE4 ) << "Created " << _totalstubs << " stubs from on average " << ( _totalpl1 + _totalpl2 ) / 2.0 << " hits -> " << _totalstubs / ( ( _totalpl1 + _totalpl2 ) / 2.0 ) * 100.0 << "% efficiency!" << endl;
 
 }
 

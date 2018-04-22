@@ -72,6 +72,10 @@ namespace eutelescope
 
 	    int _totalstubs;
 
+	    int _totalpl1;
+
+	    int _totalpl2;
+
 	    TrackerHitImpl* cloneHit ( TrackerHitImpl *inputHit );
 
 	private:
