@@ -143,13 +143,13 @@ to the external frame of reference using the GEAR geometry description-->
   <!--Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file-->
   <!--parameter name="NewGEARSuffix" type="string" value="_pre"/-->
   <!--Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsXMax" type="FloatVec"> 15. 15. 15. 15. 15. 15. 15. 15. 15. 15. </parameter>
+  <parameter name="ResidualsXMax" type="FloatVec"> 15. 15. 15. 15. 15. 15. 15. 15. </parameter>
   <!--Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsXMin" type="FloatVec"> -15. -15. -15. -15. -15. -15. -15. -15. -15. -15. </parameter>
+  <parameter name="ResidualsXMin" type="FloatVec"> -15. -15. -15. -15. -15. -15. -15. -15. </parameter>
   <!--Maximal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsYMax" type="FloatVec"> 15. 15. 15. 15. 15. 15. 15. 15. 15. 15. </parameter>
+  <parameter name="ResidualsYMax" type="FloatVec"> 15. 15. 15. 15. 15. 15. 15. 15. </parameter>
   <!--Minimal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsYMin" type="FloatVec"> -15. -15. -15. -15. -15. -15. -15. -15. -15. -15. </parameter>
+  <parameter name="ResidualsYMin" type="FloatVec"> -15. -15. -15. -15. -15. -15. -15. -15. </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
