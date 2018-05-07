@@ -2,7 +2,7 @@
  * Created by Thomas Eichhorn
  *  (2014 DESY)
  *
- *  email:thomas.eichhorn@cern.ch
+ *  email:thomas.eichhorn@desy.de
  */
 
 #ifndef ALIBAVACLUSTERING_H
@@ -33,282 +33,121 @@
 #include <string>
 #include <list>
 
-
 using namespace std;
 
-	//! This is used for the landau gaus function and fits
-	/*! Details see:
-	 *	http://root.cern.ch/root/html/tutorials/fit/langaus.C.html
-	 */
-	Double_t langaufun(Double_t *x, Double_t *par);
-	TF1 *langaufit(TH1D *his, Double_t *fitrange, Double_t *startvalues, Double_t *parlimitslo, Double_t *parlimitshi, Double_t *fitparams, Double_t *fiterrors, Double_t *ChiSqr, Int_t *NDF);
-	Int_t langaupro(Double_t *params, Double_t &maxx, Double_t &FWHM);
+    //! This is used for the landau gaus function and fits
+    //Details see: http://root.cern.ch/root/html/tutorials/fit/langaus.C.html
 
-namespace alibava {
-  
-	//! A struct to return telescope information
-	typedef struct {
-		float mean;
-		std::vector<int> pixelx;
-		std::vector<int> pixely;
-	} teleinfo;
+    Double_t langaufun ( Double_t *x, Double_t *par );
+    TF1 *langaufit ( TH1D *his, Double_t *fitrange, Double_t *startvalues, Double_t *parlimitslo, Double_t *parlimitshi, Double_t *fitparams, Double_t *fiterrors, Double_t *ChiSqr, Int_t *NDF );
+    Int_t langaupro ( Double_t *params, Double_t &maxx, Double_t &FWHM );
 
-	//! Example Alibava processor for Marlin.
-	class AlibavaClustering:public alibava::AlibavaBaseProcessor   {
-		
+namespace alibava
+{
+
+    //! Example Alibava processor for Marlin.
+    class AlibavaClustering:public alibava::AlibavaBaseProcessor
+    {
+
 	public:
-		
-		//! Returns a new instance of AlibavaClustering
-		/*! This method returns an new instance of the this processor.  It
-		 *  is called by Marlin execution framework and it shouldn't be
-		 *  called/used by the final user.
-		 *
-		 *  @return a new AlibavaClustering.
-		 */
-		virtual Processor * newProcessor () {
-			return new AlibavaClustering;
-		}
 
-		//! Default constructor
-		AlibavaClustering ();
+	    virtual Processor * newProcessor ( )
+	    {
+		return new AlibavaClustering;
+	    }
 
-		//! Called at the job beginning.
-		/*! This is executed only once in the whole execution. It prints
-		 *  out the processor parameters and reset all needed data
-		 *  members. In principle this could also be the right place to
-		 *  book histograms, but since those are also grouped according to
-		 *  the detector numbers we need to have this parameter available.
-		 */
-		virtual void init ();
+	    AlibavaClustering ( );
 
-		//! Called for every run.
-		/*! At the beginning of every run the run header is read and
-		 *  processed by this method. As a first thing, the input run
-		 *  header is dynamically re-casted to a EUTelRunHeaderImpl and
-		 *  then important things like the number of detectors and the
-		 *  pixel detector boundaries are dumped from the file. After that
-		 *  the EUTelPedestalNoiseProcess::bookHistos() is called.
-		 *
-		 *  @param run the LCRu		std::string _commonmodeCollectionName;nHeader of the this current run
-		 */
-		virtual void processRunHeader (LCRunHeader * run);
+	    virtual void init ( );
 
-		//! Called every event
-		/*! Since the behavior of the PedestalNoise processor is different
-		 *  if this is the first or one of the following loop, this method
-		 *  is just calling
-		 *  AlibavaClustering::firstLoop(LCEvent*) or
-		 *  AlibavaClustering::otherLoop(LCEvent*)
-		 *
-		 *  @param evt the current LCEvent event as passed by the
-		 *  ProcessMgr
-		 */
-		virtual void processEvent (LCEvent * evt);
+	    virtual void processRunHeader ( LCRunHeader * run );
 
-		//! Check event method
-		/*! This method is called by the Marlin execution framework as
-		 *  soon as the processEvent is over. It can be used to fill check
-		 *  plots. For the time being there is nothing to check and do in
-		 *  this slot.
-		 *
-		 *  @param evt The LCEvent event as passed by the ProcessMgr
-		 *
-		 */
-		virtual void check (LCEvent * evt);
+	    virtual void processEvent ( LCEvent * evt );
 
-		//! Book histograms
-		/*! This method is used to prepare the needed directory structure
-		 *  within the current ITree folder and books all required
-		 *  histograms. Histogram pointers are stored into
-		 *  EUTelPedestalNoiseProcess::_rootObjectMap so that they can be
-		 *  recalled and filled from anywhere in the code.  Apart from the
-		 *  histograms listed in AlibavaClustering::fillHistos()
-		 *  there is also a common mode histo described here below:
-		 *
-		 *  \li commonModeHisto: 1D histogram to store the calculated
-		 *  common mode value for each event. This histogram is booked and
-		 *  filled only if the loop counter is greater-equal than 1,
-		 *  because for _iLoop == 0 there is no common mode suppression.
-		 *  This histo is not filled with the other because it needs to be
-		 *  updated every event.
-		 *
-		 *  @see AlibavaClustering::fillHistos() for the todos
-		 */
-		void bookHistos();
+	    virtual void check ( LCEvent * evt );
 
-		//! Fill histograms
-		/*! This method is used to fill in histograms for each channel. 
-		 *
-		 */
-		void fillHistos();
+	    void bookHistos ( );
 
-		//! Fill the clustersize histogram
-		/*! This method is used to fill in the clustersize histogram.
-		 *
-		 */
-		void fillClusterHisto(int clusize);
+	    void fillHistos ( );
 
-		//! Fill the Eta histogram
-		/*! This method is used to fill in the eta histogram.
-		 */
-		void fillEtaHisto(float etaratio);
+	    void fillClusterHisto ( int clusize );
 
-		//! Fill the second Eta histogram
-		/*! This method is used to fill in the second eta histogram.
-		 *  Also with tdc info...
-		 *  and seed position...
-		 */
-		void fillEtaHisto2(float etaratio);
-		void fillEtaHisto2TDC(float etaratio, float tdc);
-		void fillEtaHistoPos(float etaratio, int ichan);
+	    void fillEtaHisto ( float etaratio );
 
-		//! Fill the charge distribution histogram
-		/*! This method is used to fill in the charge distribution histogram.
-		 */
-		void fillChargeDistHisto(float a, float b, float c, float d, float e, float f, float g);
+	    void fillEtaHisto2 ( float etaratio );
 
-		//! Fill the SNR histogram
-		/*! This method is used to fill in the SNR histogram.
-		 */
-		void fillSNRHisto(float signal);
+	    void fillEtaHisto2TDC ( float etaratio, float tdc );
 
-		//! Fill the signal histogram
-		/*! This method is used to fill in the signal histogram.
-		 */
-		void fillSignalHisto(float signal);
+	    void fillEtaHistoPos ( float etaratio, int ichan );
 
-		//! Fill the hitmap histogram
-		/*! This method is used to fill in the hitmap histogram.
-		 */
-		void fillHitmapHisto(int ichan, int negclustersize, int posclustersize);
+	    void fillChargeDistHisto ( float a, float b, float c, float d, float e, float f, float g );
 
-		//! Fill the seed histogram
-		/*! This method is used to fill in the seed histogram.
-		 */
-		void fillSeedHisto(int ichan);
+	    void fillSNRHisto ( float signal );
 
-		//! Fill the seed charge histogram
-		/*! This method is used to fill in the seed charge histogram.
-		 */
-		void fillSeedChargeHisto(float signal);
+	    void fillSignalHisto ( float signal );
 
-		//! Fill the histogram showing the distance between mean and estimated fake coordinates
-		void fillFakeHisto(float missingvalue, float mean);
+	    void fillHitmapHisto ( int ichan, int negclustersize, int posclustersize );
 
-		//! Fill the cog control plot
-		void fillCogHisto(float cog);
-		
-		//! Clustering is done here.
-		void findSeedClusters(TrackerDataImpl * trkdata, LCCollectionVec * clusterCollection, LCCollectionVec * sparseClusterCollectionVec, AlibavaEventImpl * alibavaEvent, teleinfo othercoordinate);
+	    void fillSeedHisto ( int ichan );
 
-		//! Called after data processing.
-		/*! This method is called when the loop on events is finished. It
-		 *  is checking whether the calculation is properly finished or
-		 *  not.
-		 *  A very common error occurs when the file finished without a
-		 *  EORE or when the MaxRecordNumber was set to low to loop over
-		 *  all the needed record. To check this is very easy because we
-		 *  just have to crosscheck if _iLoop is equal to noOfCMIterations.
-		 */
-		virtual void end();
+	    void fillSeedChargeHisto ( float signal );
 
-		//! getter and setter for _clusterCollectionName
-		void setClusterCollectionName(std::string clusterCollectionName);
-		std::string getClusterCollectionName();
-		
-		//! Cluster collection name.
-		/*! See _clusterCollectionName for the detailed description
-		 */
-		std::string _clusterCollectionName;		
-		
-		//! The ratio over noise to find seeds
-		float _seedcut;
+	    void fillCogHisto ( float cog );
 
-		//! The ratio over noise to find clusters
-		float _clustercut;
+	    void findSeedClusters  (TrackerDataImpl * trkdata, LCCollectionVec * clusterCollection, LCCollectionVec * sparseClusterCollectionVec, AlibavaEventImpl * alibavaEvent );
 
-		//! The charges around a seed are summed up here
-		float _clustercharge[5];
+	    virtual void end ( );
 
-		//! The final count of clusters
-		int _clustercount;
+	    void setClusterCollectionName ( std::string clusterCollectionName );
 
-		//! The name of the sparse cluster collection
-		string _sparseclusterCollectionName;
+	    std::string getClusterCollectionName ( );
+	    std::string _clusterCollectionName;		
 
-		//! The polarity of the sensor
-		int _polarity;
+	    float _seedcut;
 
-		//! The unsensitve axis of our strip sensor
-		string _nonsensitiveaxis;
-		
-		//! The reading instance
-		LCReader* lcReader;
+	    float _clustercut;
 
-		//! The flag if the file is open
-		bool _telescopeopen;
+	    float _clustercharge[5];
 
-		//! The reading function
-		LCEvent *readTelescope ();
+	    int _clustercount;
 
-		//! The function to get the telescope data
-		teleinfo getTelescope();
+	    std::string _sparseclusterCollectionName;
 
-		//! The telescope plane we want to get the coordinate from, -1 to deactivate
-		int _telescopePlane;
+	    int _polarity;
 
-		//! The array storing the coordinate
-		std::vector<teleinfo> _telescopecoordinate;
+	    std::string _nonsensitiveaxis;
 
-		//! The telescope collection name
-		string _telescopeCollectionName;
+	    void dolandaugausfit ( string tempHistoName );
 
-		//! The telescope file we want to read
-		string _telescopeFile;
+	    int _clusterminsize;
+	    int _clustermaxsize;
 
-		//! The maximum size of our run, this should be below the telescope run size, since EOFs are not always caught
-		int _maxcount;
+	    bool _usefir;
+	    bool _writecoefficients;
+	    bool _writezero;
+	    bool _readcoefficients;
 
-		//! The call to do a landau gaussian fit
-		void dolandaugausfit(string tempHistoName);
-		
-		//! The switch to turn the search for the nearest fake coordinate on or off.
-		bool _searchnearest;
+	    double _readcoefficient1;
+	    double _readcoefficient2;
+	    double _initcoefficient1;
+	    double _initcoefficient2;
 
-		//! The min and max clustersizes
-		int _clusterminsize;
-		int _clustermaxsize;
+	    LCCollectionVec * filteredcollectionVec;
 
-		//! Option to use FIR filtering
-		bool _usefir;
-		
-		bool _writecoefficients;
-		bool _writezero;
-		bool _readcoefficients;
+	    string _filteredCollectionName;
 
-		double _readcoefficient1;
-		double _readcoefficient2;
-		double _initcoefficient1;
-		double _initcoefficient2;
-		
-		
-		LCCollectionVec * filteredcollectionVec;
-		
-		string _filteredCollectionName;
-		
-		string _filterFileName;
-		
-		void fillclusterspereventhisto(int a, int b);
+	    string _filterFileName;
 
+	    void fillclusterspereventhisto ( int a, int b );
 
 	protected:
 
-		IMPL::LCRunHeaderImpl* _runHeader;
+	    IMPL::LCRunHeaderImpl* _runHeader;
 
-	};
+    };
 
-	//! A global instance of the processor
-	AlibavaClustering gAlibavaClustering;
+    //! A global instance of the processor
+    AlibavaClustering gAlibavaClustering;
 
 }
 

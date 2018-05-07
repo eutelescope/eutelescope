@@ -2,7 +2,7 @@
  * Created by Thomas Eichhorn
  *  (2014 DESY)
  *
- *  email:thomas.eichhorn@cern.ch
+ *  email:thomas.eichhorn@desy.de
  */
 
 #ifndef AlibavaSimConverter_H
@@ -26,61 +26,66 @@
 #include <list>
 
 
-namespace alibava {
+namespace alibava
+{
 
-	//! Example Alibava processor for Marlin.
-
-	class AlibavaSimConverter:public alibava::AlibavaBaseProcessor   {
+    class AlibavaSimConverter:public alibava::AlibavaBaseProcessor
+    {
 
 	public:
 
-		virtual Processor * newProcessor () { return new AlibavaSimConverter; }
+	    virtual Processor * newProcessor ( )
+	    {
+		return new AlibavaSimConverter;
+	    }
 
-		AlibavaSimConverter ();
+	    AlibavaSimConverter ( );
 
-		virtual void init ();
+	    virtual void init ( );
 
-		virtual void processRunHeader (LCRunHeader * run);
+	    virtual void processRunHeader ( LCRunHeader * run );
 
-		virtual void processEvent (LCEvent * evt);
+	    virtual void processEvent ( LCEvent * evt );
 
-		virtual void check (LCEvent * evt);
+	    virtual void check ( LCEvent * evt );
 
-		virtual void end();
+	    virtual void end ( );
 
-		std::string _outputcollectionname;
+	    std::string _outputcollectionname;
 
-		double _commonmodemean;
+	    std::string _nonsensitiveaxis;
 
-		double _commonmodesigma;
+	    double _commonmodemean;
 
-		double _noisemean;
+	    double _commonmodesigma;
 
-		double _noisesigma;
+	    double _noisemean;
 
-		double _pedestaldb[256] = {0.0};
+	    double _noisesigma;
 
-		double _pedestalmean;
+	    double _pedestaldb[256] = { 0.0 };
 
-		double _pedestalsigma;
+	    double _pedestalmean;
 
-		double _scalefactor;
+	    double _pedestalsigma;
 
-		double _tdcmean;
+	    double _scalefactor;
 
-		double _tdcsigma;
+	    double _tdcmean;
 
-		EVENT::IntVec _chipSelection;
+	    double _tdcsigma;
+
+	    EVENT::IntVec _chipSelection;
 
 	protected:
 
 	private:
 
-		void checkIfChipSelectionIsValid();
+	    void checkIfChipSelectionIsValid ( );
 
 	};
 
-	AlibavaSimConverter gAlibavaSimConverter;
+    AlibavaSimConverter gAlibavaSimConverter;
 
 }
 

@@ -5,7 +5,6 @@
  *  email:thomas.eichhorn@desy.de
  */
 
-
 #ifndef AlibavaHeader_H
 #define AlibavaHeader_H 1
 
@@ -25,7 +24,6 @@
 // system includes <>
 #include <string>
 #include <list>
-
 
 namespace alibava
 {
