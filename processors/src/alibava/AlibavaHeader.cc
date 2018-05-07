@@ -5,7 +5,6 @@
  *  email:thomas.eichhorn@desy.de
  */
 
-
 // alibava includes ".h"
 #include "AlibavaHeader.h"
 #include "AlibavaRunHeaderImpl.h"
@@ -17,7 +16,7 @@
 #include "marlin/Exceptions.h"
 #include "marlin/Global.h"
 
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+#if defined ( USE_AIDA ) || defined ( MARLIN_USE_AIDA )
 // aida includes <.h>
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/ITree.h>
@@ -64,7 +63,6 @@ AlibavaHeader::AlibavaHeader ( ) : AlibavaBaseProcessor ( "AlibavaHeader" )
 
 }
 
-
 void AlibavaHeader::init ( )
 {
 
@@ -82,7 +80,6 @@ void AlibavaHeader::init ( )
     }
 }
 
-
 void AlibavaHeader::processRunHeader ( LCRunHeader * rdr )
 {
 
@@ -92,7 +89,6 @@ void AlibavaHeader::processRunHeader ( LCRunHeader * rdr )
     bookHistos ( );
 
 }
-
 
 void AlibavaHeader::processEvent ( LCEvent * anEvent )
 {
@@ -127,12 +123,10 @@ void AlibavaHeader::processEvent ( LCEvent * anEvent )
     }
 }
 
-
 void AlibavaHeader::check ( LCEvent * )
 {
 
 }
-
 
 void AlibavaHeader::end ( )
 {
@@ -203,7 +197,6 @@ void AlibavaHeader::end ( )
     }
 }
 
-
 // fills histograms with the 16 headers and the first channel
 void AlibavaHeader::fillHistos ( TrackerDataImpl * headerdata, TrackerDataImpl * channeldata, int ichip )
 {
@@ -227,7 +220,6 @@ void AlibavaHeader::fillHistos ( TrackerDataImpl * headerdata, TrackerDataImpl *
 	histo -> Fill ( chanvec[0] );
     }
 }
-
 
 // books histos
 void AlibavaHeader::bookHistos ( )
@@ -325,7 +317,6 @@ void AlibavaHeader::bookHistos ( )
 
 }
 
-
 void AlibavaHeader::correlateLastHeader ( TrackerDataImpl * headerdata, TrackerDataImpl * channeldata, unsigned int ichip )
 {
     FloatVec headvec = headerdata -> getChargeValues ( );
@@ -404,4 +395,3 @@ void AlibavaHeader::correlateLastHeader ( TrackerDataImpl * headerdata, TrackerD
 	}
     }
 }
-

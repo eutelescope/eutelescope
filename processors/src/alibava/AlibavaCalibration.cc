@@ -5,7 +5,6 @@
  *  email:thomas.eichhorn@desy.de
  */
 
-
 // alibava includes ".h"
 #include "AlibavaCalibration.h"
 #include "AlibavaRunHeaderImpl.h"
@@ -164,7 +163,7 @@ void AlibavaCalibration::end ( )
 	{
 	    unsigned int ichip = chipSelection[i];
 
-	    for ( int ichan = 0; ichan < 128; ichan++ )
+	    for ( int ichan = 0; ichan < ALIBAVA::NOOFCHANNELS; ichan++ )
 	    {
 		char tmpchar[100];
 		if ( isMasked ( ichip, ichan ) )
@@ -173,12 +172,12 @@ void AlibavaCalibration::end ( )
 		}
 
 		// seperate fit for positive and negative signals...
-		sprintf ( tmpchar, "Charge Calibration Chip %d, Channel %d", ichip, ichan);
+		sprintf ( tmpchar, "Charge Calibration Chip %d, Channel %d", ichip, ichan );
 		TProfile * histo = dynamic_cast < TProfile* > ( _rootObjectMap[tmpchar] );
-		sprintf ( tmpchar, "Charge Calibration Positive Fit Chip %d, Channel %d", ichip, ichan);
+		sprintf ( tmpchar, "Charge Calibration Positive Fit Chip %d, Channel %d", ichip, ichan );
 		TF1 * posfit = dynamic_cast < TF1* > ( _rootObjectMap[tmpchar] );
 		posfit -> SetRange ( 0.0, 1E5 );
-		sprintf ( tmpchar, "Charge Calibration Negative Fit Chip %d, Channel %d", ichip, ichan);
+		sprintf ( tmpchar, "Charge Calibration Negative Fit Chip %d, Channel %d", ichip, ichan );
 		TF1 * negfit = dynamic_cast < TF1* > ( _rootObjectMap[tmpchar] );
 		negfit -> SetRange ( -1.0 * 1E5, 0.0 );
 
@@ -191,11 +190,11 @@ void AlibavaCalibration::end ( )
 		pos = 1.0 / ( posfit -> GetParameter ( 1 ) );
 		neg = 1.0 / ( negfit -> GetParameter ( 1 ) );
 
-		sprintf ( tmpchar, "Charge Calibration, Chip %d, Positive", ichip);
+		sprintf ( tmpchar, "Charge Calibration, Chip %d, Positive", ichip );
 		TH1D * poshisto = dynamic_cast < TH1D* > ( _rootObjectMap[tmpchar] );
 		poshisto -> SetBinContent ( ichan, pos );
 
-		sprintf ( tmpchar, "Charge Calibration, Chip %d, Negative", ichip);
+		sprintf ( tmpchar, "Charge Calibration, Chip %d, Negative", ichip );
 		TH1D * neghisto = dynamic_cast < TH1D* > ( _rootObjectMap[tmpchar] );
 		neghisto -> SetBinContent ( ichan, neg );
 
@@ -215,13 +214,13 @@ void AlibavaCalibration::fillhisto ( int chip, int chan, double calc, double cal
 {
 
     char tmpchar[100];
-    sprintf ( tmpchar, "Charge Calibration Chip %d, Channel %d", chip, chan);
+    sprintf ( tmpchar, "Charge Calibration Chip %d, Channel %d", chip, chan );
 
     if ( TProfile * histo = dynamic_cast < TProfile* > ( _rootObjectMap[tmpchar] ) )
     {
 	histo -> Fill ( calc, q );
     }
-    sprintf ( tmpchar, "Delay Calibration Chip %d, Channel %d", chip, chan);
+    sprintf ( tmpchar, "Delay Calibration Chip %d, Channel %d", chip, chan );
     if ( TProfile * histo = dynamic_cast < TProfile* > ( _rootObjectMap[tmpchar] ) )
     {
 	histo -> Fill ( cald, q );
@@ -244,7 +243,7 @@ void AlibavaCalibration::bookHistos ( )
 	AIDAProcessor::tree ( this ) -> cd ( this -> name ( ) );
 	//AIDAProcessor::tree ( this ) -> cd ( "ChannelData" );
 
-	for ( int ichan = 0; ichan < 128; ichan++ )
+	for ( int ichan = 0; ichan < ALIBAVA::NOOFCHANNELS; ichan++ )
 	{
 	    char tmpchar[100];
 	    if ( isMasked ( ichip, ichan ) )
@@ -252,24 +251,24 @@ void AlibavaCalibration::bookHistos ( )
 		continue;
 	    }
 
-	    sprintf ( tmpchar, "Charge Calibration Chip %d, Channel %d", ichip, ichan);
+	    sprintf ( tmpchar, "Charge Calibration Chip %d, Channel %d", ichip, ichan );
 	    TProfile * calchisto = new TProfile ( tmpchar, tmpchar, 1000, -1.0 * 1E5, 1E5 );
 	    _rootObjectMap.insert ( make_pair ( tmpchar, calchisto ) );
 	    calchisto -> SetTitle ( tmpchar );
 	    calchisto -> SetXTitle ( "Injected Charge in e" );
 	    calchisto -> SetYTitle ( "Signal in ADCs" );
 
-	    sprintf ( tmpchar, "Charge Calibration Positive Fit Chip %d, Channel %d", ichip, ichan);
+	    sprintf ( tmpchar, "Charge Calibration Positive Fit Chip %d, Channel %d", ichip, ichan );
 	    TF1 *calposFit = new TF1 ( tmpchar, "pol1" );
 	    _rootObjectMap.insert ( make_pair ( tmpchar, calposFit ) );
 
-	    sprintf ( tmpchar, "Charge Calibration Negative Fit Chip %d, Channel %d", ichip, ichan);
+	    sprintf ( tmpchar, "Charge Calibration Negative Fit Chip %d, Channel %d", ichip, ichan );
 	    TF1 *calnegFit = new TF1 ( tmpchar, "pol1" );
 	    _rootObjectMap.insert ( make_pair ( tmpchar, calnegFit ) );
 
 	}
 
-	for ( int ichan = 0; ichan < 128; ichan++ )
+	for ( int ichan = 0; ichan < ALIBAVA::NOOFCHANNELS; ichan++ )
 	{
 	    char tmpchar[100];
 	    if ( isMasked ( ichip, ichan ) )
@@ -277,7 +276,7 @@ void AlibavaCalibration::bookHistos ( )
 		continue;
 	    }
 
-	    sprintf ( tmpchar, "Delay Calibration Chip %d, Channel %d", ichip, ichan);
+	    sprintf ( tmpchar, "Delay Calibration Chip %d, Channel %d", ichip, ichan );
 	    TProfile * caldhisto = new TProfile ( tmpchar, tmpchar, 1000, 0, 256 );
 	    _rootObjectMap.insert ( make_pair ( tmpchar, caldhisto ) );
 	    caldhisto -> SetTitle ( tmpchar );
@@ -290,15 +289,15 @@ void AlibavaCalibration::bookHistos ( )
 
 	char tmpchar[100];
 
-	sprintf ( tmpchar, "Charge Calibration, Chip %d, Positive", ichip);
-	TH1D * caliposhisto = new TH1D ( tmpchar, tmpchar, 128, 0, 127 );
+	sprintf ( tmpchar, "Charge Calibration, Chip %d, Positive", ichip );
+	TH1D * caliposhisto = new TH1D ( tmpchar, tmpchar, ALIBAVA::NOOFCHANNELS, 0, ( ALIBAVA::NOOFCHANNELS -1 ) );
 	_rootObjectMap.insert ( make_pair ( tmpchar, caliposhisto ) );
 	caliposhisto -> SetTitle ( tmpchar );
 	caliposhisto -> SetXTitle ( "Channel" );
 	caliposhisto -> SetYTitle ( "Gain in e^{-} per ADC" );
 
-	sprintf ( tmpchar, "Charge Calibration, Chip %d, Negative", ichip);
-	TH1D * calineghisto = new TH1D ( tmpchar, tmpchar, 128, 0, 127 );
+	sprintf ( tmpchar, "Charge Calibration, Chip %d, Negative", ichip );
+	TH1D * calineghisto = new TH1D ( tmpchar, tmpchar, ALIBAVA::NOOFCHANNELS, 0, ( ALIBAVA::NOOFCHANNELS -1 ) );
 	_rootObjectMap.insert ( make_pair ( tmpchar, calineghisto ) );
 	calineghisto -> SetTitle ( tmpchar );
 	calineghisto -> SetXTitle ( "Channel" );
@@ -307,4 +306,3 @@ void AlibavaCalibration::bookHistos ( )
     }
 
 }
-
