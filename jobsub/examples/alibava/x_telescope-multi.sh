@@ -11,6 +11,8 @@
 
 # usage: sh x_telescope-multi.sh runnumber
 
+# Warning: if your lcio files do NOT lie in ./output/lcio, you should adjust the path!
+
 jobsub.py -c config.cfg -csv runlist.csv telescope-converter $1
 jobsub.py -c config.cfg -csv runlist.csv telescope-converter $(($1+1))
 jobsub.py -c config.cfg -csv runlist.csv telescope-converter $(($1+2))

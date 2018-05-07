@@ -68,7 +68,7 @@
   <!--If filtering is used, it is saved into this collection-->
   <parameter name="FIRCollectionName" type="string" value="filteredcollection1"/>
   <!--If we want to get the missing coordinate from the telescope this should be set to the telescope plane id (usually 0-5). Set to -1 to disable this feature-->
-  <parameter name="GetMissingCoordFromTelescope" type="int" value="2"/>
+  <parameter name="GetMissingCoordFromTelescope" type="int" value="-1"/>
   <!--The maximum accepted clustersize in the sensitive Alibava direction. This should be larger or equal to MinClustersize!-->
   <parameter name="MaxClustersize" type="int" value="6"/>
   <!--The maximum number of events read from the telescope. This number should be below the actual number of events in the telescope. The Alibava event count can be higher.-->
