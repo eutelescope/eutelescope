@@ -1209,7 +1209,6 @@ void AlibavaClustering::dolandaugausfit ( string tempHistoName )
 
 }
 
-
 Double_t langaufun ( Double_t *x, Double_t *par )
 {
     //Fit parameters:
