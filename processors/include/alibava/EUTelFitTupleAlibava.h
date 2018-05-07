@@ -2,21 +2,12 @@
  * Rewritten and alibava features added by Thomas Eichhorn
  *  (2014 DESY)
  *
- *  email:thomas.eichhorn@cern.ch
+ *  email:thomas.eichhorn@desy.de
  *
  *  Author  A.F.Zarnecki
  * (2007 University of Warsaw)
  *
  *  email:zarnecki@fuw.edu.pl
- */
-
-/*
- *   This source code is part of the Eutelescope package of Marlin.
- *   You are free to use this source files for your own development as
- *   long as it stays in a public research context. You are not
- *   allowed to use it for commercial purpose. You must put this
- *   header with author names in all development based on this file.
- *
  */
 
 #ifndef EUTelFitTupleAlibava_h
@@ -58,328 +49,307 @@
 
 using namespace std;
 
-	//! This is used for the landau gaus function and fits
-	/*! Details see:
-	 *	http://root.cern.ch/root/html/tutorials/fit/langaus.C.html
-	 */
-	Double_t langaufun2(Double_t *x, Double_t *par);
-	TF1 *langaufit2(TH1D *his, Double_t *fitrange, Double_t *startvalues, Double_t *parlimitslo, Double_t *parlimitshi, Double_t *fitparams, Double_t *fiterrors, Double_t *ChiSqr, Int_t *NDF);
-	Int_t langaupro2(Double_t *params, Double_t &maxx, Double_t &FWHM);
+    // This is used for the landau gaus function and fits. Details see: http://root.cern.ch/root/html/tutorials/fit/langaus.C.html
+    Double_t langaufun2 ( Double_t *x, Double_t *par );
+    TF1 *langaufit2 ( TH1D *his, Double_t *fitrange, Double_t *startvalues, Double_t *parlimitslo, Double_t *parlimitshi, Double_t *fitparams, Double_t *fiterrors, Double_t *ChiSqr, Int_t *NDF );
+    Int_t langaupro2 ( Double_t *params, Double_t &maxx, Double_t &FWHM );
 
+namespace eutelescope
+{
 
+    // Processor for building n-tuple with track fit results
 
-namespace eutelescope {
+    class EUTelFitTupleAlibava : public marlin::Processor
+    {
 
+	public:
 
-	//! Processor for building n-tuple with track fit results
-	/*! This processor if for an easier analysis of track fitting results. Results stored in the track collection are used: number of fitted planes, measured positions (XY) in these planes,
-	 * Chi2 of the fit and fitted XY positions in each plane. Also positions measured in the DUT can be included. The Geometry description is taken from GEAR. However, it is possible to select 
-	 * a DUT layer ID manually. For each track referenced TrackerHit entries are analysed. Measured and fitted hits can be distinguished by looking into the hit type (type <=31 for measured hits,
-	 * type >=32 for fitted). DUT measuterents are taken directly from the TrackerHit collection. Hits belonging to DUT are identified by the Z position.
-	 */
+	    virtual Processor*  newProcessor ( )
+	    {
+		return new EUTelFitTupleAlibava;
+	    }
 
-	class EUTelFitTupleAlibava : public marlin::Processor {
+	    EUTelFitTupleAlibava ( );
 
-		public:
+	    virtual void init ( );
 
-		//! Returns a new instance of this processor. It is called by Marlin execution framework and it shouldn't be called/used by the final user.  @return a new EUTelFitTuple
-		virtual Processor*  newProcessor() { return new EUTelFitTupleAlibava ; }
+	    virtual void processRunHeader ( LCRunHeader* run );
 
-		//! Default constructor
-		EUTelFitTupleAlibava() ;
+	    virtual void processEvent ( LCEvent * evt );
 
-		//! Called at the job beginning. This is executed only once in the whole run.
-		virtual void init() ;
+	    virtual void check ( LCEvent * evt );
 
-		//! Called for every run with @param run as the LCRunHeader of the current run
-		virtual void processRunHeader( LCRunHeader* run ) ;
+	    void bookHistos ( );
 
-		//! Called for every event in the file with  @param evt as the current LCEvent event
-		virtual void processEvent( LCEvent * evt ) ;
+	    std::map < std::string , TObject * > _rootObjectMap;
 
-		//! Check event method. This method is called by the Marlin execution framework as soon as the processEvent is over. It can be used to fill check plots.
-		virtual void check( LCEvent * evt ) ;
+	    virtual void end ( );
 
-		//! Book histograms. Histogram pointers are stored into _aidaHistoMap so that they can be recalled and filled from anywhere in the code.
-		void bookHistos();
+	protected:
 
-		//! ROOT object map
-		std::map<std::string , TObject * > _rootObjectMap;
+	    // Silicon plane parameters as described in GEAR. This object is provided by GEAR during the init() phase and stored here for local use.
+	    gear::SiPlanesParameters * _siPlanesParameters;
 
-		//! Called after data processing for clean up. Used to release memory allocated in init() step
-		virtual void end() ;
+	    // This is the real geometry description for each layer. This object is taken from _siPlanesParameters during the init() phase and stored for local use
+	    gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
 
-		protected:
+	    // Input Track collection name
+	    std::string _inputColName;
 
-		//! Silicon plane parameters as described in GEAR. This object is provided by GEAR during the init() phase and stored here for local use.
-		gear::SiPlanesParameters * _siPlanesParameters;
+	    // Input TrackerHit collection name
+	    std::string _inputDUTColName;
 
-		//! This is the real geometry description for each layer. This object is taken from _siPlanesParameters during the init() phase and stored for local use
-		gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
+	    // Write our own alignment into this file
+	    std::string _outputalignment;
 
-		//! Input Track collection name
-		std::string _inputColName;
+	    bool _doAlignment;
 
-		//! Input TrackerHit collection name
-		std::string _inputDUTColName;
+	    bool _doGamma;
 
-		//! Write our own alignment into this file
-		std::string _outputalignment;
+	    // Flag for manual DUT selection
+	    bool _useManualDUT;
 
-		bool _doAlignment;
+	    // Id of telescope layer which should be used as a DUT
+	    int _manualDUTid;
 
-		bool _doGamma;
+	    //  Value to be used for missing measurements when filling the tuple
+	    double _missingValue;
 
-		//! Flag for manual DUT selection
-		bool _useManualDUT;
+	    // Flag to recheck alignment of the DUT
+	    bool _checkdealignment;
 
-		//! Id of telescope layer which should be used as a DUT
-		int _manualDUTid;
+	    // Alibava output and usage on/off
+	    bool _alibava;
 
-		//!  Value to be used for missing measurements when filling the tuple
-		double _missingValue;
+	    // Alibava collection name
+	    std::string _alibavaCollectionName;
 
-		//! Flag to recheck alignment of the DUT
-		bool _checkdealignment;
+	    // Alibava cluster collection name
+	    std::string _alibavaClusterCollectionName;
 
-		//! Alibava output and usage on/off
-		bool _alibava;
+	    // Alibava unfiltered collection name
+	    std::string _alibavaUnfilteredCollectionName;
 
-		//! Alibava collection name
-		std::string _alibavaCollectionName;
+	    std::string _alignedHitPrefix;
+	    std::string _prealignedHitPrefix;
+	    std::string _unalignedcollectionname;
 
-		//! Alibava cluster collection name
-		std::string _alibavaClusterCollectionName;
+	    // Alignment collection name
+	    std::vector<std::string> _alignmentCollectionName;
 
-		//! Alibava unfiltered collection name
-		std::string _alibavaUnfilteredCollectionName;
+	    // Prealignment collection name
+	    std::vector<std::string> _pre_alignmentCollectionName;
 
-		std::string _alignedHitPrefix;
-		std::string _prealignedHitPrefix;
-		std::string _unalignedcollectionname;
+	    // Original hit collection name
+	    std::string _originalCollectionName;
 
-		//! Alignment collection name
-		std::vector<std::string> _alignmentCollectionName;
+	    // Original prealignment applied to the original hit collection
+	    std::string _originalPreAlignment;
 
-		//! Prealignment collection name
-		std::vector<std::string> _pre_alignmentCollectionName;
+	    bool _useOriginalPreAlignment;
 
-		//! Original hit collection name
-		std::string _originalCollectionName;
+	    // Unsensitive strip sensor axis
+	    std::string _unsensitiveaxis;
 
-		//! Original prealignment applied to the original hit collection
-		std::string _originalPreAlignment;
+	    // Telescope plane count
+	    int _nTelPlanes;
 
-		bool _useOriginalPreAlignment;
+	    // Telescope plane sorting
+	    int * _planeSort;
 
-		//! Unsensitive strip sensor axis
-		std::string _unsensitiveaxis;
+	    // Telescope plane id
+	    int * _planeID;
 
-		//! Telescope plane count
-		int _nTelPlanes;
+	    // Telescope plane position in z
+	    double * _planePosition;
 
-		//! Telescope plane sorting
-		int * _planeSort;
+	    // Flag for active plane
+	    bool   * _isActive;
 
-		//! Telescope plane id
-		int * _planeID;
+	    // Flag for measurements...
+	    bool   * _isMeasured;
 
-		//! Telescope plane position in z
-		double * _planePosition;
+	    // ... in X
+	    double * _measuredX;
 
-		//! Flag for active plane
-		bool   * _isActive;
+	    // ... in Y
+	    double * _measuredY;
 
-		//! Flag for measurements...
-		bool   * _isMeasured;
+	    // ... in Z
+	    double * _measuredZ;
 
-		//! ... in X
-		double * _measuredX;
+	    // ... with charge
+	    double * _measuredQ;
 
-		//! ... in Y
-		double * _measuredY;
+	    // Flag for fitted measurements...
+	    bool   * _isFitted;
 
-		//! ... in Z
-		double * _measuredZ;
+	    // ... in X
+	    double * _fittedX;
 
-		//! ... with charge
-		double * _measuredQ;
+	    // ... in Y
+	    double * _fittedY;
 
-		//! Flag for fitted measurements...
-		bool   * _isFitted;
+	    // ... in Z
+	    double * _fittedZ;
 
-		//! ... in X
-		double * _fittedX;
+	    // The telescope coordinates for extrapolation
+	    double * _telescopeX;
 
-		//! ... in Y
-		double * _fittedY;
+	    double * _telescopeY;
 
-		//! ... in Z
-		double * _fittedZ;
+	    // The DUT plane
+	    int _iDUT;
 
-		//! The telescope coordinates for extrapolation
-		double * _telescopeX;
+	    // DUT z position before rotation
+	    double _zDUT;
 
-		double * _telescopeY;
+	    // The maximum allowed distance for fitting a hit in X
+	    double _distMax_X;
 
-		//! The DUT plane
-		int _iDUT;
+	    // The maximum allowed distance for fitting a hit in X
+	    double _distMax_Y;
 
-		//! DUT z position before rotation
-		double _zDUT;
+	    // Additional alignment and rotations from the GEAR file
+	    std::vector < float > _DUTalign;
 
-		//! The maximum allowed distance for fitting a hit in X
-		double _distMax_X;
+	    // Fiducial cuts for the residual
+	    std::vector < float > _fiducialcut;
 
-		//! The maximum allowed distance for fitting a hit in X
-		double _distMax_Y;
+	    // The function to get the alignment from file
+	    void getAlignment ( LCEvent * event );
 
-		//! Additional alignment and rotations from the GEAR file
-		std::vector<float > _DUTalign;
+	    // The function to get the prealignment from file
+	    void getPreAlignment ( LCEvent * event );
 
-		//! Fiducial cuts for the residual
-		std::vector<float > _fiducialcut;
+	    // The function to fill the histogram comparing fitted track position and clusters
+	    void fillPrecisionHisto ( float x, float y );
 
-		//! The function to get the alignment from file
-		void getAlignment (LCEvent * event);
+	    // The function to fill the histogram comparing different impact point methods
+	    void fillestimationhisto ( float x1, float y1, float x2, float y2, float x3, float y3 );
 
-		//! The function to get the prealignment from file
-		void getPreAlignment (LCEvent * event);
+	    // We fill histograms for the DUT residual
+	    void fillTDCResHisto ( float hitx, float hity, float trackx, float tracky, float tdctime );
 
-		//! The function to fill the histogram comparing fitted track position and clusters
-		void fillPrecisionHisto(float x, float y);
+	    // We fill histograms for the DUT residual
+	    void fillresihistos ( float hitx, float hity, float trackx, float tracky, int eventnr, double chi2, double ndf );
 
-		//! The function to fill the histogram comparing different impact point methods
-		void fillestimationhisto(float x1, float y1, float x2, float y2, float x3, float y3);
+	    // A hitmap of the tracks
+	    void fillHitmapHisto ( float hitx, float hity, int match );
 
-		//! We fill histograms for the DUT residual
-		void fillTDCResHisto(float hitx, float hity, float trackx, float tracky, float tdctime);
+	    // Residuals after cuts
+	    void Filteredfillresihistos ( float hitx, float hity, float trackx, float tracky );
 
-		//! We fill histograms for the DUT residual
-		void fillresihistos(float hitx, float hity, float trackx, float tracky, int eventnr, double chi2, double ndf);
+	    // Fill debug histo on calculations
+	    void filldebughistos ( float x1, float x2, float y1, float y2 );
 
-		//! A hitmap of the tracks
-		void fillHitmapHisto(float hitx, float hity, int match);
+	    // Fill eta histo
+	    void fillEtaHisto ( float left, float right, float left1, float right1, float left2, float right2, float local, int event, float tdctime );
 
-		//! Residuals after cuts
-		void Filteredfillresihistos(float hitx, float hity, float trackx, float tracky);
+	    // Flag if alignment is loaded
+	    bool _alignmentloaded;
 
-		//! Fill debug histo on calculations
-		void filldebughistos(float x1, float x2, float y1, float y2);
-		
-		//! Fill eta histo
-		void fillEtaHisto(float left, float right, float left1, float right1, float left2, float right2, float local, int event, float tdctime);
-		void fillEtaDebug(float left, float right, float left1, float right1, float left2, float right2, float local, float event);
+	    // Flag if prealignment is loaded
+	    bool _pre_alignmentloaded;
 
-		//! Flag if alignment is loaded
-		bool _alignmentloaded;
+	    // Flag if reference is loaded
+	    bool _referenceloaded;
 
-		//! Flag if prealignment is loaded
-		bool _pre_alignmentloaded;
-		
-		//! Flag if reference is loaded
-		bool _referenceloaded;
+	    // The variables to store the alignment from the files
+	    double * _dut_align_x;
+	    double * _dut_align_y;
+	    double * _dut_align_z;
+	    double * _dut_align_a;
+	    double * _dut_align_b;
+	    double * _dut_align_c;
+	    double * _dut_align_x_error;
+	    double * _dut_align_y_error;
+	    double * _dut_align_z_error;
+	    double * _dut_align_a_error;
+	    double * _dut_align_b_error;
+	    double * _dut_align_c_error;
+	    double * _dut_pre_align_x;
+	    double * _dut_pre_align_y;
+	    double * _dut_pre_align_z;
+	    double * _dut_pre_align_a;
+	    double * _dut_pre_align_b;
+	    double * _dut_pre_align_c;
+	    double _dut_original_pre_align_x;
+	    double _dut_original_pre_align_y;
+	    double _dut_original_pre_align_z;
+	    double _dut_original_pre_align_a;
+	    double _dut_original_pre_align_b;
+	    double _dut_original_pre_align_c;
 
-		//! The variables to store the alignment from the files
-		double * _dut_align_x;
-		double * _dut_align_y;
-		double * _dut_align_z;
-		double * _dut_align_a;
-		double * _dut_align_b;
-		double * _dut_align_c;
-		double * _dut_align_x_error;
-		double * _dut_align_y_error;
-		double * _dut_align_z_error;
-		double * _dut_align_a_error;
-		double * _dut_align_b_error;
-		double * _dut_align_c_error;
-		double * _dut_pre_align_x;
-		double * _dut_pre_align_y;
-		double * _dut_pre_align_z;
-		double * _dut_pre_align_a;
-		double * _dut_pre_align_b;
-		double * _dut_pre_align_c;
-		double _dut_original_pre_align_x;
-		double _dut_original_pre_align_y;
-		double _dut_original_pre_align_z;
-		double _dut_original_pre_align_a;
-		double _dut_original_pre_align_b;
-		double _dut_original_pre_align_c;
+	    // The pitch and pixel count of the DUT
+	    double _pitchx;
+	    double _pitchy;
+	    int _pixelx;
+	    int _pixely;
 
-		//! The pitch and pixel count of the DUT
-		double _pitchx;
-		double _pitchy;
-		int _pixelx;
-		int _pixely;
+	    // Counting run headers in a run
+	    int _nRun;
 
-		//! Counting run headers in a run
-		int _nRun ;
+	    // Counting events in a run
+	    int _nEvt;
 
-		//! Counting events in a run
-		int _nEvt ;
+	    // Run number
+	    int _runNr;
 
-		//! Run number
-		int _runNr;
+	    // Event number
+	    int _evtNr;
 
-		//! Event number
-		int _evtNr;
+	    // Use previous track fit
+	    bool _useTrackFit;
 
-		//! Use previous track fit
-		bool _useTrackFit;
+	    // Use triplet guess
+	    bool _useTriplet;
 
-		//! Use triplet guess
-		bool _useTriplet;
+	    // Matched a DUT hit
+	    bool _foundDUTHit;
 
-		//! Matched a DUT hit
-		bool _foundDUTHit;
+	    // Track limit
+	    int _tracklimit;
 
-		//! Track limit
-		int _tracklimit;
+	    // The total count of matched hits 
+	    int _matchedhits;
 
-		//! The total count of matched hits 
-		int _matchedhits;
+	    #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-		#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+	    // The Tuple name
+	    static std::string _FitTupleName;
+	    AIDA::ITuple * _FitTuple;
 
-		//! The Tuple name
-		static std::string _FitTupleName;
-		AIDA::ITuple * _FitTuple;
+	    // DUT hitmap
+	    void fillLocalHitmapHisto ( float x, float y, float z, int map );
 
-		//! DUT hitmap
-		void fillLocalHitmapHisto(float x, float y, float z, int map);
-		
-		
-		void fillInterStripHitmap(double x, double y);
-		
-		//! The reference hit collection
-		std::string _referencecollectionname;
-		
-		//! The function to get the reference hit collection
-		void getReference (LCEvent * event);
-		
-		//! DUT positions from the reference hit collection
-		double _x_refhit;
-		double _y_refhit;
-		double _z_refhit;
-		double _a_refhit;
-		double _b_refhit;
-		double _c_refhit;
+	    void fillInterStripHitmap ( double x, double y );
 
-		int _polarity;
+	    // The reference hit collection
+	    std::string _referencecollectionname;
 
-		#endif
-		
-		void dolandaugausfit(string tempHistoName);
+	    // The function to get the reference hit collection
+	    void getReference ( );
 
+	    // DUT positions from the reference hit collection
+	    double _x_refhit;
+	    double _y_refhit;
+	    double _z_refhit;
+	    double _a_refhit;
+	    double _b_refhit;
+	    double _c_refhit;
+
+	    int _polarity;
+
+	    #endif
+
+	    void dolandaugausfit ( string tempHistoName );
 
 	} ;
 
-	//! A global instance of the processor.
+	// A global instance of the processor.
 	EUTelFitTupleAlibava aEUTelFitTupleAlibava ;
 
 }
 
 #endif
-
-
-
