@@ -27,9 +27,6 @@
 # Pol 
 #  The polarity of the sensor. -1 for p-bulk, 1 for n-bulk.
 #
-# Clulimit
-#  The event limit up to which clusters will be read from the telescope file in reconstruction. This needs to be set < telescope event count to prevent segfaults.
-#
 # UnsensAxis
 #  The unsensitive strip sensor axis. This should also be reflected in the gear file used.
 #
@@ -37,7 +34,7 @@
 #  Option to skip filtering in the 2nd step
 #
 # SetupRef
-#  Include reference plane. Should also be in the gear file.
+#  Include reference plane with this sensor id. Should also be in the gear file.
 #
 #
 # An empty/not needed field can be skipped by a comma
@@ -45,7 +42,7 @@
 #########################################################################################
 #	this line for EUTelescope:
 
-RunNumber,FileExtension,PedRunNumberFormatted,Bonds,TelescopeRun,GearGeoFile,Pol,Clulimit,UnsensAxis,Filter2,SetupRef
+RunNumber,FileExtension,PedRunNumberFormatted,Bonds,TelescopeRun,GearGeoFile,Pol,UnsensAxis,Filter2,SetupRef
 
 
 #########################################################################################
@@ -53,20 +50,20 @@ RunNumber,FileExtension,PedRunNumberFormatted,Bonds,TelescopeRun,GearGeoFile,Pol
 
 
 #! 100P unirr, 0°, -300V, +20°C, -0.000017mA
-0019,ped,000019,'$0:31-48$ $0:54-58$ $0:68-71$ $0:74-87$',,gear_alibava_a0_b0_c0_d100.xml,,,,,
-0022,dat,000019,'$0:31-48$ $0:54-58$ $0:68-71$ $0:74-87$',012260,gear_alibava_a0_b0_c0_d100.xml,-1,430000,x,,
-012260,c,,,,gear_alibava_a0_b0_c0_d100.xml,,,,,
-012261,d,,,,gear_alibava_a0_b0_c0_d100.xml,,,,,
-012262,d,,,,gear_alibava_a0_b0_c0_d100.xml,,,,,
-012263,d,,,,gear_alibava_a0_b0_c0_d100.xml,,,,,
+0019,ped,000019,'$0:31-48$ $0:54-58$ $0:68-71$ $0:74-87$',,gear_alibava_a0_b0_c0_d100.xml,,,,
+0022,dat,000019,'$0:31-48$ $0:54-58$ $0:68-71$ $0:74-87$',012260,gear_alibava_a0_b0_c0_d100.xml,-1,x,,
+012260,c,,,,gear_alibava_a0_b0_c0_d100.xml,,,,
+012261,d,,,,gear_alibava_a0_b0_c0_d100.xml,,,,
+012262,d,,,,gear_alibava_a0_b0_c0_d100.xml,,,,
+012263,d,,,,gear_alibava_a0_b0_c0_d100.xml,,,,
 
 
 #! 100N 1e15, 25°, 300V, -20°C, 0.0087mA
-0447,ped,000447,'$0:33-46$ $0:50-54$ $0:59-62$ $0:65-76$ $0:80-94$',,gear_alibava_a25_b0_c0_d100.xml,,,,,
-0438,dat,000447,'$0:33-46$ $0:50-54$ $0:59-62$ $0:65-76$ $0:80-94$',003692,gear_alibava_a25_b0_c0_d100.xml,1,500000,x,,
-003692,,,,,gear_alibava_a25_b0_c0_d100.xml,,,,,
+0447,ped,000447,'$0:33-46$ $0:50-54$ $0:59-62$ $0:65-76$ $0:80-94$',,gear_alibava_a25_b0_c0_d100.xml,,,,
+0438,dat,000447,'$0:33-46$ $0:50-54$ $0:59-62$ $0:65-76$ $0:80-94$',003692,gear_alibava_a25_b0_c0_d100.xml,1,x,,
+003692,,,,,gear_alibava_a25_b0_c0_d100.xml,,,,
 
 
 #! 100S unirr, 0°, 100V, +20°C, simulated 
-000900,ped,000900,'$0:1-126$',000900,gear_alibava_a0_b0_c0_d100.xml,,,,,
-000908,dat,000900,'$0:1-126$',000908,gear_alibava_a0_b0_c0_d100.xml,1,10000,x,,
+000900,ped,000900,'$0:1-126$',000900,gear_alibava_a0_b0_c0_d100.xml,,,,
+000908,dat,000900,'$0:1-126$',000908,gear_alibava_a0_b0_c0_d100.xml,1,x,,

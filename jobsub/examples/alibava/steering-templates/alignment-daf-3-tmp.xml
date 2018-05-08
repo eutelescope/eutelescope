@@ -142,8 +142,6 @@
   <parameter name="NominalDydz" type="float" value="0.0"/>
   <!--Radiation lengths of planes, ordered by z-pos..-->
   <!--parameter name="RadiationLengths" type="FloatVec"> </parameter-->
-  <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
-  <parameter name="ReferenceCollection" value="referenceHit"/>
   <!--How many telescope planes do we require to be included in the fit?-->
   <parameter name="RequireNTelPlanes" type="float" value="6"/>
   <!--Sigma resolution of planes, ordered by z-pos.-->
@@ -229,8 +227,6 @@ XYShiftsAllRot - shifts in the X,Y and Z directions and rotations around all thr
   <!--parameter name="PedeUserStartValuesY" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
   <!--Start values for the alignment for shifts in the Z direction.-->
   <!--parameter name="PedeUserStartValuesZ" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
-  <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
-  <parameter name="ReferenceCollection" value="referenceHit"/>
   <!--Maximal values of the hit residuals in the X direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
   <parameter name="ResidualsXMax" type="FloatVec" value="@ResidualXMax@"/>
   <!--Minimal values of the hit residuals in the X direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
