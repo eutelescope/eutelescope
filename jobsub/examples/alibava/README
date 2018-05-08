@@ -2,7 +2,7 @@
 
 examples/alibava
 
-Thomas Eichhorn 2016
+Thomas Eichhorn 2016,2018
 thomas.eichhorn@desy.de
 
 =============================================================================
@@ -18,17 +18,11 @@ Folder contents:
 
   Contains gear files for various setup scenarios. gear_alibava_aA_bB_cC_dD.xml 
 is a setup with the strip sensor DUT of thickness D at a rotation angle alpha 
-of A, rotation angle beta of B and rotation angle gamma of C. All included 
-files have the same telescope setup, but this can be changed to your needs. 
-gear_alibava_eda.xml is for a scenario where the sensitive DUT coordinate is 
-rotated by 90 degrees (here: along the x-axis). gear_alibava_ref.xml and 
-gear_alibava_ref_38.xml are for scenarios where a reference plane is used. 
-gear_telescope.xml is for the DUT-free case.
-
-/histoinfo:
-
-  Contains XML files for histogram ranges and boundaries. This is mostly for 
-legacy processors.
+of A, rotation angle beta of B and rotation angle gamma of C. 
+gear_alibava_a0_b0_c0_d100_bfieldx05.xml has a magnetic field of 0.5T in 
+negative x-direction. All included files have the same telescope setup, but this 
+can be changed to your needs. gear_alibava_ref.xml is for a scenario where a 
+reference plane is used. The telescope geometry here is slightly different.
 
 /output:
 
