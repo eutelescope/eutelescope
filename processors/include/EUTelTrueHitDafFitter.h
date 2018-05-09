@@ -139,7 +139,6 @@ namespace eutelescope {
         n_failedChi2OverNdof, n_failedIsnan, n_passedNdof, n_passedChi2OverNdof,
         n_passedIsnan;
 
-    // Reference HitCollection name
     std::string _clusterCollectionName;
     LCCollectionVec *_clusterVec;
 
