@@ -194,7 +194,7 @@ int EUTelDafMaterial::checkDutResids(
     if (find(_dutPlanes.begin(), _dutPlanes.end(), iden) == _dutPlanes.end()) {
       continue;
     }
-    std::pair<float, float> resX = _resX[iden];
+    stdd::pair<float, float> resX = _resX[iden];
     std::pair<float, float> resY = _resY[iden];
     track.indexes.at(ii) = -1;
 
