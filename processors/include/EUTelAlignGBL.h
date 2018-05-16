@@ -135,8 +135,6 @@ namespace eutelescope {
 
     std::string _binaryFilename;
 
-    float _telescopeResolution;
-
     Utility::alignMode _alignMode;
     std::string _alignModeString;
 
@@ -165,8 +163,23 @@ namespace eutelescope {
     // Statistics
     size_t _nMilleDataPoints;
     size_t _nMilleTracks;
-
     size_t _nPlanes;
+
+
+  //UpstreamTriplet
+  std::vector<int> _upstream_triplet_ids;
+  //DownstreamTriplet
+  std::vector<int> _downstream_triplet_ids;
+  //LastUpstreamSensor
+  int _last_upstream_sensor;
+  //ResolutionX
+  std::vector<float> _x_resolution_vec;
+  //ResolutionY
+  std::vector<float> _y_resolution_vec;
+
+  std::map<int, bool> _is_sensor_upstream;
+
+  std::vector<int>_dut_ids;
 
 	std::vector<double> _planePosition;
 	std::vector<double> _planeRadLength;
@@ -175,7 +188,6 @@ namespace eutelescope {
 	std::vector<Eigen::Vector2d> _planeMeasPrec;
 	std::vector<int> indexconverter;
 	std::unique_ptr<gbl::MilleBinary>  milleAlignGBL; // for producing MillePede-II binary file
-	//gbl::MilleBinary*  milleAlignGBL; // for producing MillePede-II binary file
   };
 
   //! A global instance of the processor
