@@ -317,7 +317,7 @@ void AlibavaPedestalNoiseProcessor::bookHistos(){
 			tempHistoTitle<<tempHistoName<<";ADCs;NumberofEntries";
 			
 			TH1D * chanDataHisto =
-			new TH1D (tempHistoName.c_str(),"",1000,0,1000);
+			new TH1D (tempHistoName.c_str(),"",2000,-1000,1000);
 			_rootObjectMap.insert(make_pair(tempHistoName, chanDataHisto));
 			string tmp_string = tempHistoTitle.str();
 			chanDataHisto->SetTitle(tmp_string.c_str());

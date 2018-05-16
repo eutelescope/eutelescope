@@ -155,6 +155,9 @@ namespace alibava {
 		 */
 		float _NoiseDeviation;
 		
+		//! Common mode calculation method
+		std::string _commonmodeMethod;
+		
 		// getter and setter for _commonmodeCollectionName
 		void setCommonModeCollectionName(std::string CommonModeCollectionName);
 		std::string getCommonModeCollectionName();
@@ -171,7 +174,7 @@ namespace alibava {
 		void setCommonModeErrorVec(EVENT::FloatVec commonerror);
 		EVENT::FloatVec getCommonModeErrorVec();
 
-		
+
 	protected:
 										
 		//! Name of the Common mode histogram 

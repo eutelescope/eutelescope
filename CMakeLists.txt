@@ -54,7 +54,7 @@ INCLUDE_DIRECTORIES( SYSTEM ${EIGEN2_INCLUDE_DIR} )
 # $ILCSOFT/geant4/build-9.5.p02/geant4make.sh
 # now the allpix lib can be loaded as well 
 # allpix lib if checkout and compiled here:
-# export ALLPIX="/home/ilcsoft/v01-16-02/Eutelescope/HEAD/external/allpix"
+#export (ALLPIX="/data/ilcsoft/v01-17-10/Eutelescope/v1.0/external/allpix/allpix")
 # the library is placed by default to
 # GBL if checkout and compiled as shared lib:
 # export GBL="/home/ilcsoft/v01-16-02/Eutelescope/HEAD/external/gbl/cpp"
@@ -156,6 +156,7 @@ ADD_DEFINITIONS("-DDO_TESTING")
 include_directories(SYSTEM ./external)
 INCLUDE_DIRECTORIES( ./include )
 INCLUDE_DIRECTORIES( ./include/alibava )
+INCLUDE_DIRECTORIES( ./include/cms )
 INCLUDE_DIRECTORIES( ./pixgeo/include/ )
 
  
@@ -172,6 +173,7 @@ SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -fdiagnostics-show-option -Weffc++ -W
 SET( libname ${PROJECT_NAME} )
 AUX_SOURCE_DIRECTORY( ./src library_sources )
 AUX_SOURCE_DIRECTORY( ./src/alibava library_sources )
+AUX_SOURCE_DIRECTORY( ./src/cms library_sources )
 ADD_SHARED_LIBRARY( ${libname} ${library_sources} )
 INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
 #INSTALL_SHARED_LIBRARY( GBL DESTINATION lib )

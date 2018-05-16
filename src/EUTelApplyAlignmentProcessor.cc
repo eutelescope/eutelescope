@@ -681,12 +681,19 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
       }
 
       // copy the input to the output, at least for the common part
+      CellIDEncoder<TrackerHitImpl> outputCellIDEncoder(EUTELESCOPE::HITENCODING, _outputCollectionVec);
       TrackerHitImpl   * outputHit  = new TrackerHitImpl;
       outputHit->setType( inputHit->getType() );
       outputHit->rawHits() = inputHit->getRawHits();
+      FloatVec cov = inputHit->getCovMatrix();
+      outputHit->setCovMatrix( cov );
       outputHit->setCellID0( inputHit->getCellID0() );
       outputHit->setCellID1( inputHit->getCellID1() );
       outputHit->setTime( inputHit->getTime() );
+      outputHit->setEDep( inputHit->getEDep() );
+      outputHit->setEDepError( inputHit->getEDepError() );
+      outputHit->setQuality( inputHit->getQuality() );
+
 
       double * inputPosition      = const_cast< double * > ( inputHit->getPosition() ) ;
       double   outputPosition[3]  = { 0., 0., 0. };
@@ -916,12 +923,18 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
       }
 
       // copy the input to the output, at least for the common part
+      CellIDEncoder<TrackerHitImpl> outputCellIDEncoder(EUTELESCOPE::HITENCODING, _outputCollectionVec);
       TrackerHitImpl   * outputHit  = new TrackerHitImpl;
       outputHit->setType( inputHit->getType() );
       outputHit->rawHits() = inputHit->getRawHits();
+      FloatVec cov = inputHit->getCovMatrix();
+      outputHit->setCovMatrix( cov );
       outputHit->setCellID0( inputHit->getCellID0() );
       outputHit->setCellID1( inputHit->getCellID1() );
       outputHit->setTime( inputHit->getTime() );
+      outputHit->setEDep( inputHit->getEDep() );
+      outputHit->setEDepError( inputHit->getEDepError() );
+      outputHit->setQuality( inputHit->getQuality() );
 
       const double * inputPosition      = const_cast< const double * > ( inputHit->getPosition() ) ;
       double   outputPosition[3]  = { 0., 0., 0. };
@@ -1078,6 +1091,17 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
         if(_alignmentCollectionVec->size() > 0 )
         {
             streamlog_out ( DEBUG2   ) << "DIRECT:FIRST:REFHIT: alignment sensorID: " ;
+
+
+	    EUTelAlignmentConstant * alignment32;
+	    // just find the position of plane 32
+            for ( size_t iPos = 0; iPos < _alignmentCollectionVec->size(); ++iPos ) 
+            {
+		EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( _alignmentCollectionVec->getElementAt( iPos ) );
+		if(alignment->getSensorID() == 32) {
+			alignment32 = static_cast< EUTelAlignmentConstant * > ( _alignmentCollectionVec->getElementAt( iPos ) );
+		}
+            }
  
             for ( size_t iPos = 0; iPos < _alignmentCollectionVec->size(); ++iPos ) 
             {
@@ -1087,7 +1111,15 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
             
                 if ( _applyToReferenceHitCollection ) 
                 {
-                 AlignReferenceHit( evt,   alignment); 
+		 if(alignment->getSensorID() == 60 || alignment->getSensorID() == 61) {
+			// in that case we need to do some trick...
+			// self made copy constructir
+			EUTelAlignmentConstant * alignment1 = new EUTelAlignmentConstant(alignment->getSensorID(), alignment32->getXOffset(), alignment32->getYOffset(), alignment32->getZOffset(), alignment32->getAlpha(), alignment32->getBeta(), alignment32->getGamma(), alignment32->getXOffsetError(), alignment32->getYOffsetError(), alignment32->getZOffsetError(), alignment32->getAlphaError(), alignment32->getBetaError(), alignment32->getGammaError());
+			// apply now
+			AlignReferenceHit( evt,   alignment1); 
+		 } else {
+                 	AlignReferenceHit( evt,   alignment); 
+		 }
                 }
             }
             streamlog_out ( DEBUG2 ) << endl;
@@ -1146,7 +1178,12 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
  
       // now that we know at which sensor the hit belongs to, we can
       // get the corresponding alignment constants
-      map< int , int >::iterator  positionIter = _lookUpTable[ _alignmentCollectionName ].find( sensorID );
+      map< int , int >::iterator  positionIter;
+     if (sensorID == 60 || sensorID == 61) {
+	positionIter = _lookUpTable[ _alignmentCollectionName ].find( 32 );
+     } else {
+	positionIter = _lookUpTable[ _alignmentCollectionName ].find( sensorID );
+     }
 
      streamlog_out( DEBUG5 ) << "DIRECT:-----:-----: iHit [" <<  iHit << "] for sensor  "<<  sensorID << endl;
      if ( positionIter == _lookUpTable[ _alignmentCollectionName ].end() )
@@ -1218,13 +1255,18 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
       streamlog_out( DEBUG5 ) << "DIRECT:-----:-----: refhit found for sensorID " << sensorID << endl;
 
       // copy the input to the output, at least for the common part
+      CellIDEncoder<TrackerHitImpl> outputCellIDEncoder(EUTELESCOPE::HITENCODING, _outputCollectionVec);
       TrackerHitImpl   * outputHit  = new TrackerHitImpl;
       outputHit->setType( inputHit->getType() );
       outputHit->rawHits() = inputHit->getRawHits();
-      outputHit->setCovMatrix( inputHit->getCovMatrix() );
+      FloatVec cov = inputHit->getCovMatrix();
+      outputHit->setCovMatrix( cov );
       outputHit->setCellID0( inputHit->getCellID0() );
       outputHit->setCellID1( inputHit->getCellID1() );
       outputHit->setTime( inputHit->getTime() );
+      outputHit->setEDep( inputHit->getEDep() );
+      outputHit->setEDepError( inputHit->getEDepError() );
+      outputHit->setQuality( inputHit->getQuality() );
 
       // hit coordinates in the center-of-the sensor frame (axis coincide with the global frame)
       const double *inputS = static_cast<const double*> ( inputHit->getPosition() ) ;
@@ -1334,6 +1376,20 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
             outputPosition[0] -= offsetX; 
             outputPosition[1] -= offsetY; 
             outputPosition[2] -= offsetZ; 
+
+	    // and then let's apply the proper 
+	    if(sensorID == 61) {
+		double delta = 2.0;
+		double dx = sin(-beta)*delta;
+		outputPosition[0] += dx;
+		outputPosition[2] += (delta - sqrt(delta*delta - dx*dx));
+	    }
+	    if(sensorID == 60) {
+		double delta = 2.0;
+		double dx = sin(-beta)*delta;
+		outputPosition[0] -= dx;
+		outputPosition[2] -= (delta - sqrt(delta*delta - dx*dx));
+	    }
           
         }
         else if ( _correctionMethod == 2 ) 
@@ -1556,12 +1612,18 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
       }
  
       // copy the input to the output, at least for the common part
+      CellIDEncoder<TrackerHitImpl> outputCellIDEncoder(EUTELESCOPE::HITENCODING, _outputCollectionVec);
       TrackerHitImpl   * outputHit  = new TrackerHitImpl;
       outputHit->setType( inputHit->getType() );
       outputHit->rawHits() = inputHit->getRawHits();
+      FloatVec cov = inputHit->getCovMatrix();
+      outputHit->setCovMatrix( cov );
       outputHit->setCellID0( inputHit->getCellID0() );
       outputHit->setCellID1( inputHit->getCellID1() );
       outputHit->setTime( inputHit->getTime() );
+      outputHit->setEDep( inputHit->getEDep() );
+      outputHit->setEDepError( inputHit->getEDepError() );
+      outputHit->setQuality( inputHit->getQuality() );
 
       // now that we know at which sensor the hit belongs to, we can
       // get the corresponding alignment constants

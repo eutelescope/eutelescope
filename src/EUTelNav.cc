@@ -536,6 +536,7 @@ TVector3 EUTelNav::getPositionfromArcLength(TVector3 pos, TVector3 pVec, float b
 		}
 		return pos;
 }
+/*
 TVector3 EUTelNav::getMomentumfromArcLengthLocal(TVector3 pVec, TVector3 pos, float beamQ, float s, int planeID)
 {
 	TVector3	newMomentum = EUTelNav::getMomentumfromArcLength(pVec,beamQ,s);
@@ -551,6 +552,7 @@ TVector3 EUTelNav::getMomentumfromArcLengthLocal(TVector3 pVec, TVector3 pos, fl
 	}
 	return pVecUnitLocal;
 }
+*/
 
 
 //This will calculate the momentum at a arc length away given initial parameters.

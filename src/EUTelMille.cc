@@ -1739,7 +1739,6 @@ void EUTelMille::processEvent (LCEvent * event) {
                   _waferResidX[help] = b0 + la*c0 - x;
                   _waferResidY[help] = b1 + la*c1 - y;
                   _waferResidZ[help] = la*sqrt(1.0 - c0*c0 - c1*c1) - z;
-
 		  } else {
 */
 		    // use reference vector
@@ -2870,6 +2869,57 @@ void EUTelMille::end() {
 	  streamlog_out ( ERROR5 ) << pedeerrors.str() << endl;
 	  // TODO: decide what to do now; exit? and if, how?
           streamlog_out ( ERROR5 ) << "Will exit now" << endl;
+
+		// Thomas Eichhorn: Introducing this writes an empty alignment file in case of fail.
+		// This keeps later processors from failing.
+
+		streamlog_out (ERROR5) << "Will write an empty alignment file!" << endl;
+		LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
+		try 
+		{
+			lcWriter->open( _alignmentConstantLCIOFile, LCIO::WRITE_NEW );
+		} catch ( IOException& e ) {
+			streamlog_out ( ERROR5 ) << e.what() << endl;
+			exit(-1);
+		}
+
+		// Write an almost empty run header
+		LCRunHeaderImpl * lcHeader  = new LCRunHeaderImpl;
+		lcHeader->setRunNumber( 0 );
+		lcWriter->writeRunHeader(lcHeader);
+		delete lcHeader;
+
+		// An event:
+		LCEventImpl * event = new LCEventImpl;
+		event->setRunNumber( 0 );
+		event->setEventNumber( 0 );
+
+		// The alignment constant collection we want to write
+		LCCollectionVec * constantsCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
+
+		for (size_t i = 0; i<geo::gGeometry().nPlanes();i++)
+		{
+			EUTelAlignmentConstant * constant = new EUTelAlignmentConstant;
+			constant->setSensorID(i);
+			constant->setXOffset(0.0);
+			constant->setYOffset(0.0);
+			constant->setZOffset(0.0);
+			constant->setAlpha(0.0);
+			constant->setBeta(0.0);
+			constant->setGamma(0.0);
+			constantsCollection->push_back( constant );
+		}
+
+		event->addCollection( constantsCollection, _alignmentConstantCollectionName );
+
+		// Output all this
+		lcWriter->writeEvent( event );
+		delete event;
+		lcWriter->close();
+		streamlog_out (ERROR5) << "Done writing empty alignment file!" << endl;
+
+		// Done Thomas' addition
+
 	  //exit(EXIT_FAILURE); // FIXME: can lead to (ROOT?) seg faults - points to corrupt memory? run valgrind...
 	  return; // does fine for now
 	}
@@ -3066,12 +3116,12 @@ void EUTelMille::bookHistos() {
     const int    tracksNBin = 20  ;
     const double tracksMin  = -0.5;
     const double tracksMax  = 19.5;
-    const int    Chi2NBin = 200 ;
+    const int    Chi2NBin = 1000 ;
     const double Chi2Min  =   0.;
-    const double Chi2Max  = 20.;
-    const int    NBin =   150;
-    const double Min  = -75.;
-    const double Max  =  75.;
+    const double Chi2Max  = 1000.;
+    const int    NBin =   4000;
+    const double Min  = -2000.;
+    const double Max  =  2000.;
 
     AIDA::IHistogram1D * numberTracksLocal =
       AIDAProcessor::histogramFactory(this)->createHistogram1D(_numberTracksLocalname,tracksNBin,tracksMin,tracksMax);
@@ -3273,5 +3323,4 @@ void EUTelMille::bookHistos() {
 }
 
 #endif // USE_GEAR
-
 

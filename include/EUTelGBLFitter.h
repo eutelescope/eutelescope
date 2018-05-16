@@ -99,7 +99,7 @@ namespace eutelescope {
 			//GET
 			float getPositionOfSecondScatter(float start, float end);
 			gbl::GblPoint getLabelToPoint(std::vector<gbl::GblPoint> & pointList, unsigned  int label);
-			void getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList, EUTelTrack& track, std::map< int, std::map< float, float > > & SensorResidual, std::map< int, std::map< float, float > >& sensorResidualError);
+			void getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList, std::map< int, std::map< float, float > > & SensorResidual, std::map< int, std::map< float, float > >& sensorResidualError);
 			inline int getAlignmentMode() const {
 				return _alignmentMode;
 			}
@@ -130,7 +130,7 @@ namespace eutelescope {
 			void resetPerTrack();
 			void findScattersZPositionBetweenTwoStates();
 			TMatrixD findScattersJacobians(EUTelState state, EUTelState nextTrack);
-			void updateTrackFromGBLTrajectory(gbl::GblTrajectory* traj, EUTelTrack& track, std::map<int,std::vector<double> >& mapSensorIDToCorrectionVec );
+			void updateTrackFromGBLTrajectory(gbl::GblTrajectory* traj, EUTelTrack& track );
 			void prepareLCIOTrack( gbl::GblTrajectory*, std::vector<const IMPL::TrackImpl*>::const_iterator&, double, int); 
 			void prepareMilleOut( gbl::GblTrajectory* );
             TVector3 transVecGlobalToLocal(TVector3 input, int location);

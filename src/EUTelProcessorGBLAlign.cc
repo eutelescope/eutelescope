@@ -69,8 +69,6 @@ _mEstimatorType()
     
     registerOptionalParameter("FixedAlignmentPlanesZrotation", "Ids of planes for which rotation around Z will be fixed during millepede call", _fixedAlignmentZRotationPlaneIds, IntVec());
 
-    registerOptionalParameter("PedeSteeringAdditionalCmds","FOR EXPERTS: List of commands that should be included in the pede steering file. Use '\\' to seperate options and introduce a line break.",_pedeSteerAddCmds, StringVec());
-
 		registerOptionalParameter("AlignmentConstantLCIOFile","This is the name of the LCIO file name with the output alignment"
                             "constants (add .slcio)",_alignmentConstantLCIOFile, static_cast< std::string > ( "alignment.slcio" ) );
 		registerOptionalParameter("ExcludePlanes", "This is the planes that will not be included in analysis", _excludePlanes ,IntVec());
@@ -226,7 +224,7 @@ void EUTelProcessorGBLAlign::end(){
 	//TO DO: We automatically create the millepede output file in the directory of execution. We should be able to move these to another folder to stop the clutter in this directory.
 	//The millepede class contains all the functions related to manipulation of steering files, results files from millepede and the scripts related to editing these file.
 	//It also controls the running of millepede. 
-	_Mille->writeMilleSteeringFile(_pedeSteerAddCmds);//This will create the initial steering file. This can then be accessed via the string member variable:_milleSteeringFilename
+	_Mille->writeMilleSteeringFile();//This will create the initial steering file. This can then be accessed via the string member variable:_milleSteeringFilename
 	bool tooManyRejects = 	_Mille->runPede();//This will run millepede and create the initial results file. We automatically line to this through the string variable._milleResultFileName.
 	if(!tooManyRejects){//Check that the intial input fit is successful. We need this for the initial reasonable results file.
 		streamlog_out (MESSAGE9) <<"FIRST ATTEMPT WITH INITIAL INPUT PARAMETERS. NOW TRY TO CONVERGE.......................................  "<< std::endl;

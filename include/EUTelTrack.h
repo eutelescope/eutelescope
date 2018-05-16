@@ -20,7 +20,6 @@ namespace eutelescope {
 		public: 
 			EUTelTrack();
 			EUTelTrack( const EUTelTrack& track);
-			EUTelTrack( const EUTelTrack& track,bool);
 			//getters
             float getChi2() const ;
             float getNdf() const;
