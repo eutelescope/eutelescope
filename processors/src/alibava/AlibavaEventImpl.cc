@@ -3,74 +3,78 @@
  *  (2014 DESY)
  *
  *  email:eda.yildirim@cern.ch
+ *
+ *  modified by: Thomas Eichhorn thomas.eichhorn@desy.de
  */
 
 // personal includes ".h"
 #include "AlibavaEventImpl.h"
 #include "ALIBAVA.h"
 
-// marlin includes ".h"
-
-// lcio includes <.h>
-
 using namespace std;
 using namespace alibava;
 
-AlibavaEventImpl::AlibavaEventImpl() : IMPL::LCEventImpl() { /* NO - OP */
-  ;
+AlibavaEventImpl::AlibavaEventImpl ( ) : IMPL::LCEventImpl ( )
+{
+    /* NO - OP */ ;
 }
 
-void AlibavaEventImpl::setEventType(EventType type) {
-
-  int iType = static_cast<EventType>(type);
-  setEventType(iType);
+void AlibavaEventImpl::setEventType ( EventType type )
+{
+    int iType = static_cast < EventType > ( type );
+    setEventType ( iType );
 }
 
-void AlibavaEventImpl::setEventType(int type) {
-
-  _params.setValue(ALIBAVA::EVENTTYPE, type);
+void AlibavaEventImpl::setEventType ( int type )
+{
+    _params.setValue ( ALIBAVA::EVENTTYPE, type );
 }
 
-void AlibavaEventImpl::setEventValue(float avalue) {
-
-  _params.setValue(ALIBAVA::EVENTVALUE, avalue);
+void AlibavaEventImpl::setEventValue ( float avalue )
+{
+    _params.setValue ( ALIBAVA::EVENTVALUE, avalue );
 }
 
-void AlibavaEventImpl::setEventSize(int asize) {
-
-  _params.setValue(ALIBAVA::EVENTSIZE, asize);
+void AlibavaEventImpl::setEventSize ( int asize )
+{
+    _params.setValue ( ALIBAVA::EVENTSIZE, asize );
 }
 
-void AlibavaEventImpl::setEventCode(int acode) {
-
-  _params.setValue(ALIBAVA::EVENTCODE, acode);
+void AlibavaEventImpl::setEventCode ( int acode )
+{
+    _params.setValue ( ALIBAVA::EVENTCODE, acode );
 }
 
-void AlibavaEventImpl::setEventClock(float aclock) {
-
-  _params.setValue(ALIBAVA::EVENTCLOCK, aclock);
+void AlibavaEventImpl::setEventClock ( float aclock )
+{
+    _params.setValue ( ALIBAVA::EVENTCLOCK, aclock );
 }
 
-void AlibavaEventImpl::setEventTime(float atime) {
-
-  _params.setValue(ALIBAVA::EVENTTIME, atime);
+void AlibavaEventImpl::setEventTime ( float atime )
+{
+    _params.setValue ( ALIBAVA::EVENTTIME, atime );
 }
 
-void AlibavaEventImpl::setEventTemp(float atemp) {
-
-  _params.setValue(ALIBAVA::EVENTTEMP, atemp);
+void AlibavaEventImpl::setEventTemp ( float atemp )
+{
+    _params.setValue ( ALIBAVA::EVENTTEMP, atemp );
 }
 
-void AlibavaEventImpl::setCalCharge(float acharge) {
-
-  _params.setValue(ALIBAVA::CALCHARGE, acharge);
+void AlibavaEventImpl::setCalCharge ( float acharge )
+{
+    _params.setValue ( ALIBAVA::CALCHARGE, acharge );
 }
-void AlibavaEventImpl::setCalDelay(float adelay) {
 
-  _params.setValue(ALIBAVA::CALDELAY, adelay);
+void AlibavaEventImpl::setCalDelay ( float adelay )
+{
+    _params.setValue ( ALIBAVA::CALDELAY, adelay );
 }
-void AlibavaEventImpl::maskEvent() { _params.setValue(ALIBAVA::EVENTMASK, 1); }
-void AlibavaEventImpl::unmaskEvent() {
 
-  _params.setValue(ALIBAVA::EVENTMASK, 0);
+void AlibavaEventImpl::maskEvent ( )
+{
+    _params.setValue ( ALIBAVA::EVENTMASK, 1 );
+}
+void AlibavaEventImpl::unmaskEvent ( )
+{
+    _params.setValue ( ALIBAVA::EVENTMASK, 0 );
 }

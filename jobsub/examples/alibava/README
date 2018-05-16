@@ -1,39 +1,490 @@
-Analysis chain:
+# EUTelescope ALiBaVa Example
 
-To calculate Pedestals
-jobsub -c config.cfg -csv runlist.csv alibava-convert-ped <PedRunNum>
-jobsub -c config.cfg alibava-pedestal <PedRunNum>
-jobsub -c config.cfg -csv runlist.csv alibava-commonmode <PedRunNum>
-jobsub -c config.cfg alibava-pedestal2 <PedRunNum>
+`jobsub/examples/alibava`
 
-To get pedestal subtracted and common mode corrected signal values
-jobsub -c config.cfg -csv runlist.csv alibava-converter <SourceRunNum>
-jobsub -c config.cfg -csv runlist.csv alibava-reco <SourceRunNum>
-jobsub -c config.cfg alibava-commonmodecut <SourceRunNum>
-jobsub -c config.cfg -csv runlist.csv alibava-seedclustering <SourceRunNum>
+**Thomas Eichhorn 2016,2018**
 
-To plot histograms for data before clustering 
-jobsub -c config.cfg -csv runlist.csv alibava-datahisto <SourceRunNum>
-jobsub -c config.cfg -csv runlist.csv alibava-clusterhisto <SourceRunNum>
-
-At this point we have clusters from alibava data, lets get the ones from telescope too
-jobsub -c config.cfg -csv runlist.csv telescope-converter <SourceRunNum>
-jobsub -c config.cfg -csv runlist.csv telescope-clustering <SourceRunNum> 
-jobsub -c config.cfg -csv runlist.csv telescope-filter <SourceRunNum> 
-
-Now it is time to merge telescope and alibava cluster collections
-jobsub -c config.cfg -csv runlist.csv merger <SourceRunNum>
-
-And run hitmaker 
-jobsub -c config.cfg -csv runlist.csv hitmaker-local <SourceRunNum>
-
-If you want to find the missing coordinate values of your hits run missingcoodinate
-jobsub -c config.cfg -csv runlist.csv missingcoordinate <SourceRunNum>
+**thomas.eichhorn@desy.de**
 
 
-Notes:
-<PedRunNum> : Alibava pedestal data run number
-<SourceRunNum> : Alibava beam data run number
+This is the example full analysis and reconstruction of a strip sensor DUT with an ALiBaVa readout system.
+In this folder, there are several folders, scripts and configuration files, which are explained in the following:
+
+* `/gearfiles`:
+
+  This folder contains the GEAR files describing the geometry of your setup.
+  Use different GEAR files for different setups, such as varying rotation angles, telescope plane spacings, magnetic fields etc.
+  Also, if the alignment of the DUT runs into a weak mode or fails, giving a *wrong* DUT angle or DUT position can help in the alignment.
 
 
+* `/output`:
+
+   The EUTelescope processors write to the sub-folders located herein:
+
+  * `output/database`:
+
+    The alignment constants for each run are stored here, together with the hot pixel maps of the telescope planes.
+
+  * `output/histograms`:
+
+    Runs which write a ROOT histogram store them here.
+    Especially for debugging, histograms give valuable information.
+
+  * `output/lcio`:
+
+    This folder contains the LCIO data files which are written by each jobtask.
+    A file with at least one event can be printed to `stdout` by `dumpevent file.lcio eventnr`.
+    You will also have to do this often for debugging.
+
+  * `output/logs`:
+
+    The printouts of each jobtask to `stdout` are saved here.
+
+* `/steering-templates`:
+
+  The jobtask steering files located here tell EUTelescope which processors are to be called with which parameters.
+  You can add a new one with custom EUTelescope processors or modify the existing parameters.
+
+* `config.cfg`:
+
+  This config file has all the basic configuration settings.
+  If you change a folder or file name, you have to set it here.
+  Also, the path to the raw data is stored here, so set it accordingly.
+  Each steering file needs a section in this config file.
+
+* `runlist.csv`:
+
+  This file has the run numbers of all telescope and ALiBaVa runs.
+  Also, configuration settings for an individual run (polarity, temperature, etc.) can be set here.
+  An example file will be explained later on.
+
+* `README`:
+
+  This file.
+
+* `x_<name>.sh`:
+
+  Scripts for performing a specific task on one run.
+  They should be called with `sh scriptname.sh <runnumber>`.
+  Further information is in the individual scripts.
+
+* `z_<name>.sh`:
+
+  Similar scripts that parse the runlist.csv and thus loop over all (or a certain subset of runs) therein.
+  Again, further information is in each script.
+
+## Adapting the Installation to your Setup
+
+To run the analysis, it is assumed you use a somewhat similar geometrical setup, with the DUT positioned between 3 upstream and 3 downstream telescope planes.
+For your individual analysis to work, some small changes must be made to reflect the setup of your test beam measurements.
+
+### The GEAR File
+
+First, the GEAR file should be adjusted to your needs.
+Several example files are included for different DUT positions.
+`gear_alibava_aA_bB_cC_dD.xml` is a setup with the strip sensor DUT of thickness `D` at a rotation angle alpha of `A`, rotation angle beta of `B` and rotation angle gamma of `C`.
+`gear_alibava_a0_b0_c0_d100_bfieldx05.xml` has a magnetic field of `0.5 T` in negative x-direction.
+All included files have the same telescope setup, but this can be changed to your needs.
+`gear_alibava_ref.xml` is for a scenario where a CMS Pixel reference plane is used.
+The telescope plane spacing here is slightly different.
+You do not have to use this naming scheme, but it helps keeping things simple.
+In the file, set the telescope `z` position of each telescope plane (for both the ladder and the sensitive part) and adjust the DUT position (rotation and `z` position) and thickness.
+If the ALiBaVa strips run horizontal, then `y` is the sensitive dimension, so for `x` copy the telescope sensor dimensions, pitch, pixel count etc.
+Otherwise, if the strips run top-down, `x` is sensitive, so `y` gets the telescope sensor dimensions.
+All fields should be self-explanatory.
+The orientation of the coordinate systems can also be found in reference [1][thesis_thomas], in summary, `z` is along the beam, `x` points to the right (when looking along the beam) and `y` points downwards.
+
+### The Run List
+
+The `runlist.csv` file tells the EUTelescope analysis which run files to load with which settings.
+Lines starting with a hash are comments and are not read by EUTelescope.
+Each run taken should be added as a line in this file, with the fields adjusted accordingly.
+Fields not relevant for a run type (e.g. the wire-bond list for a telescope run) can be skipped.
+Scripts are available to then run the analysis on all entries, or on selected subsets.
+The first uncommented line tells EUTelescope in which order the parameters are, change or add things here if you wish.
+These field names are then accessed in the `config.cfg` and the steering files with `@field-name@`.
+
+* `RunNumber`
+
+  This is the last four to six digits of a run file, leading zeros will be added.
+  All run files taken have to be included, that is the telescope run number, the ALiBaVa RS run number and the ALiBaVa pedestal run number.
+  This means there should be at least three lines in the file for one measurement run.
+
+* `FileExtension`
+
+  This is the possible extension of the ALiBaVa files.
+  I used `ped` and `dat` for pedestal and RS runs respectively, but feel free to change this.
+  Some scripts called later on use this field to identify the run type, so you would need to change them too.
+  For these scripts to work, in case of multiple telescope runs for one ALiBaVa run, the first telescope run has to have a `c` in this file extension field, all following a `d`.
+  The `.raw` extension of telescope runs is added automatically.
+
+* `PedRunNumberFormatted`
+
+  This is the six-digit (!) pedestal run number that will be used for reconstruction of a ALiBaVa RS run.
+  Obviously, a single pedestal run can be used for multiple RS runs.
+
+* `Bonds`
+
+  These are the good channels of a sensor, coded as follows:
+
+  ```
+  '$Chip:lowergoodchan-highergoodchan$ $etc.$'
+  ```
+
+  If you use two chips, for example with a sensor bonded to channels `20` to `59` and `61` to `80` of the first chip (implying a bad wire bond at channel `60`) and with another sensor bonded to channels `30` to `90` of the second chip, this field would read:
+
+  ```
+  '$0:20-59$ $0:61-80$ $1:30-90$'
+  ```
+
+  Since the exact good channels of each sensor are determined later in the analysis, for the first runs, set this to the maximum range, i.e. for one chip:
+
+  ```
+  '$0:0-127$'
+  ```
+
+* `TelescopeRun`
+
+  This is the corresponding telescope run to an ALiBaVa RS run.
+  Should there be multiple telescope runs for a single ALiBaVa run, only add the first run.
+
+* `GearGeoFile`
+
+  This is the GEAR file to be used for this run.
+
+* `Pol`
+
+  Here the polarity of the sensor is noted, `-1` for p-bulk, `1` for n-bulk.
+
+* `UnsensAxis`
+
+  Here the nonsensitive coordinate of the DUT is noted, options are `x` or `y`.
+
+* `Filter2`
+
+  This field gives the option to skip the second cross-talk filter iteration in clustering.
+  This feature should only be used for debug purposes.
+
+* `SetupRef`
+
+  Use this integer switch for runs with a pixel reference plane.
+  The alignment and tracking processors will then require a reference plane hit from the sensor with the id given here for a good track.
+
+### The Config File
+
+The config file `config.cfg` contains global settings, used by each processor.
+Every jobtask needs a section in the config file, specified by `[jobtask]`.
+As the fields from the run list are passed by `@FieldName@`, global settings are also passed to the processors with `@setting@`.
+Most settings do not have to be changed, the only one is `NativePath`.
+This should point to the folder where the raw telescope and ALiBaVa data is stored.
+
+## Running the Reconstruction by Hand
+
+Now the `runlist.csv` should contain your runs and the GEAR files the geometry of your setup.
+If you have added the path to your raw data in the `config.cfg`, the analysis can now be run from the command line.
+Each processor group (aka jobtask) can now be run by calling:
+
+```
+jobsub -c config.cfg -csv runlist.csv jobtask runnumber
+```
+
+assuming you did not change the file names.
+Each `jobtask` has a steering file in the `steering-templates` folder and a section in the `config.cfg`.
+The latter file also has a list of output files that will be created.
+In general, the order of jobtasks has to be followed.
+This is because jobtasks expect a certain file to exist, but if the jobtask that creates the file was skipped or crashed, it won't work, since the output file is missing.
+This is also the number one cause of segmentation faults!
+The config file does not have many settings, except for the path to the raw data, which, as explained above, you have to set.
+The steering files are XML files with parameters for the individual EUTelescope processors.
+They are mostly commented, with the comment-string taken from the source code.
+This means that the parameter's description is not necessarily true, so looking at the source code is important.
+The suggested sequence of `jobtasks` for a `DataRun` and corresponding `PedestalRun` and `TelescopeRun` is:
+
+* `convert-ped PedestalRun`
+
+  Convert the raw ALiBaVa pedestal data to the LCIO format.
+
+* `pedestal PedestalRun`
+
+  Calculate the pedestals.
+  If you have enabled all channels in the `runlist.csv`, channels with bad wire bonds can be identified by outliers in the noise and/or pedestal histograms.
+  Mask bad channels and repeat.
+
+* `commonmode PedestalRun`
+
+  Calculate the common mode of this pedestal.
+
+* `pedestal2 PedestalRun`
+
+  Recalculate the pedestal to obtain the noise of this run.
+
+* `pedestalhisto PedestalRun`
+
+  Compute some additional histograms.
+
+* `telescope-converter TelescopeRun`
+
+  Convert the raw telescope data to the LCIO format.
+
+* `telescope-clustering TelescopeRun`
+
+  Cluster the telescope data.
+
+* `telescope-filter TelescopeRun`
+
+  Filter noisy telescope clusters or edge regions, etc.
+
+* `converter DataRun`
+
+  Convert the raw ALiBaVa RS run data to the LCIO format.
+
+* `reco DataRun`
+
+  Reconstruct the ALiBaVa signal levels.
+  The `PedestalRun` output data from the `pedestal2` jobtask is needed here.
+
+* `clustering-1 DataRun`
+
+  Cross-talk is filtered and the data is clustered based on noise levels.
+
+* `clustering-2 DataRun`
+
+  Data is re-filtered for cross-talk and then re-clustered.
+
+* `datahisto DataRun`
+
+  Additional histograms are computed.
+
+* `merge DataRun`
+
+  Clusters from the telescope and the ALiBaVa are merged into a single file, so the output of `telescope-filter` is needed here.
+
+* `hitmaker DataRun`
+
+  Hits in the global coordinate system are calculated and a preliminary prealignment is performed.
+
+* `coordinator DataRun`
+
+  The nonsensitive coordinate is calculated from the prealigned telescope data.
+
+
+After the `coordinator` step, you can choose between two different alignment methods, either DAF or GBL.
+In both cases, several iterations are performed.
+For DAF run:
+
+
+* `alignment-daf-1 DataRun`
+* `alignment-daf-2 DataRun`
+* `alignment-daf-3 DataRun`
+* `alignment-daf-4 DataRun`
+* `alignment-daf-5 DataRun`
+* `tracking-1 DataRun`
+* `alignment-daf-6 DataRun`
+* `alignment-daf-7 DataRun`
+* `tracking-2 DataRun`
+* `alignment-daf-8 DataRun`
+* `alignment-daf-9 DataRun`
+* `alignment-daf-10 DataRun`
+* `tracking-3 DataRun`
+
+For GBL run:
+
+* `alignment-gbl-1 DataRun`
+* `alignment-gbl-2 DataRun`
+* `alignment-gbl-3 DataRun`
+* `alignment-gbl-4 DataRun`
+* `alignment-gbl-5 DataRun`
+* `alignment-gbl-6 DataRun`
+* `alignment-gbl-7 DataRun`
+* `alignment-gbl-8 DataRun`
+* `alignment-gbl-9 DataRun`
+* `alignment-gbl-10 DataRun`
+* `alignment-gbl-11 DataRun`
+* `alignment-gbl-12 DataRun`
+* `alignment-gbl-13 DataRun`
+* `alignment-gbl-14 DataRun`
+* `tracking-gbl DataRun`
+
+In each iteration, the residual cuts, chi2 cut offs, telescope and DUT sensor resolutions, etc. are further constrained towards realistic values.
+Finally, tracking is performed with the telescope (and a possible reference plane) only and the tracking and full ALiBaVa read-out data are saved.
+The ROOT file created by the last step in both alignment methods contains the ROOT TNtuple which is later used for the analysis.
+The objective of most processors is explained in reference [1][thesis_thomas], the focus here is on the technical details.
+If you have multiple telescope runs for one `DataRun`, use the script provided for clustering instead of the above command:
+
+```
+sh x_telescope-multi.sh FirstTelescopeRun
+```
+
+The script will concatenate the following three runs into `FirstTelescopeRun`.
+If you want to concatenate less runs, change the script accordingly.
+For n-bulk runs with suspected non-Gaussian noise (not necessarily all n-bulk runs, c.f.[1][thesis_thomas]), the above sequence has to be changed a bit.
+Instead of calling
+
+```
+jobsub -c config.cfg -csv runlist.csv clustering-1 DataRun
+jobsub -c config.cfg -csv runlist.csv clustering-2 DataRun
+```
+
+use
+
+```
+jobsub -c config.cfg -csv runlist.csv rghfilter DataRun
+jobsub -c config.cfg -csv runlist.csv clustering-1-afterrgh DataRun
+jobsub -c config.cfg -csv runlist.csv clustering-2-afterrgh DataRun
+```
+
+This tries to filter this type of noise.
+
+While running the sequence by hand is tiresome, you can directly see errors on `stdout` and it gives you a feel for the analysis.
+In general, do this for a few test runs and verify the output before you use the scripts.
+Check the created histograms and make sure the distributions and plots make sense.
+Output histogram and LCIO file names are listed in the config file.
+You can also verify that data is transformed correctly by dumping an event to `stdout` as explained above and checking that, for example, a hit gets aligned to the correct position.
+The XML steering parameters used by each run and the `stdout` log are compressed into a zip file on completion of a run.
+Unzip and inspect if you suspect a problem.
+Runs which are still ongoing, or which crashed will have an open log file in the main directory, which you can `tail -f` to follow progress.
+
+## Running the Reconstruction by Script
+
+If this analysis works with the commands above for several runs, you can use the provided scripts to process all runs.
+Be warned that this can hog giant amounts of memory and CPU, so do not do this on your laptop.
+On an average workstation, 10 runs running in parallel is about the maximum.
+Especially high occupancy runs (hint: SLAC and SPS) with many (> ~15) hits per plane per event need lots of memory, so if you have this kind of data, change the scripts accordingly.
+
+### Simple Scripts
+
+The simple scripts (`x_task.sh`) just perform all steps mentioned above for an individual run, i.e.:
+
+```
+sh x_pedestal.sh PedestalRun
+```
+
+```
+sh x_telescope-single.sh TelescopeRun
+```
+
+and
+
+```
+sh x_daf.sh DataRun
+```
+
+or 
+
+```
+sh x_gbl.sh DataRun
+```
+
+just run the above steps for a single run file.
+If you use the pixel reference plane in the telescope setup, in `x_telescope-single.sh` change the second processor from `telescope-clustering` to `telescope-clustering-ref`.
+Similar, `x_telescope-multi.sh` should be used to concatenate multiple telescope files.
+
+### Multi-Run Scripts
+
+The more complex scripts (`z_task`) also perform all steps, but for multiple runs in parallel.
+All scripts parse the `runlist.csv` to get the needed run numbers.
+To only run a select group of runs, edit the scripts (second line, `INPUT=XYZ.csv`) to parse a different run list.
+The master run list (`runlist.csv`) used throughout the script can remain as is.
+The command
+
+```
+sh z_pedestal_all.sh
+```
+
+will process all pedestal runs, with at most 5 runs in parallel.
+5 is used as a maximum, since the frequent I/O processes can crash the system.
+Similarly,
+
+```
+sh z_telescope_all.sh
+```
+
+will run all telescope runs, choosing the normal clustering or the concatenation automatically and then filtering the runs.
+You should adapt `z_telescope_all.sh` as mentioned above if you are using the pixel reference plane.
+The ALiBaVa RS runs are processed by
+
+```
+sh z_data_all_daf.sh
+```
+
+or 
+
+```
+sh z_data_all_gbl.sh
+```
+
+The n-bulk runs where non-Gaussian noise should be corrected are processed with the scripts `z_data_all_daf_n.sh` and `z_data_all_gbl_n.sh`.
+Especially here take care to run this only for a separate run list, as the non-Gaussian noise correction will not work for p-bulk data.
+All complex scripts write a `logoutput` text file which can be `tail -f`'ed to see progress.
+
+### Misc Scripts
+
+Other scripts included in the `jobsub/examples/alibava` folder are:
+
+* `x_getpos.sh
+
+  Script to get the final position of the DUT in the global coordinate system after all alignment steps.
+  Usage:
+
+  ```
+  sh x_getpos.sh DataRun
+  ```
+
+* `x_realign.sh
+
+  Script to use the alignment constants of a good run for a run which does not align.
+  Use with four-digit run numbers:
+
+  ```
+  sh x_realign.sh badDataRun goodDataRun
+  ```
+
+* `x_calibration.sh`
+
+  Analyse an ALiBaVa calibration file.
+
+* `x_daf_n.sh`
+
+  Same reconstruction as in `x_daf.sh`, but with included non-Gaussian noise filtering for n-bulk data.
+
+* `x_gbl_n.sh`
+
+  Same reconstruction as in `x_gbl.sh`, but with included non-Gaussian noise filtering for n-bulk data.
+
+* `x_sim_dut.sh`
+
+  Script to run the reconstruction (in GBL, you can change this) on AllPix-simulated data.
+  The simulation scripts for pedestals and telescope data should again be called before.
+
+* `x_sim_pedestal.sh`
+
+  Script to run the pedestal reconstruction on AllPix-simulated data.
+
+* `x_sim_tel.sh`
+
+  Script to run the telescope clustering and filtering on AllPix-simulated data.
+
+## References
+
+1. Thomas Eichhorn. *Development of Silicon Sensors for the High Luminosity LHC*.
+
+   PhD Thesis, University of Hamburg, 2015. [DESY-THESIS-2015-024][thesis_thomas]
+
+2. Matteo Centis Vignali. *Silicon Sensors for the Upgrades of the CMS Pixel Detector*.
+
+   PhD Thesis, University of Hamburg, 2015. [DESY-THESIS-2015-052][thesis_matteo]
+
+3. Matteo Centis Vignali and Thomas Eichhorn for the Tracker Group of the CMS Experiment. *Characterisation of Irradiated Thin Silicon Sensors for the CMS Phase II Pixel Upgrade*.
+
+   EPJC 77(8), 567 (2017). [doi:10.1140/epjc/s10052-017-5115-z][epi_paper]
+
+4. Lorenzo de Cilladi. *Test beam simulations of Tracker modules for the CMS Phase II Upgrade: pT triggering, efficiency, resolution*.
+
+   [DESY Summer Student Report 2017][lorenzo]
+
+
+[thesis_thomas]:http://dx.doi.org/10.3204/DESY-THESIS-2015-024
+[thesis_matteo]:http://dx.doi.org/10.3204/DESY-THESIS-2015-052
+[epi_paper]:http://dx.doi.org/10.1140/epjc/s10052-017-5115-z
+[lorenzo]:http://www.desy.de/f/students/2017/reports/LorenzoDeCilladi.pdf
 

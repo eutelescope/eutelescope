@@ -1,0 +1,18 @@
+## This line for EUTelescope:
+RunNumber,GearGeoFile,Energy,SetupRef
+
+# MPA file test
+1001,mapsa_cern.xml,,
+
+111,mapsa_cern.xml,,
+112,mapsa_cern.xml,,
+170,mapsa_cern.xml,,
+176,mapsa_cern.xml,120,20
+202,mapsa_cern.xml,120,
+210,mapsa_cern.xml,120,
+212,mapsa_cern.xml,120,20
+213,mapsa_cern.xml,120,20
+214,mapsa_cern.xml,120,20
+215,mapsa_cern.xml,120,20
+216,mapsa_cern.xml,120,20
+303,mapsa_cern.xml,120,20

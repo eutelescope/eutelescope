@@ -1,18 +1,69 @@
-RunNumber, PedestalRunNumber, TelescopeRunNumber,BeamEnergy,MagneticField,Rotation,GearFileName
-613,000602,001057,4.4,0,0,gear-TB5-B000
-602,000602,,,0,0,gear-TB5-B000
-4088,004088,,,1,-0.11,gear-TB6-B100
-4091,004088,001891,4.4,1,-0.1,gear-TB6-B100
-4105,004105,,,1,-20.4,gear-TB6-B100
-4104,004105,001904,4.4,1,-20.44,gear-TB6-B100
-4072,004072,,,1,20.32,gear-TB6-B100
-4076,004072,001878,4.4,0,20.33,gear-TB6-B000
-4182,004182,,,0,15.08,gear-TB6-B000
-4185,004182,001958,4.4,0,15.08,gear-TB6-B000
-4198,004198,,,0,-0.16,gear-TB6-B000
-4197,004198,001970,4.4,0,-0.16,gear-TB6-B000
-4213,004213,,,0,-19.54,gear-TB6-B000
-4212,004213,001982,4.4,0,-19.54,gear-TB6-B000
+#########################################################################################
+#########################################################################################
+# The Runlist
+#
+# Lines with # are skipped by EUTelescope Processors
+#
+# Fields:
+#
+# RunNumber
+#  The last 4-6 digits of a lcio run file, leading 0s will be added.
+#
+# FileExtension
+#  For Alibava runs is this is either ped or dat. First telescope run to be concatenated with others gets c, the added ones d as extension.
+#
+# PedRunNumberFormatted
+#  The 6 digit (!) pedestal run number that will be used for reco.
+#
+# Bonds
+#  The good channels of a sensor, coded: '$Chip:lowergoodchan-highergoodchan$ $etc.$'.
+#
+# TelescopeRun
+#  The corresponding telescope run nr, if more than one, only the first one.
+#
+# GearGeoFile
+#  The gear file to be used for this run.
+#
+# Pol 
+#  The polarity of the sensor. -1 for p-bulk, 1 for n-bulk.
+#
+# UnsensAxis
+#  The unsensitive strip sensor axis. This should also be reflected in the gear file used.
+#
+# Filter2 
+#  Option to skip filtering in the 2nd step
+#
+# SetupRef
+#  Include reference plane with this sensor id. Should also be in the gear file.
+#
+#
+# An empty/not needed field can be skipped by a comma
+#
+#########################################################################################
+#	this line for EUTelescope:
+
+RunNumber,FileExtension,PedRunNumberFormatted,Bonds,TelescopeRun,GearGeoFile,Pol,UnsensAxis,Filter2,SetupRef
 
 
+#########################################################################################
+#########################################################################################
 
+
+#! 100P unirr, 0°, -300V, +20°C, -0.000017mA
+0019,ped,000019,'$0:31-48$ $0:54-58$ $0:68-71$ $0:74-87$',,gear_alibava_a0_b0_c0_d100.xml,,,,
+0022,dat,000019,'$0:31-48$ $0:54-58$ $0:68-71$ $0:74-87$',012260,gear_alibava_a0_b0_c0_d100.xml,-1,x,,
+012260,c,,,,gear_alibava_a0_b0_c0_d100.xml,,,,
+012261,d,,,,gear_alibava_a0_b0_c0_d100.xml,,,,
+012262,d,,,,gear_alibava_a0_b0_c0_d100.xml,,,,
+012263,d,,,,gear_alibava_a0_b0_c0_d100.xml,,,,
+
+
+#! 100N 1e15, 25°, 300V, -20°C, 0.0087mA
+0447,ped,000447,'$0:33-46$ $0:50-54$ $0:59-62$ $0:65-76$ $0:80-94$',,gear_alibava_a25_b0_c0_d100.xml,,,,
+0438,dat,000447,'$0:33-46$ $0:50-54$ $0:59-62$ $0:65-76$ $0:80-94$',003692,gear_alibava_a25_b0_c0_d100.xml,1,x,,
+003692,,,,,gear_alibava_a25_b0_c0_d100.xml,,,,
+
+
+#! 100S unirr, 0°, 100V, +20°C, simulated 
+000900,ped,000900,'$0:1-126$',000900,gear_alibava_a0_b0_c0_d100.xml,,,,
+000908,dat,000900,'$0:1-126$',000908,gear_alibava_a0_b0_c0_d100.xml,1,x,,

@@ -1,0 +1,48 @@
+=============================================================================
+
+MPA Analysis with EUTelescope
+
+Thomas Eichhorn 2018
+thomas.eichhorn@desy.de
+
+=============================================================================
+
+This is the example analysis and reconstruction of a CMS MPA chip and sensor
+as DUT with an FE-I4 as a refrence plane
+
+=============================================================================
+
+Folder contents:
+
+/gearfiles:
+
+  Contains gear files for various setup scenarios. 
+
+/output:
+
+  The output created by the EUTelescope processors will be written to the 
+subfolders herein.
+
+/steering-templates:
+
+  This folder contains the steering templates used to control the processors. 
+They are explained further on.
+
+/config.cfg:
+
+  The configuration file. Data paths should be changed, other settings should 
+work for most scenarios.
+
+/runlist.csv:
+
+  A file containing the information of the runs to be processed. Run-specific 
+parameters are read from this file. It can also be parsed by the scripts for 
+running multiple runs.
+
+/README:
+
+  This file.
+
+/x_mpa.sh:
+
+  Script to run through the reconstruction. Call with sh mpa.sh <runnumber> .
