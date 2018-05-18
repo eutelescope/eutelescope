@@ -66,6 +66,9 @@
 #include <iostream>
 #include <fstream>
 
+// ROOT includes ".h"
+#include <TMath.h>
+
 using namespace std;
 using namespace lcio;
 using namespace marlin;
