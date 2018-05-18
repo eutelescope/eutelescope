@@ -9,6 +9,7 @@
       <processor name="AIDA"/>
       <processor name="HitMakerM26"/>
       <processor name="HitMakerAPIX"/>
+      <processor name="HitLocalToGlobal"/>
       <processor name="Correlator"/>
       <processor name="PreAligner"/>
       <processor name="Save"/>
@@ -37,52 +38,54 @@
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
 
- <processor name="HitMakerM26" type="EUTelProcessorHitMaker">
- <!--EUTelHitMakerTwo is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
-  <!--If true a 3D histo will be filled. It may require large memory-->
-  <!--parameter name="Enable3DHisto" type="bool">true </parameter-->
-  <!--Hit coordinates are calculated in local reference frame of sensor-->
-  <!--parameter name="EnableLocalCoordidates" type="bool">false </parameter-->
-  <!--Hit collection name-->
-  <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
-  <!--This is the name of the LCIO file name with the output offset db (add .slcio)-->
-  <!--parameter name="OffsetDBFile" type="string">offset-db.slcio </parameter-->
-  <!--Cluster (pulse) collection name-->
-  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse">cluster_m26_free </parameter>
-  <!--This is the name of the reference hit collection initialized in this processor. This collection provides the reference vector to correctly determine a plane corresponding to a global hit coordiante.-->
-  <!--parameter name="ReferenceCollection" type="string">referenceHit </parameter-->
-  <!--This is the file where the reference hit collection is stored-->
-  <parameter name="ReferenceHitFile" type="string"> @DatabasePath@/run@RunNumber@-refhit-db.slcio </parameter>
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
- </processor>
 
- <processor name="HitMakerAPIX" type="EUTelProcessorHitMaker">
- <!--EUTelHitMakerTwo is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
-  <!--If true a 3D histo will be filled. It may require large memory-->
-  <!--parameter name="Enable3DHisto" type="bool">true </parameter-->
+
+ <processor name="HitMakerM26" type="EUTelProcessorHitMaker">
+ <!--EUTelProcessorHitMaker is responsible to translate cluster centers from the local frame of reference 
+to the external frame of reference using the GEAR geometry description-->
   <!--Hit coordinates are calculated in local reference frame of sensor-->
-  <!--parameter name="EnableLocalCoordidates" type="bool">false </parameter-->
-  <!--Hit collection name-->
-  <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
-  <!--This is the name of the LCIO file name with the output offset db (add .slcio)-->
-  <!--parameter name="OffsetDBFile" type="string">offset-db.slcio </parameter-->
-  <!--Cluster (pulse) collection name-->
-  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse">cluster_apix_free </parameter>
-  <!--This is the name of the reference hit collection initialized in this processor. This collection provides the reference vector to correctly determine a plane corresponding to a global hit coordiante.-->
-  <!--parameter name="ReferenceCollection" type="string">referenceHit </parameter-->
-  <!--This is the file where the reference hit collection is stored-->
-  <parameter name="ReferenceHitFile" type="string"> @DatabasePath@/run@RunNumber@-refhit-db.slcio </parameter>
+  <parameter name="EnableLocalCoordidates" type="bool"> true </parameter>
+  <!--Output hit collection name-->
+  <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> local_hit </parameter>
+  <!--Input cluster collection name-->
+  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26_free </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
- </processor>
+</processor>
+
+<processor name="HitMakerAPIX" type="EUTelProcessorHitMaker">
+ <!--EUTelProcessorHitMaker is responsible to translate cluster centers from the local frame of reference 
+to the external frame of reference using the GEAR geometry description-->
+  <!--Hit coordinates are calculated in local reference frame of sensor-->
+  <parameter name="EnableLocalCoordidates" type="bool"> true </parameter>
+  <!--Output hit collection name-->
+  <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> local_hit </parameter>
+  <!--Input cluster collection name-->
+  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_apix_free </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="HitLocalToGlobal" type="EUTelProcessorCoordinateTransformHits">
+ <!--EUTelLocaltoGlobalHitMaker is responsible to change local coordinates to global. This is done using the EUTelGeometryClass-->
+  <!--Local input hit collection name-->
+  <parameter name="hitCollectionNameInput" type="string" lcioInType="TrackerHit"> local_hit </parameter>
+  <!--Global output hit collection name-->
+  <parameter name="hitCollectionNameOutput" type="string" lcioOutType="TrackerHit"> hit </parameter>
+  <!--Set to true to undo the alignment instead-->
+  <!--parameter name="Undo Alignment (boolean)" type="bool" value="false"/-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+</processor>
 
 <processor name="PreAligner" type="EUTelPreAlign">
  <!--Apply alignment constants to hit collection-->
-  <!--Name of LCIO db file where alignment constantds will be stored-->
-  <parameter name="AlignmentConstantLCIOFile" type="string"> @DatabasePath@/run@RunNumber@-prealign-db.slcio </parameter>
   <!--How many events should be used for an approximation to the X,Y shifts (pre-alignment)? (default=50000)-->
   <parameter name="Events" type="int">9999 </parameter>
+  <!--Dump alignment into GEAR file instead of prealignment database-->
+  <parameter name="DumpGEAR" type="bool" value="true"/>
+  <!--Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file-->
+  <parameter name="NewGEARSuffix" type="string" value="@RunNumber@_pre"/>
   <!--SensorID of fixed plane-->
   <!--parameter name="FixedPlane" type="int">0 </parameter-->
   <!--Switch on or off the histogram filling-->
@@ -90,7 +93,7 @@
   <!--This is the name of the hot pixel collection that clusters should be checked against (optional). -->
   <!--parameter name="HotPixelCollectionName" type="string"> </parameter-->
   <!--The name of the input hit collection-->
-  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit">hit </parameter>
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
   <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
   <!--parameter name="MinNumberOfCorrelatedHits" type="int">5 </parameter-->
   <!--reference hit collection name -->
@@ -150,7 +153,7 @@
 <processor name="Save" type="EUTelOutputProcessor">
  <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
   <!--drops the named collections from the event-->
-  <!--parameter name="DropCollectionNames" type="StringVec">TPCHits HCalHits  </parameter-->
+  <parameter name="DropCollectionNames" type="StringVec"> hit </parameter>
   <!--drops all collections of the given type from the event-->
   <!--parameter name="DropCollectionTypes" type="StringVec">SimTrackerHit SimCalorimeterHit  </parameter-->
   <!-- write complete objects in subset collections to the file (i.e. ignore subset flag)-->

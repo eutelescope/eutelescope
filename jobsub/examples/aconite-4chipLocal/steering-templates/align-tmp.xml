@@ -117,23 +117,28 @@
   <parameter name="mccollections" type="StringVec"> </parameter>
 </processor>
 
+
  <processor name="PedeToGEAR" type="EUTelPedeGEAR">
  <!--EUTelPedeGEAR calls PEDE to process a MILLE binary file and create an updated GEAR file with the updated MILLEPEDE II alignment constants.-->
   <!--Number of alignment constants used. Available mode are: 
-1 - shifts in the X and Y directions and a rotation around the Z axis,
-2 - only shifts in the X and Y directions
-3 - (EXPERIMENTAL) shifts in the X,Y and Z directions and rotations around all three axis-->
-  <parameter name="AlignMode" type="int" value="3"/>
+		XYShiftsRotZ - shifts in the X and Y directions and a rotation around the Z axis,
+		XYShifts - only shifts in the X and Y directions
+		XYShiftsAllRot - shifts in the X,Y and Z directions and rotations around all three axis-->
+  <parameter name="AlignMode" type="string"> @AlignMode@ </parameter>
   <!--Exclude planes from fit according to their sensor ids.-->
-  <parameter name="ExcludePlanes" type="IntVec" value="@ExcludePlanes@"/>
+  <parameter name="ExcludePlanes" type="IntVec"> @ExcludePlanes@ </parameter>
   <!--Fix sensor planes in the fit according to their sensor ids.-->
-  <parameter name="FixedPlanes" type="IntVec" value="@FixedPlanes@"/>
+  <parameter name="FixedPlanes" type="IntVec"> @FixedPlanes@ </parameter>
   <!--Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file-->
-  <parameter name="NewGEARSuffix" type="string" value="_aligned"/>
+  <parameter name="NewGEARSuffix" type="string"> _aligned </parameter>
+  <!--Offset scale factor.-->
+  <!--parameter name="OffsetScaleFactor" type="int">1000 </parameter-->
   <!--Name of the steering file for the pede program.-->
-  <parameter name="PedeSteerfileName" type="string" value="@DatabasePath@/@FilePrefix@-pede-steer.txt"/>
+  <parameter name="PedeSteerfileName" type="string"> @DatabasePath@/@FilePrefix@-pede-steer.txt </parameter>
+  <!--Apply the obtained rotation to the preexisting offset vector or not..-->
+  <!--parameter name="RotateOffsetVec" type="bool">false </parameter-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
 </processor>
 
  <processor name="Align" type="EUTelMille">
@@ -143,10 +148,10 @@
   <!--Track collection name. This is only relevant if InputMode is set to larger to 1-->
   <parameter name="TrackCollectionName" type="string" lcioInType="Track"> tracks </parameter>
   <!--Number of alignment constants used. Available mode are: 
-1 - shifts in the X and Y directions and a rotation around the Z axis,
-2 - only shifts in the X and Y directions
-3 - (EXPERIMENTAL) shifts in the X,Y and Z directions and rotations around all three axis-->
-  <parameter name="AlignMode" type="int" value="3"/>
+XYShiftsRotZ - shifts in the X and Y directions and a rotation around the Z axis,
+XYShifts - only shifts in the X and Y directions
+XYShiftsAllRot - shifts in the X,Y and Z directions and rotations around all three axis-->
+  <parameter name="AlignMode" type="string" value="@AlignMode@"></parameter>
   <!--This is the name of the alignment collection to be saved into the slcio file-->
   <!--parameter name="AlignmentConstantCollectionName" type="string" value="alignment"/-->
   <!--This is the name of the LCIO file name with the output alignmentconstants (add .slcio)-->
