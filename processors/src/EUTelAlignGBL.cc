@@ -340,7 +340,9 @@ void EUTelAlignGBL::init() {
 
   // booking histograms
   bookHistos(_sensorIDVec);
-
+  gblutil.setParent(this);
+  gblutil.bookHistos();
+  
   streamlog_out( MESSAGE2 ) << "Initialising Mille..." << endl;
 
   unsigned int reserveSize = 8000;
@@ -370,8 +372,6 @@ void EUTelAlignGBL::init() {
 
 //------------------------------------------------------------------------------
 void EUTelAlignGBL::processRunHeader( LCRunHeader* rdr ) {
-  gblutil.setParent(this);
-  gblutil.bookHistos();
   auto header = std::make_unique<EUTelRunHeaderImpl>(rdr);
   header->addProcessor( type() ) ;
   // increment the run counter
