@@ -552,6 +552,8 @@ void EUTelDafBase::init() {
   case simpleCluster:
     _system.setClusterRadius(_normalizedRadius);
     break;
+  default:
+    _system.setClusterRadius(_normalizedRadius);
   }
   _system.setNominalXdz(
       _nXdz); // What is the tangent angle of the beam? (Probably zero)
@@ -814,6 +816,8 @@ void EUTelDafBase::processEvent(LCEvent *event) {
   case simpleCluster:
     _system.clusterTracker();
     break;
+  default:
+    _system.clusterTracker();
   }
 
   // Child specific actions

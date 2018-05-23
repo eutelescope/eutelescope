@@ -693,10 +693,10 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
 
         auto const & resVecX = _planeResolutionX[trackhit->plane];
         auto const & resVecY = _planeResolutionY[trackhit->plane];
-        //auto cluX = trackhit->clustersizex; 
-        auto cluX = trackhit->clustersize; 
-        //auto cluY = trackhit->clustersizey; 
-        auto cluY = trackhit->clustersize; 
+        auto cluX = static_cast<size_t>(trackhit->clustersizex);
+        //auto cluX = static_cast<size_t>(trackhit->clustersize);
+        auto cluY = static_cast<size_t>(trackhit->clustersizey);
+        //auto cluY = static_cast<size_t>(trackhit->clustersize);
         double _x_resolution_tmp = (cluX >= resVecX.size()) ? resVecX.back() : resVecX[cluX];
         double _y_resolution_tmp = (cluY >= resVecY.size()) ? resVecY.back() : resVecY[cluY];
       

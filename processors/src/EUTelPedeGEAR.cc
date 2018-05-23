@@ -299,7 +299,7 @@ void EUTelPedeGEAR::end() {
       // within the next 80 chars
       //(with offset of 22 chars since pch points to beginning of "Sum(..."
       //string just found)
-      char *pch = (char *)((memchr(pch0 + 22, '=', 180)));
+      const char *pch = static_cast<const char*>(memchr(pch0 + 22, '=', 180));
 
       if (pch != NULL) {
         char str[16];

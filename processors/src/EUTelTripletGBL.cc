@@ -239,7 +239,7 @@ void EUTelTripletGBL::init() {
 //------------------------------------------------------------------------------
 void EUTelTripletGBL::processRunHeader( LCRunHeader* runHeader) {
 
-  std::auto_ptr<EUTelRunHeaderImpl> eutelHeader( new EUTelRunHeaderImpl( runHeader ) );
+  auto eutelHeader = std::make_unique<EUTelRunHeaderImpl>( runHeader );
   eutelHeader->addProcessor( type() );
 
   // Decode and print out Run Header information - just a check

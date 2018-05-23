@@ -2180,8 +2180,7 @@ void EUTelProcessorAnalysisPALPIDEfs::end() {
       else
         binName += Form("%d", symmetryGroups[i][j]);
     }
-    clusterShapeHistoGrouped->GetXaxis()->SetBinLabel(i + 1,
-                                                      (char *)binName.c_str());
+    clusterShapeHistoGrouped->GetXaxis()->SetBinLabel(i + 1, binName.c_str());
   }
   for (int iSector = 0; iSector < _nSectors; iSector++) {
     for (unsigned int i = 0; i < symmetryGroups.size(); i++) {
@@ -2196,7 +2195,7 @@ void EUTelProcessorAnalysisPALPIDEfs::end() {
           binName += Form("%d", symmetryGroups[i][j]);
       }
       clusterShapeHistoGroupedSector[iSector]->GetXaxis()->SetBinLabel(
-          i + 1, (char *)binName.c_str());
+          i + 1, binName.c_str());
     }
   }
   tmp = 0;

@@ -51,12 +51,6 @@ namespace eutelescope {
     virtual void dafEnd();
     //! Set fitter specific params
     virtual void dafParams();
-    //! Calculate Z coordinate for a pair X:Y on a plane define by refhit
-    //! collection and "plane" id
-    /* input - plane and pos[0] and pos[1]
-     * output - pos[2] to be overwritten with the right value
-     */
-    virtual double getZfromRefHit(int plane, int sensorID, double *pos);
 
   protected:
     //! Output track collection name
