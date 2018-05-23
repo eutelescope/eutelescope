@@ -158,7 +158,6 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelAlignGBL") {
 
   registerInputCollections(LCIO::TRACKERHIT,"HitCollectionName","Hit collections name",_hitCollectionName,HitCollectionNameVecExample);
   registerProcessorParameter("Ebeam","Beam energy [GeV]",_eBeam, static_cast<double>(4.0));
-  registerProcessorParameter("IsFirstAlignStep", "Bool: 1/0 (yes/no)",_IsFirstAlignStep, static_cast<int>(0));
 
   registerOptionalParameter("ExcludePlanes","Exclude planes from fit according to their sensor ids.",_excludePlanes_sensorIDs ,std::vector<int>());
 
@@ -248,52 +247,11 @@ void EUTelAlignGBL::init() {
                             << "\n\t_planeWscatSi has size: \t" << _planeWscatSi.size() 
                             << "\n\t_planeWscatAir has size: \t" << _planeWscatAir.size() << '\n';
 
-  // The measurement resolution depends on threshold, energy, dz, and number of iterations done ...
-  // We make an accurate, heuristic  guess
-  double distplane = _planePosition[1] - _planePosition[0];
-  double res = 0;
-  if( distplane > 100. ) {
-   res = 100. - _eBeam*8;
-   if (_eBeam > 11) {
-       res = 8;
-   }
-  }
-  else if( distplane < 30. ) {
-   res = 20. - _eBeam*1.5; // if only tracks with prob(chi2,ndf) > 0.001 are passed to Mille
-  }
-  else if( distplane > 30. && distplane < 100. ) {
-   res = 50 - _eBeam*3.8; 
-   if (_eBeam > 10) {
-       res = 6.;
-   }
-  }
-
-/*
-  if(!_IsFirstAlignStep){
-   // 2nd iteration 20
-   if( distplane < 30. ) {
-       res = 4.4 - _eBeam*0.1;
-   }
-   // 2nd iteration 150
-   else if( distplane > 100. ) {
-       res = 18 - _eBeam*1.5;
-   }
-  }
-*/
-
-  res = res/1000.; // finally convert to [mm]
-     
-  streamlog_out( MESSAGE2 ) << "res x = " << res << endl;
-
-
   for(size_t ipl = 0; ipl < _nPlanes; ipl++) {
     auto x_res = _x_resolution_vec.at(ipl)/1000.0;
     auto y_res = _y_resolution_vec.at(ipl)/1000.0;
-    if(_IsFirstAlignStep) {
-      _planeMeasPrec.emplace_back(1.0/res/res, 1.0/res/res);
-    } else {
-      _planeMeasPrec.emplace_back(1.0/x_res/x_res, 1.0/y_res/y_res);
-    }
+    _planeMeasPrec.emplace_back(1.0/x_res/x_res, 1.0/y_res/y_res);
+    
   }
 
   // the user is giving sensor ids for the planes to be fixed.
@@ -352,13 +310,6 @@ void EUTelAlignGBL::init() {
   milleAlignGBL = std::make_unique<gbl::MilleBinary>( _binaryFilename, reserveSize );
 
   streamlog_out( MESSAGE2 ) << "The filename for the binary file is: " << _binaryFilename.c_str() << endl;
-
-  // apply correction to cut if is not first alignment step
-  if(!_IsFirstAlignStep){
-    _triCut = _triCut*6./_eBeam;
-    _driCut = _driCut*6./_eBeam;
-    _sixCut = _sixCut*6./_eBeam;
-  }
 
   if(_alignModeString.compare("XYShiftsRotZ") == 0 ) {
     _alignMode = Utility::alignMode::XYShiftsRotZ;
