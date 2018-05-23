@@ -34,8 +34,7 @@ using namespace eutelescope;
 using namespace gear;
 #endif
 
-EUTelMatrixDecoder::EUTelMatrixDecoder(int xNoOfPixel, int yNoOfPixel) throw(
-    InvalidParameterException)
+EUTelMatrixDecoder::EUTelMatrixDecoder(int xNoOfPixel, int yNoOfPixel)
     : _xNoOfPixel(xNoOfPixel), _yNoOfPixel(yNoOfPixel), _xMin(0), _yMin(0) {
 
   if (xNoOfPixel <= 0)

@@ -206,7 +206,7 @@ namespace eutelescope {
      *  information, a SkipEventException is thrown and the geometry
      *  will be initialize with the following event.
      */
-    void initializeGeometry(LCEvent *event) throw(marlin::SkipEventException);
+    void initializeGeometry(LCEvent *event);
 
   protected:
     //! Input collection name.

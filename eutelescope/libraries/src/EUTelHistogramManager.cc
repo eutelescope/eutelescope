@@ -40,8 +40,7 @@ EUTelHistogramManager::~EUTelHistogramManager() {
   _histoInfoMap.clear();
 }
 
-bool EUTelHistogramManager::init() throw(std::exception,
-                                         marlin::ParseException) {
+bool EUTelHistogramManager::init() {
 
   TiXmlDocument *doc = new TiXmlDocument;
 

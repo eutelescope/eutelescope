@@ -185,7 +185,7 @@ namespace eutelescope {
      *  @throw exception in case of problem reading the info file
      *  @throw ParseException in case of problem parsing the XML file
      */
-    bool init() throw(std::exception, marlin::ParseException);
+    bool init();
 
     //! Get the histogram information corresponding to histoName
     /*! This method is used to return a pointer to a

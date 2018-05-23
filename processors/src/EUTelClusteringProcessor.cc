@@ -293,8 +293,7 @@ void EUTelClusteringProcessor::processRunHeader(LCRunHeader *rdr) {
   ++_iRun;
 }
 
-void EUTelClusteringProcessor::initializeGeometry(LCEvent *event) throw(
-    marlin::SkipEventException) {
+void EUTelClusteringProcessor::initializeGeometry(LCEvent *event) {
   // set the total number of detector to zero. This number can be
   // different from the one written in the gear description because
   // the input collection can contain only a fraction of all the
