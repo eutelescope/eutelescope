@@ -145,7 +145,7 @@ namespace eutelescope {
      *
      *  @param evt the current LCEvent event as passed by the ProcessMgr
      */
-    virtual void modifyEvent(LCEvent *){};
+    virtual void modifyEvent(LCEvent*){};
 
     //! Check event method
     /*! This method is called by the Marlin execution framework as
@@ -155,7 +155,7 @@ namespace eutelescope {
      *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      */
-    virtual void check(LCEvent *evt);
+    virtual void check(LCEvent*){};
 
     //! Called after data processing.
     /*! This method is called when the loop on events is finished. It

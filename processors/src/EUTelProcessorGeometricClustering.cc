@@ -180,17 +180,15 @@ void EUTelProcessorGeometricClustering::readCollections(LCEvent *event) {
 }
 
 void EUTelProcessorGeometricClustering::processEvent(LCEvent *event) {
-  // increment event counter
+
   ++_iEvt;
 
-  // first of all we need to be sure that the geometry is properly initialized!
   if (!_isGeometryReady) {
     initializeGeometry(event);
   }
 
   readCollections(event);
 
-  // book the histograms now
   if (_fillHistos && isFirstEvent()) {
     bookHistos();
   }
@@ -498,11 +496,6 @@ void EUTelProcessorGeometricClustering::geometricClustering(
       delete sparseClusterCollectionVec;
     }
   }
-}
-
-void EUTelProcessorGeometricClustering::check(LCEvent * /* evt */) {
-  // nothing to check here - could be used to fill check plots in reconstruction
-  // processor
 }
 
 void EUTelProcessorGeometricClustering::end() {
