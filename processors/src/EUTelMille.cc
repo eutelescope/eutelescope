@@ -1114,7 +1114,7 @@ void EUTelMille::FitTrack(unsigned int nPlanesFitter, double xPosFitter[],
 }
 
 void EUTelMille::FillHotPixelMap(LCEvent *event) {
-  LCCollectionVec *hotPixelCollectionVec = 0;
+  LCCollectionVec *hotPixelCollectionVec = nullptr;
   try {
     hotPixelCollectionVec = static_cast<LCCollectionVec *>(
         event->getCollection(_hotPixelCollectionName));
@@ -2513,7 +2513,7 @@ bool EUTelMille::hitContainsHotPixels(TrackerHitImpl *hit) {
 
         TrackerDataImpl *clusterFrame =
             dynamic_cast<TrackerDataImpl *>(clusterVector[0]);
-        if (clusterFrame == 0) {
+        if (clusterFrame == nullptr) {
           // found invalid result from cast
           throw UnknownDataTypeException(
               "Invalid hit found in method hitContainsHotPixels()");
@@ -2969,7 +2969,7 @@ void EUTelMille::end() {
         {
           const char *pch0 =
               strstr(pedeoutput.str().data(), "Sum(Chi^2)/Sum(Ndf) = ");
-          if (pch0 != 0) {
+          if (pch0 != nullptr) {
             streamlog_out(DEBUG5)
                 << " Parsing pede output for final chi2/ndf result.. " << endl;
             // search for the equal sign after which the result for chi2/ndf is

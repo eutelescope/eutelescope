@@ -380,7 +380,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     int clusterdim[2] = {0,0};
 
     TrackerDataImpl* clusterVector = static_cast<TrackerDataImpl*>( meshit->getRawHits()[0]);
-    EUTelSimpleVirtualCluster * cluster=0;
+    EUTelSimpleVirtualCluster * cluster = nullptr;
 
     float locx = -1;
     float locy = -1;

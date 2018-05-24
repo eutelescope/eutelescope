@@ -63,7 +63,7 @@ using namespace lcio ;
 using namespace marlin ;
 using namespace eutelescope;
 
-EUTelFixDUTAlignment::EUTelFixDUTAlignment ( ) : Processor ( "EUTelFixDUTAlignment" ), _siPlanesParameters ( NULL ), _siPlanesLayerLayout ( NULL )
+EUTelFixDUTAlignment::EUTelFixDUTAlignment ( ) : Processor ( "EUTelFixDUTAlignment" ), _siPlanesParameters ( nullptr ), _siPlanesLayerLayout ( nullptr )
 {
     _description = "Does some very hacky stuff: Mode 0: creates a user-specified DUT alignment. Mode 1: creates 4 dummy hits for each telescope plane and the DUT. The total DUT alignment steps can then be applied to these hits to get the final alignment of the DUT sensor.";
 
@@ -93,7 +93,7 @@ EUTelFixDUTAlignment::EUTelFixDUTAlignment ( ) : Processor ( "EUTelFixDUTAlignme
 
 void EUTelFixDUTAlignment::init ( )
 {
-    if ( Global::GEAR == 0x0 )
+    if ( Global::GEAR == nullptr )
     {
 	streamlog_out ( ERROR5 ) << "The GearMgr is not available, for an unknown reason." << endl;
 	exit ( -1 );

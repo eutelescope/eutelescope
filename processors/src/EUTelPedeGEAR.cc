@@ -292,7 +292,7 @@ void EUTelPedeGEAR::end() {
 
     const char *pch0 =
         strstr(pedeoutput.str().data(), "Sum(Chi^2)/Sum(Ndf) = ");
-    if (pch0 != 0) {
+    if (pch0 != nullptr) {
       streamlog_out(DEBUG5)
           << " Parsing pede output for final chi2/ndf result.. " << std::endl;
       // search for the equal sign after which the result for chi2/ndf is stated

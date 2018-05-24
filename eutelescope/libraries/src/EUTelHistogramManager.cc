@@ -47,7 +47,7 @@ bool EUTelHistogramManager::init() {
   if (doc->LoadFile(_histoInfoFileName)) {
 
     TiXmlHandle hDoc(doc);
-    TiXmlHandle hRoot(0);
+    TiXmlHandle hRoot(nullptr);
     TiXmlElement *pElem;
 
     pElem = hDoc.FirstChildElement().Element();
@@ -150,7 +150,7 @@ EUTelHistogramManager::getHistogramInfo(std::string histoName) const {
   std::map<std::string, EUTelHistogramInfo *>::const_iterator iter =
       _histoInfoMap.find(histoName);
   if (iter == _histoInfoMap.end())
-    return 0x0;
+    return nullptr;
   return iter->second;
 }
 

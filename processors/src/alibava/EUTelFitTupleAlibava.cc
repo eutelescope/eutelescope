@@ -216,7 +216,7 @@ void EUTelFitTupleAlibava::init ( )
     _matchedhits = 0;
 
     // check if the GEAR manager pointer is not null!
-    if ( Global::GEAR == 0x0 )
+    if ( Global::GEAR == nullptr )
     {
 	streamlog_out ( ERROR5 ) << "The GearMgr is not available, for an unknown reason." << endl;
 	exit ( -1 );
@@ -1550,9 +1550,9 @@ void EUTelFitTupleAlibava::processEvent ( LCEvent * event )
 			float clustercharge = 0.0;
 
 			TrackerDataImpl* clusterVector = static_cast < TrackerDataImpl* > ( meshit -> getRawHits ( ) [0] );
-			EUTelSimpleVirtualCluster * cluster = 0;
+			EUTelSimpleVirtualCluster * cluster = nullptr;
 			cluster = new EUTelSparseClusterImpl < EUTelGenericSparsePixel > ( clusterVector );
-			if ( cluster != 0 )
+			if ( cluster != nullptr )
 			{
 			    cluster -> getClusterSize ( clustersizeX, clustersizeY );
 			    clustercharge = cluster -> getTotalCharge ( );

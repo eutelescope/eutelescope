@@ -164,7 +164,7 @@ INCLUDE_DIRECTORIES( ./geometries/include/ )
 INCLUDE_DIRECTORIES( ./external/millepede2/$ENV{MILLEPEDEII_VERSION} )
  
 # definitions to pass to the compiler
-ADD_DEFINITIONS( "-Wno-effc++ -Wall -std=c++11 -pedantic -Wextra -Wcast-align -Wcast-qual -Wuseless-cast" )
+ADD_DEFINITIONS( "-Wno-effc++ -Wall -std=c++11 -pedantic -Wextra -Wcast-align -Wcast-qual -Wuseless-cast -Wzero-as-null-pointer-constant" )
 ADD_DEFINITIONS( "-Wno-long-long" )
 
 # debuging warnings and switches - only active if  CMAKE_BUILD_TYPE  is set to debug

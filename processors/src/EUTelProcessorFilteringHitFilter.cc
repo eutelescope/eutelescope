@@ -130,11 +130,11 @@ void EUTelProcessorFilteringHitFilter::processEvent(LCEvent *event) {
   } catch (lcio::DataNotAvailableException e) {
     streamlog_out(WARNING) << _hitInputCollectionName
                            << " collection not available" << std::endl;
-    hitInputCollection = 0;
+    hitInputCollection = nullptr;
   }
 
   // this will only be entered if the collection is available
-  if (hitInputCollection != 0 && hitOutputCollection != 0) {
+  if (hitInputCollection != nullptr && hitOutputCollection != nullptr) {
     for (int iHit = 0; iHit < hitInputCollection->getNumberOfElements();
          iHit++) {
       TrackerHitImpl *hit =

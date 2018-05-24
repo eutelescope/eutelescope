@@ -25,7 +25,7 @@ using namespace std;
 using namespace eutelescope;
 
 EUTelRunHeaderImpl::EUTelRunHeaderImpl(const EUTelRunHeaderImpl &z)
-    : _lcHeader(NULL) {
+    : _lcHeader(nullptr) {
   IMPL::LCRunHeaderImpl *zlcrunheader =
       const_cast<EUTelRunHeaderImpl &>(z).lcRunHeader();
   _lcHeader->setRunNumber(zlcrunheader->getRunNumber());

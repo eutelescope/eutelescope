@@ -159,7 +159,7 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt) {
       bookHistos();
     }
 #endif
-    hotPixelCollectionVec = 0;
+    hotPixelCollectionVec = nullptr;
     try {
       hotPixelCollectionVec = static_cast<LCCollectionVec *>(
           evt->getCollection(_hotPixelCollectionName));
@@ -186,7 +186,7 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt) {
     } else
       _noiseMaskAvailable = false;
 
-    deadColumnCollectionVec = 0;
+    deadColumnCollectionVec = nullptr;
     try {
       deadColumnCollectionVec = static_cast<LCCollectionVec *>(
           evt->getCollection(_deadColumnCollectionName));

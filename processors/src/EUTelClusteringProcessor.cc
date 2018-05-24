@@ -87,10 +87,10 @@ EUTelClusteringProcessor::EUTelClusteringProcessor()
       _clusterSignal_NHistos(), _clusterSNR_NHistos(),
       _clusterSignal_NxNHistos(), _clusterSNR_NxNHistos(),
       _isGeometryReady(false), _ancillaryIndexMap(), _orderedSensorIDVec(),
-      _sensorIDVec(), zsInputDataCollectionVec(NULL),
-      nzsInputDataCollectionVec(NULL), pulseCollectionVec(NULL),
-      noiseCollectionVec(NULL), statusCollectionVec(NULL),
-      hotPixelCollectionVec(NULL), hasNZSData(false), hasZSData(false),
+      _sensorIDVec(), zsInputDataCollectionVec(nullptr),
+      nzsInputDataCollectionVec(nullptr), pulseCollectionVec(nullptr),
+      noiseCollectionVec(nullptr), statusCollectionVec(nullptr),
+      hotPixelCollectionVec(nullptr), hasNZSData(false), hasZSData(false),
       _hitIndexMapVec() {
 
   // modify processor description
@@ -427,7 +427,7 @@ void EUTelClusteringProcessor::initializeHotPixelMapVec() {
     }
 
     // the noise map. we only need this map for decoding issues.
-    TrackerDataImpl *noise = 0;
+    TrackerDataImpl *noise = nullptr;
 
     // the noise map. we only need this map for decoding issues.
     noise = dynamic_cast<TrackerDataImpl *>(
@@ -573,7 +573,7 @@ void EUTelClusteringProcessor::readCollections(LCEvent *event) {
 
   //
   //
-  statusCollectionVec = 0;
+  statusCollectionVec = nullptr;
   try {
     statusCollectionVec = dynamic_cast<LCCollectionVec *>(
         event->getCollection(_statusCollectionName));
@@ -583,7 +583,7 @@ void EUTelClusteringProcessor::readCollections(LCEvent *event) {
     streamlog_out(DEBUG4) << "No status collection found in the event" << endl;
   }
 
-  noiseCollectionVec = 0;
+  noiseCollectionVec = nullptr;
   try {
     noiseCollectionVec = dynamic_cast<LCCollectionVec *>(
         event->getCollection(_noiseCollectionName));
@@ -597,8 +597,8 @@ void EUTelClusteringProcessor::readCollections(LCEvent *event) {
   // the hotpixel db file should be read only once, and
   // only after the statusCollection has been created (opened)
   //
-  if (isFirstEvent() && statusCollectionVec != 0) {
-    hotPixelCollectionVec = 0;
+  if (isFirstEvent() && statusCollectionVec != nullptr) {
+    hotPixelCollectionVec = nullptr;
     try {
       hotPixelCollectionVec = static_cast<LCCollectionVec *>(
           event->getCollection(_hotPixelCollectionName));
@@ -772,7 +772,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(
   // clustering. BTW we should consider changing that "meaningful"
   // name! This contains cluster and not yet pulses
   bool isDummyAlreadyExisting = false;
-  LCCollectionVec *sparseClusterCollectionVec = NULL;
+  LCCollectionVec *sparseClusterCollectionVec = nullptr;
   try {
     sparseClusterCollectionVec =
         dynamic_cast<LCCollectionVec *>(evt->getCollection("original_zsdata"));
@@ -824,7 +824,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(
     // get the noise and the status matrix with the right detectorID
     //    TrackerRawDataImpl * status = 0;
     // the noise map. we only need this map for decoding issues.
-    TrackerDataImpl *noise = 0;
+    TrackerDataImpl *noise = nullptr;
 
     // get the noise and the status matrix with the right detectorID
     //    status =
@@ -1264,7 +1264,7 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(
   // clustering. BTW we should consider changing that "meaningful"
   // name! This contains cluster and not yet pulses
   bool isDummyAlreadyExisting = false;
-  LCCollectionVec *sparseClusterCollectionVec = NULL;
+  LCCollectionVec *sparseClusterCollectionVec = nullptr;
   try {
     sparseClusterCollectionVec =
         dynamic_cast<LCCollectionVec *>(evt->getCollection("original_zsdata"));
@@ -1565,7 +1565,7 @@ void EUTelClusteringProcessor::zsBrickedClustering(
   // clustering. BTW we should consider changing that "meaningful"
   // name! This contains cluster and not yet pulses
   bool isDummyAlreadyExisting = false;
-  LCCollectionVec *sparseClusterCollectionVec = NULL;
+  LCCollectionVec *sparseClusterCollectionVec = nullptr;
   try {
     sparseClusterCollectionVec =
         dynamic_cast<LCCollectionVec *>(evt->getCollection("original_zsdata"));
@@ -1984,7 +1984,7 @@ void EUTelClusteringProcessor::sparseClustering(
   CellIDDecoder<TrackerDataImpl> cellDecoder(zsInputDataCollectionVec);
 
   bool isDummyAlreadyExisting = false;
-  LCCollectionVec *sparseClusterCollectionVec = NULL;
+  LCCollectionVec *sparseClusterCollectionVec = nullptr;
 
   try {
     sparseClusterCollectionVec =
@@ -2239,7 +2239,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(
   streamlog_out(DEBUG0) << "Event " << _iEvt << endl;
 
   bool isDummyAlreadyExisting = false;
-  LCCollectionVec *dummyCollection = NULL;
+  LCCollectionVec *dummyCollection = nullptr;
   try {
     dummyCollection = dynamic_cast<LCCollectionVec *>(
         evt->getCollection(_dummyCollectionName));
@@ -2511,7 +2511,7 @@ void EUTelClusteringProcessor::nzsBrickedClustering(
   streamlog_out(DEBUG0) << "nzsBrickedClustering: Event " << _iEvt << endl;
 
   bool isDummyAlreadyExisting = false;
-  LCCollectionVec *dummyCollection = NULL;
+  LCCollectionVec *dummyCollection = nullptr;
   try {
     dummyCollection = dynamic_cast<LCCollectionVec *>(
         evt->getCollection(_dummyCollectionName));

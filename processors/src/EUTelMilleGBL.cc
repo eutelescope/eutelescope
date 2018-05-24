@@ -683,7 +683,7 @@ void EUTelMilleGBL::init ( )
     #else
 
     // check that the GEAR manager pointer is not null
-    if ( Global::GEAR == 0x0 )
+    if ( Global::GEAR == nullptr )
     {
 	streamlog_out( ERROR5 ) << "The GEAR manager is not available!" << endl;
 	exit ( -1 );

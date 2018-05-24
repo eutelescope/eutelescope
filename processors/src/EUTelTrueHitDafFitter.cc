@@ -561,7 +561,7 @@ void EUTelTrueHitDafFitter::readHitCollection(LCEvent *event) {
     bool region = true;
     int planeIndex = -1;
 
-    if ((trueHit != 0) && (trueHit->getQuality() == 1)) {
+    if ((trueHit != nullptr) && (trueHit->getQuality() == 1)) {
 
       const double *hitpos = trueHit->getPosition();
       pos[0] = hitpos[0];
@@ -1083,8 +1083,8 @@ void EUTelTrueHitDafFitter::end() {
     sprintf(iden, "%d", plane.getSensorID());
     string bname = static_cast<string>("pl") + iden + "_";
 
-    if (_aidaHistoMap[bname + "residualX"] != 0 &&
-        _aidaHistoMap[bname + "residualY"] != 0) {
+    if (_aidaHistoMap[bname + "residualX"] != nullptr &&
+        _aidaHistoMap[bname + "residualY"] != nullptr) {
 
       streamlog_out(MESSAGE5)
           << "plane:" << i

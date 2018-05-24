@@ -208,7 +208,7 @@ void EUTelCorrelator::init() {
                          0.5 * geo::gGeometry().siPlaneYSize(sensorID);
   }
 
-  _outputCorrelatedHitCollectionVec = 0;
+  _outputCorrelatedHitCollectionVec = nullptr;
 
   _isInitialize = false;
 }
@@ -367,7 +367,7 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
           externalCluster = new EUTelSparseClusterImpl<EUTelGenericSparsePixel>(
               static_cast<TrackerDataImpl *>(externalPulse->getTrackerData()));
 
-          if (externalCluster != 0 &&
+          if (externalCluster != nullptr &&
               externalCluster->getTotalCharge() < _clusterChargeMin) {
             delete externalCluster;
             continue;
@@ -436,7 +436,7 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
                       static_cast<TrackerDataImpl *>(
                           internalPulse->getTrackerData()));
 
-              if (internalCluster != 0 &&
+              if (internalCluster != nullptr &&
                   internalCluster->getTotalCharge() < _clusterChargeMin) {
                 delete internalCluster;
                 continue;
@@ -656,7 +656,7 @@ void EUTelCorrelator::end() {
         if (inPlaneID == getFixedPlaneID())
           continue;
 
-        if (_hitXCorrShiftMatrix[exPlaneID][inPlaneID] == 0)
+        if (_hitXCorrShiftMatrix[exPlaneID][inPlaneID] == nullptr)
           continue;
         if (_hitXCorrShiftMatrix[exPlaneID][inPlaneID]->yAxis().bins() <= 0)
           continue;
@@ -1085,23 +1085,23 @@ void EUTelCorrelator::bookHistos() {
         } else {
 
           if (_hasClusterCollection && !_hasHitCollection) {
-            innerMapXCluster[col] = NULL;
-            innerMapYCluster[col] = NULL;
+            innerMapXCluster[col] = nullptr;
+            innerMapYCluster[col] = nullptr;
 
-            innerMapXCluShift[col] = NULL;
-            innerMapYCluShift[col] = NULL;
-            innerMapXCluShiftProjection[col] = NULL;
-            innerMapYCluShiftProjection[col] = NULL;
+            innerMapXCluShift[col] = nullptr;
+            innerMapYCluShift[col] = nullptr;
+            innerMapXCluShiftProjection[col] = nullptr;
+            innerMapYCluShiftProjection[col] = nullptr;
           }
 
           if (_hasHitCollection) {
-            innerMapXHit[col] = NULL;
-            innerMapYHit[col] = NULL;
+            innerMapXHit[col] = nullptr;
+            innerMapYHit[col] = nullptr;
 
-            innerMapXHitShift[col] = NULL;
-            innerMapYHitShift[col] = NULL;
-            innerMapXHitShiftProjection[col] = NULL;
-            innerMapYHitShiftProjection[col] = NULL;
+            innerMapXHitShift[col] = nullptr;
+            innerMapYHitShift[col] = nullptr;
+            innerMapXHitShiftProjection[col] = nullptr;
+            innerMapYHitShiftProjection[col] = nullptr;
           }
         }
       }
@@ -1136,7 +1136,7 @@ void EUTelCorrelator::bookHistos() {
         xMin = (isHistoManagerAvailable && histoInfo) ? histoInfo->_xMin : -10.;
         xMax = (isHistoManagerAvailable && histoInfo) ? histoInfo->_xMax : 10.;
 
-        AIDA::IHistogram1D *histo1D = 0;
+        AIDA::IHistogram1D *histo1D = nullptr;
         histo1D = AIDAProcessor::histogramFactory(this)->createHistogram1D(
             tempHistoName.c_str(), xBin, xMin, xMax);
         tempHistoTitle = "HitXShift/" + _hitXCorrShiftProjectionHistoName +

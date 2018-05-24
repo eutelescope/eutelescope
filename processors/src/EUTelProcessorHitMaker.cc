@@ -149,8 +149,8 @@ void EUTelProcessorHitMaker::processEvent(LCEvent *event) {
                             << endl;
   }
 
-  LCCollectionVec *pulseCollection = 0;
-  LCCollectionVec *hitCollection = 0;
+  LCCollectionVec *pulseCollection = nullptr;
+  LCCollectionVec *hitCollection = nullptr;
 
   try {
     pulseCollection = static_cast<LCCollectionVec *>(

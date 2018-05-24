@@ -13,7 +13,7 @@
 namespace eutelescope {
 
   EUTelTrackFitter::EUTelTrackFitter()
-      : _name("DefaultTrackFitter"), _LCIO_fittrackvec(0), _LCIO_fithitvec(0) {
+      : _name("DefaultTrackFitter"), _LCIO_fittrackvec(nullptr), _LCIO_fithitvec(nullptr) {
 
     // reset the hit and track vectors
     Clear();
@@ -27,7 +27,7 @@ namespace eutelescope {
       }
   */
   EUTelTrackFitter::EUTelTrackFitter(std::string name)
-      : _name(name), _LCIO_fittrackvec(0), _LCIO_fithitvec(0) {
+      : _name(name), _LCIO_fittrackvec(nullptr), _LCIO_fithitvec(nullptr) {
 
     // reset the hit and track vectors
     Clear();
@@ -48,7 +48,7 @@ namespace eutelescope {
 
   void EUTelTrackFitter::Clear() {
 
-    if (getFitHitVec() == 0)
+    if (getFitHitVec() == nullptr)
       try {
         _LCIO_fithitvec = new LCCollectionVec(LCIO::TRACKERHIT);
         LCFlagImpl flag(_LCIO_fithitvec->getFlag());
@@ -62,7 +62,7 @@ namespace eutelescope {
     else
       _LCIO_fithitvec->clear();
 
-    if (getFitTrackVec() == 0)
+    if (getFitTrackVec() == nullptr)
       try {
         _LCIO_fittrackvec = new LCCollectionVec(LCIO::TRACK);
         LCFlagImpl flag(_LCIO_fittrackvec->getFlag());

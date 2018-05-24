@@ -150,7 +150,7 @@ namespace eutelescope {
 
   public:
     //! Default constructor
-    EUTelRunHeaderImpl(lcio::LCRunHeader *lcHeader) : _lcHeader(NULL) {
+    EUTelRunHeaderImpl(lcio::LCRunHeader *lcHeader) : _lcHeader(nullptr) {
       _lcHeader = dynamic_cast<IMPL::LCRunHeaderImpl *>(lcHeader);
     }
 

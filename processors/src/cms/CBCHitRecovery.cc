@@ -217,9 +217,9 @@ void CBCHitRecovery::processEvent ( LCEvent * anEvent )
                 }*/
 
                 // variables
-                const double *cTelescope2Pos = 0;
-                const double *cVirtualHitPos = 0;
-                const double *cTelescope3Pos = 0;
+                const double *cTelescope2Pos = nullptr;
+                const double *cVirtualHitPos = nullptr;
+                const double *cTelescope3Pos = nullptr;
 
                 // find the fit hit points of the track (needed to calculate the fir hits in the dut
                 int nEntries = inputFitPointVec -> getNumberOfElements ( );
@@ -249,7 +249,7 @@ void CBCHitRecovery::processEvent ( LCEvent * anEvent )
                 // check that there are tracks in the event
                 if (nEntries != 0) {
                         // and that we have succeeded to get the track positions
-                        if (cTelescope2Pos == 0 || cVirtualHitPos == 0 || cTelescope3Pos == 0) {
+                        if (cTelescope2Pos == nullptr || cVirtualHitPos == nullptr || cTelescope3Pos == nullptr) {
                                 streamlog_out ( WARNING ) << "No fit hit for some of the planes in the event " <<  anEvent -> getEventNumber ( ) << endl;
                         } else {
                                 // track from upstream (it pointed from dut to the telescope plane 2, then we will reconstruct sensor 60 hit)

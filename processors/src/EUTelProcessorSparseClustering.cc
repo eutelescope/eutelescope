@@ -69,8 +69,8 @@ EUTelProcessorSparseClustering::EUTelProcessorSparseClustering()
       _totClusterMap(), _noOfDetector(0), _ExcludedPlanes(),
       _clusterSignalHistos(), _clusterSizeXHistos(), _clusterSizeYHistos(),
       _seedSignalHistos(), _hitMapHistos(), _eventMultiplicityHistos(),
-      _isGeometryReady(false), _sensorIDVec(), _zsInputDataCollectionVec(NULL),
-      _pulseCollectionVec(NULL), _sparseMinDistanceSquared(2) {
+      _isGeometryReady(false), _sensorIDVec(), _zsInputDataCollectionVec(nullptr),
+      _pulseCollectionVec(nullptr), _sparseMinDistanceSquared(2) {
 
   // modify processor description
   _description = "EUTelProcessorSparseClustering is looking for clusters into "
@@ -255,7 +255,7 @@ void EUTelProcessorSparseClustering::sparseClustering(
   CellIDDecoder<TrackerDataImpl> cellDecoder(_zsInputDataCollectionVec);
 
   bool isDummyAlreadyExisting = false;
-  LCCollectionVec *sparseClusterCollectionVec = NULL;
+  LCCollectionVec *sparseClusterCollectionVec = nullptr;
 
   try {
     sparseClusterCollectionVec =

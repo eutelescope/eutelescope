@@ -167,8 +167,8 @@ void EUTelMissingCoordinateEstimator::processEvent ( LCEvent * event )
 	streamlog_out ( WARNING2 ) << "Event number " << evt -> getEventNumber ( ) << " in run " << evt -> getRunNumber ( ) << " is of unknown type. Continue considering it as a normal data event." << endl;
     }
 
-    LCCollectionVec * inputHitCollection = 0;
-    LCCollectionVec * outputHitCollection = 0;
+    LCCollectionVec * inputHitCollection = nullptr;
+    LCCollectionVec * outputHitCollection = nullptr;
 
     try
     {

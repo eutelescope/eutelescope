@@ -40,7 +40,7 @@ namespace alibava
 
 	public:
 
-	    AlibavaRunHeaderImpl ( lcio::LCRunHeader * lcHeader ) : _lcHeader(NULL)
+	    AlibavaRunHeaderImpl ( lcio::LCRunHeader * lcHeader ) : _lcHeader(nullptr)
 	    {
 		_lcHeader = dynamic_cast < IMPL::LCRunHeaderImpl* > ( lcHeader );
 	    }

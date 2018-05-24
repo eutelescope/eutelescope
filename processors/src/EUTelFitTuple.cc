@@ -120,7 +120,7 @@ void EUTelFitTuple::init() {
   _tluTimeStamp = 0;
 
   // check if the GEAR manager pointer is not null!
-  if (Global::GEAR == 0x0) {
+  if (Global::GEAR == nullptr) {
     message<ERROR5>("The GearMgr is not available, for an unknown reason.");
     exit(-1);
   }

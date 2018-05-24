@@ -663,11 +663,11 @@ void EUTelDafBase::readHitCollection(LCEvent *event) {
       if (_mcCollectionStr.size() > 0) {
         _mcCollection = dynamic_cast<LCCollectionVec *>(
             event->getCollection(_mcCollectionStr[i]));
-        SimTrackerHitImpl *simhit = 0;
-        if (_mcCollection != 0)
+        SimTrackerHitImpl *simhit = nullptr;
+        if (_mcCollection != nullptr)
           simhit = static_cast<SimTrackerHitImpl *>(
               _mcCollection->getElementAt(iHit));
-        if (simhit != 0) {
+        if (simhit != nullptr) {
           UTIL::CellIDDecoder<SimTrackerHitImpl> simHitDecoder(_mcCollection);
           const double *simpos = simhit->getPosition();
           pos[0] = simpos[0];
@@ -676,12 +676,12 @@ void EUTelDafBase::readHitCollection(LCEvent *event) {
           int planeID = simHitDecoder(simhit)["sensorID"];
           planeIndex = _indexIDMap[planeID];
         }
-        streamlog_out(DEBUG5) << " SIM: simhit=" << (simhit != 0)
+        streamlog_out(DEBUG5) << " SIM: simhit=" << (simhit != nullptr)
                               << " add point [" << planeIndex << "] "
                               << static_cast<float>(pos[0]) * 1000.0f << " "
                               << static_cast<float>(pos[1]) * 1000.0f << " "
                               << static_cast<float>(pos[2]) * 1000.0f << endl;
-      } else if (hit != 0) {
+      } else if (hit != nullptr) {
         const double *hitpos = hit->getPosition();
         pos[0] = hitpos[0];
         pos[1] = hitpos[1];
@@ -1125,8 +1125,8 @@ void EUTelDafBase::end() {
     char iden[4];
     sprintf(iden, "%d", plane.getSensorID());
     string bname = static_cast<string>("pl") + iden + "_";
-    if (_aidaHistoMap[bname + "residualX"] != 0 &&
-        _aidaHistoMap[bname + "residualY"] != 0)
+    if (_aidaHistoMap[bname + "residualX"] != nullptr &&
+        _aidaHistoMap[bname + "residualY"] != nullptr)
       streamlog_out(MESSAGE5)
           << "plane:" << ii
           << "  x-stat :" << _aidaHistoMap[bname + "residualX"]->allEntries()

@@ -40,7 +40,7 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
       _alignmentPAlpideCollectionName("alignmentPAlpide"),
       _alignmentCollectionName("alignment"),
       _preAlignmentCollectionName("prealign"), _zsDataCollectionName(""),
-      zsInputDataCollectionVec(NULL), _hotPixelCollectionName(""), limit(0.05),
+      zsInputDataCollectionVec(nullptr), _hotPixelCollectionName(""), limit(0.05),
       _dutID(6), _maxNumberOfPixels(3), _nPlanesWithMoreHits(4),
       _moreTracks(false), _energy(6.0), _writeShapes(false),
       _shapeOutputFileName("./shapeDistribution.txt"),
@@ -55,7 +55,7 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
       nFakeWithoutTrack(8, 0), nFake(8, 0), nFakeWithTrackCorrected(8, 0),
       nDUThits(0), nNoPAlpideHit(0), nWrongPAlpideHit(0),
       nPlanesWithTooManyHits(0), xZero(0), yZero(0), xPitch(0), ySize(0),
-      xPixel(0), yPixel(0), hotPixelCollectionVec(NULL)
+      xPixel(0), yPixel(0), hotPixelCollectionVec(nullptr)
 
 {
   _description = "Analysis of the fitted tracks";
@@ -292,7 +292,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt) {
   if (_isFirstEvent) {
     // Hot pixel collection
     // -----------------------------------------------------------------------
-    hotPixelCollectionVec = 0;
+    hotPixelCollectionVec = nullptr;
     try {
       hotPixelCollectionVec = static_cast<LCCollectionVec *>(
           evt->getCollection(_hotPixelCollectionName));
@@ -336,7 +336,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt) {
 
     // Dead column collection
     // ---------------------------------------------------------------------
-    deadColumnCollectionVec = 0;
+    deadColumnCollectionVec = nullptr;
     try {
       deadColumnCollectionVec = static_cast<LCCollectionVec *>(
           evt->getCollection(_deadColumnCollectionName));
@@ -434,7 +434,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt) {
 
   // Input collection
   // -----------------------------------------------------------------------------
-  LCCollection *col;
+  LCCollection *col = nullptr;
   try {
     col = evt->getCollection(_inputColName);
   } catch (lcio::DataNotAvailableException &e) {
@@ -447,7 +447,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt) {
 
   // Fitted hits
   // ----------------------------------------------------------------------------------
-  LCCollection *colFit = 0;
+  LCCollection *colFit = nullptr;
   bool fitHitAvailable = true;
   try {
     colFit = evt->getCollection(_inputFittedHitName);
@@ -463,7 +463,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt) {
 
   // Tracks
   // ---------------------------------------------------------------------------------------
-  LCCollection *colTrack = NULL;
+  LCCollection *colTrack = nullptr;
   try {
     colTrack = evt->getCollection(_trackCollectionName);
   } catch (DataNotAvailableException e) {
@@ -474,9 +474,9 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt) {
 
   // Alignment
   // ------------------------------------------------------------------------------------
-  LCCollectionVec *alignmentPAlpideCollectionVec = 0;
-  LCCollectionVec *alignmentCollectionVec = 0;
-  LCCollectionVec *preAlignmentCollectionVec = 0;
+  LCCollectionVec *alignmentPAlpideCollectionVec = nullptr;
+  LCCollectionVec *alignmentCollectionVec = nullptr;
+  LCCollectionVec *preAlignmentCollectionVec = nullptr;
   try {
     alignmentCollectionVec = dynamic_cast<LCCollectionVec *>(
         evt->getCollection(_alignmentCollectionName));
@@ -560,7 +560,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt) {
     int nHit = col->getNumberOfElements();
     for (int ihit = 0; ihit < nHit; ihit++) {
       TrackerHit *hit = dynamic_cast<TrackerHit *>(col->getElementAt(ihit));
-      if (hit != 0) {
+      if (hit != nullptr) {
         const double *pos = hit->getPosition();
         std::vector<double> posFakeHit;
         posFakeHit.push_back(pos[0]);
@@ -796,7 +796,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt) {
         for (int ihit = 0; ihit < nHit; ihit++) {
           TrackerHit *hit = dynamic_cast<TrackerHit *>(col->getElementAt(ihit));
           double pos[3] = {0., 0., 0.};
-          if (hit != 0) {
+          if (hit != nullptr) {
             const double *pos0 = hit->getPosition();
             pos[0] = pos0[0];
             pos[1] = pos0[1];
@@ -843,7 +843,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt) {
                   TrackerHit *hitNext =
                       dynamic_cast<TrackerHit *>(col->getElementAt(jhit));
                   double posNext[3] = {0., 0., 0.};
-                  if (hitNext != 0) {
+                  if (hitNext != nullptr) {
                     const double *pos0Next = hitNext->getPosition();
                     posNext[0] = pos0Next[0];
                     posNext[1] = pos0Next[1];
@@ -2475,11 +2475,11 @@ bool EUTelProcessorAnalysisPALPIDEfs::RemoveAlign(
   TVector3 inputVec(fitpos[0] - xPlaneCenter, fitpos[1] - yPlaneCenter,
                     fitpos[2] - zPlaneCenter);
   // cerr << zPlaneThickness << "\t" << zPlaneCenter << endl;
-  EUTelAlignmentConstant *alignment = 0;
+  EUTelAlignmentConstant *alignment = nullptr;
   bool alignExist = false;
-  EUTelAlignmentConstant *preAlignment = 0;
+  EUTelAlignmentConstant *preAlignment = nullptr;
   bool prealignExist = false;
-  EUTelAlignmentConstant *alignmentPAlpide = 0;
+  EUTelAlignmentConstant *alignmentPAlpide = nullptr;
   bool alignPAlpideExist = false;
   if (!_oneAlignmentCollection) {
     for (int iAlign = 0;

@@ -152,18 +152,18 @@ namespace eutelescope {
     //(basically a two dimensional array)
     template <class T> class dim2array {
     public:
-      dim2array() : array(NULL), size_x(0), size_y(0) { createarray(); }
-      dim2array(int x, int y) : array(NULL), size_x(x), size_y(y) {
+      dim2array() : array(nullptr), size_x(0), size_y(0) { createarray(); }
+      dim2array(int x, int y) : array(nullptr), size_x(x), size_y(y) {
         createarray();
       }
       dim2array(const unsigned int x, const unsigned int y, T value)
-          : array(NULL), size_x(x), size_y(y) {
+          : array(nullptr), size_x(x), size_y(y) {
         createarray();
         for (unsigned int i = 0; i < (size_x * size_y); ++i)
           array[i] = value;
       }
       dim2array(const dim2array &a)
-          : array(NULL), size_x(a.size_x), size_y(a.size_y) {
+          : array(nullptr), size_x(a.size_x), size_y(a.size_y) {
         // size_x = a.size_x;
         // size_y = a.size_y;
         createarray();

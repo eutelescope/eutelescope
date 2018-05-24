@@ -56,8 +56,8 @@ using namespace marlin ;
 using namespace eutelescope;
 
 EUTelDUTPosition::EUTelDUTPosition ( ) : Processor ( "EUTelDUTPosition" ),
-_siPlanesParameters ( NULL ),
-_siPlanesLayerLayout ( NULL )
+_siPlanesParameters ( nullptr ),
+_siPlanesLayerLayout ( nullptr )
 {
 
     // modify processor description
@@ -76,7 +76,7 @@ _siPlanesLayerLayout ( NULL )
 
 void EUTelDUTPosition::init ( )
 {
-    if ( Global::GEAR == 0x0 )
+    if ( Global::GEAR == nullptr )
     {
 	streamlog_out ( ERROR5 ) << "The GearMgr is not available, for an unknown reason." << endl;
 	exit ( -1 );

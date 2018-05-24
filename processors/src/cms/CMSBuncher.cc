@@ -123,9 +123,9 @@ LCEvent *CMSBuncher::readTelescope ( )
     try
     {
 	LCEvent *evt = lcReader -> readNextEvent ( );
-	if ( evt == NULL )
+	if ( evt == nullptr )
 	{
-	    return ( 0 );
+	    return nullptr;
 	    streamlog_out ( ERROR1 ) << "FAIL! NULL Event!" << endl ;
 	}
 	return ( evt );
@@ -133,7 +133,7 @@ LCEvent *CMSBuncher::readTelescope ( )
     catch ( IOException& e )
     {
 	streamlog_out ( ERROR1 ) << "FAIL: " << e.what ( ) << endl ;
-	return ( 0 );
+	return nullptr;
     }
 }
 

@@ -92,7 +92,7 @@ std::string EUTelTestFitter::_hitAmbiguityHistoName = "nAmbig";
 
 EUTelTestFitter::EUTelTestFitter()
     : Processor("EUTelTestFitter"), _isFirstEvent(false),
-      _siPlanesParameters(NULL), _siPlanesLayerLayout(NULL),
+      _siPlanesParameters(nullptr), _siPlanesLayerLayout(nullptr),
       _histoInfoFileName(""), _inputColName(""), _outputTrackColName(""),
       _correctedHitColName(""), _outputHitColName(""),
       _alignmentCollectionNames(), _InputHitsInTrack(false),
@@ -108,16 +108,16 @@ EUTelTestFitter::EUTelTestFitter()
       _chi2Min(0.0), _useNominalResolution(false), _useDUT(false),
       _useBeamConstraint(false), _beamSpread(0.0), _beamSlopeX(0.0),
       _beamSlopeY(0.0), _eBeam(0.0), _nTelPlanes(0), _nActivePlanes(0),
-      _iDUT(0), _planeSort(NULL), _planeID(NULL), _planeShiftX(NULL),
-      _planeShiftY(NULL), _planeRotZ(NULL), _planePosition(NULL),
-      _planeThickness(NULL), _planeX0(NULL), _planeResolution(NULL),
-      _isActive(NULL), _planeWindowIDs(NULL), _planeMaskIDs(NULL), _nRun(0),
-      _nEvt(0), _planeHits(NULL), _planeChoice(NULL), _planeMod(NULL),
-      _planeX(NULL), _planeEx(NULL), _planeY(NULL), _planeEy(NULL),
-      _planeScatAngle(NULL), _planeDist(NULL), _planeScat(NULL), _fitX(NULL),
-      _fitEx(NULL), _fitY(NULL), _fitEy(NULL), _fitArray(NULL),
-      _nominalFitArrayX(NULL), _nominalErrorX(NULL), _nominalFitArrayY(NULL),
-      _nominalErrorY(NULL), _noOfEventWOInputHit(0), _noOfEventWOTrack(0),
+      _iDUT(0), _planeSort(nullptr), _planeID(nullptr), _planeShiftX(nullptr),
+      _planeShiftY(nullptr), _planeRotZ(nullptr), _planePosition(nullptr),
+      _planeThickness(nullptr), _planeX0(nullptr), _planeResolution(nullptr),
+      _isActive(nullptr), _planeWindowIDs(nullptr), _planeMaskIDs(nullptr), _nRun(0),
+      _nEvt(0), _planeHits(nullptr), _planeChoice(nullptr), _planeMod(nullptr),
+      _planeX(nullptr), _planeEx(nullptr), _planeY(nullptr), _planeEy(nullptr),
+      _planeScatAngle(nullptr), _planeDist(nullptr), _planeScat(nullptr), _fitX(nullptr),
+      _fitEx(nullptr), _fitY(nullptr), _fitEy(nullptr), _fitArray(nullptr),
+      _nominalFitArrayX(nullptr), _nominalErrorX(nullptr), _nominalFitArrayY(nullptr),
+      _nominalErrorY(nullptr), _noOfEventWOInputHit(0), _noOfEventWOTrack(0),
       _noOfTracks(0), _aidaHistoMap(), _aidaHistoMap1D(), _aidaHistoMap2D(),
       _UseSlope(false), _SlopeXLimit(0.0), _SlopeYLimit(0.0),
       _SlopeDistanceMax(0.0), _fittedXcorr(), _fittedYcorr(), _fittedZcorr(),
@@ -378,7 +378,7 @@ void EUTelTestFitter::init() {
 #else
 
   // check if the GEAR manager pointer is not null!
-  if (Global::GEAR == 0x0) {
+  if (Global::GEAR == nullptr) {
     streamlog_out(ERROR2)
         << "The GearMgr is not available, for an unknown reason." << endl;
     exit(-1);
@@ -911,7 +911,7 @@ void EUTelTestFitter::processEvent(LCEvent *event) {
                     event->getCollection(_alignmentCollectionNames[i]));
             // next, find the alignment constant corresponding to the DUT
 
-            EUTelAlignmentConstant *c = NULL;
+            EUTelAlignmentConstant *c = nullptr;
             for (size_t iPos = 0; iPos < alignmentCollectionVec->size();
                  ++iPos) {
               c = static_cast<EUTelAlignmentConstant *>(
@@ -1027,12 +1027,12 @@ void EUTelTestFitter::processEvent(LCEvent *event) {
     // Hit position
     //
     double pos[3] = {0., 0., 0.};
-    if (meshit != 0) {
+    if (meshit != nullptr) {
       const double *pos0 = meshit->getPosition();
       pos[0] = pos0[0];
       pos[1] = pos0[1];
       pos[2] = pos0[2];
-    } else if (meshit == 0 && simhit != 0) {
+    } else if (meshit == nullptr && simhit != nullptr) {
       const double *pos0 = simhit->getPosition();
       pos[0] = pos0[0];
       pos[1] = pos0[1];
@@ -1145,7 +1145,7 @@ void EUTelTestFitter::processEvent(LCEvent *event) {
     cov[0] = 0.;
     cov[1] = 0.;
     cov[2] = 0.;
-    if (meshit != 0) {
+    if (meshit != nullptr) {
       const EVENT::FloatVec cov0 = meshit->getCovMatrix();
       cov[0] = cov0[0];
       cov[1] = cov0[1];
@@ -1826,7 +1826,7 @@ void EUTelTestFitter::processEvent(LCEvent *event) {
           //
           // Copy input hit data
           //
-          if (meshit != 0) {
+          if (meshit != nullptr) {
             fitpoint->setType(meshit->getTime());
             corrhit->setType(meshit->getType());
             corrhit->setTime(meshit->getTime());
@@ -1834,7 +1834,7 @@ void EUTelTestFitter::processEvent(LCEvent *event) {
             corrhit->rawHits() = meshit->getRawHits();
             corrhit->setCellID0(meshit->getCellID0());
             corrhit->setCellID1(meshit->getCellID1());
-          } else if (simhit != 0) {
+          } else if (simhit != nullptr) {
             fitpoint->setType(simhit->getTime());
             corrhit->setType(0);
             corrhit->setTime(simhit->getTime());
@@ -2823,7 +2823,7 @@ void EUTelTestFitter::getFastTrackImpactPoint(double &x, double &y, double &z,
   b[1] = offsetX;
   b[2] = offsetY;
 
-  trackImpact = equationMatrix.Invert() * b;
+  trackImpact = equationMatrix.Invert(nullptr)*b;
 
   x = trackImpact(0);
   y = trackImpact(1);
@@ -2891,7 +2891,7 @@ void EUTelTestFitter::getTrackImpactPoint(double &x, double &y, double &z,
     TrackerHit *meshit = trackhits.at(ihit);
 
     // Look at fitted hits only!
-    if (meshit != 0) {
+    if (meshit != nullptr) {
       if ((hitCellDecoder(meshit)["properties"] & kFittedHit) == 0) {
         continue;
       }
@@ -2900,7 +2900,7 @@ void EUTelTestFitter::getTrackImpactPoint(double &x, double &y, double &z,
     // Hit position
     //
     double pos[3] = {0., 0., 0.};
-    if (meshit != 0) {
+    if (meshit != nullptr) {
       const double *pos0 = meshit->getPosition();
       pos[0] = pos0[0];
       pos[1] = pos0[1];
@@ -2990,7 +2990,7 @@ void EUTelTestFitter::getTrackImpactPoint(double &x, double &y, double &z,
     LCCollectionVec *alignmentCollectionVec = dynamic_cast<LCCollectionVec *>(
         ev->getCollection(_alignmentCollectionNames[i]));
     // next, find the alignment constant corresponding to the DUT
-    EUTelAlignmentConstant *c = NULL;
+    EUTelAlignmentConstant *c = nullptr;
     for (size_t iPos = 0; iPos < alignmentCollectionVec->size(); ++iPos) {
 
       c = static_cast<EUTelAlignmentConstant *>(
@@ -3000,7 +3000,7 @@ void EUTelTestFitter::getTrackImpactPoint(double &x, double &y, double &z,
       // to the DUT; the pointer to it is now stored in c and can
       // be furhter used
     }
-    if (c == NULL) {
+    if (c == nullptr) {
       cout << "Was not possible to found alignment constant, terminating"
            << endl;
       abort();
@@ -3052,7 +3052,7 @@ void EUTelTestFitter::getTrackImpactPoint(double &x, double &y, double &z,
   b(1) = offsetX;
   b(2) = offsetY;
 
-  trackImpact = equationMatrix.Invert() * b;
+  trackImpact = equationMatrix.Invert(nullptr) * b;
 
   /*
   // very very naive approach

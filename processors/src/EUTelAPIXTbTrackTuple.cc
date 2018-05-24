@@ -26,13 +26,13 @@ EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple()
       _inputTrackerHitColName(""), _inputTelPulseCollectionName(""),
       _inputDutPulseCollectionName(""), _telZsColName(""), _dutZsColName(""),
       _path2file(""), _DUTIDs(std::vector<int>()), _nRun(0), _nEvt(0),
-      _runNr(0), _evtNr(0), _isFirstEvent(false), _file(NULL), _eutracks(NULL),
-      _nTrackParams(0), _xPos(NULL), _yPos(NULL), _dxdz(NULL), _dydz(NULL),
-      _trackIden(NULL), _trackNum(NULL), _chi2(NULL), _ndof(NULL),
-      _zstree(NULL), _nPixHits(0), p_col(NULL), p_row(NULL), p_tot(NULL),
-      p_iden(NULL), p_lv1(NULL), p_hitTime(NULL), p_frameTime(NULL),
-      _euhits(NULL), _nHits(0), _hitXPos(NULL), _hitYPos(NULL), _hitZPos(NULL),
-      _hitSensorId(NULL) {
+      _runNr(0), _evtNr(0), _isFirstEvent(false), _file(nullptr), _eutracks(nullptr),
+      _nTrackParams(0), _xPos(nullptr), _yPos(nullptr), _dxdz(nullptr), _dydz(nullptr),
+      _trackIden(nullptr), _trackNum(nullptr), _chi2(nullptr), _ndof(nullptr),
+      _zstree(nullptr), _nPixHits(0), p_col(nullptr), p_row(nullptr), p_tot(nullptr),
+      p_iden(nullptr), p_lv1(nullptr), p_hitTime(nullptr), p_frameTime(nullptr),
+      _euhits(nullptr), _nHits(0), _hitXPos(nullptr), _hitYPos(nullptr), _hitZPos(nullptr),
+      _hitSensorId(nullptr) {
   // processor description
   _description = "Prepare tbtrack style n-tuple with track fit results";
 
@@ -139,7 +139,7 @@ void EUTelAPIXTbTrackTuple::end() {
 
 // Read in TrackerHit(Impl) to later dump them
 bool EUTelAPIXTbTrackTuple::readHits(std::string hitColName, LCEvent *event) {
-  LCCollection *hitCollection = NULL;
+  LCCollection *hitCollection = nullptr;
 
   try {
     hitCollection = event->getCollection(hitColName);
@@ -183,7 +183,7 @@ bool EUTelAPIXTbTrackTuple::readHits(std::string hitColName, LCEvent *event) {
 
 // Read in TrackerHit to later dump
 bool EUTelAPIXTbTrackTuple::readTracks(LCEvent *event) {
-  LCCollection *trackCol = NULL;
+  LCCollection *trackCol = nullptr;
 
   try {
     trackCol = event->getCollection(_inputTrackColName);
@@ -253,7 +253,7 @@ bool EUTelAPIXTbTrackTuple::readTracks(LCEvent *event) {
 
 // Read in raw (zs) TrackerData(Impl) to later dump
 bool EUTelAPIXTbTrackTuple::readZsHits(std::string colName, LCEvent *event) {
-  LCCollectionVec *zsInputCollectionVec = NULL;
+  LCCollectionVec *zsInputCollectionVec = nullptr;
 
   try {
     zsInputCollectionVec =

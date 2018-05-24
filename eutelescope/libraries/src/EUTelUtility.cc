@@ -284,13 +284,13 @@ namespace eutelescope {
         try {
           LCObjectVec clusterVector = hit->getRawHits();
 
-          EUTelVirtualCluster *cluster = NULL;
+          EUTelVirtualCluster *cluster = nullptr;
 
           if (hit->getType() == kEUTelSparseClusterImpl) {
 
             TrackerDataImpl *clusterFrame =
                 dynamic_cast<TrackerDataImpl *>(clusterVector[0]);
-            if (clusterFrame == 0) {
+            if (clusterFrame == nullptr) {
               // found invalid result from cast
               throw UnknownDataTypeException(
                   "Invalid hit found in method hitContainsHotPixels()");
@@ -402,7 +402,7 @@ namespace eutelescope {
      * @return plane id
      */
     int getSensorIDfromHit(EVENT::TrackerHit *hit) {
-      if (hit == NULL) {
+      if (hit == nullptr) {
         streamlog_out(ERROR) << "getSensorIDfromHit:: An invalid hit pointer "
                                 "supplied! will exit now\n"
                              << std::endl;
@@ -432,7 +432,7 @@ namespace eutelescope {
 
       std::map<std::string, bool> hotPixelMap;
 
-      LCCollectionVec *hotPixelCollectionVec = 0;
+      LCCollectionVec *hotPixelCollectionVec = nullptr;
       try {
         hotPixelCollectionVec = static_cast<LCCollectionVec *>(
             event->getCollection(hotPixelCollectionName));

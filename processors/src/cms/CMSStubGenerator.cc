@@ -132,8 +132,8 @@ void CMSStubGenerator::processEvent ( LCEvent * event )
 	streamlog_out ( WARNING2 ) << "Event number " << evt -> getEventNumber ( ) << " in run " << evt -> getRunNumber ( ) << " is of unknown type. Continue considering it as a normal data event." << endl;
     }
 
-    LCCollectionVec * inputHitCollection = 0;
-    LCCollectionVec * outputHitCollection = 0;
+    LCCollectionVec * inputHitCollection = nullptr;
+    LCCollectionVec * outputHitCollection = nullptr;
 
     try
     {
@@ -223,9 +223,9 @@ void CMSStubGenerator::processEvent ( LCEvent * event )
 	    float q1 = -1.0;
 	    const double* pos1 = Hit1 -> getPosition ( );
 	    TrackerDataImpl* clusterVector1 = static_cast < TrackerDataImpl* > ( Hit1 -> getRawHits ( ) [0] );
-	    EUTelSimpleVirtualCluster * cluster1 = 0;
+	    EUTelSimpleVirtualCluster * cluster1 = nullptr;
 	    cluster1 = new EUTelSparseClusterImpl < EUTelGenericSparsePixel > ( clusterVector1 );
-	    if ( cluster1 != 0 )
+	    if ( cluster1 != nullptr )
 	    {
 		cluster1 -> getCenterOfGravity ( x1, y1 );
 		q1 = cluster1 -> getTotalCharge ( );
@@ -239,9 +239,9 @@ void CMSStubGenerator::processEvent ( LCEvent * event )
 		float q2 = -1.0;
 		const double* pos2 = Hit2 -> getPosition ( );
 		TrackerDataImpl* clusterVector2 = static_cast < TrackerDataImpl* > ( Hit2 -> getRawHits ( ) [0] );
-		EUTelSimpleVirtualCluster * cluster2 = 0;
+		EUTelSimpleVirtualCluster * cluster2 = nullptr;
 		cluster2 = new EUTelSparseClusterImpl < EUTelGenericSparsePixel > ( clusterVector2 );
-		if ( cluster2 != 0 )
+		if ( cluster2 != nullptr )
 		{
 		    cluster2 -> getCenterOfGravity ( x2, y2 );
 		    q2 = cluster2 -> getTotalCharge ( );

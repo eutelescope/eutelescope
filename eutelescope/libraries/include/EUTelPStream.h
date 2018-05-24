@@ -315,7 +315,7 @@ namespace redi {
     typedef typename pbase_type::argv_type argv_type;
 
     /// Default constructor, creates an uninitialised stream.
-    basic_ipstream() : istream_type(NULL), pbase_type() {}
+    basic_ipstream() : istream_type(nullptr), pbase_type() {}
 
     /**
      * @brief Constructor that initialises the stream by starting a process.
@@ -328,7 +328,7 @@ namespace redi {
      * @see   do_open(const std::string&, pmode)
      */
     basic_ipstream(const std::string &command, pmode mode = pstdout)
-        : istream_type(NULL), pbase_type(command, readable(mode)) {}
+        : istream_type(nullptr), pbase_type(command, readable(mode)) {}
 
     /**
      * @brief Constructor that initialises the stream by starting a process.
@@ -343,7 +343,7 @@ namespace redi {
      */
     basic_ipstream(const std::string &file, const argv_type &argv,
                    pmode mode = pstdout)
-        : istream_type(NULL), pbase_type(file, argv, readable(mode)) {}
+        : istream_type(nullptr), pbase_type(file, argv, readable(mode)) {}
 
     /**
      * @brief Destructor.
@@ -425,7 +425,7 @@ namespace redi {
     typedef typename pbase_type::argv_type argv_type;
 
     /// Default constructor, creates an uninitialised stream.
-    basic_opstream() : ostream_type(NULL), pbase_type() {}
+    basic_opstream() : ostream_type(nullptr), pbase_type() {}
 
     /**
      * @brief Constructor that initialises the stream by starting a process.
@@ -438,7 +438,7 @@ namespace redi {
      * @see   do_open(const std::string&, pmode)
      */
     basic_opstream(const std::string &command, pmode mode = pstdin)
-        : ostream_type(NULL), pbase_type(command, mode | pstdin) {}
+        : ostream_type(nullptr), pbase_type(command, mode | pstdin) {}
 
     /**
      * @brief Constructor that initialises the stream by starting a process.
@@ -453,7 +453,7 @@ namespace redi {
      */
     basic_opstream(const std::string &file, const argv_type &argv,
                    pmode mode = pstdin)
-        : ostream_type(NULL), pbase_type(file, argv, mode | pstdin) {}
+        : ostream_type(nullptr), pbase_type(file, argv, mode | pstdin) {}
 
     /**
      * @brief Destructor
@@ -521,7 +521,7 @@ namespace redi {
     typedef typename pbase_type::argv_type argv_type;
 
     /// Default constructor, creates an uninitialised stream.
-    basic_pstream() : iostream_type(NULL), pbase_type() {}
+    basic_pstream() : iostream_type(nullptr), pbase_type() {}
 
     /**
      * @brief Constructor that initialises the stream by starting a process.
@@ -534,7 +534,7 @@ namespace redi {
      * @see   do_open(const std::string&, pmode)
      */
     basic_pstream(const std::string &command, pmode mode = pstdout | pstdin)
-        : iostream_type(NULL), pbase_type(command, mode) {}
+        : iostream_type(nullptr), pbase_type(command, mode) {}
 
     /**
      * @brief Constructor that initialises the stream by starting a process.
@@ -549,7 +549,7 @@ namespace redi {
      */
     basic_pstream(const std::string &file, const argv_type &argv,
                   pmode mode = pstdout | pstdin)
-        : iostream_type(NULL), pbase_type(file, argv, mode) {}
+        : iostream_type(nullptr), pbase_type(file, argv, mode) {}
 
     /**
      * @brief Destructor
@@ -645,7 +645,7 @@ namespace redi {
     typedef typename pbase_type::argv_type argv_type;
 
     /// Default constructor, creates an uninitialised stream.
-    basic_rpstream() : ostream_type(NULL), istream_type(NULL), pbase_type() {}
+    basic_rpstream() : ostream_type(nullptr), istream_type(nullptr), pbase_type() {}
 
     /**
      * @brief  Constructor that initialises the stream by starting a process.
@@ -658,7 +658,7 @@ namespace redi {
      * @see   do_open(const std::string&, pmode)
      */
     basic_rpstream(const std::string &command, pmode mode = pstdout | pstdin)
-        : ostream_type(NULL), istream_type(NULL), pbase_type(command, mode) {}
+        : ostream_type(nullptr), istream_type(nullptr), pbase_type(command, mode) {}
 
     /**
      * @brief  Constructor that initialises the stream by starting a process.
@@ -673,7 +673,7 @@ namespace redi {
      */
     basic_rpstream(const std::string &file, const argv_type &argv,
                    pmode mode = pstdout | pstdin)
-        : ostream_type(NULL), istream_type(NULL), pbase_type(file, argv, mode) {
+        : ostream_type(nullptr), istream_type(nullptr), pbase_type(file, argv, mode) {
     }
 
     /// Destructor
@@ -773,7 +773,7 @@ namespace redi {
   inline basic_pstreambuf<C, T>::basic_pstreambuf()
       : ppid_(-1) // initialise to -1 to indicate no process run yet.
         ,
-        wpipe_(-1), wbuffer_(NULL), rsrc_(rsrc_out), status_(-1), error_(0) {
+        wpipe_(-1), wbuffer_(nullptr), rsrc_(rsrc_out), status_(-1), error_(0) {
     init_rbuffers();
   }
 
@@ -790,7 +790,7 @@ namespace redi {
                                                   pmode mode)
       : ppid_(-1) // initialise to -1 to indicate no process run yet.
         ,
-        wpipe_(-1), wbuffer_(NULL), rsrc_(rsrc_out), status_(-1), error_(0) {
+        wpipe_(-1), wbuffer_(nullptr), rsrc_(rsrc_out), status_(-1), error_(0) {
     init_rbuffers();
     open(command, mode);
   }
@@ -810,7 +810,7 @@ namespace redi {
                                                   pmode mode)
       : ppid_(-1) // initialise to -1 to indicate no process run yet.
         ,
-        wpipe_(-1), wbuffer_(NULL), rsrc_(rsrc_out), status_(-1), error_(0) {
+        wpipe_(-1), wbuffer_(nullptr), rsrc_(rsrc_out), status_(-1), error_(0) {
     init_rbuffers();
     open(file, argv, mode);
   }
@@ -847,7 +847,7 @@ namespace redi {
    *
    * @param   command  a string containing a shell command.
    * @param   mode     a bitwise OR of one or more of @c out, @c in, @c err.
-   * @return  NULL if the shell could not be started or the
+   * @return  nullptr if the shell could not be started or the
    *          pipes could not be opened, @c this otherwise.
    * @see     <b>execl</b>(3)
    */
@@ -859,14 +859,14 @@ namespace redi {
       const std::string argv[] = { "sh", "-c", command };
       return this->open(shell_path, argv_type(argv, argv+3), mode);
 #else
-    basic_pstreambuf<C, T> *ret = NULL;
+    basic_pstreambuf<C, T> *ret = nullptr;
 
     if (!is_open()) {
       switch (fork(mode)) {
       case 0:
         // this is the new process, exec command
         ::execl(shell_path, "sh", "-c", command.c_str(),
-                static_cast<char *>(NULL));
+                static_cast<char *>(nullptr));
 
         // can only reach this point if exec() failed
 
@@ -942,7 +942,7 @@ namespace redi {
    * @param   file  a string containing the pathname of a program to execute.
    * @param   argv  a vector of argument strings passed to the new program.
    * @param   mode  a bitwise OR of one or more of @c out, @c in and @c err.
-   * @return  NULL if a pipe could not be opened or if the program could
+   * @return  nullptr if a pipe could not be opened or if the program could
    *          not be executed, @c this otherwise.
    * @see     <b>execvp</b>(3)
    */
@@ -950,7 +950,7 @@ namespace redi {
   basic_pstreambuf<C, T> *basic_pstreambuf<C, T>::open(const std::string &file,
                                                        const argv_type &argv,
                                                        pmode mode) {
-    basic_pstreambuf<C, T> *ret = NULL;
+    basic_pstreambuf<C, T> *ret = nullptr;
 
     if (!is_open()) {
       // constants for read/write ends of pipe
@@ -975,7 +975,7 @@ namespace redi {
               dest = new char[src.size() + 1];
               dest[src.copy(dest, src.size())] = '\0';
             }
-            arg_v[argv.size()] = NULL;
+            arg_v[argv.size()] = nullptr;
 
             ::execvp(file.c_str(), arg_v);
 
@@ -1138,7 +1138,7 @@ namespace redi {
    * errors for @c waitpid().
    * See your system's documentation for these errors.
    *
-   * @return  @c this on successful close or @c NULL if there is no
+   * @return  @c this on successful close or @c nullptr if there is no
    *          process to close or if an error occurs.
    */
   template <typename C, typename T>
@@ -1160,7 +1160,7 @@ namespace redi {
       error_ = 0;
     } while (wait() == -1 && error() == EINTR);
 
-    return running ? this : NULL;
+    return running ? this : nullptr;
   }
 
   /**
@@ -1169,8 +1169,8 @@ namespace redi {
   template <typename C, typename T>
   inline void basic_pstreambuf<C, T>::init_rbuffers() {
     rpipe_[rsrc_out] = rpipe_[rsrc_err] = -1;
-    rbuffer_[rsrc_out] = rbuffer_[rsrc_err] = NULL;
-    rbufstate_[0] = rbufstate_[1] = rbufstate_[2] = NULL;
+    rbuffer_[rsrc_out] = rbuffer_[rsrc_err] = nullptr;
+    rbufstate_[0] = rbufstate_[1] = rbufstate_[2] = nullptr;
   }
 
   template <typename C, typename T>
@@ -1201,21 +1201,21 @@ namespace redi {
   template <typename C, typename T>
   void basic_pstreambuf<C, T>::destroy_buffers(pmode mode) {
     if (mode & pstdin) {
-      this->setp(NULL, NULL);
+      this->setp(nullptr, nullptr);
       delete[] wbuffer_;
-      wbuffer_ = NULL;
+      wbuffer_ = nullptr;
     }
     if (mode & pstdout) {
       if (rsrc_ == rsrc_out)
-        this->setg(NULL, NULL, NULL);
+        this->setg(nullptr, nullptr, nullptr);
       delete[] rbuffer_[rsrc_out];
-      rbuffer_[rsrc_out] = NULL;
+      rbuffer_[rsrc_out] = nullptr;
     }
     if (mode & pstderr) {
       if (rsrc_ == rsrc_err)
-        this->setg(NULL, NULL, NULL);
+        this->setg(nullptr, nullptr, nullptr);
       delete[] rbuffer_[rsrc_err];
-      rbuffer_[rsrc_err] = NULL;
+      rbuffer_[rsrc_err] = nullptr;
     }
   }
 
@@ -1285,11 +1285,11 @@ namespace redi {
    * errors for @c kill().  See your system's documentation for these errors.
    *
    * @param   signal  A signal to send to the child process.
-   * @return  @c this or @c NULL if @c kill() fails.
+   * @return  @c this or @c nullptr if @c kill() fails.
    */
   template <typename C, typename T>
   inline basic_pstreambuf<C, T> *basic_pstreambuf<C, T>::kill(int signal) {
-    basic_pstreambuf<C, T> *ret = NULL;
+    basic_pstreambuf<C, T> *ret = nullptr;
     if (is_open()) {
       if (::kill(ppid_, signal))
         error_ = errno;
@@ -1534,7 +1534,7 @@ namespace redi {
       this->setg(rbuf + pbsz - npb, rbuf + pbsz, rbuf + pbsz + rc);
       return true;
     } else {
-      this->setg(NULL, NULL, NULL);
+      this->setg(nullptr, nullptr, nullptr);
       return false;
     }
   }
@@ -1621,7 +1621,7 @@ namespace redi {
   /** Creates an uninitialised stream. */
   template <typename C, typename T>
   inline pstream_common<C, T>::pstream_common()
-      : std::basic_ios<C, T>(NULL), command_(), buf_() {
+      : std::basic_ios<C, T>(nullptr), command_(), buf_() {
     this->std::basic_ios<C, T>::rdbuf(&buf_);
   }
 
@@ -1636,7 +1636,7 @@ namespace redi {
   template <typename C, typename T>
   inline pstream_common<C, T>::pstream_common(const std::string &command,
                                               pmode mode)
-      : std::basic_ios<C, T>(NULL), command_(command), buf_() {
+      : std::basic_ios<C, T>(nullptr), command_(command), buf_() {
     this->std::basic_ios<C, T>::rdbuf(&buf_);
     do_open(command, mode);
   }
@@ -1653,7 +1653,7 @@ namespace redi {
   template <typename C, typename T>
   inline pstream_common<C, T>::pstream_common(const std::string &file,
                                               const argv_type &argv, pmode mode)
-      : std::basic_ios<C, T>(NULL), command_(file), buf_() {
+      : std::basic_ios<C, T>(nullptr), command_(file), buf_() {
     this->std::basic_ios<C, T>::rdbuf(&buf_);
     do_open(file, argv, mode);
   }
@@ -1757,15 +1757,15 @@ namespace redi {
    *
    * For each open stream shared with the child process a @c FILE* is
    * obtained and assigned to the corresponding parameter. For closed
-   * streams @c NULL is assigned to the parameter.
+   * streams @c nullptr is assigned to the parameter.
    * The return value can be tested to see which parameters should be
-   * @c !NULL by masking with the corresponding @c pmode value.
+   * @c !nullptr by masking with the corresponding @c pmode value.
    *
    * @see <b>fdopen</b>(3)
    */
   template <typename C, typename T>
   std::size_t basic_pstreambuf<C, T>::fopen(FILE *&in, FILE *&out, FILE *&err) {
-    in = out = err = NULL;
+    in = out = err = nullptr;
     std::size_t open_files = 0;
     if (wpipe() > -1) {
       if ((in = ::fdopen(wpipe(), "w"))) {
