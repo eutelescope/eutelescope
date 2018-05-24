@@ -73,8 +73,8 @@ void EUTelROI::consistencyCheck() const {
     throw InvalidParameterException(
         "EUTelROI::consistencyCheck yBottomLeft > yTopRight");
 }
-
-std::ostream &eutelescope::operator<<(std::ostream &os, EUTelROI roi) {
+namespace eutelescope {
+std::ostream & operator<<(std::ostream &os, EUTelROI roi) {
   if (roi._detectorID != std::numeric_limits<int>::min())
     os << " Detector ID = " << roi._detectorID << endl;
 
@@ -83,4 +83,5 @@ std::ostream &eutelescope::operator<<(std::ostream &os, EUTelROI roi) {
      << " Top right corner   (" << roi._xTopRight << ", " << roi._yTopRight
      << ")";
   return os;
+}
 }

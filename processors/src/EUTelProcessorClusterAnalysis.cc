@@ -500,9 +500,9 @@ void EUTelProcessorClusterAnalysis::bookHistos() {
 
 void EUTelProcessorClusterAnalysis::end() {
   for (int iSector = 0; iSector < _nSectors; iSector++) {
-    for (unsigned int i = 0; i < symmetryGroups.size(); i++) {
+    for (size_t i = 0; i < symmetryGroups.size(); i++) {
       string binName;
-      for (unsigned int j = 0; j < symmetryGroups[i].size(); j++) {
+      for (size_t j = 0; j < symmetryGroups[i].size(); j++) {
         clusterShapeHistoGroupedSector[iSector]->Fill(
             i, clusterShapeHistoSector[iSector]->GetBinContent(
                    symmetryGroups[i][j] + 1));
@@ -512,7 +512,7 @@ void EUTelProcessorClusterAnalysis::end() {
           binName += Form("%d", symmetryGroups[i][j]);
       }
       clusterShapeHistoGroupedSector[iSector]->GetXaxis()->SetBinLabel(
-          i + 1, (char *)binName.c_str());
+          i + 1, binName.c_str());
     }
   }
   //

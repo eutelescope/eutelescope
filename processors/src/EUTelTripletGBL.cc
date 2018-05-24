@@ -780,8 +780,8 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     double ry[6];
     double trackhitx[6];
     double trackhity[6];
-    double trackhitxloc[6];
-    double trackhityloc[6];
+    //double trackhitxloc[6];
+    //double trackhityloc[6];
     //double zprev = _planePosition[0];
     double step = 0.;
     s = 0.;
@@ -820,8 +820,8 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
       trackhitx[ipl] = trackhit.x;
       trackhity[ipl] = trackhit.y;
-      trackhitxloc[ipl] = trackhit.locx;
-      trackhityloc[ipl] = trackhit.locy;
+      //trackhitxloc[ipl] = trackhit.locx;
+      //trackhityloc[ipl] = trackhit.locy;
 
       rx[ipl] = trackhit.x - xs;
       ry[ipl] = trackhit.y - ys;

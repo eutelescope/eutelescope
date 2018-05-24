@@ -414,13 +414,14 @@ void EUTelTrueHitDafFitter::init() {
 
   // Prepare track finder
   switch (_trackFinderType) {
-
   case combinatorialKF:
     _system.setCKFChi2Cut(_normalizedRadius * _normalizedRadius);
     break;
   case simpleCluster:
     _system.setClusterRadius(_normalizedRadius);
     break;
+  default:
+    _system.setClusterRadius(_normalizedRadius);
   }
 
   _system.setNominalXdz(
@@ -690,13 +691,14 @@ void EUTelTrueHitDafFitter::processEvent(LCEvent *event) {
 
   // Run track finder
   switch (_trackFinderType) {
-
   case combinatorialKF:
     _system.combinatorialKF();
     break;
   case simpleCluster:
     _system.clusterTracker();
     break;
+  default:
+    _system.clusterTracker();
   }
 
   // Child specific actions

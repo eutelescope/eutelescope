@@ -186,7 +186,7 @@ int main( int argc, char ** argv ) {
 
 
 
-  auto_ptr< AnyOption > option( new AnyOption );
+  auto option = std::make_unique<AnyOption>();
 
   string usageString = 
     "\n"

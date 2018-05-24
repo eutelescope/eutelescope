@@ -252,7 +252,7 @@ void EUTelTripletGBLKinkEstimator::init() {
 //------------------------------------------------------------------------------
 void EUTelTripletGBLKinkEstimator::processRunHeader( LCRunHeader* runHeader) {
 
-  std::auto_ptr<EUTelRunHeaderImpl> eutelHeader( new EUTelRunHeaderImpl( runHeader ) );
+  auto eutelHeader = std::make_unique<EUTelRunHeaderImpl>( runHeader );
   eutelHeader->addProcessor( type() );
 
   // Decode and print out Run Header information - just a check
@@ -667,8 +667,8 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
     double ry[6];
     double trackhitx[6];
     double trackhity[6];
-    double trackhitxloc[6];
-    double trackhityloc[6];
+    //double trackhitxloc[6];
+    //double trackhityloc[6];
     //double zprev = _planePosition[0];
     double step = 0.;
 
@@ -716,8 +716,8 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 
 	trackhitx[ipl] = trackhit.x;
 	trackhity[ipl] = trackhit.y;
-	trackhitxloc[ipl] = trackhit.locx;
-	trackhityloc[ipl] = trackhit.locy;
+	//trackhitxloc[ipl] = trackhit.locx;
+	//trackhityloc[ipl] = trackhit.locy;
 
 	rx[ipl] = trackhit.x - xs; // distance to SEED triplet srip (which can either be equal to trip, or constructed from e.g. planes (0,2,5)
 	ry[ipl] = trackhit.y - ys;
