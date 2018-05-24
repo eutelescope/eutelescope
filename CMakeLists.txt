@@ -267,6 +267,13 @@ install (CODE
 
 )
 
+# Enable testing
+ENABLE_TESTING()
+
+# Include example configurations:
+ADD_SUBDIRECTORY(ctest)
+
+
 option(utest "Build all tests." OFF)
 if(utest)
   add_subdirectory(unittests)
