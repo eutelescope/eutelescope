@@ -43,7 +43,7 @@ namespace eutelescope {
      *  @throw InvalidParameterException if it fails
      */
     EUTelROI(float xBottomLeft, float yBottomLeft, float xTopRight,
-             float yTopRight) throw(InvalidParameterException);
+             float yTopRight);
 
     //! Default constructor with the two corners and the detector ID
     /*! A part of assign all the value to the corresponding data
@@ -52,7 +52,7 @@ namespace eutelescope {
      *  @throw InvalidParameterException if it fails
      */
     EUTelROI(int detectorID, float xBottomLeft, float yBottomLeft,
-             float xTopRight, float yTopRight) throw(InvalidParameterException);
+             float xTopRight, float yTopRight);
 
     //! Get the two corners
     /*! This method allow to access to the boundaries of the ROI.
@@ -115,7 +115,7 @@ namespace eutelescope {
      *
      *  throw InvalidParameterException is the consistency check fails
      */
-    void consistencyCheck() const throw(InvalidParameterException);
+    void consistencyCheck() const;
 
     //! Bottom left x
     /*! This is the bottom left x coordinate of the ROI

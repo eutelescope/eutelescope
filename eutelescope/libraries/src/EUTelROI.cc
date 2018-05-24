@@ -20,7 +20,7 @@ using namespace std;
 using namespace eutelescope;
 
 EUTelROI::EUTelROI(float xBottomLeft, float yBottomLeft, float xTopRight,
-                   float yTopRight) throw(InvalidParameterException)
+                   float yTopRight)
     : _xBottomLeft(xBottomLeft), _yBottomLeft(yBottomLeft),
       _xTopRight(xTopRight), _yTopRight(yTopRight),
       _detectorID(std::numeric_limits<int>::min()) {
@@ -30,7 +30,7 @@ EUTelROI::EUTelROI(float xBottomLeft, float yBottomLeft, float xTopRight,
 
 EUTelROI::EUTelROI(int detectorID, float xBottomLeft, float yBottomLeft,
                    float xTopRight,
-                   float yTopRight) throw(InvalidParameterException)
+                   float yTopRight)
     : _xBottomLeft(xBottomLeft), _yBottomLeft(yBottomLeft),
       _xTopRight(xTopRight), _yTopRight(yTopRight), _detectorID(detectorID) {
 
@@ -64,7 +64,7 @@ bool EUTelROI::isInside(float x, float y) const {
   return false;
 }
 
-void EUTelROI::consistencyCheck() const throw(InvalidParameterException) {
+void EUTelROI::consistencyCheck() const {
 
   if (_xBottomLeft > _xTopRight)
     throw InvalidParameterException(

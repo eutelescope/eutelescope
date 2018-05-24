@@ -372,7 +372,7 @@ namespace eutelescope {
      *  information, a SkipEventException is thrown and the geometry
      *  will be initialize with the following event.
      */
-    void initializeGeometry(LCEvent *evt) throw(marlin::SkipEventException);
+    void initializeGeometry(LCEvent *evt);
 
     //! initialize statusCollection
     /*! values from hotpixel DB file are read into the statusCollection

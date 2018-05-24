@@ -153,8 +153,7 @@ void EUTelCalibrateEventProcessor::processRunHeader(LCRunHeader *rdr) {
   ++_iRun;
 }
 
-void EUTelCalibrateEventProcessor::initializeGeometry(LCEvent *event) throw(
-    marlin::SkipEventException) {
+void EUTelCalibrateEventProcessor::initializeGeometry(LCEvent *event) {
 
   // now I need the _ancillaryIndexMap. For this I need to take the
   // pedestal input collection

@@ -24,9 +24,7 @@
 #include <gear/SiPlanesParameters.h>
 
 // aida includes <.h>
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
-#endif
 
 // lcio includes <.h>
 #include <IMPL/LCCollectionVec.h>
@@ -145,7 +143,7 @@ namespace eutelescope {
      *
      *  @param evt the current LCEvent event as passed by the ProcessMgr
      */
-    virtual void modifyEvent(LCEvent *evt);
+    virtual void modifyEvent(LCEvent*){};
 
     //! Check event method
     /*! This method is called by the Marlin execution framework as
@@ -155,7 +153,7 @@ namespace eutelescope {
      *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      */
-    virtual void check(LCEvent *evt);
+    virtual void check(LCEvent*){};
 
     //! Called after data processing.
     /*! This method is called when the loop on events is finished. It
@@ -184,7 +182,6 @@ namespace eutelescope {
      */
     void resetStatus(IMPL::TrackerRawDataImpl *status);
 
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! Book histograms
     /*! This method is used to prepare the needed directory structure
      *  within the current ITree folder and books all required
@@ -200,7 +197,6 @@ namespace eutelescope {
      *  @param evt The current event object
      */
     void fillHistos(LCEvent *evt);
-#endif
 
     //! Initialize the geometry information
     /*! This method is called to initialize the geometry information,
@@ -214,7 +210,7 @@ namespace eutelescope {
      *  information, a SkipEventException is thrown and the geometry
      *  will be initialize with the following event.
      */
-    void initializeGeometry(LCEvent *evt) throw(marlin::SkipEventException);
+    void initializeGeometry(LCEvent *evt);
 
   protected:
     //! Method for geometric clsutering
@@ -297,7 +293,6 @@ namespace eutelescope {
      */
     std::vector<int> _ExcludedPlanes;
 
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! Map for pointer to cluster signal histograms.
     std::map<int, AIDA::IBaseHistogram *> _clusterSignalHistos;
 
@@ -327,7 +322,6 @@ namespace eutelescope {
 
     //! Map for pointer to total cluster size histogram 
     std::map<int,AIDA::IBaseHistogram*>_clusterSizeTotalHistos;
-#endif
 
     //! Geometry ready switch
     /*! This boolean reveals if the geometry has been properly
