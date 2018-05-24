@@ -84,9 +84,9 @@ AlibavaMerger::AlibavaMerger ( ) : AlibavaBaseProcessor ( "AlibavaMerger" )
 
     registerProcessorParameter ( "AlibavaFile", "The filename where the alibava data is stored", _alibavaFile, string ( "alibava.slcio" ) );
 
-    registerProcessorParameter ( "EventdifferenceAlibava", "The event count the Alibava is behind (read: earlier than) the Telescope. 1 means alibava event 1 == telescope event 0, etc.", _eventdifferenceAlibava, int ( 0 ) );
+    registerProcessorParameter ( "EventdifferenceAlibava", "The event count the Alibava is behind (read: earlier than) the Telescope. 1 means alibava event 1 == telescope event 0, etc.", _eventdifferenceAlibava, 0 );
 
-    registerProcessorParameter ( "EventdifferenceTelescope", "The event count the telescope is behind (read: earlier than) the Alibava. 1 means alibava event 0 == telescope event 1, etc.", _eventdifferenceTelescope, int ( 0 ) );
+    registerProcessorParameter ( "EventdifferenceTelescope", "The event count the telescope is behind (read: earlier than) the Alibava. 1 means alibava event 0 == telescope event 1, etc.", _eventdifferenceTelescope, 0 );
 
     registerProcessorParameter ( "OutputCollectionName", "The name of the output collection we want to create", _outputCollectionName, string ( "original_zsdata" ) );
 
@@ -94,9 +94,9 @@ AlibavaMerger::AlibavaMerger ( ) : AlibavaBaseProcessor ( "AlibavaMerger" )
 
     registerProcessorParameter ( "OutputCollectionName3", "The name of the tertiary output collection we want to create", _outputCollectionName3, string ( "zsdata_m26" ) );
 
-    registerProcessorParameter ( "OutputMode", "The verbosity of the merged hits: 0 to only write events where we have a hit in both systems, 1 for events where we at least have one alibava hit, 2 for events where we at least have one telescope hit and 3 for writing out all events, even if there are no hits in them", _outputmode, int ( 0 ) );
+    registerProcessorParameter ( "OutputMode", "The verbosity of the merged hits: 0 to only write events where we have a hit in both systems, 1 for events where we at least have one alibava hit, 2 for events where we at least have one telescope hit and 3 for writing out all events, even if there are no hits in them", _outputmode,  0 );
 
-    registerProcessorParameter ( "PlaneShiftTelescope", "Option to decrement/increment the telescope plane sensor id", _teleplaneshift, int ( 0 ) );
+    registerProcessorParameter ( "PlaneShiftTelescope", "Option to decrement/increment the telescope plane sensor id", _teleplaneshift, 0 );
 
     registerProcessorParameter ( "TelescopeCollectionName", "The name of the telescope collection we want to merge", _telescopeCollectionName, string ( "original_zsdata" ) );
 

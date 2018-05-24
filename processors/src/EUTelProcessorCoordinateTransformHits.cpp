@@ -42,7 +42,7 @@ _undoAlignment(false)
 
 		registerOutputCollection(LCIO::TRACKERHIT,"hitCollectionNameOutput", "Global output hit collection name", _hitCollectionNameOutput, std::string ("global_hit"));
 
-		registerOptionalParameter("Undo Alignment (boolean)", "Set to true to undo the alignment instead", _undoAlignment, bool(false));
+		registerOptionalParameter("Undo Alignment (boolean)", "Set to true to undo the alignment instead", _undoAlignment, false);
 }
 
 void EUTelProcessorCoordinateTransformHits::init() {

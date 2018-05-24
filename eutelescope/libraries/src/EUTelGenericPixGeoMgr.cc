@@ -146,6 +146,6 @@ EUTelGenericPixGeoDescr *EUTelGenericPixGeoMgr::getPixGeoDescr(int planeID) {
        << " from PixGeoMgr. Did you include it in your GEAR file?";
     throw std::runtime_error(ss.str());
   } else {
-    return static_cast<EUTelGenericPixGeoDescr *>(returnGeoDescrIt->second);
+    return returnGeoDescrIt->second;
   }
 }

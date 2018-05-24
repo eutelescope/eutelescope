@@ -67,9 +67,9 @@ _siPlanesLayerLayout ( NULL )
 
     registerOptionalParameter ( "DUTPositionFile", "The DUT position will be written to this file!", _outputDUTFileName, string ( "fail2.txt" ) );
 
-    registerOptionalParameter ( "ManualDUTPosition", "The sorted sensor position of the DUT (usually 3).", _manualDUTposition , int ( 3 ) );
+    registerOptionalParameter ( "ManualDUTPosition", "The sorted sensor position of the DUT (usually 3).", _manualDUTposition , 3 );
 
-    registerOptionalParameter ( "ManualDUTID", "The sensor ID of the DUT.", _manualDUTid , int ( 6 ) );
+    registerOptionalParameter ( "ManualDUTID", "The sensor ID of the DUT.", _manualDUTid , 6 );
 
     registerOptionalParameter ( "FinalCollection", "The collection name after the final alignment", _finalcollectionname, string ( "AlignedHit10" ) );
 }

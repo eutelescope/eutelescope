@@ -82,8 +82,8 @@ bool EUTelHistogramManager::init() {
         delete doc;
         delete histoInfo;
         throw ParseException(
-            string("EUTelHistogramManager::init: no type found for " +
-                   string(pHistoNode->Attribute("name"))));
+            "EUTelHistogramManager::init: no type found for " +
+                   std::string(pHistoNode->Attribute("name")));
       } else
         histoInfo->_type = pHistoNode->Attribute("type");
 

@@ -91,7 +91,7 @@ _clustercount ( 0 )
     registerProcessorParameter ( "ClusterCut", "The cluster SNR cut", _clustercut , float ( 1.5 ) );
 
     // the polarity 
-    registerProcessorParameter ( "Polarity", "The sensor polarity: -1 for negative cluster signals (p-type sensor), 1 for positive cluster signals (n-type sensor)", _polarity, int ( -1 ) );
+    registerProcessorParameter ( "Polarity", "The sensor polarity: -1 for negative cluster signals (p-type sensor), 1 for positive cluster signals (n-type sensor)", _polarity,  -1 );
 
     // now the optional parameters
     registerProcessorParameter ( "NoiseCollectionName", "The noise collection name", _noiseCollectionName, string ( "finalnoise" ) );
@@ -105,17 +105,17 @@ _clustercount ( 0 )
     // the name of the sparse cluster collection
     registerProcessorParameter ( "SparseClusterCollectionName", "The sparse cluster collection name, this needs to be original_zsdata for hitmaker", _sparseclusterCollectionName, string ( "original_zsdata" ) );
 
-    registerOptionalParameter ( "MinClustersize", "The minimum accepted clustersize in the sensitive Alibava direction. This must be larger or equal to 1!", _clusterminsize, int ( 1 ) );
+    registerOptionalParameter ( "MinClustersize", "The minimum accepted clustersize in the sensitive Alibava direction. This must be larger or equal to 1!", _clusterminsize,  1 );
 
-    registerOptionalParameter ( "MaxClustersize", "The maximum accepted clustersize in the sensitive Alibava direction. This should be larger or equal to MinClustersize!", _clustermaxsize, int ( 99 ) );
+    registerOptionalParameter ( "MaxClustersize", "The maximum accepted clustersize in the sensitive Alibava direction. This should be larger or equal to MinClustersize!", _clustermaxsize, 99 );
 
-    registerOptionalParameter ( "UseFIRFilter", "A FIR (finite impulse response) filter can be applied to the input data to minimise crosstalk. This switches the filter on.", _usefir, bool ( false ) );
+    registerOptionalParameter ( "UseFIRFilter", "A FIR (finite impulse response) filter can be applied to the input data to minimise crosstalk. This switches the filter on.", _usefir, false );
 
-    registerOptionalParameter ( "WriteFIRCoefficients", "From the eta distribution coefficients for filtering are calculated. This writes them to disk.", _writecoefficients, bool ( false ) );
+    registerOptionalParameter ( "WriteFIRCoefficients", "From the eta distribution coefficients for filtering are calculated. This writes them to disk.", _writecoefficients, false );
 
-    registerOptionalParameter ( "WriteZeroCoefficients", "For compatibility, two zero coefficients can be written to file.", _writezero, bool ( false ) );
+    registerOptionalParameter ( "WriteZeroCoefficients", "For compatibility, two zero coefficients can be written to file.", _writezero, false );
 
-    registerOptionalParameter ( "ReadFIRCoefficients", "FIR filter coefficients from a previous iteration can be read if this is switched on.", _readcoefficients, bool ( false ) );
+    registerOptionalParameter ( "ReadFIRCoefficients", "FIR filter coefficients from a previous iteration can be read if this is switched on.", _readcoefficients, false );
 
     registerOptionalParameter ( "FIRCoefficientFile", "The filename to read/write coefficients to", _filterFileName, string ( "filtercoefficients.txt" ) );
 
@@ -749,7 +749,7 @@ void AlibavaClustering::findSeedClusters(TrackerDataImpl * trkdata, LCCollection
 	    // this assumes six telescope planes, so the first chip will be plane 6, etc.
 	    dataEncoder["sensorID"] = 6;
 	    dataEncoder["sparsePixelType"] = static_cast < int > ( kEUTelSparseClusterImpl );
-	    dataEncoder["quality"] = static_cast < int > ( 0 );
+	    dataEncoder["quality"] =  0;
 	    dataEncoder.setCellID ( zsCluster.get ( ) );
 	    sparseClusterCollectionVec -> push_back ( zsCluster.get ( ) );
 

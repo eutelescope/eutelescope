@@ -71,7 +71,7 @@ EUTelRawDataSparsifier::EUTelRawDataSparsifier()
   registerProcessorParameter(
       "SparsePixelType",
       "Type of sparsified pixel data structure (use SparsePixelType enum)",
-      _pixelType, static_cast<int>(1));
+      _pixelType, 1);
 
   vector<float> sigmaCutVecExample;
   sigmaCutVecExample.push_back(2.5);
@@ -204,7 +204,7 @@ void EUTelRawDataSparsifier::processEvent(LCEvent *event) {
           EUTELESCOPE::ZSDATADEFAULTENCODING, sparsifiedDataCollection);
       int sensorID = static_cast<int>(cellDecoder(rawData)["sensorID"]);
       sparseDataEncoder["sensorID"] = sensorID;
-      sparseDataEncoder["sparsePixelType"] = static_cast<int>(_pixelType);
+      sparseDataEncoder["sparsePixelType"] = _pixelType;
       sparseDataEncoder.setCellID(sparsified);
 
       EUTelMatrixDecoder matrixDecoder(cellDecoder, rawData);

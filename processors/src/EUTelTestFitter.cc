@@ -165,49 +165,49 @@ EUTelTestFitter::EUTelTestFitter()
 
   registerProcessorParameter("InputHitsInTrack",
                              "Flag for storing input (measured) hits in track",
-                             _InputHitsInTrack, static_cast<bool>(false));
+                             _InputHitsInTrack, false);
 
   registerProcessorParameter("OutputHitsInTrack",
                              "Flag for storing output (fitted) hits in track",
-                             _OutputHitsInTrack, static_cast<bool>(true));
+                             _OutputHitsInTrack, true);
 
   registerProcessorParameter("AllowMissingHits",
                              "Allowed number of missing hits in the track",
-                             _allowMissingHits, static_cast<int>(0));
+                             _allowMissingHits, 0);
 
   registerProcessorParameter("AllowSkipHits",
                              "Allowed number of hits removed from the track",
-                             _allowSkipHits, static_cast<int>(0));
+                             _allowSkipHits, 0);
 
   registerProcessorParameter("MaxPlaneHits",
                              "Maximum number of considered hits per plane",
-                             _maxPlaneHits, static_cast<int>(100));
+                             _maxPlaneHits, 100);
 
   registerProcessorParameter("MissingHitPenalty",
                              "Chi2 penalty for missing hit in the track",
-                             _missingHitPenalty, static_cast<double>(0.));
+                             _missingHitPenalty, 0.);
 
   registerProcessorParameter("SkipHitPenalty",
                              "Chi2 penalty for removing hit from the track",
-                             _skipHitPenalty, static_cast<double>(100.));
+                             _skipHitPenalty, 100.);
 
   registerProcessorParameter("Chi2Min", "Minimum Chi2 for accepted track fit",
-                             _chi2Min, static_cast<double>(0.0));
+                             _chi2Min, 0.0);
 
   registerProcessorParameter("Chi2Max", "Maximum Chi2 for accepted track fit",
-                             _chi2Max, static_cast<double>(100.));
+                             _chi2Max, 100.);
 
   registerProcessorParameter(
       "UseNominalResolution",
       "Flag for using nominal resolution instead of position errors",
-      _useNominalResolution, static_cast<bool>(true));
+      _useNominalResolution, true);
 
   registerProcessorParameter("UseDUT",
                              "Flag for including DUT measurement in the fit",
-                             _useDUT, static_cast<bool>(false));
+                             _useDUT, false);
 
   registerProcessorParameter("Ebeam", "Beam energy [GeV]", _eBeam,
-                             static_cast<double>(6.0));
+                             6.0);
 
   registerProcessorParameter("HistoInfoFileName",
                              "Name of the histogram information file",
@@ -222,15 +222,15 @@ EUTelTestFitter::EUTelTestFitter()
   registerOptionalParameter(
       "SlopeXLimit",
       "Limit on track slope change when passing sensor layer (in X direction)",
-      _SlopeXLimit, static_cast<float>(0.001));
+      _SlopeXLimit, 0.001f);
   registerOptionalParameter(
       "SlopeYLimit",
       "Limit on track slope change when passing sensor layer (in Y direction)",
-      _SlopeYLimit, static_cast<float>(0.001));
+      _SlopeYLimit, 0.001f);
   registerOptionalParameter("SlopeDistanceMax", "Maximum hit distance from the "
                                                 "expected position, used for "
                                                 "hit preselection in [mm]",
-                            _SlopeDistanceMax, static_cast<float>(1.));
+                            _SlopeDistanceMax, 1.f);
   // -------------------------------------------------------------------------------------------------
 
   std::vector<int> initLayerIDs;
@@ -298,54 +298,54 @@ EUTelTestFitter::EUTelTestFitter()
   registerOptionalParameter(
       "UseBeamConstraint",
       "Flag for using beam direction constraint in the fit", _useBeamConstraint,
-      static_cast<bool>(false));
+      false);
 
   registerOptionalParameter(
       "BeamSpread",
       "Assumed angular spread of the beam [rad] (for beam constraint)",
-      _beamSpread, static_cast<double>(0.0));
+      _beamSpread, 0.0);
 
   registerOptionalParameter(
       "BeamSlopeX",
       "Beam direction tilt in X-Z plane [rad] (for beam constraint)",
-      _beamSlopeX, static_cast<double>(0.));
+      _beamSlopeX, 0.);
 
   registerOptionalParameter(
       "BeamSlopeY",
       "Beam direction tilt in Y-Z plane [rad] (for beam constraint)",
-      _beamSlopeY, static_cast<double>(0.));
+      _beamSlopeY, 0.);
 
   registerOptionalParameter(
       "SearchMultipleTracks",
       "Flag for searching multiple tracks in events with multiple hits",
-      _searchMultipleTracks, static_cast<bool>(true));
+      _searchMultipleTracks, true);
 
   registerOptionalParameter("AllowAmbiguousHits",
                             "Allow same hit to be used in more than one track",
-                            _allowAmbiguousHits, static_cast<bool>(false));
+                            _allowAmbiguousHits, false);
 
   registerOptionalParameter(
       "MaximumAmbiguousHits",
       "Maximum number of hits to be shared by more than one track",
-      _maximumAmbiguousHits, static_cast<int>(2));
+      _maximumAmbiguousHits, 2);
 
   registerOptionalParameter(
       "ResolutionX", "X resolution parameter for each plane. Note: these "
                      "numbers are ordered according to the z position of the "
                      "sensors and NOT according to the sensor id.",
-      _resolutionX, std::vector<float>(static_cast<int>(6), 10.));
+      _resolutionX, std::vector<float>(6, 10.));
 
   registerOptionalParameter(
       "ResolutionY", "Y resolution parameter for each plane. Note: these "
                      "numbers are ordered according to the z position of the "
                      "sensors and NOT according to the sensor id.",
-      _resolutionY, std::vector<float>(static_cast<int>(6), 10.));
+      _resolutionY, std::vector<float>(6, 10.));
 
   registerOptionalParameter(
       "ResolutionZ", "Z resolution parameter for each plane. Note: these "
                      "numbers are ordered according to the z position of the "
                      "sensors and NOT according to the sensor id.",
-      _resolutionZ, std::vector<float>(static_cast<int>(6), 10.));
+      _resolutionZ, std::vector<float>(6, 10.));
 
   // initialize all the counters
   _noOfEventWOInputHit = 0;

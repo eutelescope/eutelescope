@@ -48,9 +48,9 @@ EUTelSucimaImagerReader::EUTelSucimaImagerReader()
   registerProcessorParameter("SUCIMAImagerFileName", "Input file", _fileName,
                              std::string("input.dat"));
   registerProcessorParameter("NoOfXPixel", "Number of pixels along X",
-                             _noOfXPixel, static_cast<int>(512));
+                             _noOfXPixel, 512);
   registerProcessorParameter("NoOfYPixel", "Number of pixels along Y",
-                             _noOfYPixel, static_cast<int>(512));
+                             _noOfYPixel, 512);
 }
 
 EUTelSucimaImagerReader *EUTelSucimaImagerReader::newProcessor() {

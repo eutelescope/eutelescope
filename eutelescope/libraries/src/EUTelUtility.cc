@@ -28,7 +28,7 @@ namespace eutelescope {
 
     // Cantor pairing function
     int cantorEncode(int X, int Y) {
-      return static_cast<int>((X + Y) * (X + Y + 1) / 2 + Y);
+      return (X + Y) * (X + Y + 1) / 2 + Y;
     }
 
     /** Returns the rotation matrix for given angles

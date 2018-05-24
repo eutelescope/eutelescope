@@ -82,9 +82,9 @@ CMSMerger::CMSMerger ( ) : Processor ( "CMSMerger" )
 
     registerProcessorParameter ( "CBCPulseCollectionName2", "The name of the CBC pulse collection we want to merge - sensor 2", _cbcPulseCollectionName2, string ( "cbc_collection2p" ) );
 
-    registerProcessorParameter ( "CorrelationPlane", "The sensorID of the telescope plane to use for correlation plots", _correlationPlaneID, int ( 2 ) );
+    registerProcessorParameter ( "CorrelationPlane", "The sensorID of the telescope plane to use for correlation plots", _correlationPlaneID, 2 );
 
-    registerProcessorParameter ( "EventMerge", "Merge events based on event number (true) or on event time (false)", _eventmerge, bool ( true ) );
+    registerProcessorParameter ( "EventMerge", "Merge events based on event number (true) or on event time (false)", _eventmerge, true );
 
     registerProcessorParameter ( "OutputCollectionName", "The name of the output collection we want to create", _outputCollectionName, string ( "output_collection1" ) );
 
@@ -92,9 +92,9 @@ CMSMerger::CMSMerger ( ) : Processor ( "CMSMerger" )
 
     registerProcessorParameter ( "OutputCollectionName3", "The name of the tertiary output collection we want to create", _outputCollectionName3, string ( "output_collection3" ) );
 
-    registerProcessorParameter ( "ReadCBCAhead", "Read this number of CBC events before reading the first telescope event", _eventdifferenceCBC, int ( 0 ) );
+    registerProcessorParameter ( "ReadCBCAhead", "Read this number of CBC events before reading the first telescope event", _eventdifferenceCBC, 0 );
 
-    registerProcessorParameter ( "ReadTelescopeAhead", "Read this number of telescope events before reading the first CBC event", _eventdifferenceTelescope, int ( 0 ) );
+    registerProcessorParameter ( "ReadTelescopeAhead", "Read this number of telescope events before reading the first CBC event", _eventdifferenceTelescope, 0 );
 
     registerProcessorParameter ( "TelescopeCollectionName", "The name of the telescope collection we want to merge", _telescopeCollectionName, string ( "telescope_collection1" ) );
 

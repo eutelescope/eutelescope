@@ -24,9 +24,9 @@ EUTelProcessorAnalysisPALPIDEfsNoise::EUTelProcessorAnalysisPALPIDEfsNoise()
                           _zsDataCollectionName, string("zsdata"));
   registerProcessorParameter("HistogramFilling",
                              "Switch on or off the histogram filling",
-                             _fillHistos, static_cast<bool>(true));
+                             _fillHistos, true);
   registerOptionalParameter("Energy", "Particle energy", _energy,
-                            static_cast<double>(6.0));
+                            6.0);
   EVENT::StringVec _stringVecExample;
   _stringVecExample.push_back(" ");
   registerOptionalParameter("ChipID", "Chip IDs", _chipID, _stringVecExample);

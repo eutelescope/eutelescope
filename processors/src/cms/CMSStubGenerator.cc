@@ -77,19 +77,19 @@ CMSStubGenerator::CMSStubGenerator ( ) : Processor ( "CMSStubGenerator" )
 
     registerOutputCollection ( LCIO::TRACKERHIT, "OutputHitCollectionName", "Output hit collection name", _outputHitCollectionName, std::string ( " " ) );
 
-    registerProcessorParameter ( "DUTPlane1", "This is the first DUT sensorID.", _dutPlane1, int ( 6 ) );
+    registerProcessorParameter ( "DUTPlane1", "This is the first DUT sensorID.", _dutPlane1, 6 );
 
-    registerProcessorParameter ( "DUTPlane2", "This is the second DUT sensorID.", _dutPlane2, int ( 7 ) );
+    registerProcessorParameter ( "DUTPlane2", "This is the second DUT sensorID.", _dutPlane2, 7 );
 
-    registerProcessorParameter ( "KeepDUTHits", "Keep the DUT hits in mode 0 after creating subs or discard them?", _keepDUTHits, bool ( true ) );
+    registerProcessorParameter ( "KeepDUTHits", "Keep the DUT hits in mode 0 after creating subs or discard them?", _keepDUTHits, true );
 
-    registerProcessorParameter ( "MaxResidual", "Maximum distance in channels for two clusters to constitute a stub", _maxResidual, float ( 0.0 ) );
+    registerProcessorParameter ( "MaxResidual", "Maximum distance in channels for two clusters to constitute a stub", _maxResidual, 0.0f );
 
-    registerProcessorParameter ( "Mode", "0 to merge hits. 1 to drop hits from plane 1, 2 to drop hits from plane 2", _runMode, int ( 0 ) );
+    registerProcessorParameter ( "Mode", "0 to merge hits. 1 to drop hits from plane 1, 2 to drop hits from plane 2", _runMode, 0 );
 
-    registerProcessorParameter ( "OutputSensorID", "SensorID of the output stub.", _outputSensorID, int ( 8 ) );
+    registerProcessorParameter ( "OutputSensorID", "SensorID of the output stub.", _outputSensorID, 8 );
 
-    registerProcessorParameter ( "RequireStub", "Do we require an event to have the stub flag set to create an offline stub? 1 for on, 0 for off.", _requirestubflag, int ( 1 ) );
+    registerProcessorParameter ( "RequireStub", "Do we require an event to have the stub flag set to create an offline stub? 1 for on, 0 for off.", _requirestubflag, 1 );
 
 }
 

@@ -132,18 +132,18 @@ EUTelDUTHistograms::EUTelDUTHistograms()
 
   registerProcessorParameter(
       "ManualDUTid", "Id of telescope layer which should be used as DUT", _iDUT,
-      static_cast<int>(0));
+      0);
 
   registerProcessorParameter(
       "DistMax",
       "Maximum allowed distance between fit and matched DUT hit in [mm]",
-      _distMax, static_cast<double>(0.1));
+      _distMax, 0.1);
 
   registerProcessorParameter("DUTpitchX", "DUT sensor pitch in X", _pitchX,
-                             static_cast<double>(0.0184));
+                             0.0184);
 
   registerProcessorParameter("DUTpitchY", "DUT sensor pitch in Y", _pitchY,
-                             static_cast<double>(0.0184));
+                             0.0184);
 
   std::vector<float> initAlign;
   initAlign.push_back(0.);
@@ -160,18 +160,18 @@ EUTelDUTHistograms::EUTelDUTHistograms()
                              _histoInfoFileName, string("histoinfo.xml"));
 
   registerOptionalParameter("cluSizeXCut", "cluster size X cut ", _cluSizeXCut,
-                            static_cast<int>(-1));
+                            -1);
 
   registerOptionalParameter("cluSizeYCut", "cluster size Y cut ", _cluSizeYCut,
-                            static_cast<int>(-1));
+                            -1);
 
   registerOptionalParameter(
       "trackNCluXCut", "number of hit on a track with _cluSizeX cluster size ",
-      _trackNCluXCut, static_cast<int>(0));
+      _trackNCluXCut, 0);
 
   registerOptionalParameter(
       "trackNCluYCut", "number of hit on a track with _cluSizeY cluster size ",
-      _trackNCluYCut, static_cast<int>(0));
+      _trackNCluYCut, 0);
 }
 
 void EUTelDUTHistograms::init() {
@@ -2199,7 +2199,7 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event) {
       int sizeY = -1;
       int subMatrix = -1;
       if (meshit != 0) {
-        getClusterSize(hsensorID, static_cast<TrackerHit *>(meshit), sizeX,
+        getClusterSize(hsensorID, meshit, sizeX,
                        sizeY, subMatrix);
       } else if (meshit0 != 0) {
         sizeX = 1;

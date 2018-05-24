@@ -95,7 +95,7 @@ EUTelProcessorHitMaker::EUTelProcessorHitMaker()
   registerOptionalParameter(
       "EnableLocalCoordidates",
       "Hit coordinates are calculated in local reference frame of sensor",
-      _wantLocalCoordinates, static_cast<bool>(false));
+      _wantLocalCoordinates, false);
 }
 
 void EUTelProcessorHitMaker::init() {

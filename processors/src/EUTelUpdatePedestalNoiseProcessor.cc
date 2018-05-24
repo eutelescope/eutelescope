@@ -83,12 +83,12 @@ EUTelUpdatePedestalNoiseProcessor::EUTelUpdatePedestalNoiseProcessor()
 
   registerProcessorParameter("UpdateFrequency",
                              "How often the algorithm should be applied",
-                             _updateFrequency, static_cast<int>(10));
+                             _updateFrequency, 10);
 
   registerOptionalParameter(
       "FixedWeightValue",
       "The value of the fixed weight (only for fixed weight algorithm",
-      _fixedWeight, static_cast<int>(100));
+      _fixedWeight, 100);
 
   IntVec monitorPixelExample;
   monitorPixelExample.push_back(0);

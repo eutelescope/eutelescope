@@ -115,7 +115,7 @@ void EUTelDafAlign::dafParams() {
   registerOptionalParameter(
       "RunPede",
       "Build steering file, binary input file, and execute the pede program.",
-      _runPede, static_cast<bool>(true));
+      _runPede, true);
   registerOptionalParameter("PedeSteerfileName",
                             "Name of the steering file for the pede program.",
                             _pedeSteerfileName, string("steer_mille.txt"));

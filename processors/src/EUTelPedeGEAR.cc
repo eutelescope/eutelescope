@@ -72,11 +72,11 @@ EUTelPedeGEAR::EUTelPedeGEAR() : Processor("EUTelPedeGEAR") {
 
   registerOptionalParameter("OffsetScaleFactor",
                             "Offset scale factor.",
-                            _offsetScaleFactor, int(1000));
+                            _offsetScaleFactor, 1000);
 
   registerOptionalParameter("RotateOffsetVec",
                             "Apply the obtained rotation to the preexisting offset vector or not..",
-                            _rotateOldOffsetVec, bool(false));
+                            _rotateOldOffsetVec, false);
 
 
 }

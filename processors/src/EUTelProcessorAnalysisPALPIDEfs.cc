@@ -83,26 +83,26 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
                           _zsDataCollectionName, string("zsdata"));
   registerProcessorParameter("HistogramFilling",
                              "Switch on or off the histogram filling",
-                             _fillHistos, static_cast<bool>(true));
+                             _fillHistos, true);
   registerProcessorParameter(
       "HistoInfoFileName", "This is the name of the histogram information file",
       _histoInfoFileName, string("histoinfo.xml"));
   registerProcessorParameter(
       "Limit", "This is allowed distance between the track and the hit", limit,
-      static_cast<double>(0.05));
+      0.05);
   registerProcessorParameter("dutID", "This is the ID of the DUT", _dutID,
-                             static_cast<int>(6));
+                             6);
   registerProcessorParameter("MaxNumberOfPixels",
                              "This is the maximum number of pixels in one "
                              "cluster for the clustershape analysis",
-                             _maxNumberOfPixels, static_cast<int>(3));
+                             _maxNumberOfPixels, 3);
   registerProcessorParameter(
       "nPlanesWithMoreHits",
       "This is the maximum number of planes that can have more than one hit",
-      _nPlanesWithMoreHits, static_cast<int>(4));
+      _nPlanesWithMoreHits, 4);
   registerProcessorParameter("MoreTracks",
                              "More tracks are allowed in one event",
-                             _moreTracks, static_cast<bool>(false));
+                             _moreTracks, false);
   registerOptionalParameter(
       "HotPixelCollectionName",
       "This is the name of the hotpixel collection of the pALPIDE",
@@ -116,10 +116,10 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
                             "This is the name of the file which contains the "
                             "pixels which were masked during datataking",
                             _noiseMaskFileName, static_cast<string>(""));
-  registerOptionalParameter("Energy", "Particle energy", _energy,
-                            static_cast<double>(6.0));
+  registerOptionalParameter("Energy", "Particle energy [GeV]", _energy,
+                            6.0);
   registerProcessorParameter("WriteShapes", "Write cluster shapes to file?",
-                             _writeShapes, static_cast<bool>(false));
+                             _writeShapes, false);
   registerOptionalParameter(
       "ShapeOutputFileName", "This is the name of the file where the IDs of "
                              "the cluster shapes will be saved",
@@ -137,9 +137,9 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
                             static_cast<string>(""));
   registerProcessorParameter(
       "MinTimeStamp", "This is minimum timestamp required to consider an event",
-      _minTimeStamp, static_cast<double>(0));
+      _minTimeStamp, 0.);
   registerOptionalParameter("ChipVersion", "Chip Version", _chipVersion,
-                            static_cast<int>(3));
+                            3);
 
   //  float defaultHoleSizeX[2] = {1, 29}; // Need to be changed if eutelescope
   //  has -std=c++11 flag
@@ -152,11 +152,11 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
                             _holesizeY, std::vector<float>{9, 12.5});
   _isFirstEvent = true;
   registerProcessorParameter("ShowFake", "Show fake efficiency", _showFake,
-                             static_cast<bool>(true));
+                             true);
   registerProcessorParameter("RealAssociation", "Calculate track to hit "
                                                 "association without allowing "
                                                 "the tracks to share hits",
-                             _realAssociation, static_cast<bool>(false));
+                             _realAssociation, false);
 }
 
 void EUTelProcessorAnalysisPALPIDEfs::init() {

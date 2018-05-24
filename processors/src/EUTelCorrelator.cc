@@ -107,12 +107,12 @@ EUTelCorrelator::EUTelCorrelator()
   registerProcessorParameter("ClusterChargeMinimum",
                              "Minimum allowed cluster charge to be taken into "
                              "account for the correlation plots (default = 2)",
-                             _clusterChargeMin, static_cast<int>(2));
+                             _clusterChargeMin, 2);
 
   registerProcessorParameter("Events", "How many events are needed to get "
                                        "reasonable correlation plots (and "
                                        "Offset DB)? (default=1000)",
-                             _events, static_cast<int>(1000));
+                             _events, 1000);
 
   registerOptionalParameter("FixedPlane", "SensorID of fixed plane",
                             _fixedPlaneID, 0);
@@ -148,7 +148,7 @@ EUTelCorrelator::EUTelCorrelator()
   registerOptionalParameter("MinNumberOfCorrelatedHits",
                             "If there are more then this number of correlated "
                             "hits (planes->track candidate) (default=5)",
-                            _minNumberOfCorrelatedHits, static_cast<int>(5));
+                            _minNumberOfCorrelatedHits, 5);
 
   registerOptionalParameter(
       "HotPixelCollectionName", "This is the name of the hot pixel collection "

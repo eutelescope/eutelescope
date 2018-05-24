@@ -72,7 +72,7 @@ CMSBuncher::CMSBuncher ( ) : DataSourceProcessor ( "CMSBuncher" )
 
     registerProcessorParameter ( "OutputCollectionName", "The name of the output collection we want to create", _outputCollectionName, string ( "collection2" ) );
 
-    registerProcessorParameter ( "SingleFrameTime", "The time of a frame. Unit is micro seconds", _singleframetime, int ( 115 ) );
+    registerProcessorParameter ( "SingleFrameTime", "The time of a frame. Unit is micro seconds", _singleframetime, 115 );
 
 }
 

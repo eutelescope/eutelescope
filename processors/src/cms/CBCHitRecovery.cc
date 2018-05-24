@@ -82,7 +82,7 @@ _aidaHistoMap ( )
 
     registerProcessorParameter ( "CBCDataOutputCollectionName", "The name of the CBC data collection we want to write", _cbcDataOutputCollectionName, string ( "cbc_data_output" ) );
 
-    registerProcessorParameter ( "CBCVirtualDUTId", "The id of the virtual CBC DUT", _cbcVirtualDUTId, static_cast <int> (0) );
+    registerProcessorParameter ( "CBCVirtualDUTId", "The id of the virtual CBC DUT", _cbcVirtualDUTId, 0 );
     
     registerProcessorParameter ( "CBCRealDUTsVec", "The ids of the real DUTs (has to be two)", _cbcRealDUTsVec, std::vector < int > () );
 }

@@ -113,11 +113,11 @@ void EUTelDafFitter::dafParams() {
 
   // Tracker system options
   registerOptionalParameter("AddToLCIO", "Should plots be made and filled?",
-                            _addToLCIO, static_cast<bool>(true));
+                            _addToLCIO, true);
   registerOptionalParameter(
       "FitDuts",
       "Set this to true if you want DUTs to be included in the track fit",
-      _fitDuts, static_cast<bool>(false));
+      _fitDuts, false);
   // Track fitter options
   registerOutputCollection(LCIO::TRACK, "TrackCollectionName",
                            "Collection name for fitted tracks",

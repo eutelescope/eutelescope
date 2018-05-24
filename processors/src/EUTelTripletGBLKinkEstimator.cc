@@ -113,43 +113,43 @@ EUTelTripletGBLKinkEstimator::EUTelTripletGBLKinkEstimator() : Processor("EUTelT
 
   registerProcessorParameter( "Ebeam",
       "Beam energy [GeV]",
-      _eBeam, static_cast < double >( 0.0));
+      _eBeam, 0.0);
 
   registerOptionalParameter( "triResCut", "Upstream/Downstream triplet residual cut [mm]", _triplet_res_cut, 0.1 );
 
   registerProcessorParameter( "matchingCut",
       "cut for matching in x coordinate in mm",
-      _track_match_cut, static_cast < double >(0.15));
+      _track_match_cut, 0.15);
 
   registerProcessorParameter( "slopeCut",
       "cut for track slopes in x coordinate in rad",
-      _slope_cut, static_cast < double >(0.002));
+      _slope_cut, 0.002);
 
   registerProcessorParameter( "dut_plane",
       "aluminium plane to be considered as passive DUT",
-      _dut_plane, static_cast <int>(-1));
+      _dut_plane, -1);
 
   registerProcessorParameter( "eff_radius",
       "radius on DUT plane to accept match with triplet",
-      _eff_radius, static_cast <double>(0.1)); // in mm. 0.1 is for 6 GeV, 20 mm. This is scaled with E and dz
+      _eff_radius, 0.1); // in mm. 0.1 is for 6 GeV, 20 mm. This is scaled with E and dz
 
   registerProcessorParameter( "kappa",
       "global factor to Highland formula",
-      _kappa, static_cast <double>(1.0)); // 1.0 means HL as is, 1.2 means 20% additional scattering
+      _kappa, 1.0); // 1.0 means HL as is, 1.2 means 20% additional scattering
 
   registerProcessorParameter( "targetthick",
       "thickness of alu target, if present",
-      _targetthick, static_cast <double>(0.0));
+      _targetthick, 0.0);
 
   registerProcessorParameter( "probchi2Cut",
       "Cut on Prob(chi2,ndf) rejecting bad tracks with prob < cut",
-      _probchi2_cut, static_cast <double>(.01)); 
+      _probchi2_cut, .01); 
 
   registerOptionalParameter("Resolution",
       "resolution parameter for each Cluster size, same for all planes. first value is average of all CSes. Up to CS6 plus larger than 6, hence in total 8 numbers. Disable with -1, e.g. (3.5e-3, -1, -1, ...., -1)",
-      _resolution,  FloatVec (static_cast <double> (8), 3.5*1e-3));
+      _resolution,  FloatVec( 8, 3.5*1e-3));
 
-  registerOptionalParameter("Thickness","thickness parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_thickness,  FloatVec (static_cast <double> (7), 50*1e-3));
+  registerOptionalParameter("Thickness","thickness parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_thickness,  FloatVec( 7, 50*1e-3));
 
 
 }
@@ -652,7 +652,7 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
     double p = _eBeam; // beam momentum
     double epsSi = -1;
     double epsAir = -1.; // define later when dz is known
-    double epsAlu = ((double)_targetthick)/88.97; // Alu target // FIXME this is used only in the log-correction, but needs assumption of X0 :/
+    double epsAlu = (_targetthick)/88.97; // Alu target // FIXME this is used only in the log-correction, but needs assumption of X0 :/
     // another way would be so solve this iteratively: start wihout target correcttion in the log-correction, in second iteration use result from first, ...
 
     double sumeps = 0.0;
@@ -1024,8 +1024,8 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 
       ipos = ilab[1];
       traj.getResults( ipos, aCorrection, aCovariance );
-      traj.getMeasResults(static_cast<unsigned int>(ipos), ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
-      traj.getScatResults(static_cast<unsigned int>(ipos), ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
+      traj.getMeasResults(ipos, ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+      traj.getScatResults(ipos, ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
       gblax1Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
       gbldx1Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
       gbldx11Histo->fill( aCorrection[3] ); // shift x [mm]
@@ -1044,8 +1044,8 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 
       ipos = ilab[2];
       traj.getResults( ipos, aCorrection, aCovariance );
-      traj.getMeasResults(static_cast<unsigned int>(ipos), ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
-      traj.getScatResults(static_cast<unsigned int>(ipos), ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
+      traj.getMeasResults(ipos, ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+      traj.getScatResults(ipos, ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
       gblax2Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
       gbldx2Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
       gbldx21Histo->fill( aCorrection[3] ); // shift x [mm]
@@ -1091,8 +1091,8 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 
       ipos = ilab[4];
       traj.getResults( ipos, aCorrection, aCovariance );
-      traj.getMeasResults(static_cast<unsigned int>(ipos), ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
-      traj.getScatResults(static_cast<unsigned int>(ipos), ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
+      traj.getMeasResults(ipos, ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+      traj.getScatResults(ipos, ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
       gblax3Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
       gbldx3Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
       gbldx31Histo->fill( aCorrection[3] ); // shift x [mm]
@@ -1110,8 +1110,8 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 
       ipos = ilab[5];
       traj.getResults( ipos, aCorrection, aCovariance );
-      traj.getMeasResults(static_cast<unsigned int>(ipos), ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
-      traj.getScatResults(static_cast<unsigned int>(ipos), ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
+      traj.getMeasResults(ipos, ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+      traj.getScatResults(ipos, ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
       gblax4Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
       gbldx4Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
       gbldx41Histo->fill( aCorrection[3] ); // shift x [mm]
@@ -1127,8 +1127,8 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 
       ipos = ilab[6];
       traj.getResults( ipos, aCorrection, aCovariance );
-      traj.getMeasResults(static_cast<unsigned int>(ipos), ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
-      traj.getScatResults(static_cast<unsigned int>(ipos), ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
+      traj.getMeasResults(ipos, ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+      traj.getScatResults(ipos, ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
       gblax5Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
       gbldx5Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
       gbldx51Histo->fill( aCorrection[3] ); // shift x [mm]

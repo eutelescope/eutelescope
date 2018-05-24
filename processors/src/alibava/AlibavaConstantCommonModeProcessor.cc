@@ -76,9 +76,9 @@ _commonmodeerror ( )
 
     registerOptionalParameter ( "CommonModeErrorCollectionName", "Common mode error collection name, better not to change", _commonmodeerrorCollectionName, string ( "commonmodeerror" ) );
 
-    registerOptionalParameter ( "CommonModeErrorCalculationIteration", "The number of iterations that should be used in common mode calculation", _Niteration, int ( 3 ) );
+    registerOptionalParameter ( "CommonModeErrorCalculationIteration", "The number of iterations that should be used in common mode calculation", _Niteration, 3 );
 
-    registerOptionalParameter ("NoiseDeviation", "The limit to the deviation of noise. The data that exceeds this deviation will be considered as signal and not be included in common mode error calculation", _NoiseDeviation, float ( 2.5 ) );
+    registerOptionalParameter ("NoiseDeviation", "The limit to the deviation of noise. The data that exceeds this deviation will be considered as signal and not be included in common mode error calculation", _NoiseDeviation, 2.5f );
 
     registerOptionalParameter ( "Method", "The method with which to calculate the common mode. Options are: constant or slope", _commonmodeMethod, string ( "slope" ) );
 }

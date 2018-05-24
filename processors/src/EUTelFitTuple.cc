@@ -86,18 +86,18 @@ EUTelFitTuple::EUTelFitTuple() : Processor("EUTelFitTuple") {
 
   registerProcessorParameter("MissingValue",
                              "Value used for missing measurements",
-                             _missingValue, static_cast<double>(-100.));
+                             _missingValue, -100.);
 
   registerProcessorParameter("UseManualDUT", "Flag for manual DUT selection",
-                             _useManualDUT, static_cast<bool>(false));
+                             _useManualDUT, false);
 
   registerProcessorParameter("ManualDUTid",
                              "Id of sensor layer which should be used as DUT",
-                             _manualDUTid, static_cast<int>(0));
+                             _manualDUTid, 0);
 
   registerProcessorParameter(
       "DistMax", "Maximum allowed distance between fit and matched DUT hit",
-      _distMax, static_cast<double>(0.1));
+      _distMax, 0.1);
 
   std::vector<float> initAlign;
   initAlign.push_back(0.);

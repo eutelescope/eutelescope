@@ -105,7 +105,7 @@ CBCSimConverter::CBCSimConverter ( ) : Processor ( "CBCSimConverter" )
 
     registerInputCollection ( LCIO::TRACKERDATA, "InputCollectionName", "Input collection name",  _inputCollectionName, string ( "Det351" ) );
 
-    registerProcessorParameter ( "ChanCount", "The number of channels in the system", _chancount, int ( 254 ) );
+    registerProcessorParameter ( "ChanCount", "The number of channels in the system", _chancount,  254 );
 
     registerProcessorParameter ( "NonSensitiveAxis", "The unsensitive axis of the CBC", _nonsensitiveaxis, string ( "x" ) );
 

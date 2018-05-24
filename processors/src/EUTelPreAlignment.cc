@@ -105,16 +105,16 @@ EUTelPreAlign::EUTelPreAlign() : Processor("EUTelPreAlign") {
   registerOptionalParameter("MinNumberOfCorrelatedHits",
                             "If there are more then this number of correlated "
                             "hits (planes->track candidate) (default=5)",
-                            _minNumberOfCorrelatedHits, static_cast<int>(5));
+                            _minNumberOfCorrelatedHits, 5);
 
   registerOptionalParameter("HistogramFilling",
                             "Switch on or off the histogram filling",
-                            _fillHistos, bool(true));
+                            _fillHistos, true);
 
   registerOptionalParameter(
       "DumpGEAR",
       "Dump alignment into GEAR file instead of prealignment database",
-      _dumpGEAR, bool(false));
+      _dumpGEAR, false);
 
   registerOptionalParameter("NewGEARSuffix",
                             "Suffix for the new GEAR file, set to empty string "

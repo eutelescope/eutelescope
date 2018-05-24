@@ -98,29 +98,29 @@ EUTelGBLFitter::EUTelGBLFitter() : Processor("EUTelGBLFitter"), _inputCollection
   // processor parameters
   registerInputCollection( LCIO::TRACKERHIT, "InputCollection", "Name of the input TrackerHit collection of the telescope", _inputCollectionTelescope, std::string("") );
 
-  registerProcessorParameter( "Ebeam", "Beam energy [GeV]", _eBeam, static_cast<double>(0.0));
+  registerProcessorParameter( "Ebeam", "Beam energy [GeV]", _eBeam, 0.0);
 
   registerOptionalParameter( "triResCut", "Upstream/Downstream triplet residual cut [mm]", _triplet_res_cut, 0.1);
 
-  registerProcessorParameter( "matchingCut", "cut for matching in x coordinate in mm", _track_match_cut, static_cast<double>(0.15));
+  registerProcessorParameter( "matchingCut", "cut for matching in x coordinate in mm", _track_match_cut, 0.15);
 
-  registerProcessorParameter( "slopeCut", "cut for track slopes in x coordinate in rad", _slope_cut, static_cast<double>(0.002));
+  registerProcessorParameter( "slopeCut", "cut for track slopes in x coordinate in rad", _slope_cut, 0.002);
 
   registerProcessorParameter( "excludedPlanes", "Planes to be excluded from the track fit", _excluded_planes, EVENT::IntVec() );
 
   //in mm. 0.1 is for 6 GeV, 20 mm. This is scaled with E and dz
-  registerProcessorParameter( "eff_radius", "radius on DUT plane to accept match with triplet", _eff_radius, static_cast <double>(0.1)); 
+  registerProcessorParameter( "eff_radius", "radius on DUT plane to accept match with triplet", _eff_radius, 0.1); 
 
   //1.0 means HL as is, 1.2 means 20% additional scattering
-  registerProcessorParameter( "kappa", "global factor to Highland formula", _kappa, static_cast<double>(1.0));
+  registerProcessorParameter( "kappa", "global factor to Highland formula", _kappa, 1.0);
 
-  registerProcessorParameter( "probchi2Cut", "Cut on Prob(chi2,ndf) rejecting bad tracks with prob < cut", _probchi2_cut, static_cast<double>(.01)); 
+  registerProcessorParameter( "probchi2Cut", "Cut on Prob(chi2,ndf) rejecting bad tracks with prob < cut", _probchi2_cut, .01); 
 
-  registerProcessorParameter( "TelescopeResolution", "Resolution parameter for each cluster size (CS) for all telescope planes. First value is average of all CSes, subsequently for CS=1 them CS=2 and so on. The last value is for all CSes larger than the previous ones. I.e. if you provide five values: <avg> <CS 1> <CS 2> <CS 3> <CS greater 3>", _telResolution, FloatVec(static_cast<double>(8), 3.5*1e-3));
+  registerProcessorParameter( "TelescopeResolution", "Resolution parameter for each cluster size (CS) for all telescope planes. First value is average of all CSes, subsequently for CS=1 them CS=2 and so on. The last value is for all CSes larger than the previous ones. I.e. if you provide five values: <avg> <CS 1> <CS 2> <CS 3> <CS greater 3>", _telResolution, FloatVec(8, 3.5*1e-3));
 
-  registerOptionalParameter( "DUTXResolutions", "Same as TelescopeResolution, but now only for y-direction. Also, there needs to be an additional leading NEGATIVE number for the sensorID. E.g. -20 0.5 0.7 0.4 0.3 would correspond to <sensorID (20)> <avg> <CS 1> <CS 2> <CS greater 2>, this could be followed by a further section which again starts with a negative number for the next sensorID", _dutResolutionX, FloatVec(static_cast<double>(8), 3.5*1e-3));
+  registerOptionalParameter( "DUTXResolutions", "Same as TelescopeResolution, but now only for y-direction. Also, there needs to be an additional leading NEGATIVE number for the sensorID. E.g. -20 0.5 0.7 0.4 0.3 would correspond to <sensorID (20)> <avg> <CS 1> <CS 2> <CS greater 2>, this could be followed by a further section which again starts with a negative number for the next sensorID", _dutResolutionX, FloatVec(8, 3.5*1e-3));
 
-  registerOptionalParameter( "DUTYResolutions", "Same as DUTXResolutions but in y-direction.", _dutResolutionY, FloatVec(static_cast<double>(8), 3.5*1e-3));
+  registerOptionalParameter( "DUTYResolutions", "Same as DUTXResolutions but in y-direction.", _dutResolutionY, FloatVec(8., 3.5*1e-3));
 }
 
 void EUTelGBLFitter::init() {

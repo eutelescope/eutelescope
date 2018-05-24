@@ -80,7 +80,7 @@ _maxExpectedCreatedHitPerDUTHit ( 10 )
 
     registerProcessorParameter ( "MaxResidual", "This processor will look for hits in the known coordinate to determine if the hits are correlated. The hits will be considered as correlated if the residual is smaller than MaxResidual", _maxResidual, float ( 10.0 ) );
 
-    registerProcessorParameter ( "MultiHitMode", "Allow an individual DUT hit to be transformed into multiple hits? If false, only the closest extrapolated position will be used.", _multihitmode, bool ( true ) );
+    registerProcessorParameter ( "MultiHitMode", "Allow an individual DUT hit to be transformed into multiple hits? If false, only the closest extrapolated position will be used.", _multihitmode, true );
     
 
 }

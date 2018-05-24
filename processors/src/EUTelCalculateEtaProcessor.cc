@@ -96,7 +96,7 @@ EUTelCalculateEtaProcessor::EUTelCalculateEtaProcessor()
   registerProcessorParameter("EventNumber", "Write here how many events you "
                                             "want to use for eta calculation "
                                             "(-1 for all)",
-                             _nEvent, static_cast<int>(-1));
+                             _nEvent, -1);
 
   IntVec noOfBinExample;
   noOfBinExample.push_back(1000);
@@ -108,7 +108,7 @@ EUTelCalculateEtaProcessor::EUTelCalculateEtaProcessor()
 
   registerProcessorParameter("ClusterQualitySelection",
                              "To use only kGoodQuality write 0 here",
-                             _clusterQuality, static_cast<int>(0));
+                             _clusterQuality, 0);
   registerProcessorParameter("ClusterTypeSelection",
                              "Write FULL: full cluster, NxMPixel: for a NxM "
                              "sub-cluster, NPixel: to use only N pixel",
@@ -125,7 +125,7 @@ EUTelCalculateEtaProcessor::EUTelCalculateEtaProcessor()
   registerProcessorParameter(
       "NPixelSize",
       "The number of pixel with the highest signal (only for NPixel)", _nPixel,
-      static_cast<int>(5));
+      5);
 
   registerProcessorParameter("EtaXCollectionName",
                              "Set the name of the Eta collection along x",
@@ -143,7 +143,7 @@ EUTelCalculateEtaProcessor::EUTelCalculateEtaProcessor()
                             "reject single pixel cluster. 1=reject, 0=keep, "
                             "2=reject clusters with two pixels, where the "
                             "second pixel is not diagonal to the seed. ",
-                            _rejectsingplepixelcluster, static_cast<int>(0));
+                            _rejectsingplepixelcluster, 0);
 }
 
 void EUTelCalculateEtaProcessor::init() {

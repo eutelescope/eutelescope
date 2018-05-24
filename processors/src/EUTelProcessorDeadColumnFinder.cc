@@ -24,7 +24,7 @@ EUTelProcessorDeadColumnFinder::EUTelProcessorDeadColumnFinder()
                           _zsDataCollectionName, string("zsdata"));
   registerProcessorParameter("HistogramFilling",
                              "Switch on or off the histogram filling",
-                             _fillHistos, static_cast<bool>(true));
+                             _fillHistos, true);
   registerOptionalParameter("DeadColumnFileName",
                             "This is the name of the LCIO file containing the "
                             "pixels belonging to a dead column",
@@ -130,7 +130,7 @@ void EUTelProcessorDeadColumnFinder::end() {
   streamlog_out(MESSAGE5) << "Average number of hits per event:" << endl;
   for (int iLayer = 0; iLayer < _nLayer; iLayer++)
     streamlog_out(MESSAGE5) << "Layer " << iLayer << "\t"
-                            << (double)hitMap[iLayer]->GetEntries() / _nEvent
+                            << hitMap[iLayer]->GetEntries() / _nEvent
                             << endl;
   for (int iLayer = 0; iLayer < _nLayer; iLayer++) {
     CellIDEncoder<TrackerDataImpl> deadColumnEncoder(

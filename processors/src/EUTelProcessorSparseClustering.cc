@@ -88,7 +88,7 @@ EUTelProcessorSparseClustering::EUTelProcessorSparseClustering()
   // now the optional parameters
   registerProcessorParameter(
       "TCut", "Time cut in time units of your sensor", _cutT,
-      static_cast<float>(std::numeric_limits<float>::max()));
+      std::numeric_limits<float>::max());
 
   registerProcessorParameter(
       "HistoInfoFileName", "This is the name of the histogram information file",
@@ -96,7 +96,7 @@ EUTelProcessorSparseClustering::EUTelProcessorSparseClustering()
 
   registerProcessorParameter("HistogramFilling",
                              "Switch on or off the histogram filling",
-                             _fillHistos, static_cast<bool>(true));
+                             _fillHistos, true);
 
   registerOptionalParameter(
       "ExcludedPlanes",
@@ -105,8 +105,8 @@ EUTelProcessorSparseClustering::EUTelProcessorSparseClustering()
 
   registerProcessorParameter(
       "SparseMinDistanceSquared",
-      "Minimum distance squared between sparsified pixel ( touching == 2) ",
-      _sparseMinDistanceSquared, static_cast<int>(2));
+      "Minimum distance squared between sparsified pixel ( touching == 2) [integer]",
+      _sparseMinDistanceSquared, 2);
 
   _isFirstEvent = true;
 }

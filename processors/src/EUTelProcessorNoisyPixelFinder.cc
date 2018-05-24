@@ -77,7 +77,7 @@ namespace eutelescope {
     registerProcessorParameter(
         "NoOfEvents",
         "The number of events to be considered for each update cycle",
-        _noOfEvents, static_cast<int>(100));
+        _noOfEvents, 100);
 
     registerOptionalParameter(
         "SensorIDVec",
@@ -88,7 +88,7 @@ namespace eutelescope {
                                "This float number [0,1] represents the maximum "
                                "allowed firing frequency\n"
                                "within the selected number of event per cycle",
-                               _maxAllowedFiringFreq, static_cast<float>(0.2));
+                               _maxAllowedFiringFreq, 0.2f);
 
     registerOptionalParameter(
         "HotPixelDBFile", "This is the name of the LCIO file name with the "
@@ -107,11 +107,11 @@ namespace eutelescope {
 
   registerOptionalParameter("NoisyPixelNoHistogramUpperLimit",
                               "Upper limit for noisy pixel count versus noise cut histogram",
-                              _noisyPixelVsCutHistUpperLimit, static_cast<double>(0.0006));
+                              _noisyPixelVsCutHistUpperLimit, 0.0006);
 
    registerOptionalParameter("NoisyPixelNoHistogramBins",
                               "Bin count for noisy pixel count versus noise cut histogram",
-                              _noisyPixelVsCutHistBins, int(1000));
+                              _noisyPixelVsCutHistBins, 1000);
 
 
 

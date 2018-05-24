@@ -55,13 +55,13 @@ EUTelStrasMimoTelReader::EUTelStrasMimoTelReader()
 
   registerProcessorParameter("LEPSIRunNumber",
                              "The run to be converted (the number only)",
-                             _runNumber, static_cast<int>(500));
+                             _runNumber, 500);
 
   registerProcessorParameter("XNoOfPixel", "Number of pixels along the x axis",
-                             _noOfXPixel, static_cast<int>(66));
+                             _noOfXPixel, 66);
 
   registerProcessorParameter("YNoOfPixel", "Number of pixels along the x axis",
-                             _noOfYPixel, static_cast<int>(256));
+                             _noOfYPixel, 256);
 
   registerOutputCollection(LCIO::TRACKERRAWDATA, "Frame0CollectionName",
                            "Name of the Frame0 collection",

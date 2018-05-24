@@ -52,7 +52,7 @@ EUTelProcessorClusterAnalysis::EUTelProcessorClusterAnalysis()
                           _zsDataCollectionName, string("zsdata"));
   registerProcessorParameter("HistogramFilling",
                              "Switch on or off the histogram filling",
-                             _fillHistos, static_cast<bool>(true));
+                             _fillHistos, true);
   registerProcessorParameter(
       "HistoInfoFileName", "This is the name of the histogram information file",
       _histoInfoFileName, string("histoinfo.xml"));
@@ -79,21 +79,21 @@ EUTelProcessorClusterAnalysis::EUTelProcessorClusterAnalysis()
       "Folder name where all the settings of each run will be saved",
       _outputSettingsFolderName, static_cast<string>("./"));
   registerProcessorParameter("dutID", "This is the ID of the DUT", _dutID,
-                             static_cast<int>(6));
+                             6);
   registerProcessorParameter("MaxNumberOfPixels",
                              "This is the maximum number of pixels in one "
                              "cluster for the clustershape analysis",
-                             _maxNumberOfPixels, static_cast<int>(3));
+                             _maxNumberOfPixels, 3);
   registerProcessorParameter("nSectors",
                              "This is the maximum amount of sectors", _nSectors,
-                             static_cast<int>(8));
+                             8);
   registerOptionalParameter("SectorSafetyPixels",
                             "Safety distance (in pixel) of clusters being "
                             "associated to a sector and to the boundaries of "
                             "the chip.",
-                            _sectorSafetyPixels, static_cast<int>(2));
-  registerOptionalParameter("Energy", "Particle energy", _energy,
-                            static_cast<double>(6.0));
+                            _sectorSafetyPixels, 2);
+  registerOptionalParameter("Energy", "Particle energy [GeV]", _energy,
+                            6.0);
   EVENT::StringVec _stringVecExample;
   _stringVecExample.push_back(" ");
   registerOptionalParameter("ChipID", "Chip IDs", _chipID, _stringVecExample);

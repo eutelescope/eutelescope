@@ -157,20 +157,20 @@ EUTelClusteringProcessor::EUTelClusteringProcessor()
   registerProcessorParameter(
       "FFClusterSizeX",
       "Maximum allowed cluster size along x (only odd numbers)",
-      _ffXClusterSize, static_cast<int>(5));
+      _ffXClusterSize, 5);
 
   registerProcessorParameter(
       "FFClusterSizeY",
       "Maximum allowed cluster size along y (only odd numbers)",
-      _ffYClusterSize, static_cast<int>(5));
+      _ffYClusterSize, 5);
 
   registerProcessorParameter("FFSeedCut",
                              "Threshold in SNR for seed pixel identification",
-                             _ffSeedCut, static_cast<float>(4.5));
+                             _ffSeedCut, 4.5f);
 
   registerProcessorParameter("FFClusterCut",
                              "Threshold in SNR for cluster identification",
-                             _ffClusterCut, static_cast<float>(3.0));
+                             _ffClusterCut, 3.0f);
 
   registerProcessorParameter(
       "HistoInfoFileName", "This is the name of the histogram information file",
@@ -178,21 +178,21 @@ EUTelClusteringProcessor::EUTelClusteringProcessor()
 
   registerProcessorParameter(
       "SparseSeedCut", "Threshold in SNR for seed pixel contained in ZS data",
-      _sparseSeedCut, static_cast<float>(4.5));
+      _sparseSeedCut, 4.5f);
 
   registerProcessorParameter(
       "SparseClusterCut", "Threshold in SNR for clusters contained in ZS data",
-      _sparseClusterCut, static_cast<float>(3.0));
+      _sparseClusterCut, 3.0f);
 
   registerProcessorParameter(
       "SparseMinDistanceSquared",
       "Minimum distance squared between sparsified pixel ( touching == 2) ",
-      _sparseMinDistanceSquared, static_cast<int>(2));
+      _sparseMinDistanceSquared, 2);
 
   registerProcessorParameter(
       "SparseMinDistance",
       "Minimum distance between sparsified pixel ( touching == sqrt(2)) ",
-      _sparseMinDistance, static_cast<float>(0.0));
+      _sparseMinDistance, 0.0f);
 
   //  registerOptionalParameter("HotPixelDBFile","This is the name of the LCIO
   //  file name with the output hotpixel db (add .slcio)",
@@ -229,7 +229,7 @@ EUTelClusteringProcessor::EUTelClusteringProcessor()
 
   registerProcessorParameter("HistogramFilling",
                              "Switch on or off the histogram filling",
-                             _fillHistos, static_cast<bool>(true));
+                             _fillHistos, true);
 
   registerOptionalParameter(
       "ExcludedPlanes",
@@ -913,8 +913,8 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(
     // RIA:
     // this is neibhours counting only!
     //
-    const int stepx = static_cast<int>(_ffXClusterSize / 2);
-    const int stepy = static_cast<int>(_ffYClusterSize / 2);
+    const int stepx = _ffXClusterSize / 2;
+    const int stepy = _ffYClusterSize / 2;
 
     ///    const int stepx = 1; wrong or OK ?? could skipp this counting for
     ///    reeeally sparse data
@@ -1118,9 +1118,9 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(
                 // center of this matrix.
 
                 pixelmatrix.set(pix[j].x + xoffset - seedX +
-                                    static_cast<int>(_ffXClusterSize / 2),
+                                    _ffXClusterSize / 2,
                                 pix[j].y + yoffset - seedY +
-                                    static_cast<int>(_ffYClusterSize / 2),
+                                    _ffYClusterSize / 2,
                                 true);
               }
 

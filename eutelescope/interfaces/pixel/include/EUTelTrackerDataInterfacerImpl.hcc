@@ -146,23 +146,23 @@ class EUTelTrackerDataInterfacerImpl : public EUTelTrackerDataInterfacer {
 	inline void EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>::pushChargeValues(EUTelSimpleSparsePixel const & pixel){
 		_trackerData->chargeValues().push_back( static_cast<float> (pixel.getXCoord()) );
 		_trackerData->chargeValues().push_back( static_cast<float> (pixel.getYCoord()) );
-		_trackerData->chargeValues().push_back( static_cast<float> (pixel.getSignal()) );
+		_trackerData->chargeValues().push_back( pixel.getSignal() );
 	}
 
 	template<>
 	inline void EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>::pushChargeValues(EUTelGenericSparsePixel const & pixel){
 		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getXCoord()) );
 		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getYCoord()) );
-		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getSignal()) );
-		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getTime()) );
+		_trackerData->chargeValues().push_back( pixel.getSignal() );
+		_trackerData->chargeValues().push_back( pixel.getTime() );
 	}
 
 	template<>
 	inline void EUTelTrackerDataInterfacerImpl<EUTelGeometricPixel>::pushChargeValues(EUTelGeometricPixel const & pixel){
 		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getXCoord()) );
 		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getYCoord()) );
-		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getSignal()) );
-		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getTime()) );
+		_trackerData->chargeValues().push_back( pixel.getSignal() );
+		_trackerData->chargeValues().push_back( pixel.getTime() );
 
 		_trackerData->chargeValues().push_back( pixel.getPosX() );
 		_trackerData->chargeValues().push_back( pixel.getPosY() );
@@ -174,13 +174,11 @@ class EUTelTrackerDataInterfacerImpl : public EUTelTrackerDataInterfacer {
 	inline void EUTelTrackerDataInterfacerImpl<EUTelMuPixel>::pushChargeValues(EUTelMuPixel const & pixel){
 		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getXCoord()) );
 		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getYCoord()) );
-		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getSignal()) );
-		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getTime()) );
+		_trackerData->chargeValues().push_back( pixel.getSignal() );
+		_trackerData->chargeValues().push_back( pixel.getTime() );
 		_trackerData->chargeValues().push_back(	static_cast<float>(pixel.getHitTime()) );
-		_trackerData->chargeValues().push_back(	static_cast<float>(static_cast<long
-		long unsigned>(pixel.getFrameTime() )  & 0xFFFFFFFF ) );
-		_trackerData->chargeValues().push_back(	static_cast<float>(static_cast<long
-		long unsigned>(pixel.getFrameTime() ) >> 32 ) );
+		_trackerData->chargeValues().push_back(	static_cast<float>(pixel.getFrameTime()  & 0xFFFFFFFF ) );
+		_trackerData->chargeValues().push_back(	static_cast<float>(pixel.getFrameTime() >> 32 ) );
 	}
 
 	//! Template specialization for the fillPixelVec method

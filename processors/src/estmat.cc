@@ -24,7 +24,7 @@ void EstMat::readTrack(int track, TrackerSystem<FITTERTYPE, 4> &system) {
   for (size_t meas = 0; meas < tracks.at(track).size(); meas++) {
     Measurement<FITTERTYPE> &m1 = tracks.at(track).at(meas);
     for (size_t ii = 0; ii < system.planes.size(); ii++) {
-      if ((int)m1.getIden() == (int)system.planes.at(ii).getSensorID()) {
+      if ((int)m1.getIden() == system.planes.at(ii).getSensorID()) {
         double x = m1.getX() * (1.0 + xScale.at(ii)) + m1.getY() * zRot.at(ii);
         double y = m1.getY() * (1.0 + yScale.at(ii)) - m1.getX() * zRot.at(ii);
         x += xShift.at(ii);

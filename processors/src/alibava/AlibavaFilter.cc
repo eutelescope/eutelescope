@@ -63,29 +63,29 @@ AlibavaFilter::AlibavaFilter ( ) : AlibavaBaseProcessor ( "AlibavaFilter" )
 
     registerOutputCollection ( LCIO::TRACKERDATA, "OutputCollectionName", "Output filtered data collection name", _outputCollectionName, string ( "recodata_filtered" ) );
 
-    registerOptionalParameter ( "Coefficient1", "First correction value", _initcoefficient1, float ( 0.0373 ) );
+    registerOptionalParameter ( "Coefficient1", "First correction value", _initcoefficient1, 0.0373f );
 
-    registerOptionalParameter ( "Coefficient2", "Second correction value", _initcoefficient2, float ( 0.0162 ) );
+    registerOptionalParameter ( "Coefficient2", "Second correction value", _initcoefficient2, 0.0162f );
 
-    registerProcessorParameter ( "UseSimpleMethod", "Set to true to use Coefficient1 and Coefficient2 or read from file. This should be sufficient for most applications. If false, then the (define nc N) filter coefficients in the source code will be used.", _simplemethod, bool ( true ) );
+    registerProcessorParameter ( "UseSimpleMethod", "Set to true to use Coefficient1 and Coefficient2 or read from file. This should be sufficient for most applications. If false, then the (define nc N) filter coefficients in the source code will be used.", _simplemethod, true );
 
-    registerOptionalParameter ( "ReadFIRCoefficients", "FIR filter coefficients from a previous iteration can be read if this is switched on.", _readcoefficients, bool ( false ) );
+    registerOptionalParameter ( "ReadFIRCoefficients", "FIR filter coefficients from a previous iteration can be read if this is switched on.", _readcoefficients, false );
 
     registerOptionalParameter ( "FIRCoefficientFile", "The filename to read/write coefficients to", _filterFileName, string ( "filtercoefficients.txt" ) );
 
-    registerProcessorParameter ( "RGHfilter", "Set to true to use RGH filtering instead of FIR filtering. RGH filtering assumes a polarity of +1!", _rghcorrection, bool ( false ) );
+    registerProcessorParameter ( "RGHfilter", "Set to true to use RGH filtering instead of FIR filtering. RGH filtering assumes a polarity of +1!", _rghcorrection, false );
 
-    registerOptionalParameter ( "MinRGHnoise", "The minimum noise a channel has to have to consider RGH filtering. Set to 0 to do all good channels.", _minrghnoise, float ( 6.0 ) );
+    registerOptionalParameter ( "MinRGHnoise", "The minimum noise a channel has to have to consider RGH filtering. Set to 0 to do all good channels.", _minrghnoise, 6.0f );
 
-    registerOptionalParameter ( "MaxSignalFactor", "The maximum signal a channel is allowed to have. This factor times a channels noise is the limit. Should be larger than the cluster seed limit, otherwise no clusters will be found.", _maxsignalfactor, float ( 10.0 ) );
+    registerOptionalParameter ( "MaxSignalFactor", "The maximum signal a channel is allowed to have. This factor times a channels noise is the limit. Should be larger than the cluster seed limit, otherwise no clusters will be found.", _maxsignalfactor, 10.0f );
 
-    registerOptionalParameter ( "MaxRGHADC", "The maximum ADC in a channel to be allowed. Higher ADCs will be set to 0 if RGH filtering is used.", _maxrghadc, float ( 150.0 ) );
+    registerOptionalParameter ( "MaxRGHADC", "The maximum ADC in a channel to be allowed. Higher ADCs will be set to 0 if RGH filtering is used.", _maxrghadc, 150.0f );
 
-    registerOptionalParameter ( "SeedCut", "The used cluster seed cut, used to determine the number of cluster candidates in RGH filtering", _seedcut, float ( 5.0 ) );
+    registerOptionalParameter ( "SeedCut", "The used cluster seed cut, used to determine the number of cluster candidates in RGH filtering", _seedcut, 5.0f );
 
-    registerOptionalParameter ( "MaxSuspects", "The highest number of cluster candidates in an event allowed before discarding it in RGH filtering.", _maxsuspects, int ( 1 ) );
+    registerOptionalParameter ( "MaxSuspects", "The highest number of cluster candidates in an event allowed before discarding it in RGH filtering.", _maxsuspects, 1 );
 
-    registerOptionalParameter ( "NegativeNoise", "The ratio of noise in negative ADCs required for a neighbour to cut a seed.", _rghnegnoisecut, float ( 2.0 ) );
+    registerOptionalParameter ( "NegativeNoise", "The ratio of noise in negative ADCs required for a neighbour to cut a seed.", _rghnegnoisecut, 2.0f );
 
     registerProcessorParameter ( "NoiseCollectionName", "Noise collection name", _noiseCollectionName, string ( "finalnoise" ) );
 
