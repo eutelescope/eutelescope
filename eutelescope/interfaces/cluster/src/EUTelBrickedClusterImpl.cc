@@ -84,9 +84,7 @@ float EUTelBrickedClusterImpl::getTotalCharge() const {
 
   //! will be okay if we set zeros for the unwanted pixels
   FloatVec vectorCopy(_trackerData->getChargeValues());
-  setOutsiderValuesInVectorInterpretedAsBrickedMatrix(
-      static_cast<std::vector<float> &>(vectorCopy), 0.0f);
-
+  setOutsiderValuesInVectorInterpretedAsBrickedMatrix( vectorCopy, 0.0f);
   FloatVec::const_iterator iter = vectorCopy.begin();
 
   while (iter != vectorCopy.end()) {
@@ -101,7 +99,7 @@ void EUTelBrickedClusterImpl::getCenterOfGravityShift(float &xCoG,
   //! will be okay if we set zeros for the unwanted pixels
   FloatVec vectorCopy(_trackerData->getChargeValues());
   setOutsiderValuesInVectorInterpretedAsBrickedMatrix(
-      static_cast<std::vector<float> &>(vectorCopy), 0.0f);
+      vectorCopy, 0.0f);
 
   // streamlog_out( MESSAGE4 ) << "RUNNING
   // EUTelBrickedClusterImpl::getCenterOfGravityShift() " << endl;
@@ -225,7 +223,7 @@ void EUTelBrickedClusterImpl::getCenterOfGravityShift(float &xCoG, float &yCoG,
     //! set fake negative values such that the unwanted pixels are not among the
     //! significant ones!
     setOutsiderValuesInVectorInterpretedAsBrickedMatrix(
-        static_cast<std::vector<float> &>(vectorCopy),
+        vectorCopy,
         (-1) * numeric_limits<float>::max());
 
     map<int, float> highSignalPixel;
@@ -386,8 +384,7 @@ float EUTelBrickedClusterImpl::getClusterCharge(int nPixel) const {
   vector<float> vectorCopy(_trackerData->getChargeValues());
   //! will only be okay if we set -inf for the unwanted pixels
   setOutsiderValuesInVectorInterpretedAsBrickedMatrix(
-      static_cast<std::vector<float> &>(vectorCopy),
-      (-1) * numeric_limits<float>::max());
+      vectorCopy, (-1) * numeric_limits<float>::max());
 
   sort(vectorCopy.begin(), vectorCopy.end(), greater<float>());
 
@@ -409,8 +406,7 @@ EUTelBrickedClusterImpl::getClusterCharge(std::vector<int> nPixels) const {
   vector<float> vectorCopy(_trackerData->getChargeValues());
   //! will only be okay if we set -inf for the unwanted pixels
   setOutsiderValuesInVectorInterpretedAsBrickedMatrix(
-      static_cast<std::vector<float> &>(vectorCopy),
-      (-1) * numeric_limits<float>::max());
+      vectorCopy, (-1) * numeric_limits<float>::max());
 
   vector<float> clusterSignal;
 
@@ -526,7 +522,7 @@ float EUTelBrickedClusterImpl::getClusterSNR(int nPixel) const {
   //! set fake negative values such that the unwanted pixels are not among the
   //! significant ones!
   setOutsiderValuesInVectorInterpretedAsBrickedMatrix(
-      static_cast<std::vector<float> &>(vectorCopy),
+      vectorCopy,
       (-1) * numeric_limits<float>::max());
   //! zeros @ noise for unwanted pixels is not even necessary here, but it is
   //! done automatically anwayway
@@ -585,7 +581,7 @@ EUTelBrickedClusterImpl::getClusterSNR(std::vector<int> nPixels) const {
   //! significant ones!
   vector<float> vectorCopy(_trackerData->getChargeValues());
   setOutsiderValuesInVectorInterpretedAsBrickedMatrix(
-      static_cast<std::vector<float> &>(vectorCopy),
+      vectorCopy,
       (-1) * numeric_limits<float>::max());
 
 //! zeros @ noise for unwanted pixels is not even necessary here, but it is done
@@ -849,7 +845,7 @@ void EUTelBrickedClusterImpl::print(std::ostream &os) const {
   os << "--- Signal Values ---" << endl;
   FloatVec vectorCopy(_trackerData->getChargeValues());
   outputBricked3x3MatrixFromVector(
-      static_cast<std::vector<float> &>(vectorCopy));
+      vectorCopy);
 }
 
 void EUTelBrickedClusterImpl::
@@ -969,7 +965,7 @@ void EUTelBrickedClusterImpl::debugOutput() const {
   streamlog_out(MESSAGE2) << endl;
   streamlog_out(MESSAGE2) << "  = Charge matrix:" << endl;
   outputBricked3x3MatrixFromVector(
-      static_cast<std::vector<float> &>(vectorCopy));
+      vectorCopy);
   streamlog_out(MESSAGE2) << "    Total Charge: " << getTotalCharge() << endl;
 
   std::vector<int> numbersTwoThreeSixSeven;

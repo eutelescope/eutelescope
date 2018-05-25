@@ -24,7 +24,7 @@ void EstMat::readTrack(int track, TrackerSystem<FITTERTYPE, 4> &system) {
   for (size_t meas = 0; meas < tracks.at(track).size(); meas++) {
     Measurement<FITTERTYPE> &m1 = tracks.at(track).at(meas);
     for (size_t ii = 0; ii < system.planes.size(); ii++) {
-      if ((int)m1.getIden() == (int)system.planes.at(ii).getSensorID()) {
+      if (static_cast<int>(m1.getIden()) == system.planes.at(ii).getSensorID()) {
         double x = m1.getX() * (1.0 + xScale.at(ii)) + m1.getY() * zRot.at(ii);
         double y = m1.getY() * (1.0 + yScale.at(ii)) - m1.getX() * zRot.at(ii);
         x += xShift.at(ii);
@@ -652,7 +652,7 @@ void EstMat::printAllFreeParams() {
   printParams("params[\"ZPosition\"]", zPos, zPosIndex.size(), "%4.2f ");
 }
 
-void printHisto(TH1D *histo) {
+inline void printHisto(TH1D *histo) {
   cout << "(list"
        << " :min " << histo->GetXaxis()->GetXmin() << " :bin-size "
        << histo->GetBinWidth(0) << endl
@@ -699,7 +699,7 @@ void EstMat::plot(char *fname) {
       new TH2D("correlations12x", "correlations12x", 100, -4, 4, 100, -4, 4);
   TH2D *corr12Y =
       new TH2D("correlations12y", "correlations12y", 100, -4, 4, 100, -4, 4);
-  for (int ii = 0; ii < (int)system.planes.size(); ii++) {
+  for (size_t ii = 0; ii < system.planes.size(); ii++) {
     char name[200];
     int sensorID = system.planes.at(ii).getSensorID();
     sprintf(name, "resX %i", sensorID);
@@ -731,7 +731,7 @@ void EstMat::plot(char *fname) {
       ndof->Fill(candidate.ndof);
       chi2OverNeod->Fill(candidate.chi2 / candidate.ndof);
 
-      for (int ii = 0; ii < (int)system.planes.size(); ii++) {
+      for (size_t ii = 0; ii < system.planes.size(); ii++) {
         candidate.estimates.at(ii) = system.m_fitter.smoothed.at(ii);
       }
       for (size_t pl = 0; pl < system.planes.size(); pl++) {
@@ -995,9 +995,9 @@ gsl_vector *EstMat::simplesStepSize() {
   return (s);
 }
 
-double estimateSimplex(const gsl_vector *v, void *params) {
+inline double estimateSimplex(const gsl_vector *v, void *params) {
   // A wrapper function for the simplex search for passing to the C library GSL
-  Minimizer *minimize = (Minimizer *)params;
+  Minimizer *minimize = static_cast<Minimizer*>(params);
   EstMat &estMat = minimize->mat;
   estMat.estToSystem(v, minimize->mat.system);
   int zPrev = -999999999;
@@ -1071,7 +1071,7 @@ void EstMat::simplexSearch(Minimizer *minimizeMe, size_t iterations,
       if (iter % 100 == 0 or status == GSL_SUCCESS) {
         cout << "Iteration " << iter << ", restart " << ii
              << ", nTracks = " << itMax << endl;
-        printf("%5d %10.3e %10.3e f() = %7.7f size = %.7f\n", (int)iter,
+        printf("%5d %10.3e %10.3e f() = %7.7f size = %.7f\n", static_cast<int>(iter),
                gsl_vector_get(s->x, 0), gsl_vector_get(s->x, 1), s->fval, size);
         printAllFreeParams();
       }

@@ -277,9 +277,8 @@ void EUTelProcessorTrueHitAnalysis::fillHistos(LCEvent *event) {
       double const *hitPos = reconstructedHit->getPosition();
       int pairIndex = findPairIndex(
           hitPos,
-          static_cast<std::vector<double const *>>(trueHitMap.at(detectorID)));
-      double const *pair = (static_cast<std::vector<double const *>>(
-          trueHitMap.at(detectorID)))[pairIndex];
+          trueHitMap.at(detectorID));
+      double const *pair = (trueHitMap.at(detectorID))[pairIndex];
 
       double diff_x = (hitPos[0] - pair[0]) * 1000;
       double diff_y = (hitPos[1] - pair[1]) * 1000;

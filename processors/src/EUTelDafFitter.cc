@@ -113,11 +113,11 @@ void EUTelDafFitter::dafParams() {
 
   // Tracker system options
   registerOptionalParameter("AddToLCIO", "Should plots be made and filled?",
-                            _addToLCIO, static_cast<bool>(true));
+                            _addToLCIO, true);
   registerOptionalParameter(
       "FitDuts",
       "Set this to true if you want DUTs to be included in the track fit",
-      _fitDuts, static_cast<bool>(false));
+      _fitDuts, false);
   // Track fitter options
   registerOutputCollection(LCIO::TRACK, "TrackCollectionName",
                            "Collection name for fitted tracks",
@@ -230,14 +230,6 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float, 4> &track,
     pos[1] = estim.getY() / 1000.0;
     pos[2] = pl.getMeasZ() / 1000.0;
 
-    // overload z coordinate calculation -> important for proper sensor
-    // Identification by the hit coordinates based onthe refhit collection
-    // if( fabs(pos[2] - getZfromRefHit(plane, sensorID, pos)) > 0.0002 ){
-    //   streamlog_out(WARNING) << "Fitted measurement is not in the plane!
-    //   SensorID " << idHitEncoder["sensorID"] << std::endl;
-    //   pos[2] = getZfromRefHit(plane, sensorID, pos);
-    // }
-
     fitpoint->setPosition(pos);
     // Covariance matrix of the fitted position
     // (stored as lower triangle matrix, i.e.  cov(xx),cov(y,x),cov(y,y) ).
@@ -279,27 +271,6 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float, 4> &track,
   }
   fittrack->setReferencePoint(refpoint);
   _fittrackvec->addElement(fittrack);
-}
-
-double EUTelDafFitter::getZfromRefHit(int plane, int sensorID, double *pos) {
-
-  TVector3 lpoint(pos[0], pos[1], pos[2]);
-  TVector3 lvector(0., 0., 1.);
-  TVector3 hitInPlane;
-  TVector3 norm2Plane;
-
-  hitInPlane.SetXYZ(geo::gGeometry().siPlaneXPosition(sensorID),
-                    geo::gGeometry().siPlaneYPosition(sensorID),
-                    geo::gGeometry().siPlaneZPosition(sensorID));
-  norm2Plane = geo::gGeometry().siPlaneNormal(sensorID);
-
-  TVector3 point(1., 1., 1.);
-
-  double linecoord_numenator = norm2Plane.Dot(hitInPlane - lpoint);
-  double linecoord_denumenator = norm2Plane.Dot(lvector);
-  point = (linecoord_numenator / linecoord_denumenator) * lvector + lpoint;
-
-  return point(2);
 }
 
 void EUTelDafFitter::dafEnd() {}

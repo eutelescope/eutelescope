@@ -76,7 +76,7 @@ EUTelOutputProcessor::EUTelOutputProcessor()
   registerProcessorParameter(
       "SkipIntermediateEORE",
       "Set it to true to remove intermediate EORE in merged runs",
-      _skipIntermediateEORESwitch, static_cast<bool>(true));
+      _skipIntermediateEORESwitch, true);
 }
 
 void EUTelOutputProcessor::init() {

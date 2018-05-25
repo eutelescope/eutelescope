@@ -27,9 +27,7 @@ EUTelEventImpl::EUTelEventImpl() : IMPL::LCEventImpl() { /* NO - OP */
 }
 
 void EUTelEventImpl::setEventType(EventType type) {
-
-  int iType = static_cast<EventType>(type);
-  setEventType(iType);
+  setEventType(static_cast<int>(type));
 }
 
 void EUTelEventImpl::setEventType(int type) {

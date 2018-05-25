@@ -58,7 +58,7 @@ _storeHeaderPedestalNoise ( false )
 
     registerProcessorParameter ( "InputFileName", "This is the input file name", _fileName, string ( "runXXXXXX.dat" ) );
 
-    registerProcessorParameter ( "GeoID", "The geometry identification number", _geoID, static_cast < int > ( 0 ) );
+    registerProcessorParameter ( "GeoID", "The geometry identification number", _geoID,  0 );
 
     registerProcessorParameter ( "RunNumber", "Run number of file (formatted)", _formattedRunNumber, string ( "0" ) );
 
@@ -69,11 +69,11 @@ _storeHeaderPedestalNoise ( false )
     // now optional parameters
     registerOptionalParameter ( "ChipSelection", "Selection of chip that you want to store data from. Chip numbers start from 0. If not set, all data (i.e. chip 0 and 1) will be stored", _chipSelection, EVENT::IntVec ( ) );
 
-    registerOptionalParameter ( "StartEventNum", "The event number that AlibavaConverter should start storing. Default value is -1, in this case it will store every event", _startEventNum, int ( -1 ) );
+    registerOptionalParameter ( "StartEventNum", "The event number that AlibavaConverter should start storing. Default value is -1, in this case it will store every event", _startEventNum, -1 );
 
-    registerOptionalParameter ( "StopEventNum", "The event number that AlibavaConverter should stop storing. Default value is -1, in this case it will store every event", _stopEventNum, int ( -1 ) );
+    registerOptionalParameter ( "StopEventNum", "The event number that AlibavaConverter should stop storing. Default value is -1, in this case it will store every event", _stopEventNum,  -1 );
 
-    registerOptionalParameter ( "StoreHeaderPedestalNoise", "Alibava stores a pedestal and a noise set in the run header. These values are not used in the rest of the analysis, so it is optional to store them. By default they will not be stored, but it you want you can set this variable to true to store them in the header of the slcio file", _storeHeaderPedestalNoise, bool ( false ) );
+    registerOptionalParameter ( "StoreHeaderPedestalNoise", "Alibava stores a pedestal and a noise set in the run header. These values are not used in the rest of the analysis, so it is optional to store them. By default they will not be stored, but it you want you can set this variable to true to store them in the header of the slcio file", _storeHeaderPedestalNoise, false );
 
 }
 
@@ -155,7 +155,7 @@ void AlibavaConverter::readDataSource ( int /* numEvents */ )
     }
     else
     {
-	version = int ( header[1] - '0' );
+	version =  header[1] - '0' ;
 	header = header.substr ( 5 );
     }
 

@@ -95,7 +95,8 @@ int EUTelMatrixDecoder::getYFromIndex(int index) const {
   return (index / _xNoOfPixel) + _yMin;
 }
 
-std::ostream &eutelescope::operator<<(std::ostream &os,
+namespace eutelescope {
+std::ostream & operator<<(std::ostream &os,
                                       const EUTelMatrixDecoder &decoder) {
 
   int spacer = 30;
@@ -109,4 +110,5 @@ std::ostream &eutelescope::operator<<(std::ostream &os,
      << resetiosflags(ios::left);
 
   return os;
+}
 }

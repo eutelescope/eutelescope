@@ -82,7 +82,7 @@ _aidaHistoMap ( )
 
     registerProcessorParameter ( "CBCDataOutputCollectionName", "The name of the CBC data collection we want to write", _cbcDataOutputCollectionName, string ( "cbc_data_output" ) );
 
-    registerProcessorParameter ( "CBCVirtualDUTId", "The id of the virtual CBC DUT", _cbcVirtualDUTId, static_cast <int> (0) );
+    registerProcessorParameter ( "CBCVirtualDUTId", "The id of the virtual CBC DUT", _cbcVirtualDUTId, 0 );
     
     registerProcessorParameter ( "CBCRealDUTsVec", "The ids of the real DUTs (has to be two)", _cbcRealDUTsVec, std::vector < int > () );
 }
@@ -154,7 +154,7 @@ void CBCHitRecovery::processEvent ( LCEvent * anEvent )
     }
 
         // the collection we read
-        LCCollectionVec * inputTrackVec;
+        //LCCollectionVec * inputTrackVec;
         LCCollectionVec * inputFitPointVec;
         LCCollectionVec * inputHitsVec;
         
@@ -174,7 +174,7 @@ void CBCHitRecovery::processEvent ( LCEvent * anEvent )
         try
         {
                 // give the collection vec its data
-                inputTrackVec = dynamic_cast < LCCollectionVec * > ( anEvent -> getCollection ( _InputTrackCollectionName ) );
+                //inputTrackVec = dynamic_cast < LCCollectionVec * > ( anEvent -> getCollection ( _InputTrackCollectionName ) );
                 inputFitPointVec = dynamic_cast < LCCollectionVec * > ( anEvent -> getCollection ( _InputFitHitsCollectionName ) );
                 inputHitsVec = dynamic_cast < LCCollectionVec * > ( anEvent -> getCollection ( _cbcInputCollectionName ) );
                 
@@ -217,9 +217,9 @@ void CBCHitRecovery::processEvent ( LCEvent * anEvent )
                 }*/
 
                 // variables
-                const double *cTelescope2Pos = 0;
-                const double *cVirtualHitPos = 0;
-                const double *cTelescope3Pos = 0;
+                const double *cTelescope2Pos = nullptr;
+                const double *cVirtualHitPos = nullptr;
+                const double *cTelescope3Pos = nullptr;
 
                 // find the fit hit points of the track (needed to calculate the fir hits in the dut
                 int nEntries = inputFitPointVec -> getNumberOfElements ( );
@@ -249,7 +249,7 @@ void CBCHitRecovery::processEvent ( LCEvent * anEvent )
                 // check that there are tracks in the event
                 if (nEntries != 0) {
                         // and that we have succeeded to get the track positions
-                        if (cTelescope2Pos == 0 || cVirtualHitPos == 0 || cTelescope3Pos == 0) {
+                        if (cTelescope2Pos == nullptr || cVirtualHitPos == nullptr || cTelescope3Pos == nullptr) {
                                 streamlog_out ( WARNING ) << "No fit hit for some of the planes in the event " <<  anEvent -> getEventNumber ( ) << endl;
                         } else {
                                 // track from upstream (it pointed from dut to the telescope plane 2, then we will reconstruct sensor 60 hit)
@@ -295,8 +295,8 @@ void CBCHitRecovery::processEvent ( LCEvent * anEvent )
                                         if (sensorID == _cbcVirtualDUTId) {
                                                 const double *pos = hit->getPosition();
                                                 double resX = (cVirtualHitPos[0] - pos[0])*1000;
-                                                double resY = (cVirtualHitPos[1] - pos[1])*1000;
-                                                double resZ = (cVirtualHitPos[2] - pos[2])*1000;
+                                                //double resY = (cVirtualHitPos[1] - pos[1])*1000;
+                                                //double resZ = (cVirtualHitPos[2] - pos[2])*1000;
 
                                                 dynamic_cast < AIDA::IHistogram1D* > ( _aidaHistoMap["VirtualResidualX"] ) -> fill (resX);
                                         }
@@ -305,8 +305,8 @@ void CBCHitRecovery::processEvent ( LCEvent * anEvent )
                                         if (sensorID == _cbcRealDUTsVec.at(0)) {
                                                 const double *pos = hit->getPosition();
                                                 double resX = (fit_hit_pos_dut0[0] - pos[0])*1000;
-                                                double resY = (fit_hit_pos_dut0[1] - pos[1])*1000;
-                                                double resZ = (fit_hit_pos_dut0[2] - pos[2])*1000;
+                                                //double resY = (fit_hit_pos_dut0[1] - pos[1])*1000;
+                                                //double resZ = (fit_hit_pos_dut0[2] - pos[2])*1000;
 
                                                 dynamic_cast < AIDA::IHistogram1D* > ( _aidaHistoMap["ResidualX_DUT0"] ) -> fill (resX);
                                         }
@@ -315,8 +315,8 @@ void CBCHitRecovery::processEvent ( LCEvent * anEvent )
                                         if (sensorID == _cbcRealDUTsVec.at(1)) {
                                                 const double *pos = hit->getPosition();
                                                 double resX = (fit_hit_pos_dut1[0] - pos[0])*1000;
-                                                double resY = (fit_hit_pos_dut1[1] - pos[1])*1000;
-                                                double resZ = (fit_hit_pos_dut1[2] - pos[2])*1000;
+                                                //double resY = (fit_hit_pos_dut1[1] - pos[1])*1000;
+                                                //double resZ = (fit_hit_pos_dut1[2] - pos[2])*1000;
 
                                                 dynamic_cast < AIDA::IHistogram1D* > ( _aidaHistoMap["ResidualX_DUT1"] ) -> fill (resX);
                                         }

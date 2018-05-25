@@ -71,8 +71,8 @@ EUTelProcessorGeometricClustering::EUTelProcessorGeometricClustering()
       _totClusterMap(), _noOfDetector(0), _ExcludedPlanes(),
       _clusterSignalHistos(), _clusterSizeXHistos(), _clusterSizeYHistos(),
       _seedSignalHistos(), _hitMapHistos(), _eventMultiplicityHistos(),
-      _isGeometryReady(false), _sensorIDVec(), _zsInputDataCollectionVec(NULL),
-      _pulseCollectionVec(NULL) {
+      _isGeometryReady(false), _sensorIDVec(), _zsInputDataCollectionVec(nullptr),
+      _pulseCollectionVec(nullptr) {
 
   // modify processor description
   _description = "EUTelProcessorGeometricClustering is looking for clusters "
@@ -90,7 +90,7 @@ EUTelProcessorGeometricClustering::EUTelProcessorGeometricClustering()
   // now the optional parameters
   registerProcessorParameter(
       "TCut", "Time cut in time units of your sensor", _cutT,
-      static_cast<float>(std::numeric_limits<float>::max()));
+      std::numeric_limits<float>::max());
 
   registerProcessorParameter(
       "HistoInfoFileName", "This is the name of the histogram information file",
@@ -98,7 +98,7 @@ EUTelProcessorGeometricClustering::EUTelProcessorGeometricClustering()
 
   registerProcessorParameter("HistogramFilling",
                              "Switch on or off the histogram filling",
-                             _fillHistos, static_cast<bool>(true));
+                             _fillHistos, true);
 
   registerOptionalParameter(
       "ExcludedPlanes",

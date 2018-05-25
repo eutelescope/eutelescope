@@ -102,23 +102,23 @@ EUTelPedestalNoiseProcessor::EUTelPedestalNoiseProcessor()
 
   registerProcessorParameter("NoOfCMIteration",
                              "Number of common mode suppression iterations",
-                             _noOfCMIterations, static_cast<int>(1));
+                             _noOfCMIterations, 1);
   registerProcessorParameter("HitRejectionCut",
                              "Threshold for rejection of hit pixel (SNR units)",
-                             _hitRejectionCut, static_cast<float>(4));
+                             _hitRejectionCut, 4.f);
   registerProcessorParameter(
       "MaxNoOfRejectedPixels",
       "Maximum allowed number of rejected pixels per event",
-      _maxNoOfRejectedPixels, static_cast<int>(1000));
+      _maxNoOfRejectedPixels, 1000);
 
   registerProcessorParameter(
       "MaxNoOfRejectedPixelPerRow",
       "Maximum allowed number of rejected pixels per row (only with RowWise)",
-      _maxNoOfRejectedPixelPerRow, static_cast<int>(25));
+      _maxNoOfRejectedPixelPerRow, 25);
   registerProcessorParameter(
       "MaxNoOfSkippedRow",
       "Maximum allowed number of skipped rows (only with RowWise)",
-      _maxNoOfSkippedRow, static_cast<int>(15));
+      _maxNoOfSkippedRow, 15);
 
   // new names for the pixel masking algorithms
   // since v00-00-09, the user can select multiple bad pixel
@@ -143,41 +143,41 @@ EUTelPedestalNoiseProcessor::EUTelPedestalNoiseProcessor()
   registerProcessorParameter(
       "PixelMaskUpperNoiseCut",
       "Upper threshold for bad pixel identification using NoiseDistribution",
-      _pixelMaskUpperNoiseCut, static_cast<float>(3.5));
+      _pixelMaskUpperNoiseCut, 3.5f);
   registerProcessorParameter(
       "PixelMaskUpperAbsNoiseCut",
       "Upper threshold for bad pixel identification using NoiseDistribution",
-      _pixelMaskUpperAbsNoiseCut, static_cast<float>(3.5));
+      _pixelMaskUpperAbsNoiseCut, 3.5f);
   registerProcessorParameter(
       "PixelMaskLowerAbsNoiseCut",
       "Lower threshold for bad pixel identification using DeadPixel",
-      _pixelMaskLowerAbsNoiseCut, static_cast<float>(0.2));
+      _pixelMaskLowerAbsNoiseCut, 0.2f);
   registerProcessorParameter(
       "PixelMaskUpperAbsPedeCut",
       "Upper threshold for bad pixel identification using AbsolutePedeValue",
-      _pixelMaskUpperAbsPedeCut, static_cast<float>(15));
+      _pixelMaskUpperAbsPedeCut, 15.f);
   registerProcessorParameter(
       "PixelMaskLowerAbsPedeCut",
       "Lower threshold for bad pixel identification using AbsolutePedeValue",
-      _pixelMaskLowerAbsPedeCut, static_cast<float>(-15));
+      _pixelMaskLowerAbsPedeCut, -15.f);
   registerProcessorParameter("PixelMaskMaxFiringFrequency",
                              "This is the maximum allowed firing % frequency, "
                              "being 0.1% the Gaussian limit\n"
                              "Used only during the additional masking loop",
-                             _maxFiringFreq, static_cast<float>(0.2));
+                             _maxFiringFreq, 0.2f);
   registerOptionalParameter("AdditionalMaskingLoop",
                             "Perform an additional loop for bad pixel masking",
-                            _additionalMaskingLoop, static_cast<bool>(true));
+                            _additionalMaskingLoop, true);
   registerOptionalParameter(
       "HitRejectionPreLoop",
       "Perform a fast first loop to improve the efficiency of hit rejection",
-      _preLoopSwitch, static_cast<bool>(true));
+      _preLoopSwitch, true);
 
   registerProcessorParameter("FirstEvent",
                              "First event for pedestal calculation",
-                             _firstEvent, static_cast<int>(0));
+                             _firstEvent, 0);
   registerProcessorParameter("LastEvent", "Last event for pedestal calculation",
-                             _lastEvent, static_cast<int>(-1));
+                             _lastEvent, -1);
   registerProcessorParameter(
       "OutputPedeFile", "The filename (w/o .slcio) to store the pedestal file",
       _outputPedeFileName, string("outputpede"));
@@ -185,7 +185,7 @@ EUTelPedestalNoiseProcessor::EUTelPedestalNoiseProcessor()
   registerProcessorParameter(
       "ASCIIOutputSwitch",
       "Set to true if the pedestal should also be saved as ASCII files",
-      _asciiOutputSwitch, static_cast<bool>(true));
+      _asciiOutputSwitch, true);
 
   registerProcessorParameter(
       "HistoInfoFileName", "This is the name of the histogram information file",
@@ -277,8 +277,7 @@ void EUTelPedestalNoiseProcessor::processRunHeader(LCRunHeader *rdr) {
   // make some test on parameters
   if ((_pedestalAlgo != EUTELESCOPE::MEANRMS) &&
       (_pedestalAlgo != EUTELESCOPE::AIDAPROFILE)) {
-    throw InvalidParameterException(
-        string("_pedestalAlgo cannot be " + _pedestalAlgo));
+    throw InvalidParameterException("_pedestalAlgo cannot be " + _pedestalAlgo);
   }
 
   // the user can decide to limit the pedestal calculation on a

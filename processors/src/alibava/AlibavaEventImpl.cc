@@ -21,8 +21,7 @@ AlibavaEventImpl::AlibavaEventImpl ( ) : IMPL::LCEventImpl ( )
 
 void AlibavaEventImpl::setEventType ( EventType type )
 {
-    int iType = static_cast < EventType > ( type );
-    setEventType ( iType );
+    setEventType ( static_cast<int>(type) );
 }
 
 void AlibavaEventImpl::setEventType ( int type )

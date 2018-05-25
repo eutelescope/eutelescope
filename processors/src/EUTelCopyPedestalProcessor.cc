@@ -32,8 +32,8 @@ using namespace marlin;
 using namespace eutelescope;
 
 EUTelCopyPedestalProcessor::EUTelCopyPedestalProcessor()
-    : Processor("EUTelCopyPedestalProcessor"), _pedestalCollectionVec(NULL),
-      _noiseCollectionVec(NULL), _statusCollectionVec(NULL) {
+    : Processor("EUTelCopyPedestalProcessor"), _pedestalCollectionVec(nullptr),
+      _noiseCollectionVec(nullptr), _statusCollectionVec(nullptr) {
 
   // modify processor description
   _description = "EUTelCopyPedestalProcessor copies the condition data into "

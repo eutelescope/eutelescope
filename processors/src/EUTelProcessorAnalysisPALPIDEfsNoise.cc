@@ -24,9 +24,9 @@ EUTelProcessorAnalysisPALPIDEfsNoise::EUTelProcessorAnalysisPALPIDEfsNoise()
                           _zsDataCollectionName, string("zsdata"));
   registerProcessorParameter("HistogramFilling",
                              "Switch on or off the histogram filling",
-                             _fillHistos, static_cast<bool>(true));
+                             _fillHistos, true);
   registerOptionalParameter("Energy", "Particle energy", _energy,
-                            static_cast<double>(6.0));
+                            6.0);
   EVENT::StringVec _stringVecExample;
   _stringVecExample.push_back(" ");
   registerOptionalParameter("ChipID", "Chip IDs", _chipID, _stringVecExample);
@@ -181,13 +181,13 @@ void EUTelProcessorAnalysisPALPIDEfsNoise::end() {
       //      endl;
       //      cerr << "Noise occupancy in layer " << iLayer << ", sector " <<
       //      iSector << " is " <<
-      //      (double)_nFiredPixel[iLayer][iSector]/_nEvent/(_xPixel[iLayer]/4*_yPixel[iLayer])
+      //      static_cast<double>(_nFiredPixel[iLayer][iSector])/_nEvent/(_xPixel[iLayer]/4*_yPixel[iLayer])
       //      << endl;
       noiseOccupancy[iLayer]->SetBinContent(
-          iSector + 1, (double)_nFiredPixel[iLayer][iSector] / _nEvent /
+          iSector + 1, static_cast<double>(_nFiredPixel[iLayer][iSector]) / _nEvent /
                            (_xPixel[iLayer] / 4 * _yPixel[iLayer]));
       noiseOccupancy[iLayer]->SetBinError(
-          iSector + 1, sqrt((double)_nFiredPixel[iLayer][iSector]) / _nEvent /
+          iSector + 1, sqrt(static_cast<double>(_nFiredPixel[iLayer][iSector])) / _nEvent /
                            (_xPixel[iLayer] / 4 * _yPixel[iLayer]));
     }
   }

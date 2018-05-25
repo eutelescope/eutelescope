@@ -128,9 +128,9 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneYAxis( int planeID ) {
 
 void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 	// sensor-planes in geometry navigation:
-	_siPlanesParameters = const_cast< gear::SiPlanesParameters*> (&( _gearManager->getSiPlanesParameters()));
-	_siPlanesLayerLayout = const_cast< gear::SiPlanesLayerLayout*> (&(_siPlanesParameters->getSiPlanesLayerLayout()));
-	auto nPlanes = _siPlanesLayerLayout->getNLayers(); 
+	_siPlanesParameters = const_cast<gear::SiPlanesParameters*> (&( _gearManager->getSiPlanesParameters()));
+	_siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> (&(_siPlanesParameters->getSiPlanesLayerLayout()));
+	auto nPlanes = static_cast<size_t>(_siPlanesLayerLayout->getNLayers());
 
 	//read the geoemtry names from the "Geometry" StringVec section of the gear file
 	lcio::StringVec geometryNameParameters;
@@ -223,7 +223,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 
 }
 
-double getRadLength(int A, int Z) {
+inline double getRadLength(int A, int Z) {
 	auto nom = 716.4*A;
 	auto denom = Z*(Z+1)*log(287/sqrt(Z));
 	return nom/denom;
@@ -686,7 +686,9 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
 }
 
 Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::rotationMatrixFromAngles(int sensorID) {
-	return Utility::rotationMatrixFromAngles( (long double)siPlaneXRotationRadians(sensorID), (long double)siPlaneYRotationRadians(sensorID), (long double)siPlaneZRotationRadians(sensorID) );
+	return Utility::rotationMatrixFromAngles( static_cast<long double>(siPlaneXRotationRadians(sensorID)), 
+                                            static_cast<long double>(siPlaneYRotationRadians(sensorID)), 
+                                            static_cast<long double>(siPlaneZRotationRadians(sensorID)));
 }
 
 Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::globalXAxis(int sensorID) {
@@ -881,11 +883,11 @@ double EUTelGeometryTelescopeGeoDescription::planeRadLengthLocalIncidence(int pl
 
 
 void EUTelGeometryTelescopeGeoDescription::updateSiPlanesLayout() {
-	gear::SiPlanesParameters* siplanesParameters = const_cast< gear::SiPlanesParameters*> (&( _gearManager->getSiPlanesParameters()));
-	gear::SiPlanesLayerLayout* siplanesLayerLayout = const_cast< gear::SiPlanesLayerLayout*> (&(_siPlanesParameters->getSiPlanesLayerLayout()));
+	auto siplanesParameters = const_cast<gear::SiPlanesParameters*> (&( _gearManager->getSiPlanesParameters()));
+	auto siplanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> (&(_siPlanesParameters->getSiPlanesLayerLayout()));
 
 	// data member::
-	auto nPlanes = siplanesLayerLayout->getNLayers(); 
+	auto nPlanes = static_cast<size_t>(siplanesLayerLayout->getNLayers());
 
 	// create an array with the z positions of each layer
 	for(size_t iPlane = 0; iPlane < nPlanes; iPlane++) {

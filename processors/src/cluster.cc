@@ -16,8 +16,8 @@ bool Cluster::operator==(Cluster c2) {
   if (size != c2.Size())
     return false;
   bool isEqual = false;
-  for (int i = 0; i < size; i++) {
-    for (int j = 0; j < size; j++) {
+  for (size_t i = 0; i < size; i++) {
+    for (size_t j = 0; j < size; j++) {
       if (x[i] - x1Min == c2.x[j] - x2Min && y[i] - y1Min == c2.y[j] - y2Min) {
         isEqual = true;
         break;
@@ -36,7 +36,7 @@ Cluster Cluster::mirrorX() {
   vector<int> xNew(size);
   vector<int> yNew(size);
   int yMax = *max_element(y.begin(), y.end());
-  for (int i = 0; i < size; i++) {
+  for (size_t i = 0; i < size; i++) {
     xNew[i] = x[i];
     yNew[i] = yMax - y[i];
   }
@@ -49,7 +49,7 @@ Cluster Cluster::mirrorY() {
   vector<int> xNew(size);
   vector<int> yNew(size);
   int xMax = *max_element(x.begin(), x.end());
-  for (int i = 0; i < size; i++) {
+  for (size_t i = 0; i < size; i++) {
     xNew[i] = xMax - x[i];
     yNew[i] = y[i];
   }
@@ -61,13 +61,13 @@ Cluster Cluster::mirrorY() {
 Cluster Cluster::rotate90() {
   vector<int> xNew(size);
   vector<int> yNew(size);
-  for (int i = 0; i < size; i++) {
+  for (size_t i = 0; i < size; i++) {
     xNew[i] = -1 * y[i];
     yNew[i] = x[i];
   }
   int xMin = *min_element(xNew.begin(), xNew.end());
   int yMin = *min_element(yNew.begin(), yNew.end());
-  for (int i = 0; i < size; i++) {
+  for (size_t i = 0; i < size; i++) {
     xNew[i] -= xMin;
     yNew[i] -= yMin;
   }
@@ -76,16 +76,16 @@ Cluster Cluster::rotate90() {
   return clusterNew;
 }
 
-void Cluster::set_values(int s, vector<int> a, vector<int> b) {
+void Cluster::set_values(size_t s, vector<int> a, vector<int> b) {
   size = s;
   if (x.size() == 0)
-    for (int i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
       x.push_back(a[i]);
       y.push_back(b[i]);
     }
   else
-    for (int i = 0; i < size; i++)
-      if (x.size() <= (unsigned int)size) {
+    for (size_t i = 0; i < size; i++)
+      if (x.size() <= size) {
         x[i] = a[i];
         y[i] = b[i];
       } else {
@@ -102,7 +102,7 @@ void Cluster::NeighbourPixels(int x, int y, vector<int> xOriginal,
     bool pixelExists = false;
     if (xTmp == x - 1 || xTmp == x + 1) {
       yTmp = y;
-      for (unsigned int i = 0; i < xOriginal.size(); i++) {
+      for (size_t i = 0; i < xOriginal.size(); i++) {
         if (xTmp == xOriginal[i] && yTmp == yOriginal[i]) {
           pixelExists = true;
           break;
@@ -116,7 +116,7 @@ void Cluster::NeighbourPixels(int x, int y, vector<int> xOriginal,
     } else {
       for (int j = 0; j < 2; j++) {
         yTmp = (j == 0 ? y + 1 : y - 1);
-        for (unsigned int i = 0; i < xOriginal.size(); i++) {
+        for (size_t i = 0; i < xOriginal.size(); i++) {
           if (xTmp == xOriginal[i] && yTmp == yOriginal[i]) {
             pixelExists = true;
             break;
@@ -134,7 +134,7 @@ void Cluster::NeighbourPixels(int x, int y, vector<int> xOriginal,
   }
 }
 
-void Cluster::FindReferenceClusters(vector<Cluster> &clusterVec, int sizeMax) {
+void Cluster::FindReferenceClusters(vector<Cluster> &clusterVec, size_t sizeMax) {
   vector<int> xTmp(1);
   vector<int> yTmp(1);
   xTmp[0] = 0;
@@ -142,22 +142,22 @@ void Cluster::FindReferenceClusters(vector<Cluster> &clusterVec, int sizeMax) {
   Cluster cTmp;
   cTmp.set_values(1, xTmp, yTmp);
   clusterVec.push_back(cTmp);
-  for (int size = 2; size <= sizeMax; size++) {
+  for (size_t size = 2; size <= sizeMax; size++) {
     cout << "Looking for clusters with size: " << size << endl;
-    int clusterVecSize = clusterVec.size();
-    for (int iCluster = 0; iCluster < clusterVecSize; iCluster++) {
+    auto clusterVecSize = clusterVec.size();
+    for (size_t iCluster = 0; iCluster < clusterVecSize; iCluster++) {
       if (clusterVec[iCluster].Size() < size - 1)
         continue;
       Cluster cluster;
       vector<int> x = clusterVec[iCluster].getX();
       vector<int> y = clusterVec[iCluster].getY();
-      for (int iPixel = 0; iPixel < clusterVec[iCluster].Size(); iPixel++) {
+      for (size_t iPixel = 0; iPixel < clusterVec[iCluster].Size(); iPixel++) {
         vector<int> xNeighbour;
         vector<int> yNeighbour;
         NeighbourPixels(x[iPixel], y[iPixel], x, y, xNeighbour, yNeighbour);
-        for (unsigned int i = 0; i < xNeighbour.size(); i++) {
+        for (size_t i = 0; i < xNeighbour.size(); i++) {
           bool areadyExists = false;
-          if (x.size() < (unsigned int)size) {
+          if (x.size() < size) {
             x.push_back(xNeighbour[i]);
             y.push_back(yNeighbour[i]);
           } else {
@@ -165,7 +165,7 @@ void Cluster::FindReferenceClusters(vector<Cluster> &clusterVec, int sizeMax) {
             y[size - 1] = yNeighbour[i];
           }
           cluster.set_values(size, x, y);
-          for (unsigned int k = 0; k < clusterVec.size(); k++)
+          for (size_t k = 0; k < clusterVec.size(); k++)
             if (cluster == clusterVec[k]) {
               areadyExists = true;
               break;
@@ -176,24 +176,24 @@ void Cluster::FindReferenceClusters(vector<Cluster> &clusterVec, int sizeMax) {
       }
     }
   }
-  for (unsigned int iCluster = 0; iCluster < clusterVec.size(); iCluster++) {
+  for (size_t iCluster = 0; iCluster < clusterVec.size(); iCluster++) {
     Cluster cluster = clusterVec[iCluster];
     vector<int> X = cluster.getX();
     int minX = *min_element(X.begin(), X.end());
     if (minX < 0)
-      for (unsigned int iPixel = 0; iPixel < X.size(); iPixel++)
+      for (size_t iPixel = 0; iPixel < X.size(); iPixel++)
         X[iPixel] -= minX;
     vector<int> Y = cluster.getY();
     int minY = *min_element(Y.begin(), Y.end());
     if (minY < 0)
-      for (unsigned int iPixel = 0; iPixel < Y.size(); iPixel++)
+      for (size_t iPixel = 0; iPixel < Y.size(); iPixel++)
         Y[iPixel] -= minY;
     cluster.set_values(X.size(), X, Y);
     clusterVec[iCluster] = cluster;
     cout << "Shapes: ID " << iCluster << " X size " << X.size() << " Y size "
          << Y.size() << endl;
     cout << "(X,Y) :";
-    for (unsigned int iPixel = 0; iPixel < X.size(); iPixel++)
+    for (size_t iPixel = 0; iPixel < X.size(); iPixel++)
       cout << "(" << X[iPixel] << "," << Y[iPixel] << ") ";
     cout << endl;
   }
@@ -209,16 +209,16 @@ std::map<int, int> Cluster::SymmetryPairs(vector<Cluster> clusterVec,
     cerr << "Type has to be y or x, assuming x" << endl;
     type = "x";
   }
-  for (unsigned int i = 0; i < clusterVec.size(); i++) {
+  for (size_t i = 0; i < clusterVec.size(); i++) {
     Cluster cluster;
     if (type == typeX)
       cluster = clusterVec[i].mirrorX();
     else if (type == typeY)
       cluster = clusterVec[i].mirrorY();
-    for (unsigned int j = 0; j < clusterVec.size(); j++) {
+    for (size_t j = 0; j < clusterVec.size(); j++) {
       bool alreadyAdded = false;
       for (map<int, int>::iterator it = pair.begin(); it != pair.end(); ++it)
-        if (it->first == (int)j) {
+        if (it->first == static_cast<int>(j)) {
           alreadyAdded = true;
           break;
         }
@@ -236,13 +236,13 @@ std::map<int, int> Cluster::SymmetryPairs(vector<Cluster> clusterVec,
 
 vector<vector<int>> Cluster::sameShape(vector<Cluster> clusterVec) {
   vector<vector<int>> symmetryGroups;
-  for (unsigned int i = 0; i < clusterVec.size(); i++) {
+  for (size_t i = 0; i < clusterVec.size(); i++) {
     vector<int> group;
     Cluster clusterOriginal = clusterVec[i];
     bool alreadyAdded = false;
-    for (unsigned int k = 0; k < symmetryGroups.size(); k++) {
-      for (unsigned int l = 0; l < symmetryGroups[k].size(); l++)
-        if (symmetryGroups[k][l] == (int)i) {
+    for (size_t k = 0; k < symmetryGroups.size(); k++) {
+      for (size_t l = 0; l < symmetryGroups[k].size(); l++)
+        if (symmetryGroups[k][l] == static_cast<int>(i)) {
           alreadyAdded = true;
           break;
         }
@@ -263,18 +263,18 @@ vector<vector<int>> Cluster::sameShape(vector<Cluster> clusterVec) {
         cluster2 = cluster2.rotate90();
         if (cluster2 == clusterOriginal)
           break;
-        for (unsigned int j = 0; j < clusterVec.size(); j++) {
+        for (size_t j = 0; j < clusterVec.size(); j++) {
           if (clusterVec[j] == cluster2) {
             alreadyAdded = false;
-            for (unsigned int k = 0; k < group.size(); k++)
-              if (group[k] == (int)j) {
+            for (size_t k = 0; k < group.size(); k++)
+              if (group[k] == static_cast<int>(j)) {
                 alreadyAdded = true;
                 break;
               }
-            for (unsigned int k = 0; k < symmetryGroups.size() && !alreadyAdded;
+            for (size_t k = 0; k < symmetryGroups.size() && !alreadyAdded;
                  k++) {
-              for (unsigned int l = 0; l < symmetryGroups[k].size(); l++)
-                if (symmetryGroups[k][l] == (int)j) {
+              for (size_t l = 0; l < symmetryGroups[k].size(); l++)
+                if (symmetryGroups[k][l] == static_cast<int>(j)) {
                   alreadyAdded = true;
                   break;
                 }
@@ -294,7 +294,7 @@ vector<vector<int>> Cluster::sameShape(vector<Cluster> clusterVec) {
 }
 
 int Cluster::WhichClusterShape(Cluster cluster, vector<Cluster> clusterVec) {
-  for (unsigned int iCluster = 0; iCluster < clusterVec.size(); iCluster++)
+  for (size_t iCluster = 0; iCluster < clusterVec.size(); iCluster++)
     if (cluster == clusterVec[iCluster])
       return iCluster;
   return -1;
@@ -303,10 +303,10 @@ int Cluster::WhichClusterShape(Cluster cluster, vector<Cluster> clusterVec) {
 void Cluster::getCenterOfGravity(float &xCenter, float &yCenter) {
   xCenter = 0;
   yCenter = 0;
-  for (unsigned int iX = 0; iX < x.size(); iX++)
+  for (size_t iX = 0; iX < x.size(); iX++)
     xCenter += x[iX];
   xCenter = xCenter / x.size();
-  for (unsigned int iY = 0; iY < y.size(); iY++)
+  for (size_t iY = 0; iY < y.size(); iY++)
     yCenter += y[iY];
   yCenter = yCenter / y.size();
 }

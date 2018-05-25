@@ -107,12 +107,12 @@ EUTelCorrelator::EUTelCorrelator()
   registerProcessorParameter("ClusterChargeMinimum",
                              "Minimum allowed cluster charge to be taken into "
                              "account for the correlation plots (default = 2)",
-                             _clusterChargeMin, static_cast<int>(2));
+                             _clusterChargeMin, 2);
 
   registerProcessorParameter("Events", "How many events are needed to get "
                                        "reasonable correlation plots (and "
                                        "Offset DB)? (default=1000)",
-                             _events, static_cast<int>(1000));
+                             _events, 1000);
 
   registerOptionalParameter("FixedPlane", "SensorID of fixed plane",
                             _fixedPlaneID, 0);
@@ -148,7 +148,7 @@ EUTelCorrelator::EUTelCorrelator()
   registerOptionalParameter("MinNumberOfCorrelatedHits",
                             "If there are more then this number of correlated "
                             "hits (planes->track candidate) (default=5)",
-                            _minNumberOfCorrelatedHits, static_cast<int>(5));
+                            _minNumberOfCorrelatedHits, 5);
 
   registerOptionalParameter(
       "HotPixelCollectionName", "This is the name of the hot pixel collection "
@@ -208,7 +208,7 @@ void EUTelCorrelator::init() {
                          0.5 * geo::gGeometry().siPlaneYSize(sensorID);
   }
 
-  _outputCorrelatedHitCollectionVec = 0;
+  _outputCorrelatedHitCollectionVec = nullptr;
 
   _isInitialize = false;
 }
@@ -228,7 +228,7 @@ void EUTelCorrelator::processRunHeader(LCRunHeader *rdr) {
         << "The geometry ID in the run header is set to zero." << endl
         << "This may mean that the GeoID parameter was not set" << endl;
 
-  if ((unsigned int)runHeader->getGeoID() !=
+  if (static_cast<unsigned int>(runHeader->getGeoID()) !=
       geo::gGeometry().getSiPlanesLayoutID()) {
     streamlog_out(WARNING5)
         << "Error during the geometry consistency check: " << endl
@@ -367,7 +367,7 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
           externalCluster = new EUTelSparseClusterImpl<EUTelGenericSparsePixel>(
               static_cast<TrackerDataImpl *>(externalPulse->getTrackerData()));
 
-          if (externalCluster != 0 &&
+          if (externalCluster != nullptr &&
               externalCluster->getTotalCharge() < _clusterChargeMin) {
             delete externalCluster;
             continue;
@@ -436,7 +436,7 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
                       static_cast<TrackerDataImpl *>(
                           internalPulse->getTrackerData()));
 
-              if (internalCluster != 0 &&
+              if (internalCluster != nullptr &&
                   internalCluster->getTotalCharge() < _clusterChargeMin) {
                 delete internalCluster;
                 continue;
@@ -605,13 +605,9 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
 
       if (static_cast<int>(iplane_unique.size()) > _minNumberOfCorrelatedHits &&
           trackX.size() == trackY.size()) {
-        int indexPlane = 0;
-
-        indexPlane = 0; // should be always the first element, as it's filled in
                         // the externalID loop
-
-        if (indexPlane >= 0) {
-          for (int i = 0; i < (int)trackX.size(); i++) {
+        size_t indexPlane = 0;
+          for (size_t i = 0; i < trackX.size(); i++) {
             if (i == indexPlane)
               continue; // skip as this one is not booked
             _hitXCorrelationMatrix[iplane[indexPlane]][iplane[i]]->fill(
@@ -624,7 +620,6 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
             _hitYCorrShiftMatrix[iplane[indexPlane]][iplane[i]]->fill(
                 trackY[indexPlane], trackY[indexPlane] - trackY[i]);
           }
-        }
       } else {
       }
     }
@@ -656,7 +651,7 @@ void EUTelCorrelator::end() {
         if (inPlaneID == getFixedPlaneID())
           continue;
 
-        if (_hitXCorrShiftMatrix[exPlaneID][inPlaneID] == 0)
+        if (_hitXCorrShiftMatrix[exPlaneID][inPlaneID] == nullptr)
           continue;
         if (_hitXCorrShiftMatrix[exPlaneID][inPlaneID]->yAxis().bins() <= 0)
           continue;
@@ -1085,23 +1080,23 @@ void EUTelCorrelator::bookHistos() {
         } else {
 
           if (_hasClusterCollection && !_hasHitCollection) {
-            innerMapXCluster[col] = NULL;
-            innerMapYCluster[col] = NULL;
+            innerMapXCluster[col] = nullptr;
+            innerMapYCluster[col] = nullptr;
 
-            innerMapXCluShift[col] = NULL;
-            innerMapYCluShift[col] = NULL;
-            innerMapXCluShiftProjection[col] = NULL;
-            innerMapYCluShiftProjection[col] = NULL;
+            innerMapXCluShift[col] = nullptr;
+            innerMapYCluShift[col] = nullptr;
+            innerMapXCluShiftProjection[col] = nullptr;
+            innerMapYCluShiftProjection[col] = nullptr;
           }
 
           if (_hasHitCollection) {
-            innerMapXHit[col] = NULL;
-            innerMapYHit[col] = NULL;
+            innerMapXHit[col] = nullptr;
+            innerMapYHit[col] = nullptr;
 
-            innerMapXHitShift[col] = NULL;
-            innerMapYHitShift[col] = NULL;
-            innerMapXHitShiftProjection[col] = NULL;
-            innerMapYHitShiftProjection[col] = NULL;
+            innerMapXHitShift[col] = nullptr;
+            innerMapYHitShift[col] = nullptr;
+            innerMapXHitShiftProjection[col] = nullptr;
+            innerMapYHitShiftProjection[col] = nullptr;
           }
         }
       }
@@ -1136,7 +1131,7 @@ void EUTelCorrelator::bookHistos() {
         xMin = (isHistoManagerAvailable && histoInfo) ? histoInfo->_xMin : -10.;
         xMax = (isHistoManagerAvailable && histoInfo) ? histoInfo->_xMax : 10.;
 
-        AIDA::IHistogram1D *histo1D = 0;
+        AIDA::IHistogram1D *histo1D = nullptr;
         histo1D = AIDAProcessor::histogramFactory(this)->createHistogram1D(
             tempHistoName.c_str(), xBin, xMin, xMax);
         tempHistoTitle = "HitXShift/" + _hitXCorrShiftProjectionHistoName +

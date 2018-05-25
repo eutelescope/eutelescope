@@ -298,9 +298,8 @@ void EUTelProcessorTrueTrackAnalysis::fillHistos(LCEvent *event) {
     const double *fitpointPos = recoFitpoint->getPosition();
     int pairIndex = findPairIndex(
         fitpointPos,
-        static_cast<std::vector<const double *>>(_trueHitMap.at(sensorID)));
-    const double *pair = (static_cast<std::vector<const double *>>(
-        _trueHitMap.at(sensorID)))[pairIndex];
+        _trueHitMap.at(sensorID));
+    const double *pair = (_trueHitMap.at(sensorID))[pairIndex];
 
     double diff_x = (fitpointPos[0] - pair[0]) * 1000;
     double diff_y = (fitpointPos[1] - pair[1]) * 1000;
@@ -354,9 +353,8 @@ void EUTelProcessorTrueTrackAnalysis::fillHistos(LCEvent *event) {
     const double *fitpointPos = recoFitpoint->getPosition();
     int pairIndex = findPairIndex(
         fitpointPos,
-        static_cast<std::vector<const double *>>(trueFitpointMap.at(sensorID)));
-    const double *pair = (static_cast<std::vector<const double *>>(
-        trueFitpointMap.at(sensorID)))[pairIndex];
+        trueFitpointMap.at(sensorID));
+    const double *pair = (trueFitpointMap.at(sensorID))[pairIndex];
 
     double diff_x = (fitpointPos[0] - pair[0]) * 1000;
     double diff_y = (fitpointPos[1] - pair[1]) * 1000;

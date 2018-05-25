@@ -77,7 +77,7 @@ namespace eutelescope {
     registerProcessorParameter(
         "NoOfEvents",
         "The number of events to be considered for each update cycle",
-        _noOfEvents, static_cast<int>(100));
+        _noOfEvents, 100);
 
     registerOptionalParameter(
         "SensorIDVec",
@@ -88,7 +88,7 @@ namespace eutelescope {
                                "This float number [0,1] represents the maximum "
                                "allowed firing frequency\n"
                                "within the selected number of event per cycle",
-                               _maxAllowedFiringFreq, static_cast<float>(0.2));
+                               _maxAllowedFiringFreq, 0.2f);
 
     registerOptionalParameter(
         "HotPixelDBFile", "This is the name of the LCIO file name with the "
@@ -107,11 +107,11 @@ namespace eutelescope {
 
   registerOptionalParameter("NoisyPixelNoHistogramUpperLimit",
                               "Upper limit for noisy pixel count versus noise cut histogram",
-                              _noisyPixelVsCutHistUpperLimit, static_cast<double>(0.0006));
+                              _noisyPixelVsCutHistUpperLimit, 0.0006);
 
    registerOptionalParameter("NoisyPixelNoHistogramBins",
                               "Bin count for noisy pixel count versus noise cut histogram",
-                              _noisyPixelVsCutHistBins, int(1000));
+                              _noisyPixelVsCutHistBins, 1000);
 
 
 
@@ -361,7 +361,7 @@ namespace eutelescope {
         for (auto xIt = hitVector->begin(); xIt != hitVector->end(); ++xIt) {
           for (auto yIt = xIt->begin(); yIt != xIt->end(); ++yIt) {
             // compute the firing frequency
-            double fireFreq = (double)*yIt / (double)_iEvt;
+            double fireFreq = static_cast<double>(*yIt) / static_cast<double>(_iEvt);
             // if it is larger than the allowed one, we write this pixel into a
             // collection
             firingFreqVec.push_back(fireFreq);
@@ -501,7 +501,7 @@ namespace eutelescope {
       std::string dataPointName = "FiringFreqNoisyPixelDep_d" + std::to_string(det);
 	  auto dataPointSet = marlin::AIDAProcessor::histogramFactory(this)->createCloud1D((basePath+dataPointName).c_str());
 
-	  long double stepsize = _noisyPixelVsCutHistUpperLimit/(long double)_noisyPixelVsCutHistBins;
+	  long double stepsize = _noisyPixelVsCutHistUpperLimit/static_cast<long double>(_noisyPixelVsCutHistBins);
 
 	  auto HistFF = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath + dataPointName + "_HIST").c_str(), 
 					static_cast<int>(std::ceil(_noisyPixelVsCutHistBins/10)), 0.0-stepsize/2.0, 

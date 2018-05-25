@@ -82,17 +82,17 @@ _aidaHistoMap ( )
 
     registerProcessorParameter ( "CBCPulseOutputCollectionName", "The name of the CBC pulse collection we want to write", _cbcPulseOutputCollectionName, string ( "cbc_pulse_output" ) );
 
-    registerProcessorParameter ( "ChannelCount", "The total number of channels in the sensor", _chancount, int ( 1016 ) );
+    registerProcessorParameter ( "ChannelCount", "The total number of channels in the sensor", _chancount, 1016 );
 
-    registerProcessorParameter ( "MaxClusterCountPerEvent", "The maximum allowed number of clusters in an event, events with more clusters will be discarded", _maxclusters, int ( 4 ) );
+    registerProcessorParameter ( "MaxClusterCountPerEvent", "The maximum allowed number of clusters in an event, events with more clusters will be discarded", _maxclusters, 4 );
 
-    registerProcessorParameter ( "MaxClusterSize", "The maximum allowed cluster size, larger clusters will be discarded as noise", _maxclustersize, int ( 4 ) );
+    registerProcessorParameter ( "MaxClusterSize", "The maximum allowed cluster size, larger clusters will be discarded as noise", _maxclustersize, 4 );
 
     registerProcessorParameter ( "NonSensitiveAxis", "The unsensitive axis of the CBC", _nonsensitiveaxis, string ( "x" ) );
 
-    registerProcessorParameter ( "OutputSensorID", "The sensor id to write", _outputSensorID, int ( 6 ) );
+    registerProcessorParameter ( "OutputSensorID", "The sensor id to write", _outputSensorID, 6 );
 
-    registerProcessorParameter ( "ZSMode", "Zero Suppression Mode? 0 for off, 1 for first, 2 for second sensor", _zsmode, int ( 0 ) );
+    registerProcessorParameter ( "ZSMode", "Zero Suppression Mode? 0 for off, 1 for first, 2 for second sensor", _zsmode, 0 );
 
 }
 
@@ -479,14 +479,14 @@ void CBCClustering::processEvent ( LCEvent * anEvent )
 			    zsDataEncoder["xCluSize"] = xsize;
 			    zsDataEncoder["yCluSize"] = ysize;
 			    zsDataEncoder["type"] = static_cast < int > ( kEUTelSparseClusterImpl );
-			    zsDataEncoder["quality"] = static_cast < int > ( 0 );
+			    zsDataEncoder["quality"] =  0;
 			    zsDataEncoder.setCellID ( pulseFrame );
 			    pulseFrame -> setTrackerData ( clusterFrame );
 			    clusterCollection -> push_back ( pulseFrame );
 
 			    idClusterEncoder["sensorID"] = _outputSensorID + i;
-			    idClusterEncoder["sparsePixelType"] = static_cast < int > ( 2 );
-			    idClusterEncoder["quality"] = static_cast < int > ( 0 );
+			    idClusterEncoder["sparsePixelType"] = 2;
+			    idClusterEncoder["quality"] = 0;
 			    idClusterEncoder.setCellID ( clusterFrame );
 			    sparseClusterCollectionVec -> push_back ( clusterFrame );
 			}

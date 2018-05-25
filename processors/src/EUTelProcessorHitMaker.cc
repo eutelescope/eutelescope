@@ -95,7 +95,7 @@ EUTelProcessorHitMaker::EUTelProcessorHitMaker()
   registerOptionalParameter(
       "EnableLocalCoordidates",
       "Hit coordinates are calculated in local reference frame of sensor",
-      _wantLocalCoordinates, static_cast<bool>(false));
+      _wantLocalCoordinates, false);
 }
 
 void EUTelProcessorHitMaker::init() {
@@ -149,8 +149,8 @@ void EUTelProcessorHitMaker::processEvent(LCEvent *event) {
                             << endl;
   }
 
-  LCCollectionVec *pulseCollection = 0;
-  LCCollectionVec *hitCollection = 0;
+  LCCollectionVec *pulseCollection = nullptr;
+  LCCollectionVec *hitCollection = nullptr;
 
   try {
     pulseCollection = static_cast<LCCollectionVec *>(

@@ -157,7 +157,7 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelAlignGBL") {
   HitCollectionNameVecExample.push_back("corrhits");
 
   registerInputCollections(LCIO::TRACKERHIT,"HitCollectionName","Hit collections name",_hitCollectionName,HitCollectionNameVecExample);
-  registerProcessorParameter("Ebeam","Beam energy [GeV]",_eBeam, static_cast<double>(4.0));
+  registerProcessorParameter("Ebeam","Beam energy [GeV]",_eBeam, 4.0);
 
   registerOptionalParameter("ExcludePlanes","Exclude planes from fit according to their sensor ids.",_excludePlanes_sensorIDs ,std::vector<int>());
 
@@ -168,8 +168,8 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelAlignGBL") {
   registerOptionalParameter("ResolutionY","Y Resolution of sensors (z-ordered).", _y_resolution_vec ,std::vector<float>());
 
   registerOptionalParameter("FixedPlanes","Fix sensor planes in the fit according to their sensor ids.",_FixedPlanes_sensorIDs ,std::vector<int>());
-  registerOptionalParameter("MaxTrackCandidatesTotal","Maximal number of track candidates (Total).",_maxTrackCandidatesTotal, static_cast <int> (10000000));
-  registerOptionalParameter("MaxTrackCandidates","Maximal number of track candidates.",_maxTrackCandidates, static_cast <int> (2000));
+  registerOptionalParameter("MaxTrackCandidatesTotal","Maximal number of track candidates (Total).",_maxTrackCandidatesTotal, 10000000);
+  registerOptionalParameter("MaxTrackCandidates","Maximal number of track candidates.",_maxTrackCandidates, 2000);
   registerOptionalParameter("BinaryFilename","Name of the Millepede binary file.",_binaryFilename, string ("mille.bin"));
   registerOptionalParameter("AlignMode","Number of alignment constants used. Available mode are: "
                               "\nXYZShifts - shifts in X and Y"
@@ -180,9 +180,9 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelAlignGBL") {
   registerOptionalParameter("driCut", "Downstream triplet residual cut [um]", _driCut, 0.40);
   registerOptionalParameter("sixCut", "Upstream-Downstream Track matching cut [um]", _sixCut, 0.60);
   registerOptionalParameter("slopeCut", "t(d)riplet slope cut [radian]", _slopeCut, 0.01);
-  registerOptionalParameter("GeneratePedeSteerfile","Generate a steering file for the pede program.",_generatePedeSteerfile, static_cast <int> (0));
+  registerOptionalParameter("GeneratePedeSteerfile","Generate a steering file for the pede program.",_generatePedeSteerfile, 0);
   registerOptionalParameter("PedeSteerfileName","Name of the steering file for the pede program.",_pedeSteerfileName, string("steer_mille.txt"));
-  registerProcessorParameter("kappa","Global factor to Highland formula", _kappa, static_cast <double>(1.0)); // 1.0 means HL as is, 1.2 means 20% additional scattering
+  registerProcessorParameter("kappa","Global factor to Highland formula", _kappa, 1.0); // 1.0 means HL as is, 1.2 means 20% additional scattering
 
 
 }
@@ -333,7 +333,7 @@ void EUTelAlignGBL::processRunHeader( LCRunHeader* rdr ) {
 }
 
 //------------------------------------------------------------------------------
-Eigen::Matrix<double,5,5> Jac55new( double ds ) {
+inline Eigen::Matrix<double,5,5> Jac55new( double ds ) {
   /* for GBL:
      Jacobian for straight line track
      track = q/p, x', y', x, y
@@ -360,7 +360,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
       << endl;
   }
 
-  if( _nMilleTracks > (size_t)_maxTrackCandidatesTotal ) {
+  if( _nMilleTracks > static_cast<size_t>(_maxTrackCandidatesTotal) ) {
     throw StopProcessingException(this);
   }
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
@@ -406,7 +406,6 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
   int nm = 0;
   auto tripletVec = std::vector<EUTelTripletGBLUtility::triplet>();
   auto dripletVec = std::vector<EUTelTripletGBLUtility::triplet>();
-  
 
   gblutil.FindTriplets(_hitsVec, _upstream_triplet_ids[0], _upstream_triplet_ids[1], _upstream_triplet_ids[2], _triCut, _slopeCut, tripletVec, false);
   gblutil.FindTriplets(_hitsVec, _downstream_triplet_ids[0], _downstream_triplet_ids[1], _downstream_triplet_ids[2], _driCut, _slopeCut+0.012, dripletVec, false);

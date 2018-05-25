@@ -105,10 +105,10 @@ protected:
   std::map<int, int> yPairs;
   std::vector<std::vector<int>> symmetryGroups;
   double zDistance; // TODO: which units?
-  int _nEvents;
-  int _nEventsFake;
-  int _nEventsWithTrack;
-  int _nEventsWithEfficiency;
+  size_t _nEvents;
+  size_t _nEventsFake;
+  size_t _nEventsWithTrack;
+  size_t _nEventsWithEfficiency;
   double _minTimeStamp;
   int _nSectors;
   int _chipVersion;

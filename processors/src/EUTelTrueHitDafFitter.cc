@@ -81,7 +81,7 @@ EUTelTrueHitDafFitter::EUTelTrueHitDafFitter()
   registerOptionalParameter(
       "FitDuts",
       "Set this to true if you want DUTs to be included in the track fit",
-      _fitDuts, static_cast<bool>(false));
+      _fitDuts, false);
 
   // Parameters from EUTelDafBase.cc
   registerProcessorParameter("clusterfinder",
@@ -102,19 +102,19 @@ EUTelTrueHitDafFitter::EUTelTrueHitDafFitter()
       _dutPlanes, std::vector<int>());
   registerOptionalParameter(
       "Ebeam", "Beam energy [GeV], used to calculate amount of scatter", _eBeam,
-      static_cast<float>(120.0));
+      120.0f);
   registerOptionalParameter(
       "TelResolutionX", "Sigma of telescope resolution in the global X plane,",
-      _telResX, static_cast<float>(5.3));
+      _telResX, 5.3f);
   registerOptionalParameter(
       "TelResolutionY", "Sigma of telescope resolution in the global Y plane,",
-      _telResY, static_cast<float>(5.3));
+      _telResY, 5.3f);
   registerOptionalParameter(
       "DutResolutionX", "Sigma of telescope resolution in the global X plane,",
-      _dutResX, static_cast<float>(115.4));
+      _dutResX, 115.4f);
   registerOptionalParameter(
       "DutResolutionY", "Sigma of telescope resolution in the global Y plane,",
-      _dutResY, static_cast<float>(14.4));
+      _dutResY, 14.4f);
 
   // Material and resolution
   registerOptionalParameter("RadiationLengths",
@@ -132,33 +132,33 @@ EUTelTrueHitDafFitter::EUTelTrueHitDafFitter()
                                             "allowed normalized distance "
                                             "between to hits in the xy plane "
                                             "for inclusion in track candidate.",
-                            _normalizedRadius, static_cast<float>(300.0));
+                            _normalizedRadius, 300.0f);
   registerOptionalParameter("Chi2Cutoff", "DAF fitter: The cutoff value for a "
                                           "measurement to be included in the "
                                           "fit.",
-                            _chi2cutoff, static_cast<float>(300.0f));
+                            _chi2cutoff, 300.0f);
   registerOptionalParameter(
       "RequireNTelPlanes",
       "How many telescope planes do we require to be included in the fit?",
-      _nSkipMax, static_cast<float>(0.0f));
+      _nSkipMax, 0.0f);
   registerOptionalParameter("NominalDxdz", "dx/dz assumed by track finder",
-                            _nXdz, static_cast<float>(0.0f));
+                            _nXdz, 0.0f);
   registerOptionalParameter("NominalDydz", "dy/dz assumed by track finder",
-                            _nYdz, static_cast<float>(0.0f));
+                            _nYdz, 0.0f);
   registerOptionalParameter("MaxXdxDeviance",
                             "maximum devianve for dx/dz in CKF track finder",
-                            _nXdzMaxDeviance, static_cast<float>(0.01f));
+                            _nXdzMaxDeviance, 0.01f);
   registerOptionalParameter("MaxYdxDeviance",
                             "maximum devianve for dy/dz in CKF track finder",
-                            _nYdzMaxDeviance, static_cast<float>(0.01f));
+                            _nYdzMaxDeviance, 0.01f);
 
   // Track quality parameters
   registerOptionalParameter("MaxChi2OverNdof",
                             "Maximum allowed global chi2/ndof", _maxChi2,
-                            static_cast<float>(9999.0));
+                            9999.0f);
   registerOptionalParameter(
       "NDutHits", "How many DUT hits do we need in order to accept track?",
-      _nDutHits, static_cast<int>(0));
+      _nDutHits, 0);
 }
 
 bool EUTelTrueHitDafFitter::defineSystemFromData() {
@@ -414,13 +414,14 @@ void EUTelTrueHitDafFitter::init() {
 
   // Prepare track finder
   switch (_trackFinderType) {
-
   case combinatorialKF:
     _system.setCKFChi2Cut(_normalizedRadius * _normalizedRadius);
     break;
   case simpleCluster:
     _system.setClusterRadius(_normalizedRadius);
     break;
+  default:
+    _system.setClusterRadius(_normalizedRadius);
   }
 
   _system.setNominalXdz(
@@ -560,7 +561,7 @@ void EUTelTrueHitDafFitter::readHitCollection(LCEvent *event) {
     bool region = true;
     int planeIndex = -1;
 
-    if ((trueHit != 0) && (trueHit->getQuality() == 1)) {
+    if ((trueHit != nullptr) && (trueHit->getQuality() == 1)) {
 
       const double *hitpos = trueHit->getPosition();
       pos[0] = hitpos[0];
@@ -690,13 +691,14 @@ void EUTelTrueHitDafFitter::processEvent(LCEvent *event) {
 
   // Run track finder
   switch (_trackFinderType) {
-
   case combinatorialKF:
     _system.combinatorialKF();
     break;
   case simpleCluster:
     _system.clusterTracker();
     break;
+  default:
+    _system.clusterTracker();
   }
 
   // Child specific actions
@@ -1081,8 +1083,8 @@ void EUTelTrueHitDafFitter::end() {
     sprintf(iden, "%d", plane.getSensorID());
     string bname = static_cast<string>("pl") + iden + "_";
 
-    if (_aidaHistoMap[bname + "residualX"] != 0 &&
-        _aidaHistoMap[bname + "residualY"] != 0) {
+    if (_aidaHistoMap[bname + "residualX"] != nullptr &&
+        _aidaHistoMap[bname + "residualY"] != nullptr) {
 
       streamlog_out(MESSAGE5)
           << "plane:" << i

@@ -71,23 +71,23 @@ AlibavaSimConverter::AlibavaSimConverter ( ) : AlibavaBaseProcessor ( "AlibavaSi
 
     registerOptionalParameter ( "ChipSelection", "Selection of chip that you want to store data from. Chip numbers start from 0. If not set, all data (i.e. chip 0 and 1) will be stored", _chipSelection, EVENT::IntVec ( ) );
 
-    registerOptionalParameter ( "CommonmodeMean", "Mean of the commonmode noise to be added to each strip if CommonmodeSigma > 0", _commonmodemean, double ( 0.0 ) );
+    registerOptionalParameter ( "CommonmodeMean", "Mean of the commonmode noise to be added to each strip if CommonmodeSigma > 0", _commonmodemean, 0.0 );
 
-    registerOptionalParameter ( "CommonmodeSigma", "Sigma of the commonmode noise to be added to each strip if > 0", _commonmodesigma, double ( 20.0 ) );
+    registerOptionalParameter ( "CommonmodeSigma", "Sigma of the commonmode noise to be added to each strip if > 0", _commonmodesigma, 20.0 );
 
-    registerOptionalParameter ( "NoiseMean", "Mean of the Gaussian noise to be added to each strip if NoiseSigma > 0", _noisemean, double ( 0.0 ) );
+    registerOptionalParameter ( "NoiseMean", "Mean of the Gaussian noise to be added to each strip if NoiseSigma > 0", _noisemean, 0.0 );
 
-    registerOptionalParameter ( "NoiseSigma", "Sigma of the Gaussian noise to be added to each strip if > 0", _noisesigma, double ( 5.0 ) );
+    registerOptionalParameter ( "NoiseSigma", "Sigma of the Gaussian noise to be added to each strip if > 0", _noisesigma, 5.0 );
 
-    registerOptionalParameter ( "PedestalMean", "Mean of the pedestal noise to be added to each strip if PedestalSigma > 0", _pedestalmean, double ( 500.0 ) );
+    registerOptionalParameter ( "PedestalMean", "Mean of the pedestal noise to be added to each strip if PedestalSigma > 0", _pedestalmean, 500.0 );
 
-    registerOptionalParameter ( "PedestalSigma", "Sigma of the pedestal noise to be added to each strip if > 0", _pedestalsigma, double ( 10.0 ) );
+    registerOptionalParameter ( "PedestalSigma", "Sigma of the pedestal noise to be added to each strip if > 0", _pedestalsigma, 10.0 );
 
-    registerOptionalParameter ( "Ratio", "Scale all signals by this factor", _scalefactor, double ( 1.0 ) );
+    registerOptionalParameter ( "Ratio", "Scale all signals by this factor", _scalefactor, 1.0 );
 
-    registerOptionalParameter ( "TDCMean", "Mean of the event TDC to be set", _tdcmean, double ( 20.0 ) );
+    registerOptionalParameter ( "TDCMean", "Mean of the event TDC to be set", _tdcmean, 20.0 );
 
-    registerOptionalParameter ( "TDCSigma", "Sigma of the event TDC to be set", _tdcsigma, double ( 5.0 ) );
+    registerOptionalParameter ( "TDCSigma", "Sigma of the event TDC to be set", _tdcsigma, 5.0 );
 
 }
 

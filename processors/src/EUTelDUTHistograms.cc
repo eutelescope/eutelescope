@@ -132,18 +132,18 @@ EUTelDUTHistograms::EUTelDUTHistograms()
 
   registerProcessorParameter(
       "ManualDUTid", "Id of telescope layer which should be used as DUT", _iDUT,
-      static_cast<int>(0));
+      0);
 
   registerProcessorParameter(
       "DistMax",
       "Maximum allowed distance between fit and matched DUT hit in [mm]",
-      _distMax, static_cast<double>(0.1));
+      _distMax, 0.1);
 
   registerProcessorParameter("DUTpitchX", "DUT sensor pitch in X", _pitchX,
-                             static_cast<double>(0.0184));
+                             0.0184);
 
   registerProcessorParameter("DUTpitchY", "DUT sensor pitch in Y", _pitchY,
-                             static_cast<double>(0.0184));
+                             0.0184);
 
   std::vector<float> initAlign;
   initAlign.push_back(0.);
@@ -160,18 +160,18 @@ EUTelDUTHistograms::EUTelDUTHistograms()
                              _histoInfoFileName, string("histoinfo.xml"));
 
   registerOptionalParameter("cluSizeXCut", "cluster size X cut ", _cluSizeXCut,
-                            static_cast<int>(-1));
+                            -1);
 
   registerOptionalParameter("cluSizeYCut", "cluster size Y cut ", _cluSizeYCut,
-                            static_cast<int>(-1));
+                            -1);
 
   registerOptionalParameter(
       "trackNCluXCut", "number of hit on a track with _cluSizeX cluster size ",
-      _trackNCluXCut, static_cast<int>(0));
+      _trackNCluXCut, 0);
 
   registerOptionalParameter(
       "trackNCluYCut", "number of hit on a track with _cluSizeY cluster size ",
-      _trackNCluYCut, static_cast<int>(0));
+      _trackNCluYCut, 0);
 }
 
 void EUTelDUTHistograms::init() {
@@ -1386,7 +1386,7 @@ void EUTelDUTHistograms::bookHistos() {
         }
       }
 
-      AIDA::IBaseHistogram *thisHisto = 0;
+      AIDA::IBaseHistogram *thisHisto = nullptr;
       if (static_cast<projAxis>(thisProjection) == projXY)
         thisHisto = dynamic_cast<AIDA::IBaseHistogram *>(
             AIDAProcessor::histogramFactory(this)->createProfile2D(
@@ -1909,7 +1909,7 @@ void EUTelDUTHistograms::bookHistos() {
 int EUTelDUTHistograms::getClusterSize(int sensorID, TrackerHit *hit,
                                        int &sizeX, int &sizeY, int &subMatrix) {
 
-  if (hit == 0) {
+  if (hit == nullptr) {
     streamlog_out(ERROR5) << "An invalid hit pointer supplied! will exit now\n"
                           << endl;
     return -1;
@@ -1919,7 +1919,7 @@ int EUTelDUTHistograms::getClusterSize(int sensorID, TrackerHit *hit,
     TrackerDataImpl *clusterVector =
         static_cast<TrackerDataImpl *>(hit->getRawHits()[0]);
 
-    EUTelSimpleVirtualCluster *cluster = 0;
+    EUTelSimpleVirtualCluster *cluster = nullptr;
 
     if (hit->getType() == kEUTelBrickedClusterImpl) {
 
@@ -1958,7 +1958,7 @@ int EUTelDUTHistograms::getClusterSize(int sensorID, TrackerHit *hit,
       }
     }
 
-    if (cluster != 0) {
+    if (cluster != nullptr) {
       float xlocal = -1.;
       float ylocal = -1.;
       cluster->getClusterSize(sizeX, sizeY);
@@ -2074,7 +2074,7 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event) {
   _maptrackid = 0;
   for (int itrack = 0; itrack < nTracks; itrack++) {
 
-    const double *pos = 0;
+    const double *pos = nullptr;
     int hsensorID = 0;
 
     TrackerHit *fithit =
@@ -2082,18 +2082,18 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event) {
     SimTrackerHitImpl *fithit0 =
         dynamic_cast<SimTrackerHitImpl *>(fit__col->getElementAt(itrack));
 
-    if (fithit != 0) {
+    if (fithit != nullptr) {
       pos = fithit->getPosition();
       hsensorID = hitCellDecoder(fithit)["sensorID"];
-    } else if (fithit == 0) {
-      if (fithit0 != 0) {
+    } else if (fithit == nullptr) {
+      if (fithit0 != nullptr) {
         pos = fithit0->getPosition();
         hsensorID = simhitCellDecoder(fithit0)["sensorID"];
       }
     }
 
     // skip if for some reason the track collection is at NULL address
-    if (fithit == 0 && fithit0 == 0)
+    if (fithit == nullptr && fithit0 == nullptr)
       continue;
 
     {
@@ -2172,7 +2172,7 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event) {
   // look at reconstructed hits only for all planes (excluding DUT !)
   // hits that belong to track "_maptrackid"
   for (int ihit = 0; ihit < nRecHits; ihit++) {
-    const double *pos = 0;
+    const double *pos = nullptr;
     int hsensorID = 0;
 
     TrackerHit *meshit =
@@ -2180,28 +2180,28 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event) {
     SimTrackerHitImpl *meshit0 =
         dynamic_cast<SimTrackerHitImpl *>(rec__col->getElementAt(ihit));
 
-    if (meshit != 0) {
+    if (meshit != nullptr) {
       pos = meshit->getPosition();
       hsensorID = hitCellDecoder(meshit)["sensorID"];
-    } else if (meshit == 0) {
-      if (meshit0 != 0) {
+    } else if (meshit == nullptr) {
+      if (meshit0 != nullptr) {
         pos = meshit0->getPosition();
         hsensorID = simhitCellDecoder(meshit0)["sensorID"];
       }
     }
 
     // skip if for some reason the track collection is at NULL address
-    if (meshit == 0 && meshit0 == 0)
+    if (meshit == nullptr && meshit0 == nullptr)
       continue;
 
     if (hsensorID == _iDUT) {
       int sizeX = -1;
       int sizeY = -1;
       int subMatrix = -1;
-      if (meshit != 0) {
-        getClusterSize(hsensorID, static_cast<TrackerHit *>(meshit), sizeX,
+      if (meshit != nullptr) {
+        getClusterSize(hsensorID, meshit, sizeX,
                        sizeY, subMatrix);
-      } else if (meshit0 != 0) {
+      } else if (meshit0 != nullptr) {
         sizeX = 1;
         sizeY = 1;
         subMatrix = 0;
@@ -2284,7 +2284,7 @@ int EUTelDUTHistograms::read_track(LCEvent *event) {
     Track *fittrack = dynamic_cast<Track *>(trackcol->getElementAt(itrack));
 
     // skip if for some reason the track collection is at NULL address
-    if (fittrack == 0)
+    if (fittrack == nullptr)
       continue;
 
     {

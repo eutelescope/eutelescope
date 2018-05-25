@@ -95,32 +95,32 @@ EUTelCalibrateEventProcessor::EUTelCalibrateEventProcessor()
   registerProcessorParameter(
       "DebugHistoFilling",
       "Flag to switch on (1) or off (0) the detector debug histogram filling",
-      _fillDebugHisto, static_cast<bool>(false));
+      _fillDebugHisto, false);
 
   registerProcessorParameter("PerformCommonMode", "Flag to switch on the "
                                                   "common mode suppression "
                                                   "algorithm. 0 -> off, 1 -> "
                                                   "full frame,  2 -> row wise",
-                             _doCommonMode, static_cast<int>(1));
+                             _doCommonMode, 1);
 
   registerProcessorParameter("HitRejectionCut",
                              "Threshold of pixel SNR for hit rejection",
-                             _hitRejectionCut, static_cast<float>(3.5));
+                             _hitRejectionCut, 3.5f);
 
   registerProcessorParameter(
       "MaxNoOfRejectedPixels",
       "Maximum allowed number of rejected pixel per event",
-      _maxNoOfRejectedPixels, static_cast<int>(3000));
+      _maxNoOfRejectedPixels, 3000);
 
   registerProcessorParameter(
       "MaxNoOfRejectedPixelPerRow",
       "Maximum allowed number of rejected pixels per row (only with RowWise)",
-      _maxNoOfRejectedPixelPerRow, static_cast<int>(25));
+      _maxNoOfRejectedPixelPerRow, 25);
 
   registerProcessorParameter(
       "MaxNoOfSkippedRow",
       "Maximum allowed number of skipped rows (only with RowWise)",
-      _maxNoOfSkippedRow, static_cast<int>(15));
+      _maxNoOfSkippedRow, 15);
 
   registerProcessorParameter(
       "HistoInfoFileName", "This is the name of the histogram information file",

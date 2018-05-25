@@ -36,8 +36,8 @@ using namespace eutelescope;
 EUTelAutoPedestalNoiseProcessor::EUTelAutoPedestalNoiseProcessor()
     : Processor("EUTelAutoPedestalNoiseProcessor"), _pedestalCollectionName(""),
       _noiseCollectionName(""), _statusCollectionName(""), _initPedestal(),
-      _initNoise(), _iRun(0), _iEvt(0), _pedestalCollectionVec(NULL),
-      _noiseCollectionVec(NULL), _statusCollectionVec(NULL), _minX(0), _maxX(0),
+      _initNoise(), _iRun(0), _iEvt(0), _pedestalCollectionVec(nullptr),
+      _noiseCollectionVec(nullptr), _statusCollectionVec(nullptr), _minX(0), _maxX(0),
       _minY(0), _maxY(0), _sensorIDVec() {
 
   // modify processor description

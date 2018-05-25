@@ -45,11 +45,11 @@ EUTelPseudo1DHistogram::~EUTelPseudo1DHistogram() {
 
   _FullNumberOfBins = 0;
   delete[] _NOfEntries;
-  _NOfEntries = 0;
+  _NOfEntries = nullptr;
   delete[] _Content;
-  _Content = 0;
+  _Content = nullptr;
   delete[] _UpperIntervalLimit;
-  _UpperIntervalLimit = 0;
+  _UpperIntervalLimit = nullptr;
 }
 
 //=============================================================================

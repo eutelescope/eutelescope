@@ -95,6 +95,9 @@ FitPlane<T>::FitPlane(int sensorID, T zPos, T sigmaX, T sigmaY, T scatterThetaSq
   invMeasVar(1) = 1/(sigmaY * sigmaY);
   ref0(0) = 0.0f; ref0(1) = 0.0f; ref0(2) = zPos;
   norm(0) = 0.0f; norm(1) = 0.0f; norm(2) = 1.0f;
+  measZ = T();
+  sumWeights = T();
+
 }
 
 template<typename T>
@@ -215,7 +218,7 @@ void TrackerSystem<T, N>::init(bool quiet){
   //  - Memory is allocated for track candidates and MC truth
   sort(planes.begin(), planes.end(), planeSort<T>);
   if(not quiet){
-    for(int ii = 0; ii < (int) planes.size(); ii++){
+    for(size_t ii = 0; ii < planes.size(); ii++){
       planes.at(ii).print();
     }
   }
@@ -226,7 +229,7 @@ void TrackerSystem<T, N>::init(bool quiet){
 template <typename T,size_t N>
 void TrackerSystem<T, N>::clear(){
   // Prepare tracker system for a new event.
-  for(int ii = 0; ii < (int)planes.size(); ii++){ planes.at(ii).clear(); }
+  for(size_t ii = 0; ii < planes.size(); ii++){ planes.at(ii).clear(); }
   tracks.clear();
   m_nTracks = 0;
 }
@@ -411,7 +414,7 @@ void TrackerSystem<T, N>::smoothInfo(TrackCandidate<T, N>& candidate){
   // Run a smoother for the information filter
   m_fitter.smoothInfo();
   intersect();
-  for(int ii = 0; ii < (int) planes.size() ; ii++ ){
+  for(size_t ii = 0; ii < planes.size() ; ii++ ){
     candidate.estimates.at(ii) = m_fitter.smoothed.at(ii);
   }
 }
@@ -439,7 +442,7 @@ void TrackerSystem<T, N>::getChi2Kf(TrackCandidate<T, N>& candidate){
   //Get the chi2 for a standard formulated, unbiased KF
   T chi2(0.0), ndof(0.0);
   Eigen::Matrix<T, 2, 1> resv, errv;
-  for(int plane = 0; plane < (int) planes.size(); plane++){
+  for(size_t plane = 0; plane < planes.size(); plane++){
     FitPlane<T>& p = planes.at(plane);
     if(p.isExcluded()) { continue; }
     if(candidate.indexes.at(plane) < 0) { continue; }
@@ -549,7 +552,7 @@ void TrackerSystem<T, N>::getChi2UnBiasedInfoDaf(TrackCandidate<T, N>& candidate
 template <typename T,size_t N>
 void TrackerSystem<T, N>::intersect(){
   //Check where a straight line track intersects with a measurement plane, update the measurement z position
-  for(int plane = 0; plane < (int) planes.size(); plane++ ){
+  for(size_t plane = 0; plane < planes.size(); plane++ ){
     FitPlane<T>& pl = planes.at(plane);
     TrackEstimate<T,N>& estim = m_fitter.smoothed.at(plane);
     //Line intersects with plane where
@@ -585,7 +588,7 @@ template <typename T,size_t N>
 void TrackerSystem<T, N>::fitPlanesInfoDaf(TrackCandidate<T, N>& candidate){
   // Get smoothed estimates for all planes using the unbiased DAF
   T ndof = -4.0f;
-  for(int plane = 0; plane < (int) planes.size(); plane++ ){
+  for(size_t plane = 0; plane < planes.size(); plane++ ){
     //set tot weight per plane
     if ( candidate.weights.at(plane).size() > 0 ){
       planes.at(plane).setTotWeight( candidate.weights.at(plane).sum() );
@@ -610,7 +613,7 @@ void TrackerSystem<T, N>::fitPlanesInfoDaf(TrackCandidate<T, N>& candidate){
   if(ndof > -1.9f) { ndof = runTweight( 1.0, candidate); }
   
   if(ndof > -1.9f) {
-    for(int ii = 0; ii <(int)  planes.size() ; ii++ ){
+    for(size_t ii = 0; ii < planes.size() ; ii++ ){
       //Store estimates and weights in candidate
       candidate.estimates.at(ii) = m_fitter.smoothed.at(ii);
     }
@@ -799,7 +802,7 @@ void TrackerSystem<T, N>::fitPlanesKF(TrackCandidate<T, N>& candidate){
   
   getChi2Kf(candidate);
   m_fitter.smooth();
-  for(int ii = 0; ii < (int) planes.size() ; ii++ ){
+  for(size_t ii = 0; ii < planes.size() ; ii++ ){
     candidate.estimates.at(ii) = m_fitter.smoothed.at(ii);
   }
   indexToWeight( candidate );
@@ -851,7 +854,7 @@ void TrackerSystem<T, N>::finalizeCKFTrack(TrackEstimate<T, N>& est, vector<int>
   if(candidate.chi2/candidate.ndof > getChi2OverNdofCut()) { return;}
   
   //Copy indexes, assign weights
-  for(int plane = 0; plane < (int) planes.size(); plane++){
+  for(size_t plane = 0; plane < planes.size(); plane++){
     candidate.indexes.at(plane) = indexes.at(plane);
   }
   indexToWeight( candidate );
@@ -860,14 +863,14 @@ void TrackerSystem<T, N>::finalizeCKFTrack(TrackEstimate<T, N>& est, vector<int>
 }
 
 template <typename T,size_t N>
-void TrackerSystem<T, N>::fitPermutation(int plane, TrackEstimate<T, N> &est, size_t nSkipped, vector<int> &indexes, int nMeas, T chi2){
+void TrackerSystem<T, N>::fitPermutation(size_t plane, TrackEstimate<T, N> &est, size_t nSkipped, vector<int> &indexes, int nMeas, T chi2){
   //Check a branch of the track tree. Either kill it or, let it live.
   if( getNtracks() >= m_maxCandidates){
     cout << "Reached maximum number of track candidates, " << m_maxCandidates << endl;
     return;
   }
   //Last plane, save and quit
-  if(plane == (int) planes.size()){
+  if(plane == planes.size()){
     finalizeCKFTrack(est, indexes, nMeas, chi2);
     return;
   }
@@ -897,7 +900,7 @@ void TrackerSystem<T, N>::fitPermutation(int plane, TrackEstimate<T, N> &est, si
   }
   //If only one measurement has been read in. prepare for checking angles
   if(nMeas == 1){
-    for(int ii = 0; ii < plane; ii++){
+    for(size_t ii = 0; ii < plane; ii++){
       int index = indexes.at(ii);
       if( index >= 0){
 	oldX = planes.at(ii).meas.at(index).getX();
@@ -908,7 +911,7 @@ void TrackerSystem<T, N>::fitPermutation(int plane, TrackEstimate<T, N> &est, si
     }
   }
 
-  for(int hit = 0; hit < (int)planes.at(plane).meas.size(); hit++){
+  for(size_t hit = 0; hit < planes.at(plane).meas.size(); hit++){
     Measurement<T>& mm = planes.at(plane).meas.at(hit);
     bool filterMeas = false;
     if( nMeas > 1) { 

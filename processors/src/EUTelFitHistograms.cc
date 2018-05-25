@@ -135,11 +135,11 @@ EUTelFitHistograms::EUTelFitHistograms() : Processor("EUTelFitHistograms") {
   registerProcessorParameter("AlignCheckHistograms",
                              "Flag for producing additional histograms for "
                              "alignment consistency check",
-                             _alignCheckHistograms, static_cast<bool>(false));
+                             _alignCheckHistograms, false);
 
   registerProcessorParameter(
       "BeamReferenceID", "ID of the layer used for beam based alignment check",
-      _BeamReferenceID, static_cast<int>(0));
+      _BeamReferenceID, 0);
 
   std::vector<int> initLayerIDs;
   initLayerIDs.push_back(0);
@@ -152,7 +152,7 @@ EUTelFitHistograms::EUTelFitHistograms() : Processor("EUTelFitHistograms") {
 
   registerProcessorParameter("DebugEventCount",
                              "Print out every DebugEnevtCount event",
-                             _debugCount, static_cast<int>(100));
+                             _debugCount, 100);
 }
 
 void EUTelFitHistograms::init() {
@@ -164,7 +164,7 @@ void EUTelFitHistograms::init() {
   _nEvt = 0;
 
   // check if the GEAR manager pointer is not null!
-  if (Global::GEAR == 0x0) {
+  if (Global::GEAR == nullptr) {
     streamlog_out(ERROR5)
         << "The GearMgr is not available, for an unknown reason." << endl;
     exit(-1);

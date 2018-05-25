@@ -13,17 +13,17 @@ CrossSection::CrossSection(TH2F *h2, TString name_outhist_prefix)
     :TObject(),
      fH2(h2),
      fNbinsH2(h2->GetNbinsX()),
-     fHcsXY(0), 
-     fHcsBorder(0),
-     fHcsDiag(0),
-     fVcs(0),
-     fLeg(0),
+     fHcsXY(nullptr), 
+     fHcsBorder(nullptr),
+     fHcsDiag(nullptr),
+     fVcs(),
+     fLeg(nullptr),
      fNbins(-1),
      fBinWidth(h2->GetXaxis()->GetBinWidth(1)),
-     fBins(0),
-     fNbinsEven(0),
-     fCScreated(0),
-     fDrawLegend(0)
+     fBins(nullptr),
+     fNbinsEven(false),
+     fCScreated(false),
+     fDrawLegend(false)
 {
     // check if bin number even or odd
     fNbinsEven = kFALSE;
@@ -51,7 +51,7 @@ CrossSection::CrossSection(TH2F *h2, TString name_outhist_prefix)
     if (name_outhist_prefix.CompareTo("")==0) {  
         TString name_h2 = h2->GetName();
         Int_t i_hist = 0; 
-        while(gDirectory->Get(Form("%s_border_%i",name_h2.Data(), i_hist))!=NULL) {
+        while(gDirectory->Get(Form("%s_border_%i",name_h2.Data(), i_hist))!=nullptr) {
             i_hist++;
         }
         fHcsBorder = new TH1F(Form("%s_border_%i", name_h2.Data(), i_hist),"section along border of 2D histogram", fNbins*3, fBins);
@@ -72,11 +72,11 @@ CrossSection::CrossSection(TH2F *h2, TString name_outhist_prefix)
 //_______________________________________________________________________________
 CrossSection::~CrossSection() {
     fVcs.clear(); 
-    delete fLeg;        fLeg=0;
-    delete fHcsXY;      fHcsXY=0;
-    delete fHcsDiag;    fHcsDiag=0;
-    delete fHcsBorder;  fHcsBorder=0;
-    delete fBins;       fBins=0;
+    delete fLeg;        fLeg= nullptr;
+    delete fHcsXY;      fHcsXY=nullptr;
+    delete fHcsDiag;    fHcsDiag=nullptr;
+    delete fHcsBorder;  fHcsBorder=nullptr;
+    delete fBins;       fBins=nullptr;
 }
 
 // create histograms for cross sections

@@ -52,7 +52,7 @@ EUTelProcessorClusterAnalysis::EUTelProcessorClusterAnalysis()
                           _zsDataCollectionName, string("zsdata"));
   registerProcessorParameter("HistogramFilling",
                              "Switch on or off the histogram filling",
-                             _fillHistos, static_cast<bool>(true));
+                             _fillHistos, true);
   registerProcessorParameter(
       "HistoInfoFileName", "This is the name of the histogram information file",
       _histoInfoFileName, string("histoinfo.xml"));
@@ -79,21 +79,21 @@ EUTelProcessorClusterAnalysis::EUTelProcessorClusterAnalysis()
       "Folder name where all the settings of each run will be saved",
       _outputSettingsFolderName, static_cast<string>("./"));
   registerProcessorParameter("dutID", "This is the ID of the DUT", _dutID,
-                             static_cast<int>(6));
+                             6);
   registerProcessorParameter("MaxNumberOfPixels",
                              "This is the maximum number of pixels in one "
                              "cluster for the clustershape analysis",
-                             _maxNumberOfPixels, static_cast<int>(3));
+                             _maxNumberOfPixels, 3);
   registerProcessorParameter("nSectors",
                              "This is the maximum amount of sectors", _nSectors,
-                             static_cast<int>(8));
+                             8);
   registerOptionalParameter("SectorSafetyPixels",
                             "Safety distance (in pixel) of clusters being "
                             "associated to a sector and to the boundaries of "
                             "the chip.",
-                            _sectorSafetyPixels, static_cast<int>(2));
-  registerOptionalParameter("Energy", "Particle energy", _energy,
-                            static_cast<double>(6.0));
+                            _sectorSafetyPixels, 2);
+  registerOptionalParameter("Energy", "Particle energy [GeV]", _energy,
+                            6.0);
   EVENT::StringVec _stringVecExample;
   _stringVecExample.push_back(" ");
   registerOptionalParameter("ChipID", "Chip IDs", _chipID, _stringVecExample);
@@ -159,7 +159,7 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt) {
       bookHistos();
     }
 #endif
-    hotPixelCollectionVec = 0;
+    hotPixelCollectionVec = nullptr;
     try {
       hotPixelCollectionVec = static_cast<LCCollectionVec *>(
           evt->getCollection(_hotPixelCollectionName));
@@ -186,7 +186,7 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt) {
     } else
       _noiseMaskAvailable = false;
 
-    deadColumnCollectionVec = 0;
+    deadColumnCollectionVec = nullptr;
     try {
       deadColumnCollectionVec = static_cast<LCCollectionVec *>(
           evt->getCollection(_deadColumnCollectionName));
@@ -258,7 +258,7 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt) {
          iCluster++) {
       TrackerDataImpl *zsData = dynamic_cast<TrackerDataImpl *>(
           zsInputDataCollectionVec->getElementAt(iCluster));
-      if ((int)cellDecoder(zsData)["sensorID"] == _dutID)
+      if (cellDecoder(zsData)["sensorID"] == _dutID)
         nClusterPerEvent++;
     }
   }
@@ -284,7 +284,7 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt) {
           static_cast<int>(cellDecoder(zsData)["sparsePixelType"]));
 
       // Check whether the data is the one from the DUT or not
-      if ((int)cellDecoder(zsData)["sensorID"] == _dutID) {
+      if (cellDecoder(zsData)["sensorID"] == _dutID) {
         int clusterSize = zsData->getChargeValues().size() / 4;
         vector<int> X(clusterSize);
         vector<int> Y(clusterSize);
@@ -500,9 +500,9 @@ void EUTelProcessorClusterAnalysis::bookHistos() {
 
 void EUTelProcessorClusterAnalysis::end() {
   for (int iSector = 0; iSector < _nSectors; iSector++) {
-    for (unsigned int i = 0; i < symmetryGroups.size(); i++) {
+    for (size_t i = 0; i < symmetryGroups.size(); i++) {
       string binName;
-      for (unsigned int j = 0; j < symmetryGroups[i].size(); j++) {
+      for (size_t j = 0; j < symmetryGroups[i].size(); j++) {
         clusterShapeHistoGroupedSector[iSector]->Fill(
             i, clusterShapeHistoSector[iSector]->GetBinContent(
                    symmetryGroups[i][j] + 1));
@@ -512,7 +512,7 @@ void EUTelProcessorClusterAnalysis::end() {
           binName += Form("%d", symmetryGroups[i][j]);
       }
       clusterShapeHistoGroupedSector[iSector]->GetXaxis()->SetBinLabel(
-          i + 1, (char *)binName.c_str());
+          i + 1, binName.c_str());
     }
   }
   //

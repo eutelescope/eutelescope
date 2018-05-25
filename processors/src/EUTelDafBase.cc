@@ -133,7 +133,7 @@ EUTelDafBase::EUTelDafBase(std::string name) : marlin::Processor(name) {
 
   // Tracker system options
   registerOptionalParameter("MakePlots", "Should plots be made and filled?",
-                            _histogramSwitch, static_cast<bool>(false));
+                            _histogramSwitch, false);
   registerProcessorParameter("TelescopePlanes", "List of sensor IDs for the "
                                                 "telescope planes. These "
                                                 "planes are used for the track "
@@ -147,19 +147,19 @@ EUTelDafBase::EUTelDafBase(std::string name) : marlin::Processor(name) {
       _dutPlanes, std::vector<int>());
   registerOptionalParameter(
       "Ebeam", "Beam energy [GeV], used to calculate amount of scatter", _eBeam,
-      static_cast<float>(120.0));
+      120.0f);
   registerOptionalParameter(
       "TelResolutionX", "Sigma of telescope resolution in the global X plane,",
-      _telResX, static_cast<float>(5.3));
+      _telResX, 5.3f);
   registerOptionalParameter(
       "TelResolutionY", "Sigma of telescope resolution in the global Y plane,",
-      _telResY, static_cast<float>(5.3));
+      _telResY, 5.3f);
   registerOptionalParameter(
       "DutResolutionX", "Sigma of telescope resolution in the global X plane,",
-      _dutResX, static_cast<float>(115.4));
+      _dutResX, 115.4f);
   registerOptionalParameter(
       "DutResolutionY", "Sigma of telescope resolution in the global Y plane,",
-      _dutResY, static_cast<float>(14.4));
+      _dutResY, 14.4f);
 
   // Material and resolution
   registerOptionalParameter("RadiationLengths",
@@ -194,33 +194,33 @@ EUTelDafBase::EUTelDafBase(std::string name) : marlin::Processor(name) {
                                             "allowed normalized distance "
                                             "between to hits in the xy plane "
                                             "for inclusion in track candidate.",
-                            _normalizedRadius, static_cast<float>(300.0));
+                            _normalizedRadius, 300.0f);
   registerOptionalParameter("Chi2Cutoff", "DAF fitter: The cutoff value for a "
                                           "measurement to be included in the "
                                           "fit.",
-                            _chi2cutoff, static_cast<float>(300.0f));
+                            _chi2cutoff, 300.0f);
   registerOptionalParameter(
       "RequireNTelPlanes",
       "How many telescope planes do we require to be included in the fit?",
-      _nSkipMax, static_cast<float>(0.0f));
+      _nSkipMax, 0.0f);
   registerOptionalParameter("NominalDxdz", "dx/dz assumed by track finder",
-                            _nXdz, static_cast<float>(0.0f));
+                            _nXdz, 0.0f);
   registerOptionalParameter("NominalDydz", "dy/dz assumed by track finder",
-                            _nYdz, static_cast<float>(0.0f));
+                            _nYdz, 0.0f);
   registerOptionalParameter("MaxXdxDeviance",
                             "maximum devianve for dx/dz in CKF track finder",
-                            _nXdzMaxDeviance, static_cast<float>(0.01f));
+                            _nXdzMaxDeviance, 0.01f);
   registerOptionalParameter("MaxYdxDeviance",
                             "maximum devianve for dy/dz in CKF track finder",
-                            _nYdzMaxDeviance, static_cast<float>(0.01f));
+                            _nYdzMaxDeviance, 0.01f);
 
   // Track quality parameters
   registerOptionalParameter("MaxChi2OverNdof",
                             "Maximum allowed global chi2/ndof", _maxChi2,
-                            static_cast<float>(9999.0));
+                            9999.0f);
   registerOptionalParameter(
       "NDutHits", "How many DUT hits do we need in order to accept track?",
-      _nDutHits, static_cast<int>(0));
+      _nDutHits, 0);
 }
 
 bool EUTelDafBase::defineSystemFromData() {
@@ -552,6 +552,8 @@ void EUTelDafBase::init() {
   case simpleCluster:
     _system.setClusterRadius(_normalizedRadius);
     break;
+  default:
+    _system.setClusterRadius(_normalizedRadius);
   }
   _system.setNominalXdz(
       _nXdz); // What is the tangent angle of the beam? (Probably zero)
@@ -661,11 +663,11 @@ void EUTelDafBase::readHitCollection(LCEvent *event) {
       if (_mcCollectionStr.size() > 0) {
         _mcCollection = dynamic_cast<LCCollectionVec *>(
             event->getCollection(_mcCollectionStr[i]));
-        SimTrackerHitImpl *simhit = 0;
-        if (_mcCollection != 0)
+        SimTrackerHitImpl *simhit = nullptr;
+        if (_mcCollection != nullptr)
           simhit = static_cast<SimTrackerHitImpl *>(
               _mcCollection->getElementAt(iHit));
-        if (simhit != 0) {
+        if (simhit != nullptr) {
           UTIL::CellIDDecoder<SimTrackerHitImpl> simHitDecoder(_mcCollection);
           const double *simpos = simhit->getPosition();
           pos[0] = simpos[0];
@@ -674,12 +676,12 @@ void EUTelDafBase::readHitCollection(LCEvent *event) {
           int planeID = simHitDecoder(simhit)["sensorID"];
           planeIndex = _indexIDMap[planeID];
         }
-        streamlog_out(DEBUG5) << " SIM: simhit=" << (simhit != 0)
+        streamlog_out(DEBUG5) << " SIM: simhit=" << (simhit != nullptr)
                               << " add point [" << planeIndex << "] "
                               << static_cast<float>(pos[0]) * 1000.0f << " "
                               << static_cast<float>(pos[1]) * 1000.0f << " "
                               << static_cast<float>(pos[2]) * 1000.0f << endl;
-      } else if (hit != 0) {
+      } else if (hit != nullptr) {
         const double *hitpos = hit->getPosition();
         pos[0] = hitpos[0];
         pos[1] = hitpos[1];
@@ -814,6 +816,8 @@ void EUTelDafBase::processEvent(LCEvent *event) {
   case simpleCluster:
     _system.clusterTracker();
     break;
+  default:
+    _system.clusterTracker();
   }
 
   // Child specific actions
@@ -1121,8 +1125,8 @@ void EUTelDafBase::end() {
     char iden[4];
     sprintf(iden, "%d", plane.getSensorID());
     string bname = static_cast<string>("pl") + iden + "_";
-    if (_aidaHistoMap[bname + "residualX"] != 0 &&
-        _aidaHistoMap[bname + "residualY"] != 0)
+    if (_aidaHistoMap[bname + "residualX"] != nullptr &&
+        _aidaHistoMap[bname + "residualY"] != nullptr)
       streamlog_out(MESSAGE5)
           << "plane:" << ii
           << "  x-stat :" << _aidaHistoMap[bname + "residualX"]->allEntries()

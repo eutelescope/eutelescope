@@ -89,7 +89,7 @@ void EUTelExampleProcessorCorrelator::init() {
   _iRun = 0;
 
   // check if the GEAR manager pointer is not null!
-  if (Global::GEAR == 0x0) {
+  if (Global::GEAR == nullptr) {
     streamlog_out(ERROR4)
         << "The GearMgr is not available, for an unknown reason." << endl;
     exit(-1);

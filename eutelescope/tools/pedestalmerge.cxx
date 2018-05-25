@@ -31,7 +31,7 @@ using namespace IMPL;
 
 int main( int argc, char ** argv ) {
 
-  auto_ptr< AnyOption > option( new AnyOption );
+  unique_ptr<AnyOption> option( new AnyOption );
 
   string usageString =
     "\n"
@@ -55,7 +55,7 @@ int main( int argc, char ** argv ) {
   }
 
 
-  if ( option->getValue( "output" ) == NULL ) {
+  if ( option->getValue( "output" ) == nullptr ) {
     cerr << "Please provide an output file name using -o option" << endl;
     return 2;
   }
@@ -69,8 +69,8 @@ int main( int argc, char ** argv ) {
   // the input files may be using wildcards
   glob_t globbuf;
   for ( size_t iArg = 0 ; iArg < static_cast<size_t>(option->getArgc()); ++iArg ) {
-    if ( iArg == 0 ) glob( option->getArgv( iArg ), 0, NULL, &globbuf);
-    else  glob( option->getArgv( iArg ), GLOB_APPEND, NULL, &globbuf);
+    if ( iArg == 0 ) glob( option->getArgv( iArg ), 0, nullptr, &globbuf);
+    else  glob( option->getArgv( iArg ), GLOB_APPEND, nullptr, &globbuf);
   }
 
   // moving to a vector of string because it's easier

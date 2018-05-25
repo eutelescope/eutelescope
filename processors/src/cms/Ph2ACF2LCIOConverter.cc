@@ -51,11 +51,11 @@ Ph2ACF2LCIOConverter::Ph2ACF2LCIOConverter ( ) : DataSourceProcessor ( "Ph2ACF2L
 
     registerProcessorParameter ( "InputFileName", "This is the input file name", _fileName, string ( "runXXXXXX.dat" ) );
 
-    registerProcessorParameter ( "MaxRecordNumber", "The maximum number of events to read", _maxRecordNumber, int ( -1 ) );
+    registerProcessorParameter ( "MaxRecordNumber", "The maximum number of events to read", _maxRecordNumber, -1 );
 
-    registerProcessorParameter ( "NumberOfChips", "The number of CBC chips on each front end", _nChips, int ( 2 ) );
+    registerProcessorParameter ( "NumberOfChips", "The number of CBC chips on each front end", _nChips, 2 );
 
-    registerProcessorParameter ( "NumberOfFrontends", "The number of front ends connected", _nFE, int ( 1 ) );
+    registerProcessorParameter ( "NumberOfFrontends", "The number of front ends connected", _nFE, 1 );
 
     registerProcessorParameter ( "RunNumber", "Formatted run number of file", _formattedRunNumber, string ( "0" ) );
 

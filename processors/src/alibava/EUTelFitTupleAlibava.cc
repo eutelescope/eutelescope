@@ -108,11 +108,11 @@ EUTelFitTupleAlibava::EUTelFitTupleAlibava ( ) : Processor ( "EUTelFitTupleAliba
     registerInputCollection ( LCIO::TRACKERHIT, "InputDUTCollectionName", "Name of the input DUT hit collection.", _inputDUTColName, std::string ( "hit" ) );
 
     // processor parameters:
-    registerProcessorParameter ( "AlibavaOutput", "Is there an Alibava DUT? If so, the alibava header data and reco data will also be written into the ntuple.", _alibava, static_cast < bool > ( true ) );
+    registerProcessorParameter ( "AlibavaOutput", "Is there an Alibava DUT? If so, the alibava header data and reco data will also be written into the ntuple.", _alibava,  true );
 
-    registerProcessorParameter ( "DistMax_X", "Maximum allowed distance in mm between fit and matched DUT hit in X.", _distMax_X, static_cast < double > ( 0.1 ) );
+    registerProcessorParameter ( "DistMax_X", "Maximum allowed distance in mm between fit and matched DUT hit in X.", _distMax_X, 0.1 );
 
-    registerProcessorParameter ( "DistMax_Y", "Maximum allowed distance in mm between fit and matched DUT hit in Y.", _distMax_Y, static_cast < double > ( 0.1 ) );
+    registerProcessorParameter ( "DistMax_Y", "Maximum allowed distance in mm between fit and matched DUT hit in Y.", _distMax_Y, 0.1 );
 
     std::vector < float > initAlign;
     initAlign.push_back ( 0.0 );
@@ -124,11 +124,11 @@ EUTelFitTupleAlibava::EUTelFitTupleAlibava ( ) : Processor ( "EUTelFitTupleAliba
 
     registerProcessorParameter ( "DUTalignment", "These coordinates will be read from the gear file and used to position the DUT in the telescope and determine the track impact position. 0 to continue with a coordinate as it is in the input file collection, 1 to load the corresponding shift or rotation from the gear file. If the DUT is rotated, the coordinate should be switched on! Coordinates are: (X, Y, Z, ZY, ZX, XY).", _DUTalign, initAlign );
 
-    registerProcessorParameter ( "ManualDUTid", "The telescope layer ID of the DUT.", _manualDUTid, static_cast < int > ( 0 ) );
+    registerProcessorParameter ( "ManualDUTid", "The telescope layer ID of the DUT.", _manualDUTid, 0 );
 
-    registerProcessorParameter ( "MissingValue", "Value written to the ntuple for missing measurements.", _missingValue, static_cast < double > ( -100.0 ) );
+    registerProcessorParameter ( "MissingValue", "Value written to the ntuple for missing measurements.", _missingValue, -100.0 );
 
-    registerProcessorParameter ( "UseManualDUT", "Set to true to use any DUT.", _useManualDUT, static_cast < bool > ( false ) );
+    registerProcessorParameter ( "UseManualDUT", "Set to true to use any DUT.", _useManualDUT, false );
 
     // optional parameters:
     registerOptionalParameter ( "AlibavaClusterCollectionName", "To compare matched hit positions against reconstructed clusters we need the name of the Alibava cluster collection.", _alibavaClusterCollectionName, std::string ( "alibava_clusters" ) );
@@ -143,9 +143,9 @@ EUTelFitTupleAlibava::EUTelFitTupleAlibava ( ) : Processor ( "EUTelFitTupleAliba
 
     registerOptionalParameter ( "AlignedHitPrefix", "The hit collection name of previously applied alignments, e.g. 'AlignedHit'", _alignedHitPrefix, std::string ( "AlignedHit" ) );
 
-    registerOptionalParameter ( "DoAlignment","This processor can provide additional alignment for the DUT from its residuals. This is the flag to switch this on.", _doAlignment, static_cast < bool > ( false ) );
+    registerOptionalParameter ( "DoAlignment","This processor can provide additional alignment for the DUT from its residuals. This is the flag to switch this on.", _doAlignment, false );
 
-    registerOptionalParameter ( "DoGamma","If the DoAlignment flag is set, set this to true to provide alignment in XY-direction (gamma). False will provide alignment in ZY-direction (alpha), if x is the unsensitive axis or in ZX-direction (beta), if y is the unsensitive axis.", _doGamma, static_cast < bool > ( true ) );
+    registerOptionalParameter ( "DoGamma","If the DoAlignment flag is set, set this to true to provide alignment in XY-direction (gamma). False will provide alignment in ZY-direction (alpha), if x is the unsensitive axis or in ZX-direction (beta), if y is the unsensitive axis.", _doGamma, true );
 
     std::vector < float > initFiducial;
     initFiducial.push_back ( -99.0 );
@@ -155,7 +155,7 @@ EUTelFitTupleAlibava::EUTelFitTupleAlibava ( ) : Processor ( "EUTelFitTupleAliba
 
     registerOptionalParameter ( "Fiducial", "Additional residual histograms are created with these fiducial cuts: Xmin, Xmax, Ymin, Ymax. All are in global coordinates and in mm.", _fiducialcut, initFiducial );
 
-    registerOptionalParameter ( "MaxTracksPerEvent", "The maximum number of tracks considered per event.", _tracklimit , int ( 99 ) );
+    registerOptionalParameter ( "MaxTracksPerEvent", "The maximum number of tracks considered per event.", _tracklimit , 99 );
 
     registerOptionalParameter ( "OriginalHitCollection", "The original hit collection name before any alignment is added.", _originalCollectionName, std::string ( "PreAlignedHit2" ) );
 
@@ -163,7 +163,7 @@ EUTelFitTupleAlibava::EUTelFitTupleAlibava ( ) : Processor ( "EUTelFitTupleAliba
 
     registerOptionalParameter ( "OutputAlignment", "If we want to do our own DUT alignment here, this is the filename it will be stored in.", _outputalignment, std::string ( "hackalignment.slcio" ) );
 
-    registerOptionalParameter ( "Polarity", "The polarity of our DUT. -1 for p-type, 1 for n-type", _polarity , int ( -1 ) );
+    registerOptionalParameter ( "Polarity", "The polarity of our DUT. -1 for p-type, 1 for n-type", _polarity , -1 );
 
     EVENT::StringVec _pre_alignmentCollectionNameExamples;
 
@@ -171,7 +171,7 @@ EUTelFitTupleAlibava::EUTelFitTupleAlibava ( ) : Processor ( "EUTelFitTupleAliba
 
     registerOptionalParameter ( "PreAlignedHitPrefix", "The hit collection name of previously applied prealignments, e.g. 'PreAlignedHit'", _prealignedHitPrefix, std::string ( "PreAlignedHit" ) );
 
-    registerOptionalParameter ( "RecheckDealignment", "If this flag is set to true, an aligned hit from the DUT will be dealigned with the loaded alignment and prealignment collections and compared to the original DUT hit. This is only to check the correct loading and application of DUT alignment constants. DEBUG2 or lower should be set", _checkdealignment, static_cast < bool > ( false ) );
+    registerOptionalParameter ( "RecheckDealignment", "If this flag is set to true, an aligned hit from the DUT will be dealigned with the loaded alignment and prealignment collections and compared to the original DUT hit. This is only to check the correct loading and application of DUT alignment constants. DEBUG2 or lower should be set", _checkdealignment, false );
 
     registerOptionalParameter ( "ReferenceCollectionName", "The name of the reference collection. This is needed to get the correct Z DUT position after alignments.", _referencecollectionname, std::string ( "referenceHit" ) );
 
@@ -179,11 +179,11 @@ EUTelFitTupleAlibava::EUTelFitTupleAlibava ( ) : Processor ( "EUTelFitTupleAliba
 
     registerOptionalParameter ( "UnsensitiveAxis", "If we have a strip sensor DUT, set the unsensitive axis here (x or y). This will be used for the additional alignment (if you switch it on).", _unsensitiveaxis, std::string ( "x" ) );
 
-    registerOptionalParameter ( "UseOriginalPreAlignment", "Subtract any pre-Prealignment applied to the original hit collection?", _useOriginalPreAlignment, static_cast < bool > ( true ) );
+    registerOptionalParameter ( "UseOriginalPreAlignment", "Subtract any pre-Prealignment applied to the original hit collection?", _useOriginalPreAlignment, true );
 
-    registerOptionalParameter ( "UseTrackFit", "Use an existing track fit to estimate impact position? If false, a guess will be used.", _useTrackFit, static_cast < bool > ( false ) );
+    registerOptionalParameter ( "UseTrackFit", "Use an existing track fit to estimate impact position? If false, a guess will be used.", _useTrackFit, false );
 
-    registerOptionalParameter ( "UseTriplet", "Use triplet from upstream telescope to estimate impact position? If false, result of UseTrackFit will be used", _useTriplet, static_cast < bool > ( false ) );
+    registerOptionalParameter ( "UseTriplet", "Use triplet from upstream telescope to estimate impact position? If false, result of UseTrackFit will be used", _useTriplet, false );
 
 }
 
@@ -216,7 +216,7 @@ void EUTelFitTupleAlibava::init ( )
     _matchedhits = 0;
 
     // check if the GEAR manager pointer is not null!
-    if ( Global::GEAR == 0x0 )
+    if ( Global::GEAR == nullptr )
     {
 	streamlog_out ( ERROR5 ) << "The GearMgr is not available, for an unknown reason." << endl;
 	exit ( -1 );
@@ -1550,9 +1550,9 @@ void EUTelFitTupleAlibava::processEvent ( LCEvent * event )
 			float clustercharge = 0.0;
 
 			TrackerDataImpl* clusterVector = static_cast < TrackerDataImpl* > ( meshit -> getRawHits ( ) [0] );
-			EUTelSimpleVirtualCluster * cluster = 0;
+			EUTelSimpleVirtualCluster * cluster = nullptr;
 			cluster = new EUTelSparseClusterImpl < EUTelGenericSparsePixel > ( clusterVector );
-			if ( cluster != 0 )
+			if ( cluster != nullptr )
 			{
 			    cluster -> getClusterSize ( clustersizeX, clustersizeY );
 			    clustercharge = cluster -> getTotalCharge ( );
@@ -3008,7 +3008,7 @@ TF1 *langaufit2 ( TH1D *his, Double_t *fitrange, Double_t *startvalues, Double_t
 
     sprintf ( FunName, "Fitfcn_%s", his -> GetName ( ) );
 
-    TF1 *ffitold = ( TF1* ) gROOT -> GetListOfFunctions ( ) -> FindObject ( FunName );
+    TF1 *ffitold = static_cast<TF1*>(gROOT -> GetListOfFunctions ( ) -> FindObject ( FunName ));
     if ( ffitold ) delete ffitold;
 
     TF1 *ffit = new TF1 ( FunName, langaufun2, fitrange[0], fitrange[1], 4 );

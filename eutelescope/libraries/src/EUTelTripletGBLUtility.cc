@@ -346,11 +346,13 @@ bool EUTelTripletGBLUtility::AttachDUT(EUTelTripletGBLUtility::triplet & triplet
 	}
 
 	if(minHitIx != -1) {
-		auto hitX = hits[minHitIx].x;
-       	auto hitY = hits[minHitIx].y;
+		/*
+    auto hitX = hits[minHitIx].x;
+    auto hitY = hits[minHitIx].y;
 		auto dist = (trX-hitX)*(trX-hitX)+(trY-hitY)*(trY-hitY);
+		std::cout << "Added hit with: " << dist << " on plane: " << hits[minHitIx].plane << '\n';
+    */
 		triplet.push_back_DUT(hits[minHitIx].plane, hits[minHitIx]);
-		//std::cout << "Added hit with: " << dist << " on plane: " << hits[minHitIx].plane << '\n';
 		return true;
 	}
 return false;

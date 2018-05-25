@@ -63,29 +63,29 @@ using namespace lcio ;
 using namespace marlin ;
 using namespace eutelescope;
 
-EUTelFixDUTAlignment::EUTelFixDUTAlignment ( ) : Processor ( "EUTelFixDUTAlignment" ), _siPlanesParameters ( NULL ), _siPlanesLayerLayout ( NULL )
+EUTelFixDUTAlignment::EUTelFixDUTAlignment ( ) : Processor ( "EUTelFixDUTAlignment" ), _siPlanesParameters ( nullptr ), _siPlanesLayerLayout ( nullptr )
 {
     _description = "Does some very hacky stuff: Mode 0: creates a user-specified DUT alignment. Mode 1: creates 4 dummy hits for each telescope plane and the DUT. The total DUT alignment steps can then be applied to these hits to get the final alignment of the DUT sensor.";
 
-    registerProcessorParameter ( "Mode", "Which mode: 0 or 1", _mode, int ( 1 ) );
+    registerProcessorParameter ( "Mode", "Which mode: 0 or 1", _mode, 1 );
 
     registerProcessorParameter ( "OutputFileName", "The output file to write into (both modes)", _outputfilename, std::string ( "file.slcio" ) );
 
-    registerProcessorParameter ( "EventsToWrite", "How many dummy events should be written?", _eventstowrite, int ( 1 ) );
+    registerProcessorParameter ( "EventsToWrite", "How many dummy events should be written?", _eventstowrite, 1 );
 
-    registerOptionalParameter ( "DUTshiftX","Mode 0: DUT shift in X.", _shiftx , double ( 0.0 ) );
+    registerOptionalParameter ( "DUTshiftX","Mode 0: DUT shift in X.", _shiftx , 0.0 );
 
-    registerOptionalParameter ( "DUTshiftY","Mode 0: DUT shift in Y.", _shifty , double ( 0.0 ) );
+    registerOptionalParameter ( "DUTshiftY","Mode 0: DUT shift in Y.", _shifty , 0.0 );
 
-    registerOptionalParameter ( "DUTshiftZ","Mode 0: DUT shift in Z.", _shiftz , double ( 0.0 ) );
+    registerOptionalParameter ( "DUTshiftZ","Mode 0: DUT shift in Z.", _shiftz , 0.0 );
 
-    registerOptionalParameter ( "DUTrotA","Mode 0: DUT rotation in A.", _rota , double ( 0.0 ) );
+    registerOptionalParameter ( "DUTrotA","Mode 0: DUT rotation in A.", _rota , 0.0 );
 
-    registerOptionalParameter ( "DUTrotB","Mode 0: DUT rotation in B.", _rotb , double ( 0.0 ) );
+    registerOptionalParameter ( "DUTrotB","Mode 0: DUT rotation in B.", _rotb , 0.0 );
 
-    registerOptionalParameter ( "DUTrotC","Mode 0: DUT rotation in C.", _rotc , double ( 0.0 ) );
+    registerOptionalParameter ( "DUTrotC","Mode 0: DUT rotation in C.", _rotc , 0.0 );
 
-    registerOptionalParameter ( "ManualDUTID","Mode 0: The sensor ID of the DUT.", _manualDUTid, int ( 6 ) );
+    registerOptionalParameter ( "ManualDUTID","Mode 0: The sensor ID of the DUT.", _manualDUTid, 6 );
 
     registerOptionalParameter ( "HitCollectionName", "The output hit collection name (mode 1)", _dummyhitcollectionname, std::string ( "hit" ) );
 
@@ -93,7 +93,7 @@ EUTelFixDUTAlignment::EUTelFixDUTAlignment ( ) : Processor ( "EUTelFixDUTAlignme
 
 void EUTelFixDUTAlignment::init ( )
 {
-    if ( Global::GEAR == 0x0 )
+    if ( Global::GEAR == nullptr )
     {
 	streamlog_out ( ERROR5 ) << "The GearMgr is not available, for an unknown reason." << endl;
 	exit ( -1 );

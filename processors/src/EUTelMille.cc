@@ -91,7 +91,7 @@ using namespace eutelescope;
 // std::vector<EUTelMille::hit> hitsarray;
 EUTelMille::hit *hitsarray;
 unsigned int number_of_datapoints;
-void fcn_wrapper(int & /*npar*/, double * /*gin*/, double &f, double *par,
+inline void fcn_wrapper(int & /*npar*/, double * /*gin*/, double &f, double *par,
                  int /*iflag*/) {
   EUTelMille::trackfitter fobj(hitsarray, number_of_datapoints);
   f = fobj.fit(par);
@@ -176,18 +176,18 @@ EUTelMille::EUTelMille() : Processor("EUTelMille") {
       "\n2 - Test mode. Simple internal simulation and simple trackfinding. "
       "\n3 - Mixture of a track collection from the telescope and hit "
       "collections for the DUT (only one DUT layer can be used unfortunately)",
-      _inputMode, static_cast<int>(0));
+      _inputMode, 0);
 
   registerOptionalParameter(
       "AllowedMissingHits",
       "Set how many hits (=planes) can be missing on a track candidate.",
-      _allowedMissingHits, static_cast<int>(0));
+      _allowedMissingHits, 0);
 
   registerOptionalParameter("MimosaClusterChargeMin",
                             "Remove Mimosa26 clusters with a charge (i.e. "
                             "number of fired pixels in cluster) below or equal "
                             "to this value",
-                            _mimosa26ClusterChargeMin, static_cast<int>(1));
+                            _mimosa26ClusterChargeMin, 1);
 
   // input collections
   std::vector<std::string> HitCollectionNameVecExample;
@@ -207,7 +207,7 @@ EUTelMille::EUTelMille() : Processor("EUTelMille") {
   registerOptionalParameter("DistanceMax", "Maximal allowed distance between "
                                            "hits entering the fit per 10 cm "
                                            "space between the planes.",
-                            _distanceMax, static_cast<float>(2000.0));
+                            _distanceMax, 2000.0f);
 
   registerOptionalParameter("DistanceMaxVec",
                             "Maximal allowed distance between hits entering "
@@ -228,10 +228,10 @@ EUTelMille::EUTelMille() : Processor("EUTelMille") {
   registerOptionalParameter(
       "MaxTrackCandidatesTotal", "Stop processor after this maximum number of "
                                  "track candidates (Total) is reached.",
-      _maxTrackCandidatesTotal, static_cast<int>(10000000));
+      _maxTrackCandidatesTotal, 10000000);
   registerOptionalParameter("MaxTrackCandidates",
                             "Maximal number of track candidates in a event.",
-                            _maxTrackCandidates, static_cast<int>(2000));
+                            _maxTrackCandidates, 2000);
 
   registerOptionalParameter("BinaryFilename",
                             "Name of the Millepede binary file.",
@@ -241,15 +241,15 @@ EUTelMille::EUTelMille() : Processor("EUTelMille") {
                             "(default) Resolution of the telescope for "
                             "Millepede (sigma_x=sigma_y) used only if plane "
                             "dependent resolution is set inconsistently.",
-                            _telescopeResolution, static_cast<float>(3.0));
+                            _telescopeResolution, 3.0f);
 
   registerOptionalParameter("OnlySingleHitEvents",
                             "Use only events with one hit in every plane.",
-                            _onlySingleHitEvents, static_cast<bool>(false));
+                            _onlySingleHitEvents, false);
 
   registerOptionalParameter("OnlySingleTrackEvents",
                             "Use only events with one track candidate.",
-                            _onlySingleTrackEvents, static_cast<bool>(false));
+                            _onlySingleTrackEvents, false);
 
   registerOptionalParameter(
       "AlignMode",
@@ -262,7 +262,7 @@ EUTelMille::EUTelMille() : Processor("EUTelMille") {
   registerOptionalParameter(
       "UseResidualCuts",
       "Use cuts on the residuals to reduce the combinatorial background.",
-      _useResidualCuts, static_cast<bool>(false));
+      _useResidualCuts, false);
 
   registerOptionalParameter(
       "AlignmentConstantLCIOFile",
@@ -308,19 +308,19 @@ EUTelMille::EUTelMille() : Processor("EUTelMille") {
       "ResolutionX", "X resolution parameter for each plane. Note: these "
                      "numbers are ordered according to the z position of the "
                      "sensors and NOT according to the sensor id.",
-      _resolutionX, FloatVec(static_cast<int>(6), 10.));
+      _resolutionX, FloatVec(6, 10.));
 
   registerOptionalParameter(
       "ResolutionY", "Y resolution parameter for each plane. Note: these "
                      "numbers are ordered according to the z position of the "
                      "sensors and NOT according to the sensor id.",
-      _resolutionY, FloatVec(static_cast<int>(6), 10.));
+      _resolutionY, FloatVec(6, 10.));
 
   registerOptionalParameter(
       "ResolutionZ", "Z resolution parameter for each plane. Note: these "
                      "numbers are ordered according to the z position of the "
                      "sensors and NOT according to the sensor id.",
-      _resolutionZ, FloatVec(static_cast<int>(6), 10.));
+      _resolutionZ, FloatVec(6, 10.));
 
   registerOptionalParameter(
       "FixParameter",
@@ -330,11 +330,11 @@ EUTelMille::EUTelMille() : Processor("EUTelMille") {
       "shift, bit 2 = z shift, bit 3 = alpha, bit 4 = beta, bit 5 = gamma. "
       "Note: these numbers are ordered according to the z position of the "
       "sensors and NOT according to the sensor id.",
-      _FixParameter, IntVec(static_cast<int>(6), 24));
+      _FixParameter, IntVec(6, 24));
 
   registerOptionalParameter("GeneratePedeSteerfile",
                             "Generate a steering file for the pede program.",
-                            _generatePedeSteerfile, static_cast<int>(0));
+                            _generatePedeSteerfile, 0);
 
   registerOptionalParameter("PedeSteerfileName",
                             "Name of the steering file for the pede program.",
@@ -348,13 +348,13 @@ EUTelMille::EUTelMille() : Processor("EUTelMille") {
 
   registerOptionalParameter(
       "RunPede", "Execute the pede program using the generated steering file.",
-      _runPede, static_cast<bool>(true));
+      _runPede, true);
 
   registerOptionalParameter("UsePedeUserStartValues",
                             "Give start values for pede by hand (0 - automatic "
                             "calculation of start values, 1 - start values "
                             "defined by user).",
-                            _usePedeUserStartValues, static_cast<int>(0));
+                            _usePedeUserStartValues, 0);
 
   registerOptionalParameter(
       "PedeUserStartValuesX",
@@ -369,17 +369,17 @@ EUTelMille::EUTelMille() : Processor("EUTelMille") {
   registerOptionalParameter(
       "PedeUserStartValuesZ",
       "Start values for the alignment for shifts in the Z direction.",
-      _pedeUserStartValuesZ, FloatVec(static_cast<int>(6), 0.0));
+      _pedeUserStartValuesZ, FloatVec(6, 0.0));
 
   registerOptionalParameter(
       "PedeUserStartValuesAlpha",
       "Start values for the alignment for the angle alpha.",
-      _pedeUserStartValuesAlpha, FloatVec(static_cast<int>(6), 0.0));
+      _pedeUserStartValuesAlpha, FloatVec(6, 0.0));
 
   registerOptionalParameter(
       "PedeUserStartValuesBeta",
       "Start values for the alignment for the angle beta.",
-      _pedeUserStartValuesBeta, FloatVec(static_cast<int>(6), 0.0));
+      _pedeUserStartValuesBeta, FloatVec(6, 0.0));
 
   registerOptionalParameter(
       "PedeUserStartValuesGamma",
@@ -388,17 +388,17 @@ EUTelMille::EUTelMille() : Processor("EUTelMille") {
 
   registerOptionalParameter("TestModeSensorResolution",
                             "Resolution assumed for the sensors in test mode.",
-                            _testModeSensorResolution, static_cast<float>(3.0));
+                            _testModeSensorResolution, 3.0f);
 
   registerOptionalParameter(
       "TestModeXTrackSlope",
       "Width of the track slope distribution in the x direction",
-      _testModeXTrackSlope, static_cast<float>(0.0005));
+      _testModeXTrackSlope, 0.0005f);
 
   registerOptionalParameter(
       "TestModeYTrackSlope",
       "Width of the track slope distribution in the y direction",
-      _testModeYTrackSlope, static_cast<float>(0.0005));
+      _testModeYTrackSlope, 0.0005f);
 
   registerOptionalParameter("TestModeSensorZPositions",
                             "Z positions of the sensors in test mode.",
@@ -721,7 +721,7 @@ void EUTelMille::processRunHeader(LCRunHeader *rdr) {
   // in the xml file. If the numbers are different, instead of barely
   // quitting ask the user what to do.
 
-  if ((unsigned int)header->getGeoID() !=
+  if (static_cast<unsigned int>(header->getGeoID()) !=
       geo::gGeometry().getSiPlanesLayoutID()) {
     streamlog_out(ERROR2) << "Error during the geometry consistency check: "
                           << endl;
@@ -1114,7 +1114,7 @@ void EUTelMille::FitTrack(unsigned int nPlanesFitter, double xPosFitter[],
 }
 
 void EUTelMille::FillHotPixelMap(LCEvent *event) {
-  LCCollectionVec *hotPixelCollectionVec = 0;
+  LCCollectionVec *hotPixelCollectionVec = nullptr;
   try {
     hotPixelCollectionVec = static_cast<LCCollectionVec *>(
         event->getCollection(_hotPixelCollectionName));
@@ -2359,16 +2359,14 @@ void EUTelMille::processEvent(LCEvent *event) {
               tempHistoName =
                   _residualXvsYLocalname + "_d" + to_string(sensorID);
               AIDA::IProfile1D *residxvsY_histo =
-                  dynamic_cast<AIDA::IProfile1D *>(
-                      _aidaHistoMapProf1D[tempHistoName.c_str()]);
+                      _aidaHistoMapProf1D[tempHistoName.c_str()];
               residxvsY_histo->fill(_yPosHere[iDetector],
                                     _waferResidX[iDetector]);
 
               tempHistoName =
                   _residualXvsXLocalname + "_d" + to_string(sensorID);
               AIDA::IProfile1D *residxvsX_histo =
-                  dynamic_cast<AIDA::IProfile1D *>(
-                      _aidaHistoMapProf1D[tempHistoName.c_str()]);
+                      _aidaHistoMapProf1D[tempHistoName.c_str()];
               residxvsX_histo->fill(_xPosHere[iDetector],
                                     _waferResidX[iDetector]);
             } else {
@@ -2391,16 +2389,14 @@ void EUTelMille::processEvent(LCEvent *event) {
               tempHistoName =
                   _residualYvsYLocalname + "_d" + to_string(sensorID);
               AIDA::IProfile1D *residyvsY_histo =
-                  dynamic_cast<AIDA::IProfile1D *>(
-                      _aidaHistoMapProf1D[tempHistoName.c_str()]);
+                      _aidaHistoMapProf1D[tempHistoName.c_str()];
               residyvsY_histo->fill(_yPosHere[iDetector],
                                     _waferResidY[iDetector]);
 
               tempHistoName =
                   _residualYvsXLocalname + "_d" + to_string(sensorID);
               AIDA::IProfile1D *residyvsX_histo =
-                  dynamic_cast<AIDA::IProfile1D *>(
-                      _aidaHistoMapProf1D[tempHistoName.c_str()]);
+                      _aidaHistoMapProf1D[tempHistoName.c_str()];
               residyvsX_histo->fill(_xPosHere[iDetector],
                                     _waferResidY[iDetector]);
             } else {
@@ -2422,16 +2418,14 @@ void EUTelMille::processEvent(LCEvent *event) {
               tempHistoName =
                   _residualZvsYLocalname + "_d" + to_string(sensorID);
               AIDA::IProfile1D *residzvsY_histo =
-                  dynamic_cast<AIDA::IProfile1D *>(
-                      _aidaHistoMapProf1D[tempHistoName.c_str()]);
+                      _aidaHistoMapProf1D[tempHistoName.c_str()];
               residzvsY_histo->fill(_yPosHere[iDetector],
                                     _waferResidZ[iDetector]);
 
               tempHistoName =
                   _residualZvsXLocalname + "_d" + to_string(sensorID);
               AIDA::IProfile1D *residzvsX_histo =
-                  dynamic_cast<AIDA::IProfile1D *>(
-                      _aidaHistoMapProf1D[tempHistoName.c_str()]);
+                      _aidaHistoMapProf1D[tempHistoName.c_str()];
               residzvsX_histo->fill(_xPosHere[iDetector],
                                     _waferResidZ[iDetector]);
             } else {
@@ -2519,7 +2513,7 @@ bool EUTelMille::hitContainsHotPixels(TrackerHitImpl *hit) {
 
         TrackerDataImpl *clusterFrame =
             dynamic_cast<TrackerDataImpl *>(clusterVector[0]);
-        if (clusterFrame == 0) {
+        if (clusterFrame == nullptr) {
           // found invalid result from cast
           throw UnknownDataTypeException(
               "Invalid hit found in method hitContainsHotPixels()");
@@ -2975,14 +2969,14 @@ void EUTelMille::end() {
         {
           const char *pch0 =
               strstr(pedeoutput.str().data(), "Sum(Chi^2)/Sum(Ndf) = ");
-          if (pch0 != 0) {
+          if (pch0 != nullptr) {
             streamlog_out(DEBUG5)
                 << " Parsing pede output for final chi2/ndf result.. " << endl;
             // search for the equal sign after which the result for chi2/ndf is
             // stated within the next 80 chars
             // (with offset of 22 chars since pch points to beginning of
             // "Sum(..." string just found)
-            char *pch = (char *)((memchr(pch0 + 22, '=', 180)));
+            const char *pch = static_cast<const char*>(memchr(pch0 + 22, '=', 180));
             if (pch != NULL) {
               char str[16];
               // now copy the numbers after the equal sign

@@ -41,10 +41,10 @@ EUTelUtilityPrintEventNumber::EUTelUtilityPrintEventNumber()
    */
   registerProcessorParameter("EveryNEvents",
                              "Print event number for every n-th event",
-                             _everyNEvents, static_cast<int>(1000));
+                             _everyNEvents, 1000);
   registerOptionalParameter("printTimestamp",
                             "print the event timestamp as read from LCIO",
-                            _printTimestamp, static_cast<bool>(0));
+                            _printTimestamp, false);
 }
 
 void EUTelUtilityPrintEventNumber::init() {
