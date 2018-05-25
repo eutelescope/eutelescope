@@ -228,7 +228,7 @@ void EUTelCorrelator::processRunHeader(LCRunHeader *rdr) {
         << "The geometry ID in the run header is set to zero." << endl
         << "This may mean that the GeoID parameter was not set" << endl;
 
-  if ((unsigned int)runHeader->getGeoID() !=
+  if (static_cast<unsigned int>(runHeader->getGeoID()) !=
       geo::gGeometry().getSiPlanesLayoutID()) {
     streamlog_out(WARNING5)
         << "Error during the geometry consistency check: " << endl
@@ -605,13 +605,9 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
 
       if (static_cast<int>(iplane_unique.size()) > _minNumberOfCorrelatedHits &&
           trackX.size() == trackY.size()) {
-        int indexPlane = 0;
-
-        indexPlane = 0; // should be always the first element, as it's filled in
                         // the externalID loop
-
-        if (indexPlane >= 0) {
-          for (int i = 0; i < (int)trackX.size(); i++) {
+        size_t indexPlane = 0;
+          for (size_t i = 0; i < trackX.size(); i++) {
             if (i == indexPlane)
               continue; // skip as this one is not booked
             _hitXCorrelationMatrix[iplane[indexPlane]][iplane[i]]->fill(
@@ -624,7 +620,6 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
             _hitYCorrShiftMatrix[iplane[indexPlane]][iplane[i]]->fill(
                 trackY[indexPlane], trackY[indexPlane] - trackY[i]);
           }
-        }
       } else {
       }
     }

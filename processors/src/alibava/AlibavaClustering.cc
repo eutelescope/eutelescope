@@ -741,8 +741,8 @@ void AlibavaClustering::findSeedClusters(TrackerDataImpl * trkdata, LCCollection
 	// this if stops making the "zero" cluster with all strips not in a cluster...
 	unsigned int clumin = 0;
 	unsigned int clumax = 0;
-	clumin = ( unsigned int ) _clusterminsize;
-	clumax = ( unsigned int ) _clustermaxsize;
+	clumin = static_cast<unsigned int>( _clusterminsize );
+	clumax = static_cast<unsigned int>( _clustermaxsize );
 	if ( ( sparseCluster -> size ( ) >= clumin ) && ( sparseCluster -> size ( ) <= clumax ) )
 	{
 
@@ -1280,7 +1280,7 @@ TF1 *langaufit ( TH1D *his, Double_t *fitrange, Double_t *startvalues, Double_t 
 
     sprintf ( FunName, "Fitfcn_%s", his -> GetName ( ) );
 
-    TF1 *ffitold = ( TF1* ) gROOT -> GetListOfFunctions ( ) -> FindObject ( FunName );
+    TF1 *ffitold = static_cast<TF1*>( gROOT -> GetListOfFunctions ( ) -> FindObject ( FunName ) );
     if ( ffitold ) delete ffitold;
 
     TF1 *ffit = new TF1 ( FunName, langaufun, fitrange[0], fitrange[1], 4 );

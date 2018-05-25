@@ -190,23 +190,6 @@ void EUTelPedeGEAR::init() {
 void EUTelPedeGEAR::processRunHeader(LCRunHeader *rdr) {
   auto header = std::make_unique<EUTelRunHeaderImpl>(rdr);
   header->addProcessor(type());
-
-  // this is the right place also to check the geometry ID. This is a
-  // unique number identifying each different geometry used at the
-  // beam test. The same number should be saved in the run header and
-  // in the xml file. If the numbers are different, instead of barely
-  // quitting ask the user what to do.
-
-  if (header->getGeoID() != (int)geo::gGeometry().getSiPlanesLayoutID()) {
-    streamlog_out(ERROR2) << "Error during the geometry consistency check: "
-                          << std::endl;
-    streamlog_out(ERROR2) << "The run header says the GeoID is "
-                          << header->getGeoID() << std::endl;
-    streamlog_out(ERROR2) << "The GEAR description says is     "
-                          << geo::gGeometry().getSiPlanesLayoutID()
-                          << std::endl;
-  }
-
   // increment the run counter
   ++_iRun;
 }

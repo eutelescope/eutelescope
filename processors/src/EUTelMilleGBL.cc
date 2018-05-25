@@ -1202,7 +1202,7 @@ void EUTelMilleGBL::processRunHeader ( LCRunHeader * rdr )
 }
 
 
-Eigen::Matrix < double, 5, 5 > Jac55 ( double ds, Eigen::Vector3d direction, bool bfield )
+inline Eigen::Matrix < double, 5, 5 > Jac55 ( double ds, Eigen::Vector3d direction, bool bfield )
 {
     Eigen::Matrix < double, 5, 5 > jac;
     if ( bfield == true )

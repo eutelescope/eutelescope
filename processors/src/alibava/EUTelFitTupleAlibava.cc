@@ -3008,7 +3008,7 @@ TF1 *langaufit2 ( TH1D *his, Double_t *fitrange, Double_t *startvalues, Double_t
 
     sprintf ( FunName, "Fitfcn_%s", his -> GetName ( ) );
 
-    TF1 *ffitold = ( TF1* ) gROOT -> GetListOfFunctions ( ) -> FindObject ( FunName );
+    TF1 *ffitold = static_cast<TF1*>(gROOT -> GetListOfFunctions ( ) -> FindObject ( FunName ));
     if ( ffitold ) delete ffitold;
 
     TF1 *ffit = new TF1 ( FunName, langaufun2, fitrange[0], fitrange[1], 4 );

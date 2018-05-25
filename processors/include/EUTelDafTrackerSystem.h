@@ -220,7 +220,7 @@ namespace daffitter {
     // CKF
     void finalizeCKFTrack(TrackEstimate<T, N> &est, std::vector<int> &indexes,
                           int nMeas, T chi2);
-    void fitPermutation(int plane, TrackEstimate<T, N> &est, size_t nSkipped,
+    void fitPermutation(size_t plane, TrackEstimate<T, N> &est, size_t nSkipped,
                         std::vector<int> &indexes, int nMeas, T chi2);
 
   public:

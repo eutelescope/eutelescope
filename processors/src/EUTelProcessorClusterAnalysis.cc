@@ -258,7 +258,7 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt) {
          iCluster++) {
       TrackerDataImpl *zsData = dynamic_cast<TrackerDataImpl *>(
           zsInputDataCollectionVec->getElementAt(iCluster));
-      if ((int)cellDecoder(zsData)["sensorID"] == _dutID)
+      if (cellDecoder(zsData)["sensorID"] == _dutID)
         nClusterPerEvent++;
     }
   }
@@ -284,7 +284,7 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt) {
           static_cast<int>(cellDecoder(zsData)["sparsePixelType"]));
 
       // Check whether the data is the one from the DUT or not
-      if ((int)cellDecoder(zsData)["sensorID"] == _dutID) {
+      if (cellDecoder(zsData)["sensorID"] == _dutID) {
         int clusterSize = zsData->getChargeValues().size() / 4;
         vector<int> X(clusterSize);
         vector<int> Y(clusterSize);

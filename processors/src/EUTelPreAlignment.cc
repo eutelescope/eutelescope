@@ -147,7 +147,7 @@ void EUTelPreAlign::init() {
   _sensorIDtoZOrderMap.clear();
   for (size_t index = 0; index < _sensorIDVec.size(); index++) {
     _sensorIDtoZOrderMap.insert(
-        std::make_pair(_sensorIDVec.at(index), (int)index));
+        std::make_pair(_sensorIDVec.at(index), static_cast<int>(index)));
   }
 
   for (std::vector<int>::iterator it = _sensorIDVec.begin();

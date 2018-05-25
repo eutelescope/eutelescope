@@ -49,7 +49,7 @@ struct CollectionWriter {
         }
 } colWriter;
 
-void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, const map< int, EUTelAlignmentConstant* >& alignmentConstants ) {
+inline void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, const map< int, EUTelAlignmentConstant* >& alignmentConstants ) {
     
     streamlog_out(MESSAGE4) << "Reading " << oldGearfileName << std::endl;
     streamlog_out(MESSAGE4) << "GEAR file " << newGearfileName << " will be generated." << std::endl;

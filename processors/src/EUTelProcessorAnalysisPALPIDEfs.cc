@@ -522,7 +522,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt) {
          iCluster++) {
       TrackerDataImpl *zsData = dynamic_cast<TrackerDataImpl *>(
           zsInputDataCollectionVec->getElementAt(iCluster));
-      if ((int)cellDecoder(zsData)["sensorID"] == _dutID)
+      if (static_cast<int>(cellDecoder(zsData)["sensorID"]) == _dutID)
         nClusterPerEvent++;
     }
   }
@@ -571,7 +571,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt) {
     }
     posFake.insert(posFake.begin(),
                    posFakeEvent); // TODO: why insertion at the beginning?
-    if (posFake.size() > (unsigned)_nEventsFake) {
+    if (posFake.size() > _nEventsFake) {
       posFakeTemp = posFake.back();
       posFake.pop_back();
     }
@@ -649,9 +649,9 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt) {
         // sector determination
         int index = -1;
         for (int iSector = 0; iSector < _nSectors; iSector++) {
-          if (xposfit > xSize / (double)_nSectors * iSector +
+          if (xposfit > xSize / static_cast<double>(_nSectors) * iSector +
                             (iSector == 0 ? 0 : 1) * (2. * xPitch + limit) &&
-              xposfit < xSize / (double)_nSectors * (iSector + 1) -
+              xposfit < xSize / static_cast<double>(_nSectors) * (iSector + 1) -
                             (iSector == _nSectors - 1 ? 0 : 1) *
                                 (2. * xPitch + limit)) {
             index = iSector;
@@ -1130,7 +1130,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt) {
         // FAKE EFFICIENCY DETERMINATION
         // ==========================================================
         if (_showFake) {
-          if (posFake.size() >= (unsigned)_nEventsFake) {
+          if (posFake.size() >= _nEventsFake) {
             int nHitFake = posFakeTemp.size();
             int nPlanesWithMoreHitsFake = 0;
             bool firstHitFake = true;
@@ -1260,7 +1260,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt) {
         if (_showFake) {
           if (unfoundTrackFake) {
             break;
-          } else if (posFake.size() >= (unsigned)_nEventsFake)
+          } else if (posFake.size() >= _nEventsFake)
             nTracksFake[index]++;
         }
       }
@@ -1317,8 +1317,8 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt) {
             float xCenter, yCenter;
             cluster.getCenterOfGravity(xCenter, yCenter);
             for (int iSector = 0; iSector < _nSectors; iSector++) {
-              if (xCenter > xPixel / (double)_nSectors * iSector &&
-                  xCenter < xPixel / (double)_nSectors * (iSector + 1)) {
+              if (xCenter > xPixel / static_cast<double>(_nSectors) * iSector &&
+                  xCenter < xPixel / static_cast<double>(_nSectors) * (iSector + 1)) {
                 index = iSector;
                 break;
               }
@@ -1376,8 +1376,8 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt) {
                           alignmentPAlpideCollectionVec, fitpos, xposfit,
                           yposfit);
 
-              if (abs(xposfit - (double)xCenter / xPixel * xSize) < limit &&
-                  abs(yposfit - (double)yCenter / yPixel * ySize) < limit) {
+              if (abs(xposfit - static_cast<double>(xCenter) / xPixel * xSize) < limit &&
+                  abs(yposfit - static_cast<double>(yCenter) / yPixel * ySize) < limit) {
                 isAssosiated = true;
                 break;
               }
@@ -1389,8 +1389,8 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt) {
             nFakeWithTrackHitmapCorrectedHisto->Fill(X[iPixel], Y[iPixel]);
           int index = -1;
           for (int iSector = 0; iSector < _nSectors; iSector++) {
-            if (xCenter > xPixel / (double)_nSectors * iSector &&
-                xCenter < xPixel / (double)_nSectors * (iSector + 1)) {
+            if (xCenter > xPixel / static_cast<double>(_nSectors) * iSector &&
+                xCenter < xPixel / static_cast<double>(_nSectors) * (iSector + 1)) {
               index = iSector;
               break;
             }
@@ -1520,10 +1520,10 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt) {
       int index = -1;
       for (int iSector = 0; iSector < _nSectors; iSector++) {
         if (pT.at(iT).at(0) >
-                xSize / (double)_nSectors * iSector +
+                xSize / static_cast<double>(_nSectors) * iSector +
                     (iSector == 0 ? 0 : 1) * (2. * xPitch + limit) &&
             pT.at(iT).at(0) <
-                xSize / (double)_nSectors * (iSector + 1) -
+                xSize / static_cast<double>(_nSectors) * (iSector + 1) -
                     (iSector == _nSectors ? 0 : 1) * (2. * xPitch + limit)) {
           index = iSector;
           break;
@@ -1747,60 +1747,60 @@ void EUTelProcessorAnalysisPALPIDEfs::bookHistos() {
                    100, -0.3, 0.3);
       residualXPixel[chi2Max[i]][iSector] = new TH2F(
           Form("residualXPixel_%.1f_%d", chi2Max[i], iSector),
-          "Residual X added up;X (mm);Y (mm)", (int)(xSize / xPixel * 1000), 0,
-          xSize / xPixel, (int)(ySize / yPixel * 1000), 0, ySize / yPixel);
+          "Residual X added up;X (mm);Y (mm)", static_cast<int>(xSize / xPixel * 1000), 0,
+          xSize / xPixel, static_cast<int>(ySize / yPixel * 1000), 0, ySize / yPixel);
       residualYPixel[chi2Max[i]][iSector] = new TH2F(
           Form("residualYPixel_%.1f_%d", chi2Max[i], iSector),
-          "Residual Y added up;X (mm);Y (mm)", (int)(xSize / xPixel * 1000), 0,
-          xSize / xPixel, (int)(ySize / yPixel * 1000), 0, ySize / yPixel);
+          "Residual Y added up;X (mm);Y (mm)", static_cast<int>(xSize / xPixel * 1000), 0,
+          xSize / xPixel, static_cast<int>(ySize / yPixel * 1000), 0, ySize / yPixel);
       residualXAveragePixel[chi2Max[i]][iSector] = new TH2F(
           Form("residualAverageXPixel_%.1f_%d", chi2Max[i], iSector),
-          "Average residual X;X (mm);Y (mm)", (int)(xSize / xPixel * 1000), 0,
-          xSize / xPixel, (int)(ySize / yPixel * 1000), 0, ySize / yPixel);
+          "Average residual X;X (mm);Y (mm)", static_cast<int>(xSize / xPixel * 1000), 0,
+          xSize / xPixel, static_cast<int>(ySize / yPixel * 1000), 0, ySize / yPixel);
       residualYAveragePixel[chi2Max[i]][iSector] = new TH2F(
           Form("residualAverageYPixel_%.1f_%d", chi2Max[i], iSector),
-          "Average residual Y;X (mm);Y (mm)", (int)(xSize / xPixel * 1000), 0,
-          xSize / xPixel, (int)(ySize / yPixel * 1000), 0, ySize / yPixel);
+          "Average residual Y;X (mm);Y (mm)", static_cast<int>(xSize / xPixel * 1000), 0,
+          xSize / xPixel, static_cast<int>(ySize / yPixel * 1000), 0, ySize / yPixel);
       nResidualXPixel[chi2Max[i]][iSector] =
           new TH2F(Form("nResidualXPixel_%.1f_%d", chi2Max[i], iSector),
                    "Number of tracks used for residual X plot;X (mm);Y (mm)",
-                   (int)(xSize / xPixel * 1000), 0, xSize / xPixel,
-                   (int)(ySize / yPixel * 1000), 0, ySize / yPixel);
+                   static_cast<int>(xSize / xPixel * 1000), 0, xSize / xPixel,
+                   static_cast<int>(ySize / yPixel * 1000), 0, ySize / yPixel);
       nResidualYPixel[chi2Max[i]][iSector] =
           new TH2F(Form("nResidualYPixel_%.1f_%d", chi2Max[i], iSector),
                    "Number of tracks used for residual Y plot;X (mm);Y (mm)",
-                   (int)(xSize / xPixel * 1000), 0, xSize / xPixel,
-                   (int)(ySize / yPixel * 1000), 0, ySize / yPixel);
+                   static_cast<int>(xSize / xPixel * 1000), 0, xSize / xPixel,
+                   static_cast<int>(ySize / yPixel * 1000), 0, ySize / yPixel);
       residualXPixel2by2[chi2Max[i]][iSector] =
           new TH2F(Form("residualXPixel2by2_%.1f_%d", chi2Max[i], iSector),
                    "Residual X added up 2by2;X (mm);Y (mm)",
-                   (int)(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
-                   (int)(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
+                   static_cast<int>(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
+                   static_cast<int>(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
       residualYPixel2by2[chi2Max[i]][iSector] =
           new TH2F(Form("residualYPixel2by2_%.1f_%d", chi2Max[i], iSector),
                    "Residual Y added up 2by2;X (mm);Y (mm)",
-                   (int)(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
-                   (int)(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
+                   static_cast<int>(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
+                   static_cast<int>(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
       residualXAveragePixel2by2[chi2Max[i]][iSector] = new TH2F(
           Form("residualAverageXPixel2by2_%.1f_%d", chi2Max[i], iSector),
-          "Average residual X 2by2;X (mm);Y (mm)", (int)(xSize / xPixel * 2000),
-          0, 2 * xSize / xPixel, (int)(ySize / yPixel * 2000), 0,
+          "Average residual X 2by2;X (mm);Y (mm)", static_cast<int>(xSize / xPixel * 2000),
+          0, 2 * xSize / xPixel, static_cast<int>(ySize / yPixel * 2000), 0,
           2 * ySize / yPixel);
       residualYAveragePixel2by2[chi2Max[i]][iSector] = new TH2F(
           Form("residualAverageYPixel2by2_%.1f_%d", chi2Max[i], iSector),
-          "Average residual Y 2by2;X (mm);Y (mm)", (int)(xSize / xPixel * 2000),
-          0, 2 * xSize / xPixel, (int)(ySize / yPixel * 2000), 0,
+          "Average residual Y 2by2;X (mm);Y (mm)", static_cast<int>(xSize / xPixel * 2000),
+          0, 2 * xSize / xPixel, static_cast<int>(ySize / yPixel * 2000), 0,
           2 * ySize / yPixel);
       nResidualXPixel2by2[chi2Max[i]][iSector] = new TH2F(
           Form("nResidualXPixel2by2_%.1f_%d", chi2Max[i], iSector),
           "Number of tracks used for residual X 2by2 plot;X (mm);Y (mm)",
-          (int)(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
-          (int)(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
+          static_cast<int>(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
+          static_cast<int>(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
       nResidualYPixel2by2[chi2Max[i]][iSector] = new TH2F(
           Form("nResidualYPixel2by2_%.1f_%d", chi2Max[i], iSector),
           "Number of tracks used for residual Y 2by2 plot;X (mm);Y (mm)",
-          (int)(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
-          (int)(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
+          static_cast<int>(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
+          static_cast<int>(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
     }
     clusterWidthXHisto[iSector] = new TH1I(
         Form("clusterWidthXHisto_%d", iSector),
@@ -1821,113 +1821,113 @@ void EUTelProcessorAnalysisPALPIDEfs::bookHistos() {
                  Form("Efficiency as function of place in the pixel of sector "
                       "%d;X (mm);Y (mm)",
                       iSector),
-                 (int)(xSize / xPixel * 1000), 0, xSize / xPixel,
-                 (int)(ySize / yPixel * 1000), 0, ySize / yPixel);
+                 static_cast<int>(xSize / xPixel * 1000), 0, xSize / xPixel,
+                 static_cast<int>(ySize / yPixel * 1000), 0, ySize / yPixel);
     efficiencyPixel2by2Histo[iSector] =
         new TH2F(Form("efficiencyPixel2by2Histo_%d", iSector),
                  Form("Efficiency as function of place in four pixels of "
                       "sector %d;X (mm);Y (mm)",
                       iSector),
-                 (int)(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
-                 (int)(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
+                 static_cast<int>(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
+                 static_cast<int>(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
     tracksPAlpidePixelHisto[iSector] =
         new TH2F(Form("tracksPAlpidePixelHisto_%d", iSector),
                  Form("Number of found tracks as function of place in the "
                       "pixel of sector %d;X (mm);Y (mm)",
                       iSector),
-                 (int)(xSize / xPixel * 1000), 0, xSize / xPixel,
-                 (int)(ySize / yPixel * 1000), 0, ySize / yPixel);
+                 static_cast<int>(xSize / xPixel * 1000), 0, xSize / xPixel,
+                 static_cast<int>(ySize / yPixel * 1000), 0, ySize / yPixel);
     tracksPAlpidePixel2by2Histo[iSector] =
         new TH2F(Form("tracksPAlpidePixel2by2Histo_%d", iSector),
                  Form("Number of found tracks as function of place in four "
                       "pixels of sector %d;X (mm);Y (mm)",
                       iSector),
-                 (int)(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
-                 (int)(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
+                 static_cast<int>(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
+                 static_cast<int>(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
     tracksPixelHisto[iSector] =
         new TH2F(Form("tracksPixelHisto_%d", iSector),
                  Form("Number of tracks as function of place in the pixel of "
                       "sector %d;X (mm);Y (mm)",
                       iSector),
-                 (int)(xSize / xPixel * 1000), 0, xSize / xPixel,
-                 (int)(ySize / yPixel * 1000), 0, ySize / yPixel);
+                 static_cast<int>(xSize / xPixel * 1000), 0, xSize / xPixel,
+                 static_cast<int>(ySize / yPixel * 1000), 0, ySize / yPixel);
     tracksPixel2by2Histo[iSector] =
         new TH2F(Form("tracksPixel2by2Histo_%d", iSector),
                  Form("Number of tracks as function of place in four pixels of "
                       "sector %d;X (mm);Y (mm)",
                       iSector),
-                 (int)(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
-                 (int)(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
+                 static_cast<int>(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
+                 static_cast<int>(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
     clusterSize2DHisto[iSector] =
         new TH2F(Form("clusterSize2D_%d", iSector),
                  Form("Added cluster size vs the track position of sector %d;X "
                       "(mm);Y (mm)",
                       iSector),
-                 (int)(xSize / xPixel * 1000), 0, xSize / xPixel,
-                 (int)(ySize / yPixel * 1000), 0, ySize / yPixel);
+                 static_cast<int>(xSize / xPixel * 1000), 0, xSize / xPixel,
+                 static_cast<int>(ySize / yPixel * 1000), 0, ySize / yPixel);
     clusterSize2D2by2Histo[iSector] =
         new TH2F(Form("clusterSize2D2by2_%d", iSector),
                  Form("Added cluster size vs the track position in four pixels "
                       "of sector %d;X (mm);Y (mm)",
                       iSector),
-                 (int)(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
-                 (int)(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
+                 static_cast<int>(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
+                 static_cast<int>(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
     clusterSize2DAverageHisto[iSector] =
         new TH2F(Form("clusterSize2DAverage_%d", iSector),
                  Form("Average cluster size vs the track position of sector "
                       "%d;X (mm);Y (mm)",
                       iSector),
-                 (int)(xSize / xPixel * 1000), 0, xSize / xPixel,
-                 (int)(ySize / yPixel * 1000), 0, ySize / yPixel);
+                 static_cast<int>(xSize / xPixel * 1000), 0, xSize / xPixel,
+                 static_cast<int>(ySize / yPixel * 1000), 0, ySize / yPixel);
     clusterSize2DAverage2by2Histo[iSector] =
         new TH2F(Form("clusterSize2DAverage2by2_%d", iSector),
                  Form("Average cluster size vs the track position in four "
                       "pixels of sector %d;X (mm);Y (mm)",
                       iSector),
-                 (int)(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
-                 (int)(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
+                 static_cast<int>(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
+                 static_cast<int>(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
     nClusterSizeHisto[iSector] = new TH2F(
         Form("nClusterSizeHisto_%d", iSector),
         "Number of tracks used for cluster size analysis;X (mm);Y (mm)",
-        (int)(xSize / xPixel * 1000), 0, xSize / xPixel,
-        (int)(ySize / yPixel * 1000), 0, ySize / yPixel);
+        static_cast<int>(xSize / xPixel * 1000), 0, xSize / xPixel,
+        static_cast<int>(ySize / yPixel * 1000), 0, ySize / yPixel);
     nClusterSize2by2Histo[iSector] = new TH2F(
         Form("nClusterSize2by2Histo_%d", iSector),
         "Number of tracks used for cluster size analysis 2 by 2;X (mm);Y (mm)",
-        (int)(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
-        (int)(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
+        static_cast<int>(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
+        static_cast<int>(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
     clusterWidthXVsXHisto[iSector] =
         new TH1F(Form("clusterWidthXVsXHisto_%d", iSector),
                  Form("Added cluster width in X vs the track position in X of "
                       "sector %d;X (mm);a.u.",
                       iSector),
-                 (int)(xSize / xPixel * 1000), 0, xSize / xPixel);
+                 static_cast<int>(xSize / xPixel * 1000), 0, xSize / xPixel);
     clusterWidthYVsYHisto[iSector] =
         new TH1F(Form("clusterWidthYVsYHisto_%d", iSector),
                  Form("Added cluster width in Y vs the track position in Y of "
                       "sector %d;Y (mm);a.u",
                       iSector),
-                 (int)(ySize / yPixel * 1000), 0, ySize / yPixel);
+                 static_cast<int>(ySize / yPixel * 1000), 0, ySize / yPixel);
     clusterWidthXVsXAverageHisto[iSector] =
         new TH1F(Form("clusterWidthXVsXAverageHisto_%d", iSector),
                  Form("Average cluster width in X vs the track position in X "
                       "of sector %d;X (mm);a.u.",
                       iSector),
-                 (int)(xSize / xPixel * 1000), 0, xSize / xPixel);
+                 static_cast<int>(xSize / xPixel * 1000), 0, xSize / xPixel);
     clusterWidthYVsYAverageHisto[iSector] =
         new TH1F(Form("clusterWidthYVsYAverageHisto_%d", iSector),
                  Form("Average cluster width in Y vs the track position in Y "
                       "of sector %d;Y (mm);a.u",
                       iSector),
-                 (int)(ySize / yPixel * 1000), 0, ySize / yPixel);
+                 static_cast<int>(ySize / yPixel * 1000), 0, ySize / yPixel);
     nClusterVsXHisto[iSector] = new TH1F(
         Form("nClusterVsXHisto_%d", iSector),
         "Number of tracks used for the cluster width analysis in X;X (mm);a.u.",
-        (int)(xSize / xPixel * 1000), 0, xSize / xPixel);
+        static_cast<int>(xSize / xPixel * 1000), 0, xSize / xPixel);
     nClusterVsYHisto[iSector] = new TH1F(
         Form("nClusterVsYHisto_%d", iSector),
         "Number of tracks used for the cluster width analysis in Y;Y (mm);a.u.",
-        (int)(xSize / xPixel * 1000), 0, ySize / yPixel);
+        static_cast<int>(xSize / xPixel * 1000), 0, ySize / yPixel);
     clusterShapeHistoSector[iSector] =
         new TH1I(Form("clusterShapeHisto_%d", iSector),
                  Form("Cluster shape (all rotations separately) Sector "
@@ -1977,8 +1977,8 @@ void EUTelProcessorAnalysisPALPIDEfs::bookHistos() {
                  Form("Distribuition of clusters with shape ID %d within four "
                       "pixels;X (mm);Y (mm)",
                       i),
-                 (int)(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
-                 (int)(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
+                 static_cast<int>(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
+                 static_cast<int>(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
   }
   int tmp = 0;
   for (map<int, int>::iterator it = xPairs.begin(); it != xPairs.end(); ++it) {
@@ -2027,8 +2027,8 @@ void EUTelProcessorAnalysisPALPIDEfs::bookHistos() {
                    " within four pixels;X (mm);Y (mm)";
     clusterShape2DGrouped2by2[i] =
         new TH2I(Form("clusterShapeGrouped2D2by2_%d", i), title.c_str(),
-                 (int)(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
-                 (int)(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
+                 static_cast<int>(xSize / xPixel * 2000), 0, 2 * xSize / xPixel,
+                 static_cast<int>(ySize / yPixel * 2000), 0, 2 * ySize / yPixel);
   }
   streamlog_out(DEBUG5) << "end of Booking histograms " << endl;
 }
@@ -2096,29 +2096,29 @@ void EUTelProcessorAnalysisPALPIDEfs::end() {
       residualYAveragePixel2by2[chi2Max[i]][iSector]->Divide(
           nResidualYPixel2by2[chi2Max[i]][iSector]);
     }
-    nFakeHisto->SetBinContent(iSector + 1, (double)nFake[iSector] / _nEvents /
+    nFakeHisto->SetBinContent(iSector + 1, static_cast<double>(nFake[iSector]) / _nEvents /
                                                (xPixel / _nSectors * yPixel));
-    nFakeHisto->SetBinError(iSector + 1, sqrt((double)nFake[iSector]) /
+    nFakeHisto->SetBinError(iSector + 1, sqrt(static_cast<double>(nFake[iSector])) /
                                              _nEvents /
                                              (xPixel / _nSectors * yPixel));
     nFakeWithTrackHisto->SetBinContent(
-        iSector + 1, (double)nFakeWithTrack[iSector] / _nEventsWithTrack /
+        iSector + 1, static_cast<double>(nFakeWithTrack[iSector]) / _nEventsWithTrack /
                          (xPixel / _nSectors * yPixel));
     nFakeWithTrackHisto->SetBinError(
-        iSector + 1, sqrt((double)nFakeWithTrack[iSector]) / _nEventsWithTrack /
+        iSector + 1, sqrt(static_cast<double>(nFakeWithTrack[iSector])) / _nEventsWithTrack /
                          (xPixel / _nSectors * yPixel));
     nFakeWithTrackCorrectedHisto->SetBinContent(
-        iSector + 1, (double)nFakeWithTrackCorrected[iSector] /
+        iSector + 1, static_cast<double>(nFakeWithTrackCorrected[iSector]) /
                          _nEventsWithTrack / (xPixel / _nSectors * yPixel));
     nFakeWithTrackCorrectedHisto->SetBinError(
-        iSector + 1, sqrt((double)nFakeWithTrackCorrected[iSector]) /
+        iSector + 1, sqrt(static_cast<double>(nFakeWithTrackCorrected[iSector])) /
                          _nEventsWithTrack / (xPixel / _nSectors * yPixel));
     nFakeWithoutTrackHisto->SetBinContent(iSector + 1,
-                                          (double)nFakeWithoutTrack[iSector] /
+                                          static_cast<double>(nFakeWithoutTrack[iSector]) /
                                               (_nEvents - _nEventsWithTrack) /
                                               (xPixel / _nSectors * yPixel));
     nFakeWithoutTrackHisto->SetBinError(
-        iSector + 1, sqrt((double)nFakeWithoutTrack[iSector]) /
+        iSector + 1, sqrt(static_cast<double>(nFakeWithoutTrack[iSector])) /
                          (_nEvents - _nEventsWithTrack) /
                          (xPixel / _nSectors * yPixel));
     tracksProjection[iSector] = tracksHisto->ProjectionY(
@@ -2128,8 +2128,8 @@ void EUTelProcessorAnalysisPALPIDEfs::end() {
         Form("tracksPAlpideProjection_%d", iSector),
         xPixel / _nSectors * iSector, xPixel / _nSectors * (iSector + 1));
     efficiencyProjection[iSector] =
-        (TH1D *)tracksPAlpideProjection[iSector]->Clone(
-            Form("efficiencyProjection_%d", iSector));
+        static_cast<TH1D*>(tracksPAlpideProjection[iSector]->Clone(
+            Form("efficiencyProjection_%d", iSector)));
     efficiencyProjection[iSector]->Divide(tracksProjection[iSector]);
     efficiencyProjection[iSector]->SetTitle("Efficiency projection in Y");
   }
@@ -2276,9 +2276,9 @@ void EUTelProcessorAnalysisPALPIDEfs::end() {
                           << endl;
   for (int iSector = 0; iSector < _nSectors; iSector++) {
     streamlog_out(MESSAGE4)
-        << (double)nTracksPAlpide[iSector] / nTracks[iSector] << "\t"
+        << static_cast<double>(nTracksPAlpide[iSector]) / nTracks[iSector] << "\t"
         << nTracks[iSector] << "\t" << nTracksPAlpide[iSector] << endl;
-    settingsFile << (double)nTracksPAlpide[iSector] / nTracks[iSector] << ";"
+    settingsFile << static_cast<double>(nTracksPAlpide[iSector]) / nTracks[iSector] << ";"
                  << nTracks[iSector] << ";" << nTracksPAlpide[iSector] << ";";
   }
   if (_showFake) {
@@ -2286,10 +2286,10 @@ void EUTelProcessorAnalysisPALPIDEfs::end() {
                             << endl;
     for (int iSector = 0; iSector < _nSectors; iSector++) {
       streamlog_out(MESSAGE4)
-          << (double)nTracksPAlpideFake[iSector] / nTracksFake[iSector] << "\t"
+          << static_cast<double>(nTracksPAlpideFake[iSector]) / nTracksFake[iSector] << "\t"
           << nTracksFake[iSector] << "\t" << nTracksPAlpideFake[iSector]
           << endl;
-      settingsFile << (double)nTracksPAlpideFake[iSector] / nTracksFake[iSector]
+      settingsFile << static_cast<double>(nTracksPAlpideFake[iSector]) / nTracksFake[iSector]
                    << ";" << nTracksFake[iSector] << ";"
                    << nTracksPAlpideFake[iSector] << ";";
     }
@@ -2303,11 +2303,11 @@ void EUTelProcessorAnalysisPALPIDEfs::end() {
                                "without tracks sharing a hit: "
                             << endl;
     for (int iSector = 0; iSector < _nSectors; iSector++) {
-      streamlog_out(MESSAGE4) << (double)nTracksPAlpideAssociation[iSector] /
+      streamlog_out(MESSAGE4) << static_cast<double>(nTracksPAlpideAssociation[iSector]) /
                                      nTracksAssociation[iSector]
                               << "\t" << nTracksAssociation[iSector] << "\t"
                               << nTracksPAlpideAssociation[iSector] << endl;
-      settingsFile << (double)nTracksPAlpideAssociation[iSector] /
+      settingsFile << static_cast<double>(nTracksPAlpideAssociation[iSector]) /
                           nTracksAssociation[iSector]
                    << ";" << nTracksAssociation[iSector] << ";"
                    << nTracksPAlpideAssociation[iSector] << ";";

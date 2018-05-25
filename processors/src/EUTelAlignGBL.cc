@@ -333,7 +333,7 @@ void EUTelAlignGBL::processRunHeader( LCRunHeader* rdr ) {
 }
 
 //------------------------------------------------------------------------------
-Eigen::Matrix<double,5,5> Jac55new( double ds ) {
+inline Eigen::Matrix<double,5,5> Jac55new( double ds ) {
   /* for GBL:
      Jacobian for straight line track
      track = q/p, x', y', x, y
@@ -360,7 +360,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
       << endl;
   }
 
-  if( _nMilleTracks > (size_t)_maxTrackCandidatesTotal ) {
+  if( _nMilleTracks > static_cast<size_t>(_maxTrackCandidatesTotal) ) {
     throw StopProcessingException(this);
   }
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;

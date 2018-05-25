@@ -223,7 +223,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 
 }
 
-double getRadLength(int A, int Z) {
+inline double getRadLength(int A, int Z) {
 	auto nom = 716.4*A;
 	auto denom = Z*(Z+1)*log(287/sqrt(Z));
 	return nom/denom;
@@ -686,7 +686,9 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
 }
 
 Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::rotationMatrixFromAngles(int sensorID) {
-	return Utility::rotationMatrixFromAngles( (long double)siPlaneXRotationRadians(sensorID), (long double)siPlaneYRotationRadians(sensorID), (long double)siPlaneZRotationRadians(sensorID) );
+	return Utility::rotationMatrixFromAngles( static_cast<long double>(siPlaneXRotationRadians(sensorID)), 
+                                            static_cast<long double>(siPlaneYRotationRadians(sensorID)), 
+                                            static_cast<long double>(siPlaneZRotationRadians(sensorID)));
 }
 
 Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::globalXAxis(int sensorID) {

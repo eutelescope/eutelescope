@@ -51,11 +51,11 @@ namespace eutelescope {
       // sinA << ", " << sinB << ", " << sinG <<  std::endl;
 
       Eigen::Matrix3d rotMat;
-      rotMat << (double)(cosB * cosG + sinA * sinB * sinG),
-          (double)(sinA * sinB * cosG - cosB * sinG), (double)(cosA * sinB),
-          (double)(cosA * sinG), (double)(cosA * cosG), (double)(-sinA),
-          (double)(sinA * cosB * sinG - sinB * cosG),
-          (double)(sinA * cosB * cosG + sinB * sinG), (double)(cosA * cosB);
+      rotMat << static_cast<double>(cosB * cosG + sinA * sinB * sinG),
+          static_cast<double>(sinA * sinB * cosG - cosB * sinG), static_cast<double>(cosA * sinB),
+          static_cast<double>(cosA * sinG), static_cast<double>(cosA * cosG), static_cast<double>(-sinA),
+          static_cast<double>(sinA * cosB * sinG - sinB * cosG),
+          static_cast<double>(sinA * cosB * cosG + sinB * sinG), static_cast<double>(cosA * cosB);
       // std::cout << rotMat.format(IO) << std::endl;
       return rotMat;
     }
@@ -88,7 +88,7 @@ namespace eutelescope {
       }
 
       Eigen::Vector3d vec;
-      vec << (double)aX, (double)aY, (double)aZ;
+      vec << static_cast<double>(aX), static_cast<double>(aY), static_cast<double>(aZ);
       return vec;
     }
 
@@ -672,7 +672,7 @@ namespace eutelescope {
 
     float DoubleToFloat(double a) { return static_cast<float>(a); }
 
-    float *toFloatN(double *a, int N) {
+    inline float* toFloatN(double *a, int N) {
       float *vec = new float[N];
       for (int i = 0; i < N; i++) {
         vec[i] = DoubleToFloat(a[i]);

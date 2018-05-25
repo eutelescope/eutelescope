@@ -49,29 +49,6 @@ void EUTelProcessorCoordinateTransformHits::init() {
 		geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME, EUTELESCOPE::DUMPGEOROOT);
 }
 
-void EUTelProcessorCoordinateTransformHits::processRunHeader(LCRunHeader* rdr)
-{
-		std::unique_ptr<EUTelRunHeaderImpl> header = std::make_unique<EUTelRunHeaderImpl>(rdr);
-
-		// this is the right place also to check the geometry ID. This is a
-		// unique number identifying each different geometry used at the
-		// beam test. The same number should be saved in the run header and
-		// in the xml file. If the numbers are different, instead of barely
-		// quitting ask the user what to do.
-		if ( header->getGeoID() == 0 )
-				streamlog_out ( WARNING0 )
-						<<  "The geometry ID in the run header is set to zero." << std::endl
-						<<  "This may mean that the GeoID parameter was not set" << std::endl;
-
-
-		if ( (unsigned int)header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID() ) {
-				streamlog_out ( WARNING5 ) 
-						<<  "Error during the geometry consistency check: " << std::endl
-						<< "The run header says the GeoID is " << header->getGeoID() << std::endl
-						<< "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << std::endl;
-		}
-}
-
 void EUTelProcessorCoordinateTransformHits::processEvent(LCEvent* event)
 {
 		//Check the event type and if it is the last event.

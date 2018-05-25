@@ -91,7 +91,7 @@ using namespace eutelescope;
 // std::vector<EUTelMille::hit> hitsarray;
 EUTelMille::hit *hitsarray;
 unsigned int number_of_datapoints;
-void fcn_wrapper(int & /*npar*/, double * /*gin*/, double &f, double *par,
+inline void fcn_wrapper(int & /*npar*/, double * /*gin*/, double &f, double *par,
                  int /*iflag*/) {
   EUTelMille::trackfitter fobj(hitsarray, number_of_datapoints);
   f = fobj.fit(par);
@@ -721,7 +721,7 @@ void EUTelMille::processRunHeader(LCRunHeader *rdr) {
   // in the xml file. If the numbers are different, instead of barely
   // quitting ask the user what to do.
 
-  if ((unsigned int)header->getGeoID() !=
+  if (static_cast<unsigned int>(header->getGeoID()) !=
       geo::gGeometry().getSiPlanesLayoutID()) {
     streamlog_out(ERROR2) << "Error during the geometry consistency check: "
                           << endl;

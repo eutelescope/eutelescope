@@ -181,13 +181,13 @@ void EUTelProcessorAnalysisPALPIDEfsNoise::end() {
       //      endl;
       //      cerr << "Noise occupancy in layer " << iLayer << ", sector " <<
       //      iSector << " is " <<
-      //      (double)_nFiredPixel[iLayer][iSector]/_nEvent/(_xPixel[iLayer]/4*_yPixel[iLayer])
+      //      static_cast<double>(_nFiredPixel[iLayer][iSector])/_nEvent/(_xPixel[iLayer]/4*_yPixel[iLayer])
       //      << endl;
       noiseOccupancy[iLayer]->SetBinContent(
-          iSector + 1, (double)_nFiredPixel[iLayer][iSector] / _nEvent /
+          iSector + 1, static_cast<double>(_nFiredPixel[iLayer][iSector]) / _nEvent /
                            (_xPixel[iLayer] / 4 * _yPixel[iLayer]));
       noiseOccupancy[iLayer]->SetBinError(
-          iSector + 1, sqrt((double)_nFiredPixel[iLayer][iSector]) / _nEvent /
+          iSector + 1, sqrt(static_cast<double>(_nFiredPixel[iLayer][iSector])) / _nEvent /
                            (_xPixel[iLayer] / 4 * _yPixel[iLayer]));
     }
   }

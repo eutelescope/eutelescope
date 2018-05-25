@@ -167,10 +167,10 @@ void EUTelProcessorDeadColumnFinder::end() {
         //      deadColumn = true;
       } else if (x > 0 && x < hitMap[iLayer]->GetNbinsX() - 2 &&
                  hitPixels[x - 1] > 100 && hitPixels[x + 2] > 100 &&
-                 (double)hitPixels[x] / hitPixels[x - 1] < 0.7 &&
-                 (double)hitPixels[x] / hitPixels[x + 2] < 0.7 &&
-                 (double)hitPixels[x + 1] / hitPixels[x - 1] < 0.7 &&
-                 (double)hitPixels[x + 1] / hitPixels[x + 2] < 0.7) {
+                 static_cast<double>(hitPixels[x]) / hitPixels[x - 1] < 0.7 &&
+                 static_cast<double>(hitPixels[x]) / hitPixels[x + 2] < 0.7 &&
+                 static_cast<double>(hitPixels[x + 1]) / hitPixels[x - 1] < 0.7 &&
+                 static_cast<double>(hitPixels[x + 1]) / hitPixels[x + 2] < 0.7) {
         isDead[iLayer][x] = true;
         isDead[iLayer][x + 1] = true;
         //      deadColumn = true;
