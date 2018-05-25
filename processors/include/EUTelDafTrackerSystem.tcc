@@ -95,6 +95,9 @@ FitPlane<T>::FitPlane(int sensorID, T zPos, T sigmaX, T sigmaY, T scatterThetaSq
   invMeasVar(1) = 1/(sigmaY * sigmaY);
   ref0(0) = 0.0f; ref0(1) = 0.0f; ref0(2) = zPos;
   norm(0) = 0.0f; norm(1) = 0.0f; norm(2) = 1.0f;
+  measZ = T();
+  sumWeights = T();
+
 }
 
 template<typename T>
