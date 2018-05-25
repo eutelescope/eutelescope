@@ -121,14 +121,14 @@ namespace eutelescope {
     std::vector<int> _FixedPlanes_sensorIDs; //this is going to be
 
     double _eBeam;
-    double _triCut;
-    double _driCut;
-    double _sixCut;
-    double _slopeCut;
-    int _IsFirstAlignStep;
+
+    double _upTriResCut;
+    double _downTriResCut;
+    double _upDownTripletMatchCut;
+    double _upSlopeCut;
+    double _downSlopeCut;
 
     double _kappa;
-    double _targetthick;
 
     int _maxTrackCandidates;
     int _maxTrackCandidatesTotal;

@@ -152,39 +152,31 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelAlignGBL") {
   // modify processor description
   _description = "EUTelAlignGBL uses the MILLE program to write data files for MILLEPEDE II.";
 
-  // input collections
-  std::vector<std::string > HitCollectionNameVecExample;
-  HitCollectionNameVecExample.push_back("corrhits");
-
-  registerInputCollections(LCIO::TRACKERHIT,"HitCollectionName","Hit collections name",_hitCollectionName,HitCollectionNameVecExample);
-  registerProcessorParameter("Ebeam","Beam energy [GeV]",_eBeam, 4.0);
-
-  registerOptionalParameter("ExcludePlanes","Exclude planes from fit according to their sensor ids.",_excludePlanes_sensorIDs ,std::vector<int>());
-
-  registerOptionalParameter("UpstreamTriplet","The three sensors used as the upstream triplet.", _upstream_triplet_ids, std::vector<int>{0,1,2});
-  registerOptionalParameter("DownstreamTriplet","The three sensors used as the downstream triplet.", _downstream_triplet_ids, std::vector<int>{3,4,5});
-  registerOptionalParameter("LastUpstreamSensor","The last plane (z-ordered) which still should be attached to the upstream triplet.", _last_upstream_sensor, 2);
-  registerOptionalParameter("ResolutionX","X Resolution of sensors (z-ordered).", _x_resolution_vec ,std::vector<float>());
-  registerOptionalParameter("ResolutionY","Y Resolution of sensors (z-ordered).", _y_resolution_vec ,std::vector<float>());
-
-  registerOptionalParameter("FixedPlanes","Fix sensor planes in the fit according to their sensor ids.",_FixedPlanes_sensorIDs ,std::vector<int>());
-  registerOptionalParameter("MaxTrackCandidatesTotal","Maximal number of track candidates (Total).",_maxTrackCandidatesTotal, 10000000);
-  registerOptionalParameter("MaxTrackCandidates","Maximal number of track candidates.",_maxTrackCandidates, 2000);
-  registerOptionalParameter("BinaryFilename","Name of the Millepede binary file.",_binaryFilename, string ("mille.bin"));
-  registerOptionalParameter("AlignMode","Number of alignment constants used. Available mode are: "
+  registerInputCollections(LCIO::TRACKERHIT,"HitCollectionName","Input hit collections name",_hitCollectionName, std::vector<std::string>{"corrhits"});
+  registerProcessorParameter("eBeam","Beam energy [GeV]",_eBeam, 4.0);
+  registerOptionalParameter("excludePlanes","Exclude planes from fit according to their sensor ids",_excludePlanes_sensorIDs ,std::vector<int>());
+  registerOptionalParameter("upstreamTriplet","The three sensors used as the upstream triplet", _upstream_triplet_ids, std::vector<int>{0,1,2});
+  registerOptionalParameter("downstreamTriplet","The three sensors used as the downstream triplet", _downstream_triplet_ids, std::vector<int>{3,4,5});
+  registerOptionalParameter("lastUpstreamSensor","The last plane (z-ordered) which still should be attached to the upstream triplet", _last_upstream_sensor, 2);
+  registerOptionalParameter("resolutionX","x-resolution of sensors (z-ordered) [mm]", _x_resolution_vec ,std::vector<float>());
+  registerOptionalParameter("resolutionY","y-resolution of sensors (z-ordered) [mm]", _y_resolution_vec ,std::vector<float>());
+  registerOptionalParameter("fixedPlanes","Fix sensor planes in the fit according to their sensor ids",_FixedPlanes_sensorIDs ,std::vector<int>());
+  registerOptionalParameter("maxTrackCandidatesTotal","Maximal number of track candidates (Total)",_maxTrackCandidatesTotal, 10000000);
+  registerOptionalParameter("maxTrackCandidates","Maximal number of track candidates",_maxTrackCandidates, 2000);
+  registerOptionalParameter("milleBinaryFilename","Name of the Millepede binary file",_binaryFilename, std::string{"mille.bin"});
+  registerOptionalParameter("alignMode","Number of alignment constants used. Available mode are:"
                               "\nXYZShifts - shifts in X and Y"
                               "\nXYShiftsRotZ - shifts in X and Y and rotation around the Z axis,"
                               "\nXYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis",
-                              _alignModeString, std::string("XYShiftsRotZ"));
-  registerOptionalParameter("triCut", "Upstream triplet residual cut [um]", _triCut, 0.30);
-  registerOptionalParameter("driCut", "Downstream triplet residual cut [um]", _driCut, 0.40);
-  registerOptionalParameter("sixCut", "Upstream-Downstream Track matching cut [um]", _sixCut, 0.60);
-  registerOptionalParameter("slopeCut", "t(d)riplet slope cut [radian]", _slopeCut, 0.01);
-  registerOptionalParameter("GeneratePedeSteerfile","Generate a steering file for the pede program.",_generatePedeSteerfile, 0);
-  registerOptionalParameter("PedeSteerfileName","Name of the steering file for the pede program.",_pedeSteerfileName, string("steer_mille.txt"));
-  registerProcessorParameter("kappa","Global factor to Highland formula", _kappa, 1.0); // 1.0 means HL as is, 1.2 means 20% additional scattering
-
-
+                              _alignModeString, std::string{ "XYShiftsRotZ" });
+  registerOptionalParameter("upstreamTripletResidualCut", "Upstream triplet residual cut [mm]", _upTriResCut, 0.30);
+  registerOptionalParameter("downstreamTripletResidualCut", "Downstream triplet residual cut [mm]", _downTriResCut, 0.40);
+  registerOptionalParameter("upstreamTripletSlopeCut", "Upstream triplet slope cut [mrad]", _upSlopeCut, 10.);
+  registerOptionalParameter("downstreamTripletSlopeCut", "Downstream triplet slope cut [mrad]", _downSlopeCut, 10.);
+  registerOptionalParameter("tripletsMatchingCut", "Upstream-downstream triplet matching cut [mm]", _upDownTripletMatchCut, 0.60);
+  registerOptionalParameter("generatePedeSteerfile","Generate a steering file for the pede program",_generatePedeSteerfile, 0);
+  registerOptionalParameter("pedeSteerfileName","Name of the steering file for the pede program",_pedeSteerfileName, std::string{"steer_mille.txt"});
+  registerProcessorParameter("kappa","Global factor to Highland formula, 1.0 means HL as is, 1.2 means 20/% additional scattering", _kappa, 1.0);
 }
 
 //------------------------------------------------------------------------------
@@ -248,8 +240,8 @@ void EUTelAlignGBL::init() {
                             << "\n\t_planeWscatAir has size: \t" << _planeWscatAir.size() << '\n';
 
   for(size_t ipl = 0; ipl < _nPlanes; ipl++) {
-    auto x_res = _x_resolution_vec.at(ipl)/1000.0;
-    auto y_res = _y_resolution_vec.at(ipl)/1000.0;
+    auto x_res = _x_resolution_vec.at(ipl);
+    auto y_res = _y_resolution_vec.at(ipl);
     _planeMeasPrec.emplace_back(1.0/x_res/x_res, 1.0/y_res/y_res);
     
   }
@@ -407,8 +399,8 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
   auto tripletVec = std::vector<EUTelTripletGBLUtility::triplet>();
   auto dripletVec = std::vector<EUTelTripletGBLUtility::triplet>();
 
-  gblutil.FindTriplets(_hitsVec, _upstream_triplet_ids[0], _upstream_triplet_ids[1], _upstream_triplet_ids[2], _triCut, _slopeCut, tripletVec, false);
-  gblutil.FindTriplets(_hitsVec, _downstream_triplet_ids[0], _downstream_triplet_ids[1], _downstream_triplet_ids[2], _driCut, _slopeCut+0.012, dripletVec, false);
+  gblutil.FindTriplets(_hitsVec, _upstream_triplet_ids[0], _upstream_triplet_ids[1], _upstream_triplet_ids[2], _upTriResCut, _upSlopeCut/1000., tripletVec, false);
+  gblutil.FindTriplets(_hitsVec, _downstream_triplet_ids[0], _downstream_triplet_ids[1], _downstream_triplet_ids[2], _downTriResCut, _downSlopeCut/1000., dripletVec, false);
 
   if(_printEventCounter < NO_PRINT_EVENT_COUNTER){
     std::cout << "Triplets:\n";
@@ -426,7 +418,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
 
   double zMid = 0.5*(_planePosition[_nPlanes-3] + _planePosition[2]);
   auto matchedTripletVec = std::vector<EUTelTripletGBLUtility::track>();
-  gblutil.MatchTriplets(tripletVec, dripletVec, zMid, _sixCut, matchedTripletVec);
+  gblutil.MatchTriplets(tripletVec, dripletVec, zMid, _upDownTripletMatchCut, matchedTripletVec);
 
   if(_printEventCounter < NO_PRINT_EVENT_COUNTER) std::cout << "Matched to:\n"; 
 
