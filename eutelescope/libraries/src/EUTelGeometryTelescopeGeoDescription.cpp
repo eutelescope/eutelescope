@@ -206,9 +206,9 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 		_telescopeLayers.push_back(std::move(thisLayer));
 	}
 
-//	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), [&](int a, int b)-> bool {
-//		return siPlaneZPosition(a) < siPlaneZPosition(b);
-//	}); 
+	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), [&](int a, int b)-> bool {
+		return siPlaneZPosition(a) < siPlaneZPosition(b);
+	}); 
 
 	for(auto& layer: _telescopeLayers){
 		std::cout << "Si Layer: " << layer->getID() << '\n';
