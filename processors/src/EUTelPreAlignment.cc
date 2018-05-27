@@ -518,10 +518,16 @@ void EUTelPreAlign::end() {
     constantsCollection->push_back(constant);
 
     // Also update the EUTelGeometry descr.
-    double updatedXOff = geo::gGeometry().siPlaneXPosition(sensorID) +
-                         _preAligners.at(ii).getPeakX();
-    double updatedYOff = geo::gGeometry().siPlaneYPosition(sensorID) +
-                         _preAligners.at(ii).getPeakY();
+     double updatedXOff;
+     double updatedYOff;
+     if(it == _ExcludedPlanes.end()){///Only want to update if needed. Otherwise we get a pointless warning
+       updatedXOff = geo::gGeometry().siPlaneXPosition(sensorID) + _preAligners.at(ii).getPeakX();
+       updatedYOff = geo::gGeometry().siPlaneYPosition(sensorID) + _preAligners.at(ii).getPeakY();
+     }else{
+        updatedXOff=0;
+        updatedYOff=0;
+     }
+
     double oldZPos = geo::gGeometry().siPlaneZPosition(sensorID);
 
     geo::gGeometry().alignGlobalPos(sensorID, updatedXOff, updatedYOff,
