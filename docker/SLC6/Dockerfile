@@ -11,7 +11,7 @@ RUN ["/bin/bash", "-c", "source /opt/rh/rh-git29/enable && cd $ILCSOFT/ilcinstal
 RUN ["/bin/bash", "-c", "source /opt/rh/python27/enable && source /opt/rh/rh-git29/enable && source /opt/rh/devtoolset-6/enable && $ILCSOFT/ilcinstall/ilcsoft-install -i -v $ILCSOFT/ilcinstall/examples/eutelescope/release-standalone.cfg"]
 
 ENV EUTELESCOPE /ilcsoft/v01-19-02/Eutelescope/master/
-ENV EUDAQ /ilcsoft/v01-19-02/Eutelescope/master/external/eudaq/v1.7-dev/
+ENV EUDAQ /ilcsoft/v01-19-02/Eutelescope/master/external/eudaq/v1.8.0/
 ENV ILCSOFT_CMAKE_ENV /ilcsoft/v01-19-02/ILCSoft.cmake.env.sh
 ENV MILLEPEDEII /ilcsoft/v01-19-02/Eutelescope/master/external/millepede2/tags/V04-03-03
 ENV MILLEPEDEII_VERSION tags/V04-03-03
@@ -24,9 +24,13 @@ ENV CMAKE /ilcsoft/v01-19-02/CMake/3.6.3
 ENV PATH ${CMAKE}/bin:${ROOTSYS}/bin:${MARLIN}/bin:${MILLEPEDEII}:${EUTELESCOPE}/bin:${GEAR}/tools:${GEAR}/bin:${PATH}
 ENV LD_LIBRARY_PATH ${EUTELESCOPE}/lib:${ROOTSYS}/lib:${EUDAQ}/lib:${GEAR}/lib:${GBL}/lib:${LD_LIBRARY_PATH}
 
+RUN mkdir -p /data/TestExampleAconiteQuadFEI4
+RUN /bin/bash -c "cd /data/TestExampleAconiteQuadFEI4 && wget -O run001085.raw http://cernbox.cern.ch/index.php/s/mEgF1o96bBIpwei/download && ls -l && cd -"
+RUN sed -i 's@NativePath.*= \/afs\/desy\.de\/group\/telescopes\/EutelTestData\/TestExampleAconiteQuadFEI4@NativePath = \/data\/TestExampleAconiteQuadFEI4@g' $EUTELESCOPE/jobsub/examples/aconite-4chipLocal/config.cfg
+
 WORKDIR ${EUTELESCOPE}/build/
 RUN make clean
-CMD /bin/bash -c "source /opt/rh/python27/enable && source /opt/rh/rh-git29/enable && source /opt/rh/devtoolset-6/enable && echo $PR_NO; git fetch origin refs/pull/$PR_NO/merge; git checkout FETCH_HEAD; cmake ..; make install -j 4"
+CMD /bin/bash -c "source /opt/rh/python27/enable && source /opt/rh/rh-git29/enable && source /opt/rh/devtoolset-6/enable && echo $PR_NO; git fetch origin refs/pull/$PR_NO/merge; git checkout FETCH_HEAD; cmake ..; make install -j 4; ctest -R aconite*"
 
 #RUN mkdir -p output/lcio output/logs output/histograms output/database
 #RUN mkdir -p /afs/
