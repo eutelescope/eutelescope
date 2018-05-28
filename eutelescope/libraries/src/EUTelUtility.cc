@@ -347,7 +347,7 @@ namespace eutelescope {
 
           //                if ( cluster != 0 ) delete cluster;
 
-        } catch (lcio::Exception e) {
+        } catch (lcio::Exception & e) {
           // catch specific exceptions
           streamlog_out(ERROR)
               << "Exception occured in hitContainsHotPixels(): " << e.what()
