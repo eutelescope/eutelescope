@@ -76,7 +76,7 @@ void EUTelAPIXTbTrackTuple::init() {
     // while in TBmon(II) it is in the lower left corner
     geo::EUTelGenericPixGeoDescr *geoDescr =
         geo::gGeometry().getPixGeoDescr(dutID);
-    float xSize, ySize;
+    double xSize, ySize;
     geoDescr->getSensitiveSize(xSize, ySize);
 
     _xSensSize[dutID] = xSize;

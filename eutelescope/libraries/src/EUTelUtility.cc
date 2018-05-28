@@ -126,8 +126,8 @@ namespace eutelescope {
         // Get the TrackerData for the sensor ID
         TrackerDataImpl *noisyPixelData = dynamic_cast<TrackerDataImpl *>(
             noisyPixelCollectionVec->getElementAt(i));
-        int sensorID = cellDecoder(noisyPixelData)["sensorID"];
-        int pixelType = cellDecoder(noisyPixelData)["sparsePixelType"];
+        int sensorID = static_cast<int>(cellDecoder(noisyPixelData)["sensorID"]);
+        int pixelType = static_cast<int>(cellDecoder(noisyPixelData)["sparsePixelType"]);
 
         // And get the corresponding noise vector for that plane
         std::vector<int> *noiseSensorVector = &(noisyPixelMap[sensorID]);
@@ -410,19 +410,14 @@ namespace eutelescope {
       }
 
       try {
-
-        UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder(
-            EUTELESCOPE::HITENCODING);
-
-        int sensorID =
-            hitDecoder(static_cast<IMPL::TrackerHitImpl *>(hit))["sensorID"];
+        UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder(EUTELESCOPE::HITENCODING);
+        int sensorID = static_cast<int>(hitDecoder(static_cast<IMPL::TrackerHitImpl*>(hit))["sensorID"]);
         return sensorID;
 
       } catch (...) {
         streamlog_out(ERROR) << "getSensorIDfromHit() produced an exception!"
                              << std::endl;
       }
-
       return -1;
     }
 

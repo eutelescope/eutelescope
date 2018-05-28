@@ -347,7 +347,7 @@ bool EUTelTripletGBLUtility::AttachDUT(EUTelTripletGBLUtility::triplet & triplet
 			auto dist = (trX-hitX)*(trX-hitX)+(trY-hitY)*(trY-hitY);
 //			std::cout << "Hit x/y: " << hitX << "|" << hitY << " dist: " << dist << '\n'; 
 			if(dist <= cut_squared && dist < minDist ){
-				minHitIx = ix;
+				minHitIx = static_cast<int>(ix);
 				//std::cout << "Dist: " << dist << std::endl;
 			}
 		}

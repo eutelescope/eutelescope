@@ -256,22 +256,22 @@ namespace eutelescope {
       }
       // GETTER
       /** */
-      float siPlaneRotation1(int sensorID) {
+      int siPlaneRotation1(int sensorID) {
         return _activeMap.at(sensorID)->getFlipMatrix().coeff(0, 0);
       };
 
       /** */
-      float siPlaneRotation2(int sensorID) {
+      int siPlaneRotation2(int sensorID) {
         return _activeMap.at(sensorID)->getFlipMatrix().coeff(1, 0);
       };
 
       /** */
-      float siPlaneRotation3(int sensorID) {
+      int siPlaneRotation3(int sensorID) {
         return _activeMap.at(sensorID)->getFlipMatrix().coeff(0, 1);
       };
 
       /** */
-      float siPlaneRotation4(int sensorID) {
+      int siPlaneRotation4(int sensorID) {
         return _activeMap.at(sensorID)->getFlipMatrix().coeff(1, 1);
       };
 
@@ -397,7 +397,7 @@ namespace eutelescope {
 
       Eigen::Vector3d getOffsetVector(int sensorID);
 
-      Eigen::Matrix3d getFlipMatrix(int sensorID);
+      Eigen::Matrix3i getFlipMatrix(int sensorID);
 
       Eigen::Vector3d globalXAxis(int sensorID);
 

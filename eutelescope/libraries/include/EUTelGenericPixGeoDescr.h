@@ -40,7 +40,7 @@ namespace eutelescope {
 
       /** Takes three references to floats and stores the sensitive size of
        * X,Y,Z in them */
-      void getSensitiveSize(float &x, float &y, float &z) {
+      void getSensitiveSize(double &x, double &y, double &z) {
         x = _sizeSensitiveAreaX;
         y = _sizeSensitiveAreaY;
         z = _sizeSensitiveAreaZ;
@@ -48,7 +48,7 @@ namespace eutelescope {
 
       /** Signature overloaded version of @see getSensitiveSize() omitting Z
        * information */
-      void getSensitiveSize(float &x, float &y) {
+      void getSensitiveSize(double &x, double &y) {
         x = _sizeSensitiveAreaX;
         y = _sizeSensitiveAreaY;
       }

@@ -108,9 +108,9 @@ namespace eutelescope {
       }
 
       void setRotationDeg(double alpha, double beta, double gamma) {
-		auto alphaRad = alpha*Utility::PI/180;
-		auto betaRad = beta*Utility::PI/180;
-		auto gammaRad = gamma*Utility::PI/180;
+		    auto alphaRad = static_cast<double>(alpha*Utility::PI/180.);
+		    auto betaRad = static_cast<double>(beta*Utility::PI/180.);
+		    auto gammaRad = static_cast<double>(gamma*Utility::PI/180.);
         _angleVector = Eigen::Vector3d(alphaRad, betaRad, gammaRad);
         _rotMatrix = Utility::rotationMatrixFromAngles(alphaRad, betaRad, gammaRad);
       }
@@ -248,7 +248,7 @@ namespace eutelescope {
       Eigen::Matrix2i _flipMatrix;
 
       double _pitchX, _pitchY;
-      double _nPixelsX, _nPixelsY;
+      int _nPixelsX, _nPixelsY;
       double _resX, _resY;
 
       std::string _geometry = "CAST";
@@ -299,7 +299,7 @@ namespace eutelescope {
         return std::make_pair(_resX, _resY);
       }
 
-      std::pair<double, double> getNoPixels() const {
+      std::pair<int, int> getNoPixels() const {
         return std::make_pair(_nPixelsX, _nPixelsY);
       }
 
