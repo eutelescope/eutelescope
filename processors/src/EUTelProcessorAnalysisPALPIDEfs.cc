@@ -466,7 +466,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt) {
   LCCollection *colTrack = nullptr;
   try {
     colTrack = evt->getCollection(_trackCollectionName);
-  } catch (DataNotAvailableException e) {
+  } catch (DataNotAvailableException& e) {
     fitHitAvailable = false;
   }
   if (fitHitAvailable)

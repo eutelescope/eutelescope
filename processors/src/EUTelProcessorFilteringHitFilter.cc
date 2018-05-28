@@ -127,7 +127,7 @@ void EUTelProcessorFilteringHitFilter::processEvent(LCEvent *event) {
     hitInputCollection = static_cast<LCCollectionVec *>(
         event->getCollection(_hitInputCollectionName));
 
-  } catch (lcio::DataNotAvailableException e) {
+  } catch (lcio::DataNotAvailableException& e) {
     streamlog_out(WARNING) << _hitInputCollectionName
                            << " collection not available" << std::endl;
     hitInputCollection = nullptr;

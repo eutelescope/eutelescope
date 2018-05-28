@@ -137,7 +137,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 
 	try {
 		geometryNameParameters  =  _siPlanesParameters->getStringVals("Geometry");
-	} catch(gear::UnknownParameterException e) {
+	} catch(gear::UnknownParameterException& e) {
 		streamlog_out(MESSAGE6) << "No Geometry field found in GEAR file, assuming CAST for all planes" << std::endl;
 		for(size_t i = 0; i < nPlanes; i++) {
 			geometryNameParameters.push_back("CAST");
