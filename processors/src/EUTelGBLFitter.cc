@@ -390,7 +390,7 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
   // Downstream Telescope Triplets ("driplets")
   // Generate new triplet set for the Telescope Downstream Arm:
   std::vector<EUTelTripletGBLUtility::triplet> downstream_triplets;
-  gblutil.FindTriplets(hits, 3, 4, 5, _triplet_res_cut, _slope_cut, downstream_triplets);
+  gblutil.FindTriplets(hits, std::array<size_t,3>{3, 4, 5}, _triplet_res_cut, _slope_cut, downstream_triplets);
   streamlog_out(DEBUG4) << "Found " << downstream_triplets.size() << " driplets." << endl;
 
   // Iterate over all found downstream triplets to fill histograms and match them to the REF and DUT:
@@ -427,7 +427,8 @@ void EUTelGBLFitter::processEvent( LCEvent * event ) {
 
   // Generate new triplet set for the Telescope Upstream Arm:
   std::vector<EUTelTripletGBLUtility::triplet> upstream_triplets;
-  gblutil.FindTriplets(hits, 0, 1, 2, _triplet_res_cut, _slope_cut, upstream_triplets);
+  gblutil.FindTriplets(hits, std::array<size_t,3>{0, 1, 2}, _triplet_res_cut, _slope_cut, upstream_triplets);
+
   streamlog_out(DEBUG4) << "Found " << upstream_triplets.size() << " triplets." << endl;
 
   // Iterate over all found upstream triplets to fill histograms and match them to the REF and DUT:
