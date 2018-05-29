@@ -6,9 +6,9 @@ RUN yum -y install rh-git29 python27 devtoolset-6 eigen3-devel java-1.8.0-openjd
 
 RUN mkdir -p $ILCSOFT
 
-RUN ["/bin/bash", "-c", "source /opt/rh/rh-git29/enable && git clone -b dev-base-exp https://github.com/eutelescope/ilcinstall $ILCSOFT/ilcinstall"]
+RUN ["/bin/bash", "-c", "source /opt/rh/rh-git29/enable && git clone -b dev-findpython-exp https://github.com/eutelescope/ilcinstall $ILCSOFT/ilcinstall"]
 RUN ["/bin/bash", "-c", "source /opt/rh/rh-git29/enable && cd $ILCSOFT/ilcinstall && git status"]
-RUN ["/bin/bash", "-c", "source /opt/rh/python27/enable && source /opt/rh/rh-git29/enable && source /opt/rh/devtoolset-6/enable && $ILCSOFT/ilcinstall/ilcsoft-install -i -v $ILCSOFT/ilcinstall/examples/eutelescope/release-findpython.cfg"]
+RUN ["/bin/bash", "-c", "source /opt/rh/python27/enable && source /opt/rh/rh-git29/enable && source /opt/rh/devtoolset-6/enable && $ILCSOFT/ilcinstall/ilcsoft-install -i -v $ILCSOFT/ilcinstall/examples/eutelescope/release-standalone.cfg"]
 
 ENV EUTELESCOPE /ilcsoft/v01-19-02/Eutelescope/master/
 ENV EUDAQ /ilcsoft/v01-19-02/Eutelescope/master/external/eudaq/v1.8.0/
@@ -25,7 +25,7 @@ ENV PATH ${CMAKE}/bin:${ROOTSYS}/bin:${MARLIN}/bin:${MILLEPEDEII}:${EUTELESCOPE}
 ENV LD_LIBRARY_PATH ${EUTELESCOPE}/lib:${ROOTSYS}/lib:${EUDAQ}/lib:${GEAR}/lib:${GBL}/lib:${LD_LIBRARY_PATH}
 
 RUN mkdir -p /data/TestExampleAconiteQuadFEI4
-RUN wget http://cernbox.cern.ch/index.php/s/mEgF1o96bBIpwei/download /data/TestExampleAconiteQuadFEI4
+RUN ["/bin/bash", "-c", "cd /data/TestExampleAconiteQuadFEI4 && wget -O run001085.raw http://cernbox.cern.ch/index.php/s/mEgF1o96bBIpwei/download && ls -l && cd -"]
 RUN sed -i 's@NativePath.*= \/afs\/desy\.de\/group\/telescopes\/EutelTestData\/TestExampleAconiteQuadFEI4@NativePath = \/data\/TestExampleAconiteQuadFEI4@g' $EUTELESCOPE/jobsub/examples/aconite-4chipLocal/config.cfg
 
 WORKDIR ${EUTELESCOPE}/build/

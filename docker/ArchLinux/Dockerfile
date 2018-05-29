@@ -7,7 +7,7 @@ RUN pacman -S core/gcc extra/eigen extra/gsl extra/wget core/automake core/gcc-f
 
 RUN mkdir -p $ILCSOFT
 RUN cd /usr/bin && ln -sf python2 python
-RUN git clone -b dev-base-exp https://github.com/eutelescope/ilcinstall $ILCSOFT/ilcinstall
+RUN git clone -b dev-base-exp  https://github.com/eutelescope/ilcinstall $ILCSOFT/ilcinstall
 RUN cd $ILCSOFT/ilcinstall && git status
 RUN $ILCSOFT/ilcinstall/ilcsoft-install -i -v $ILCSOFT/ilcinstall/examples/eutelescope/release-nocmake.cfg
 
@@ -26,7 +26,7 @@ ENV PATH ${CMAKE}/bin:${ROOTSYS}/bin:${MARLIN}/bin:${MILLEPEDEII}:${EUTELESCOPE}
 ENV LD_LIBRARY_PATH ${EUTELESCOPE}/lib:${ROOTSYS}/lib:${EUDAQ}/lib:${GEAR}/lib:${GBL}/lib:${LD_LIBRARY_PATH}
 
 RUN mkdir -p /data/TestExampleAconiteQuadFEI4
-RUN wget http://cernbox.cern.ch/index.php/s/mEgF1o96bBIpwei/download /data/TestExampleAconiteQuadFEI4
+RUN ["/bin/bash", "-c", "cd /data/TestExampleAconiteQuadFEI4 && wget -O run001085.raw http://cernbox.cern.ch/index.php/s/mEgF1o96bBIpwei/download && ls -l && cd -"]
 RUN sed -i 's@NativePath.*= \/afs\/desy\.de\/group\/telescopes\/EutelTestData\/TestExampleAconiteQuadFEI4@NativePath = \/data\/TestExampleAconiteQuadFEI4@g' $EUTELESCOPE/jobsub/examples/aconite-4chipLocal/config.cfg
 
 WORKDIR ${EUTELESCOPE}/build/
