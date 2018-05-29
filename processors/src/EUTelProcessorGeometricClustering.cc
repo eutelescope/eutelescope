@@ -154,7 +154,7 @@ void EUTelProcessorGeometricClustering::initializeGeometry(
       _sensorIDVec.push_back(cellDecoder(data)["sensorID"]);
       _totClusterMap.insert(std::make_pair(cellDecoder(data)["sensorID"], 0));
     }
-  } catch (lcio::DataNotAvailableException) {
+  } catch (lcio::DataNotAvailableException& ) {
     streamlog_out(DEBUG5) << "Could not find the input collection: "
                           << _zsDataCollectionName.c_str() << " !" << std::endl;
     return;

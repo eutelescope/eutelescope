@@ -60,7 +60,7 @@ void EUTelProcessorDeadColumnFinder::processEvent(LCEvent *evt) {
   try {
     zsInputDataCollectionVec = dynamic_cast<LCCollectionVec *>(
         evt->getCollection(_zsDataCollectionName));
-  } catch (lcio::DataNotAvailableException) {
+  } catch (lcio::DataNotAvailableException&) {
     //    cerr << "_zsDataCollectionName " << _zsDataCollectionName.c_str() << "
     //    not found " << endl;
     return;

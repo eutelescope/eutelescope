@@ -186,7 +186,7 @@ void AlibavaConstantCommonModeProcessor::processEvent ( LCEvent * anEvent )
 	alibavaEvent -> addCollection ( commerrCollection, getCommonModeErrorCollectionName ( ) );
 
     }
-    catch ( lcio::DataNotAvailableException )
+    catch ( lcio::DataNotAvailableException& )
     {
 	// do nothing again
 	streamlog_out ( ERROR5 ) << "Collection (" << getInputCollectionName ( ) << ") not found! " << endl;

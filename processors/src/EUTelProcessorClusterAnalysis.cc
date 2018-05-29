@@ -246,7 +246,7 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt) {
         evt->getCollection(_zsDataCollectionName));
     streamlog_out(DEBUG5) << "zsInputDataCollectionVec: "
                           << _zsDataCollectionName.c_str() << " found " << endl;
-  } catch (lcio::DataNotAvailableException) {
+  } catch (lcio::DataNotAvailableException& ) {
     streamlog_out(DEBUG5) << "zsInputDataCollectionVec: "
                           << _zsDataCollectionName.c_str() << " not found "
                           << endl;

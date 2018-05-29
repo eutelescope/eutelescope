@@ -506,7 +506,7 @@ void EUTelClusterFilter::initializeGeometry(LCEvent *event) {
       int sensorID = noiseDecoder(noise)["sensorID"];
       _ancillaryIndexMap.insert(make_pair(sensorID, iDetector));
     }
-  } catch (lcio::DataNotAvailableException) {
+  } catch (lcio::DataNotAvailableException& ) {
     // just catch it!
     _noOfDetectors = 0;
   }

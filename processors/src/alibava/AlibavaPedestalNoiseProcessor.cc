@@ -148,7 +148,7 @@ void AlibavaPedestalNoiseProcessor::processEvent ( LCEvent * anEvent )
 	    fillHistos ( trkdata );
 	}
     }
-    catch ( lcio::DataNotAvailableException )
+    catch ( lcio::DataNotAvailableException& )
     {
 	streamlog_out ( ERROR5 ) << "Collection (" << getInputCollectionName ( ) << ") not found! " << endl;
     }
