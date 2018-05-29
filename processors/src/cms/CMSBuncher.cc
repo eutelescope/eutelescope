@@ -250,7 +250,7 @@ void CMSBuncher::readDataSource ( int /*numEvents*/ )
 	    }
 	    event -> addCollection ( dataCollection, _outputCollectionName );
     }
-    catch ( lcio::DataNotAvailableException )
+    catch ( lcio::DataNotAvailableException& )
     {
 	streamlog_out( ERROR1 ) << "Collection " << _inputCollectionName << " not found" << endl;
     }

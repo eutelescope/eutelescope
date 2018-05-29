@@ -282,7 +282,7 @@ void CMSMerger::processEvent ( LCEvent * anEvent )
 	    }
 
 	}
-	catch ( lcio::DataNotAvailableException )
+	catch ( lcio::DataNotAvailableException& )
 	{
 	    streamlog_out ( DEBUG4 ) << "Collection " << _cbcDataCollectionName1 << " not found in event " << anEvent -> getEventNumber ( ) << endl;
 	}
@@ -343,7 +343,7 @@ void CMSMerger::processEvent ( LCEvent * anEvent )
 	    }
 
 	}
-	catch ( lcio::DataNotAvailableException )
+	catch ( lcio::DataNotAvailableException& )
 	{
 	    streamlog_out ( DEBUG4 ) << "Collection " << _cbcDataCollectionName2 << " not found in event " << anEvent -> getEventNumber ( ) << endl;
 	}
@@ -500,7 +500,7 @@ void CMSMerger::processEvent ( LCEvent * anEvent )
 	}
 
     }
-    catch ( lcio::DataNotAvailableException )
+    catch ( lcio::DataNotAvailableException& )
     {
 	streamlog_out( DEBUG4 ) << "Collection " << _telescopeCollectionName << " not found in event " << anEvent -> getEventNumber ( ) << endl;
     }

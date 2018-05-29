@@ -264,7 +264,7 @@ void AlibavaClustering::processEvent ( LCEvent * anEvent )
 	}
 
     }
-    catch ( lcio::DataNotAvailableException )
+    catch ( lcio::DataNotAvailableException& )
     {
 	// do nothing
 	streamlog_out ( ERROR5 ) << "Collection (" << getInputCollectionName ( ) << ") not found in event " << anEvent -> getEventNumber ( ) << " ! " << endl;

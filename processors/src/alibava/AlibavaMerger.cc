@@ -305,7 +305,7 @@ void AlibavaMerger::processEvent ( LCEvent * anEvent )
 
 	}
     }
-    catch ( lcio::DataNotAvailableException )
+    catch ( lcio::DataNotAvailableException& )
     {
 	streamlog_out ( DEBUG5 ) << "Collection " <<_alibavaCollectionName << " not found in event " << anEvent -> getEventNumber ( ) << endl;
     }
@@ -414,7 +414,7 @@ void AlibavaMerger::processEvent ( LCEvent * anEvent )
 	}
 
     }
-    catch ( lcio::DataNotAvailableException )
+    catch ( lcio::DataNotAvailableException& )
     {
 	streamlog_out ( DEBUG5 ) << "Collection "<<_telescopeCollectionName<<" not found in event " << anEvent -> getEventNumber( ) << endl;
     }
