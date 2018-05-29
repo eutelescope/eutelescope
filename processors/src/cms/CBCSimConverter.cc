@@ -241,7 +241,7 @@ void CBCSimConverter::processEvent ( LCEvent * anEvent )
 	rawDataCollection -> push_back ( newdataImpl );
 	anEvent -> addCollection ( rawDataCollection, _outputCollectionName );
     }
-    catch ( lcio::DataNotAvailableException )
+    catch ( lcio::DataNotAvailableException& )
     {
 	streamlog_out ( ERROR5 ) << "Collection " << _inputCollectionName << " not found! " << endl;
     }

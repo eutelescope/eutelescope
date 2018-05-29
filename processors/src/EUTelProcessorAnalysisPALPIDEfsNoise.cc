@@ -122,7 +122,7 @@ void EUTelProcessorAnalysisPALPIDEfsNoise::processEvent(LCEvent *evt) {
   try {
     zsInputDataCollectionVec = dynamic_cast<LCCollectionVec *>(
         evt->getCollection(_zsDataCollectionName));
-  } catch (lcio::DataNotAvailableException) {
+  } catch (lcio::DataNotAvailableException&) {
     cerr << "In event " << evt->getEventNumber() << "_zsDataCollectionName "
          << _zsDataCollectionName.c_str() << " not found " << endl;
     return;

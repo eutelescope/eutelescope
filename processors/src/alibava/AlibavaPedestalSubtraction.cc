@@ -164,7 +164,7 @@ void AlibavaPedestalSubtraction::processEvent ( LCEvent * anEvent )
 	}
 	alibavaEvent -> addCollection ( newDataCollection, getOutputCollectionName ( ) );
     }
-    catch ( lcio::DataNotAvailableException )
+    catch ( lcio::DataNotAvailableException& )
     {
 	// do nothing again
 	streamlog_out ( ERROR5 ) << "Collection (" << getInputCollectionName ( ) << ") not found! " << endl;

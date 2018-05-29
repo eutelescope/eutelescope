@@ -270,7 +270,7 @@ void AlibavaDataPlotter::processEvent ( LCEvent * anEvent )
 	}
 
     }
-    catch ( lcio::DataNotAvailableException )
+    catch ( lcio::DataNotAvailableException& )
     {
 	// do nothing again
 	streamlog_out ( ERROR5 ) << "Collection (" << _inputCollectionName << ") not found!" << endl;

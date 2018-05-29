@@ -334,7 +334,7 @@ void CBCHitRecovery::processEvent ( LCEvent * anEvent )
                 }
 
         }
-        catch ( lcio::DataNotAvailableException )
+        catch ( lcio::DataNotAvailableException& )
         {
 
         }

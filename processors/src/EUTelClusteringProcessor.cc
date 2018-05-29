@@ -318,7 +318,7 @@ void EUTelClusteringProcessor::initializeGeometry(LCEvent *event) {
       _sensorIDVec.push_back(cellDecoder(data)["sensorID"]);
     }
 
-  } catch (lcio::DataNotAvailableException) {
+  } catch (lcio::DataNotAvailableException&) {
     // do nothing
     streamlog_out(DEBUG5) << "_nzsDataCollectionName "
                           << _nzsDataCollectionName.c_str() << " not found "
@@ -338,7 +338,7 @@ void EUTelClusteringProcessor::initializeGeometry(LCEvent *event) {
       _totClusterMap.insert(make_pair(cellDecoder(data)["sensorID"], 0));
     }
 
-  } catch (lcio::DataNotAvailableException) {
+  } catch (lcio::DataNotAvailableException&) {
     // do nothing again
     streamlog_out(DEBUG5) << "_zsDataCollectionName "
                           << _zsDataCollectionName.c_str() << " not found "
@@ -366,7 +366,7 @@ void EUTelClusteringProcessor::initializeGeometry(LCEvent *event) {
           make_pair(noiseDecoder(noise)["sensorID"], iDetector));
       _orderedSensorIDVec.push_back(noiseDecoder(noise)["sensorID"]);
     }
-  } catch (lcio::DataNotAvailableException) {
+  } catch (lcio::DataNotAvailableException&) {
     streamlog_out(WARNING2)
         << "Unable to initialize the geometry. Trying with the following event"
         << endl;
@@ -552,7 +552,7 @@ void EUTelClusteringProcessor::readCollections(LCEvent *event) {
     streamlog_out(DEBUG4) << "nzsInputDataCollectionVec: "
                           << _nzsDataCollectionName.c_str() << " found "
                           << endl;
-  } catch (lcio::DataNotAvailableException) {
+  } catch (lcio::DataNotAvailableException&) {
     // do nothing
     streamlog_out(DEBUG4) << "nzsInputDataCollectionVec: "
                           << _nzsDataCollectionName.c_str() << " not found "
@@ -564,7 +564,7 @@ void EUTelClusteringProcessor::readCollections(LCEvent *event) {
         event->getCollection(_zsDataCollectionName));
     streamlog_out(DEBUG4) << "zsInputDataCollectionVec: "
                           << _zsDataCollectionName.c_str() << " found " << endl;
-  } catch (lcio::DataNotAvailableException) {
+  } catch (lcio::DataNotAvailableException&) {
     // do nothing again
     streamlog_out(DEBUG4) << "zsInputDataCollectionVec: "
                           << _zsDataCollectionName.c_str() << " not found "

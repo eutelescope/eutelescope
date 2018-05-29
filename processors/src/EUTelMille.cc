@@ -2558,7 +2558,7 @@ bool EUTelMille::hitContainsHotPixels(TrackerHitImpl *hit) {
         // fixed cluster implementation. Remember it can come from
         // both RAW and ZS data
       }
-    } catch (lcio::Exception e) {
+    } catch (lcio::Exception& e) {
       // catch specific exceptions
       streamlog_out(ERROR5)
           << "Exception occured in hitContainsHotPixels(): " << e.what()

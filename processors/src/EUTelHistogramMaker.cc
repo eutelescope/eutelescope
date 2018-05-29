@@ -182,7 +182,7 @@ void EUTelHistogramMaker::initializeGeometry(LCEvent *event) {
         _maxY.insert(make_pair(sensorID, decoder(data)["yMax"]));
       }
     }
-  } catch (lcio::DataNotAvailableException) {
+  } catch (lcio::DataNotAvailableException& ) {
     streamlog_out(WARNING2) << "Unable to initialize the geometry with the "
                                "current event. Trying with the next one"
                             << endl;

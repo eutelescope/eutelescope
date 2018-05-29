@@ -267,7 +267,7 @@ void AlibavaSimConverter::processEvent ( LCEvent * anEvent )
 	alibavaEvent -> addCollection ( rawDataCollection, _outputcollectionname );
 
     }
-    catch ( lcio::DataNotAvailableException )
+    catch ( lcio::DataNotAvailableException& )
     {
 	streamlog_out( ERROR5 ) << "Collection (" << getInputCollectionName ( ) << ") not found! " << endl;
     }

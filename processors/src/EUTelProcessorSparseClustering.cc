@@ -158,7 +158,7 @@ void EUTelProcessorSparseClustering::initializeGeometry(LCEvent *event){
     }
   }
 
-  catch (lcio::DataNotAvailableException) {
+  catch (lcio::DataNotAvailableException&) {
     streamlog_out(DEBUG5) << "Could not find the input collection: "
                           << _zsDataCollectionName.c_str() << " !" << std::endl;
     return;

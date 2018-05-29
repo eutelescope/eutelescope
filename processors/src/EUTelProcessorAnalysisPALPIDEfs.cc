@@ -466,7 +466,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt) {
   LCCollection *colTrack = nullptr;
   try {
     colTrack = evt->getCollection(_trackCollectionName);
-  } catch (DataNotAvailableException e) {
+  } catch (DataNotAvailableException& e) {
     fitHitAvailable = false;
   }
   if (fitHitAvailable)
@@ -508,7 +508,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt) {
         evt->getCollection(_zsDataCollectionName));
     streamlog_out(DEBUG4) << "zsInputDataCollectionVec: "
                           << _zsDataCollectionName.c_str() << " found " << endl;
-  } catch (lcio::DataNotAvailableException) {
+  } catch (lcio::DataNotAvailableException&) {
     streamlog_out(DEBUG4) << "zsInputDataCollectionVec: "
                           << _zsDataCollectionName.c_str() << " not found "
                           << endl;
