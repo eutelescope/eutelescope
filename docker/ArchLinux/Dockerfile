@@ -31,4 +31,4 @@ RUN sed -i 's@NativePath.*= \/afs\/desy\.de\/group\/telescopes\/EutelTestData\/T
 
 WORKDIR ${EUTELESCOPE}/build/
 RUN make clean
-CMD /bin/bash -c "source $EUTELESCOPE/build_env.sh && echo $PR_NO; git fetch origin refs/pull/$PR_NO/merge; git checkout FETCH_HEAD; cmake ..; make install -j 4; ctest -V -R aconite*"
+CMD /bin/bash -c "echo $PR_NO; git fetch origin refs/pull/$PR_NO/merge; git checkout FETCH_HEAD; cmake ..; make install -j 4; ctest -V -R aco*"
