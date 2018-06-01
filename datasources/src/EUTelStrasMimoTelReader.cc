@@ -305,7 +305,7 @@ void EUTelStrasMimoTelReader::readDataSource(int numEvents) {
           break;
         }
       }
-    } catch (ifstream::failure e) {
+    } catch (ifstream::failure& e) {
       if (!dataFile.eof()) {
         message<ERROR5>(log() << "Unable to open file " << dataFileName
                               << ". Exiting.");
