@@ -148,8 +148,9 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 
 
 	// create an array with the z positions of each layer
-	for (size_t iPlane = 0; iPlane < nPlanes; iPlane++) {
+	for (size_t iPlane_sz = 0; iPlane_sz < nPlanes; iPlane_sz++) {
 
+    auto iPlane = static_cast<int>(iPlane_sz);
 		auto ID = _siPlanesLayerLayout->getID(iPlane);
 
 		auto thisMat = EUTelMaterial(0, 0, 0);
@@ -175,7 +176,15 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 		auto f2	= _siPlanesLayerLayout->getSensitiveRotation2(iPlane);
 		auto f3	= _siPlanesLayerLayout->getSensitiveRotation3(iPlane);
 		auto f4	= _siPlanesLayerLayout->getSensitiveRotation4(iPlane);
-		activePlane->setFlips( f1, f2, f3, f4 ); 
+    
+    auto pmOneOrZero = [](double const & f) -> int {
+      if( f == 0.0 ) return 0;
+      else if( f == 1.0 ) return 1;
+      else if( f == -1.0 ) return -1;
+      else throw std::runtime_error("EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout flip matrix exntry is not plus/minus one or zero");
+    };
+
+		activePlane->setFlips( pmOneOrZero(f1), pmOneOrZero(f2), pmOneOrZero(f3), pmOneOrZero(f4) ); 
 	
 		activePlane->setGeometry( geometryNameParameters[iPlane]  );
 
@@ -223,7 +232,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 
 }
 
-inline double getRadLength(int A, int Z) {
+inline double getRadLength(double A, double Z) {
 	auto nom = 716.4*A;
 	auto denom = Z*(Z+1)*log(287/sqrt(Z));
 	return nom/denom;
@@ -259,7 +268,7 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
 	auto nLayers = _trackerPlanesLayerLayout->getNLayers();
 	for (size_t iLayer = 0; iLayer < nLayers; iLayer++) {
 
-		auto _trackerPlanesLayerImpl = const_cast<gear::TrackerPlanesLayerImpl*>(_trackerPlanesLayerLayout->getLayer( iLayer));
+		auto _trackerPlanesLayerImpl = const_cast<gear::TrackerPlanesLayerImpl*>(_trackerPlanesLayerLayout->getLayer( static_cast<int>(iLayer)));
 		auto layerID = _trackerPlanesLayerImpl->getID();
 
 		if( _telescopeLayerMap.find(layerID) != _telescopeLayerMap.end()){
@@ -462,7 +471,7 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
 void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvolumeWorld, int SensorId ) {
 	double xc, yc, zc;   // volume center position 
 	double alpha, beta, gamma;
-	double rotRef1, rotRef2, rotRef3, rotRef4;
+	int rotRef1, rotRef2, rotRef3, rotRef4;
 
 	std::stringstream strId;
 	strId << SensorId;
@@ -483,8 +492,8 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	rotRef4 = siPlaneRotation4( SensorId );
 
 	//We must check that the input is correct. Since this is a combination of initial rotations and reflections the determinate must be 1 or -1
-	float determinant = rotRef1*rotRef4 - rotRef2*rotRef3  ;
-	if(determinant==1 or determinant==-1) { 
+	int determinant = rotRef1*rotRef4 - rotRef2*rotRef3;
+	if(determinant == 1 or determinant == -1) { 
 		streamlog_out(DEBUG5) << "SensorID: " << SensorId << ". Determinant =  " <<determinant <<"  This is the correct determinate for this transformation." << std::endl;   
 	} else {
 		streamlog_out(ERROR5) << "SensorID: " << SensorId << ". Determinant =  " <<determinant << std::endl;   
@@ -509,8 +518,10 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	//Y rotations
 	TGeoRotation* pMatrixRotRefCombined = new TGeoRotation();
 	//We have to ensure that we retain a right handed coordinate system, i.e. if we only flip the x or y axis, we have to also flip the z-axis. If we flip both we have to flip twice.	
-	double integerRotationsAndReflections[9]={rotRef1,rotRef2,0,rotRef3,rotRef4,0,0,0, determinant};
-	pMatrixRotRefCombined->SetMatrix(integerRotationsAndReflections);
+	std::array<double, 9> integerRotationsAndReflections = { static_cast<double>(rotRef1), static_cast<double>(rotRef2), 0.,
+                                                           static_cast<double>(rotRef3), static_cast<double>(rotRef4), 0.,
+                                                           0.                   , 0. , static_cast<double>(determinant)   };
+	pMatrixRotRefCombined->SetMatrix(integerRotationsAndReflections.data());
 	std::cout << "Rotating plane " << SensorId << " to gamma: " << gamma << std::endl;
 	pMatrixRotRefCombined->RotateZ(gamma);//Z Rotation (degrees)//This will again rotate a vector around z axis usign the right hand rule.  
 	pMatrixRotRefCombined->RotateX(alpha);//X Rotations (degrees)//This will rotate a vector usign the right hand rule round the x-axis
@@ -597,8 +608,8 @@ void EUTelGeometryTelescopeGeoDescription::updatePlaneInfo(int sensorID) {
 	
 	auto pixGeoDescr = getPixGeoDescr(sensorID );
 
-	float sizeX, sizeY;
-    int minX, minY, maxX, maxY;
+	double sizeX, sizeY;
+  int minX, minY, maxX, maxY;
 
 	pixGeoDescr->getSensitiveSize(sizeX, sizeY);
 	pixGeoDescr->getPixelIndexRange(minX, maxX, minY, maxY);
@@ -707,8 +718,8 @@ Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::getOffsetVector(int sensor
 	return offsetVec;
 }
 
-Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::getFlipMatrix(int sensorID) {
-	Eigen::Matrix3d flipMat;
+Eigen::Matrix3i EUTelGeometryTelescopeGeoDescription::getFlipMatrix(int sensorID) {
+	Eigen::Matrix3i flipMat;
 	flipMat << 	siPlaneRotation1(sensorID),	siPlaneRotation2(sensorID),	0,
 			siPlaneRotation3(sensorID), 	siPlaneRotation4(sensorID),	0,
 			0,				0,				1;	
@@ -890,7 +901,9 @@ void EUTelGeometryTelescopeGeoDescription::updateSiPlanesLayout() {
 	auto nPlanes = static_cast<size_t>(siplanesLayerLayout->getNLayers());
 
 	// create an array with the z positions of each layer
-	for(size_t iPlane = 0; iPlane < nPlanes; iPlane++) {
+	for(size_t iPlane_sz = 0; iPlane_sz < nPlanes; iPlane_sz++) {
+
+    auto iPlane = static_cast<int>(iPlane_sz);
 		int sensorID =  _sensorIDVec.at(iPlane);
 
 		std::cout << "Set layer " << sensorID << " gamma to: " <<  siPlaneZRotation(sensorID) << std::endl;

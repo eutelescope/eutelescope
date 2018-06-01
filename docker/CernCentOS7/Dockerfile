@@ -28,4 +28,5 @@ RUN sed -i 's@NativePath.*= \/afs\/desy\.de\/group\/telescopes\/EutelTestData\/T
 
 WORKDIR ${EUTELESCOPE}/build/
 RUN make clean
-CMD /bin/bash -c "source /opt/rh/rh-git29/enable && source /opt/rh/devtoolset-6/enable && echo $PR_NO; git fetch origin refs/pull/$PR_NO/merge; git checkout FETCH_HEAD; cmake ..; make install -j 4; ctest -V -R aconite*"
+RUN ["/bin/bash", "-c", "cd $MILLEPEDEII && make && cd -"]
+CMD /bin/bash -c "source /opt/rh/rh-git29/enable && source /opt/rh/devtoolset-6/enable && echo $PR_NO; git fetch origin refs/pull/$PR_NO/merge; git checkout FETCH_HEAD; cmake -DSLC_TESTS=ON ..; make install -j 4; ctest -V -R aco*"

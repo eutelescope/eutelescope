@@ -549,7 +549,7 @@ void EUTelProcessorSparseClustering::bookHistos() {
     // minY, maxX and maxY.
     int minX, minY, maxX, maxY;
     minX = minY = maxX = maxY = 0;
-    float sizeX, sizeY, sizeZ;
+    double sizeX, sizeY, sizeZ;
     sizeX = sizeY = sizeZ = 0;
 
     geoDescr->getPixelIndexRange(minX, maxX, minY, maxY);

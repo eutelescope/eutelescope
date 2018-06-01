@@ -262,7 +262,16 @@ bool EUTelTripletGBLUtility::IsTripletIsolated(EUTelTripletGBLUtility::triplet c
   return IsolatedTrip;
 }
 
-void EUTelTripletGBLUtility::FindTriplets(std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int plane0, unsigned int plane1, unsigned int plane2, double trip_res_cut, double slope_cut, std::vector<EUTelTripletGBLUtility::triplet> &triplets, bool onlyBestTriplet) {
+template<typename T>
+void EUTelTripletGBLUtility::FindTriplets(std::vector<EUTelTripletGBLUtility::hit> const & hits, T const & triplet_sensor_ids, double trip_res_cut, double slope_cut, std::vector<EUTelTripletGBLUtility::triplet> & found_triplets, bool only_best_triplet) {
+
+  if(triplet_sensor_ids.size() != 3){
+    throw std::runtime_error("EUTelTripletGBLUtility::FindTriplets called with an invalid set of triplet_sensor_ids (size should be three entries)");
+  }
+
+  auto plane0 = triplet_sensor_ids[0];
+  auto plane1 = triplet_sensor_ids[1];
+  auto plane2 = triplet_sensor_ids[2];
 
   // get all hit is plane = plane0
   for( auto& ihit: hits ){
@@ -288,15 +297,15 @@ void EUTelTripletGBLUtility::FindTriplets(std::vector<EUTelTripletGBLUtility::hi
 	if( fabs(new_triplet.getdx(plane1)) > trip_res_cut) continue;
 	if( fabs(new_triplet.getdy(plane1)) > trip_res_cut) continue;
 
-    if(onlyBestTriplet) {    
+    if(only_best_triplet) {
 		// For low threshold (high noise) and/or high occupancy, use only the triplet with the smallest sum of residuals on plane1
 		double sum_res = sqrt(new_triplet.getdx(plane1)*new_triplet.getdx(plane1) + new_triplet.getdy(plane1)*new_triplet.getdy(plane1));
 		if(sum_res < sum_res_old){
 	
 		  // Remove the last one since it fits worse, not if its the first
-		  triplets.pop_back();
+		  found_triplets.pop_back();
 		  // The triplet is accepted, push it back:
-		  triplets.push_back(new_triplet);
+		  found_triplets.emplace_back(new_triplet);
 		  streamlog_out(DEBUG2) << new_triplet;
 		  sum_res_old = sum_res;
 		}
@@ -304,12 +313,12 @@ void EUTelTripletGBLUtility::FindTriplets(std::vector<EUTelTripletGBLUtility::hi
 		// update sum_res_old on first iteration
 		if(sum_res_old < 0.) {
 		  // The triplet is accepted, push it back:
-		  triplets.push_back(new_triplet);
+		  found_triplets.emplace_back(new_triplet);
 		  streamlog_out(DEBUG2) << new_triplet;
 		  sum_res_old = sum_res;
 		}
 	} else {	
-		triplets.push_back(new_triplet);
+		found_triplets.emplace_back(new_triplet);
 	}
       }//loop over hits
     }//loop over hits
@@ -338,7 +347,7 @@ bool EUTelTripletGBLUtility::AttachDUT(EUTelTripletGBLUtility::triplet & triplet
 			auto dist = (trX-hitX)*(trX-hitX)+(trY-hitY)*(trY-hitY);
 //			std::cout << "Hit x/y: " << hitX << "|" << hitY << " dist: " << dist << '\n'; 
 			if(dist <= cut_squared && dist < minDist ){
-				minHitIx = ix;
+				minHitIx = static_cast<int>(ix);
 				//std::cout << "Dist: " << dist << std::endl;
 			}
 		}

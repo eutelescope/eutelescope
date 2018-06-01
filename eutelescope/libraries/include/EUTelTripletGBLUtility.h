@@ -246,13 +246,18 @@ namespace eutelescope {
       //! Find hit triplets from three telescope planes
       /*! This runs over all hits in the planes of the telescope and
        * tries to match triplets by comparing with the middle planes.
+       * @param hits Reference to the hits which are used to construct the triplets
+       * @param triplet_sensor_ids Container with exactly three elements which contain the first, middle and last plane id (in this order)
+       * @param only_best_triplet Accept only the best matching triplet, not every conbination which passes cuts
+       * @param found_triplets Reference to vector inw hich the triplets should be stored
        * Two cut criteria can be set:
-       * @param triplet_res_cut Cut on the hit residual in the middle plane with respect to the triplet defined by first and last plane
-       * @param triplet_slope_cut Cut on the triplet track angle
+       * @param triplet_res_cut Cut on the hit residual in the middle plane with respect to the triplet defined by first and last plane [mm]
+       * @param triplet_slope_cut Cut on the triplet track angle [rad]
        *
        * @return a vector of found triplets among the given set of hits.
        */
-      void FindTriplets(std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int plane0, unsigned int plane1, unsigned int plane2, double trip_res_cut, double trip_slope_cut, std::vector<EUTelTripletGBLUtility::triplet> &trip, bool onlyBestTriplet = true);
+      template<typename T>
+      void FindTriplets(std::vector<EUTelTripletGBLUtility::hit> const & hits, T const & triplet_sensor_ids, double trip_res_cut, double trip_slope_cut, std::vector<EUTelTripletGBLUtility::triplet> & found_trip, bool only_best_triplet = true);
 
       //! Match the upstream and downstream triplets to tracks
       void MatchTriplets(std::vector<EUTelTripletGBLUtility::triplet> const & up, std::vector<EUTelTripletGBLUtility::triplet> const & down, double z_match, double trip_matching_cut, std::vector<EUTelTripletGBLUtility::track> &track);
