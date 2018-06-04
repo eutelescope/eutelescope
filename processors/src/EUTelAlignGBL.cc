@@ -152,7 +152,7 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelAlignGBL") {
   // modify processor description
   _description = "EUTelAlignGBL uses the MILLE program to write data files for MILLEPEDE II.";
 
-  registerInputCollections(LCIO::TRACKERHIT,"HitCollectionName","Input hit collections name",_hitCollectionName, std::vector<std::string>{"corrhits"});
+  registerInputCollections(LCIO::TRACKERHIT,"hitCollectionName","Input hit collections name",_hitCollectionName, std::vector<std::string>{"corrhits"});
   registerProcessorParameter("eBeam","Beam energy [GeV]",_eBeam, 4.0);
   registerOptionalParameter("excludePlanes","Exclude planes from fit according to their sensor ids",_excludePlanes_sensorIDs ,std::vector<int>());
   registerOptionalParameter("upstreamTriplet","The three sensors used as the upstream triplet", _upstream_triplet_ids, std::vector<int>{0,1,2});
@@ -165,14 +165,14 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelAlignGBL") {
   registerOptionalParameter("maxTrackCandidates","Maximal number of track candidates",_maxTrackCandidates, 2000);
   registerOptionalParameter("milleBinaryFilename","Name of the Millepede binary file",_binaryFilename, std::string{"mille.bin"});
   registerOptionalParameter("alignMode","Number of alignment constants used. Available mode are:"
-                              "\nXYZShifts - shifts in X and Y"
-                              "\nXYShiftsRotZ - shifts in X and Y and rotation around the Z axis,"
-                              "\nXYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis",
+                              "\n\t\tXYZShifts - shifts in X and Y"
+                              "\n\t\tXYShiftsRotZ - shifts in X and Y and rotation around the Z axis,"
+                              "\n\t\tXYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis",
                               _alignModeString, std::string{ "XYShiftsRotZ" });
   registerOptionalParameter("upstreamTripletResidualCut", "Upstream triplet residual cut [mm]", _upTriResCut, 0.30);
   registerOptionalParameter("downstreamTripletResidualCut", "Downstream triplet residual cut [mm]", _downTriResCut, 0.40);
-  registerOptionalParameter("upstreamTripletSlopeCut", "Upstream triplet slope cut [mrad]", _upSlopeCut, 10.);
-  registerOptionalParameter("downstreamTripletSlopeCut", "Downstream triplet slope cut [mrad]", _downSlopeCut, 10.);
+  registerOptionalParameter("upstreamTripletSlopeCut", "Upstream triplet slope cut [mrad]", _upSlopeCut, 3.);
+  registerOptionalParameter("downstreamTripletSlopeCut", "Downstream triplet slope cut [mrad]", _downSlopeCut, 5.);
   registerOptionalParameter("tripletsMatchingCut", "Upstream-downstream triplet matching cut [mm]", _upDownTripletMatchCut, 0.60);
   registerOptionalParameter("generatePedeSteerfile","Generate a steering file for the pede program",_generatePedeSteerfile, 0);
   registerOptionalParameter("pedeSteerfileName","Name of the steering file for the pede program",_pedeSteerfileName, std::string{"steer_mille.txt"});
