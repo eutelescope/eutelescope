@@ -344,4 +344,5 @@ namespace eutelescope {
 
 }
 
+#include "EUTelTripletGBLUtility.tcc"
 #endif
