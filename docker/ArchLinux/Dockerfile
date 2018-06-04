@@ -7,7 +7,7 @@ RUN pacman -S core/gcc extra/eigen extra/gsl extra/wget core/automake core/gcc-f
 
 RUN mkdir -p $ILCSOFT
 RUN cd /usr/bin && ln -sf python2 python
-RUN git clone -b dev-base-exp  https://github.com/eutelescope/ilcinstall $ILCSOFT/ilcinstall
+RUN git clone -b dev-base https://github.com/eutelescope/ilcinstall $ILCSOFT/ilcinstall
 RUN cd $ILCSOFT/ilcinstall && git status
 RUN $ILCSOFT/ilcinstall/ilcsoft-install -i -v $ILCSOFT/ilcinstall/examples/eutelescope/release-nocmake.cfg
 

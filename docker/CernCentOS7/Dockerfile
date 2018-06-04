@@ -4,7 +4,7 @@ RUN yum -y --enablerepo=centos-sclo-rh clean metadata
 RUN yum -y --enablerepo=centos-sclo-rh install eigen3-devel gsl gsl-devel wget automake gcc-c++ gcc-gfortran subversion java-1.8.0-openjdk-devel libX11-devel libXpm-devel libXft-devel libXext-devel python-devel tar make cmake which devtoolset-6-gcc-c++ rh-git29 
 
 ENV ILCSOFT /ilcsoft
-RUN ["/bin/bash", "-c", "source /opt/rh/rh-git29/enable  && git clone -b dev-base-exp https://github.com/eutelescope/ilcinstall $ILCSOFT/ilcinstall"]
+RUN ["/bin/bash", "-c", "source /opt/rh/rh-git29/enable  && git clone -b dev-base https://github.com/eutelescope/ilcinstall $ILCSOFT/ilcinstall"]
 RUN ["/bin/bash", "-c", "source /opt/rh/rh-git29/enable && cd $ILCSOFT/ilcinstall && git status"]
 RUN ["/bin/bash", "-c", "source /opt/rh/rh-git29/enable && source /opt/rh/devtoolset-6/enable && $ILCSOFT/ilcinstall/ilcsoft-install -i -v $ILCSOFT/ilcinstall/examples/eutelescope/release-standalone.cfg"]
 

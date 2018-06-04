@@ -5,7 +5,7 @@ ENV ILCSOFT /ilcsoft
 RUN apt update && apt-get -y install libeigen3-dev build-essential gfortran cmake subversion default-jdk libgsl0-dev libxpm-dev libxft-dev libx11-dev libxext-dev python-dev git wget 
 
 RUN mkdir -p $ILCSOFT
-RUN git clone -b dev-base-exp https://github.com/eutelescope/ilcinstall $ILCSOFT/ilcinstall
+RUN git clone -b dev-base https://github.com/eutelescope/ilcinstall $ILCSOFT/ilcinstall
 RUN cd $ILCSOFT/ilcinstall && git status
 RUN $ILCSOFT/ilcinstall/ilcsoft-install -i -v $ILCSOFT/ilcinstall/examples/eutelescope/release-standalone.cfg
 

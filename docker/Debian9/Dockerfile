@@ -1,4 +1,4 @@
-FROM ubuntu:17.10
+FROM debian:9.4
 
 ENV ILCSOFT /ilcsoft
 
