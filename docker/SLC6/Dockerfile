@@ -6,7 +6,7 @@ RUN yum -y install rh-git29 python27 devtoolset-6 eigen3-devel java-1.8.0-openjd
 
 RUN mkdir -p $ILCSOFT
 
-RUN ["/bin/bash", "-c", "source /opt/rh/rh-git29/enable && git clone -b dev-findpython-exp https://github.com/eutelescope/ilcinstall $ILCSOFT/ilcinstall"]
+RUN ["/bin/bash", "-c", "source /opt/rh/rh-git29/enable && git clone -b dev-findpython https://github.com/eutelescope/ilcinstall $ILCSOFT/ilcinstall"]
 RUN ["/bin/bash", "-c", "source /opt/rh/rh-git29/enable && cd $ILCSOFT/ilcinstall && git status"]
 RUN ["/bin/bash", "-c", "source /opt/rh/python27/enable && source /opt/rh/rh-git29/enable && source /opt/rh/devtoolset-6/enable && $ILCSOFT/ilcinstall/ilcsoft-install -i -v $ILCSOFT/ilcinstall/examples/eutelescope/release-standalone.cfg"]
 

@@ -11,7 +11,7 @@ ENV PYTHON_LIBRARY /usr/lib64/python2.7/config/libpython2.7.so
 
 RUN mkdir -p $ILCSOFT
 RUN cd /usr/bin && ln -sf python2 python
-RUN git clone -b dev-base-exp  https://github.com/eutelescope/ilcinstall $ILCSOFT/ilcinstall
+RUN git clone -b dev-base  https://github.com/eutelescope/ilcinstall $ILCSOFT/ilcinstall
 RUN cd $ILCSOFT/ilcinstall && git status
 RUN $ILCSOFT/ilcinstall/ilcsoft-install -i -v $ILCSOFT/ilcinstall/examples/eutelescope/release-nocmake.cfg
 
