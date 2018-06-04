@@ -4,11 +4,6 @@ ENV ILCSOFT /ilcsoft
 
 RUN zypper --non-interactive install gcc gcc-c++ eigen3-devel gsl-devel wget automake gcc-fortran subversion git java-11-openjdk-devel libX11-devel libXpm-devel libXft-devel libXext-devel python2-devel cmake which make tar
 
-RUN ls /usr/include/python2.7 
-
-ENV PYTHON_INCLUDE_DIR /usr/include/python2.7 
-ENV PYTHON_LIBRARY /usr/lib64/python2.7/config/libpython2.7.so
-
 RUN mkdir -p $ILCSOFT
 RUN cd /usr/bin && ln -sf python2 python
 RUN git clone -b dev-base  https://github.com/eutelescope/ilcinstall $ILCSOFT/ilcinstall
