@@ -12,6 +12,7 @@ env:
  - DOCKER_IMG=merualhemio/eutel-archlinux
  - DOCKER_IMG=merualhemio/eutel-fedora28
  - DOCKER_IMG=merualhemio/eutel-ubuntu18
+ - DOCKER_IMG=merualhemio/merualhemio/eutel-opensuse-tumbleweed
  
 script:
  - docker pull $DOCKER_IMG
