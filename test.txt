@@ -1,0 +1,2464 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<!-- ?xml-stylesheet type="text/xsl" href="http://ilcsoft.desy.de/marlin/marlin.xsl"? -->
+<!-- ?xml-stylesheet type="text/xsl" href="marlin.xsl"? -->
+
+<!-- Loading shared library : /work2/tbisanz/ilcsoft_test_may_18/v01-19-02/Eutelescope/master/lib/libEutelescope.so.1.0.0 (libEutelescope.so)-->
+<!-- Loading shared library : /work2/tbisanz/ilcsoft_test_may_18/v01-19-02/Eutelescope/master/lib/libEutelProcessors.so.1.0.0 (libEutelProcessors.so)-->
+<!-- Loading shared library : /work2/tbisanz/ilcsoft_test_may_18/v01-19-02/Eutelescope/master/lib/libEutelReaders.so.1.0.0 (libEutelReaders.so)-->
+<!-- Loading shared library : /work2/tbisanz/ilcsoft_test_may_18/v01-19-02/Eutelescope/master/external/eudaq/v1.8.0/lib/libNativeReader.so (libNativeReader.so)-->
+
+<!--##########################################
+    #                                        #
+    #     Example steering file for marlin   #
+    #                                        #
+    ##########################################-->
+
+
+<marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
+ <execute>
+  <XXprocessor name="MyEventSelector"/> 
+  <XXif condition="MyEventSelector">    
+   <processor name="MyAIDAProcessor"/>
+   <processor name="MyTestProcessor"/>  
+   <processor name="MyLCIOOutputProcessor"/>  
+  </XXif>                                 
+ </execute>
+
+ <global>
+  <parameter name="LCIOInputFiles"> simjob.slcio </parameter>
+  <!-- limit the number of processed records (run+evt): -->  
+  <parameter name="MaxRecordNumber" value="5001" />  
+  <parameter name="SkipNEvents" value="0" />  
+  <parameter name="SupressCheck" value="false" />  
+  <parameter name="AllowToModifyEvent" value="false" />  
+  <parameter name="GearXMLFile"> gear_ldc.xml </parameter>  
+  <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> DEBUG  </parameter> 
+  <parameter name="RandomSeed" value="1234567890" />
+  <!-- optionally limit the collections that are read from the input file: -->  
+  <!--parameter name="LCIOReadCollectionNames">MCParticle PandoraPFOs</parameter-->
+ </global>
+
+ <processor name="MyAIDAProcessor" type="AIDAProcessor">
+ <!--Processor that handles AIDA files. Creates on directory per processor.  Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
+  <!-- compression of output file 0: false >0: true (default) -->
+  <parameter name="Compress" type="int">1 </parameter>
+  <!-- filename without extension-->
+  <parameter name="FileName" type="string">aida_file </parameter>
+  <!-- type of output file root (default) or xml )-->
+  <parameter name="FileType" type="string">root </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyAlibavaCalibration" type="AlibavaCalibration">
+ <!--AlibavaCalibration analyses calibration files.-->
+  <!--Input Collection Name-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">rawdata </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyAlibavaClustering" type="AlibavaClustering">
+ <!--AlibavaClustering does lots of things. It clusters non-zero supressed strip sensor data and can perform FIR filtering beforehand.-->
+  <!--The cluster collection name-->
+  <parameter name="ClusterCollectionName" type="string">clustercollection </parameter>
+  <!--The cluster SNR cut-->
+  <parameter name="ClusterCut" type="float">1.5 </parameter>
+  <!--The filename to read/write coefficients to-->
+  <!--parameter name="FIRCoefficientFile" type="string">filtercoefficients.txt </parameter-->
+  <!--If filtering is used, it is saved into this collection-->
+  <!--parameter name="FIRCollectionName" type="string">filteredcollection </parameter-->
+  <!--Input data collection name-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">data </parameter>
+  <!--The maximum accepted clustersize in the sensitive Alibava direction. This should be larger or equal to MinClustersize!-->
+  <!--parameter name="MaxClustersize" type="int">99 </parameter-->
+  <!--The minimum accepted clustersize in the sensitive Alibava direction. This must be larger or equal to 1!-->
+  <!--parameter name="MinClustersize" type="int">1 </parameter-->
+  <!--The noise collection name-->
+  <parameter name="NoiseCollectionName" type="string">finalnoise </parameter>
+  <!--The filename where the final noise is stored-->
+  <parameter name="NoiseInputFile" type="string">finalnoise.slcio </parameter>
+  <!--The sensor polarity: -1 for negative cluster signals (p-type sensor), 1 for positive cluster signals (n-type sensor)-->
+  <parameter name="Polarity" type="int">-1 </parameter>
+  <!--FIR filter coefficients from a previous iteration can be read if this is switched on.-->
+  <!--parameter name="ReadFIRCoefficients" type="bool">false </parameter-->
+  <!--The seed SNR cut-->
+  <parameter name="SeedCut" type="float">3 </parameter>
+  <!--The sparse cluster collection name, this needs to be original_zsdata for hitmaker-->
+  <parameter name="SparseClusterCollectionName" type="string">original_zsdata </parameter>
+  <!--The unsensitive axis of our strip sensor-->
+  <parameter name="UnsensitiveAxis" type="string">x </parameter>
+  <!--A FIR (finite impulse response) filter can be applied to the input data to minimise crosstalk. This switches the filter on.-->
+  <!--parameter name="UseFIRFilter" type="bool">false </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--From the eta distribution coefficients for filtering are calculated. This writes them to disk.-->
+  <!--parameter name="WriteFIRCoefficients" type="bool">false </parameter-->
+  <!--For compatibility, two zero coefficients can be written to file.-->
+  <!--parameter name="WriteZeroCoefficients" type="bool">false </parameter-->
+</processor>
+
+ <processor name="MyAlibavaCommonModeSubtraction" type="AlibavaCommonModeSubtraction">
+ <!--AlibavaCommonModeSubtraction subtracts the provided common mode values from the input reco (pedestal subtracted) data. -->
+  <!--Common mode collection name, better not to change-->
+  <parameter name="CommonModeCollectionName" type="string">commonmode </parameter>
+  <!--Common mode error collection name, better not to change-->
+  <parameter name="CommonModeErrorCollectionName" type="string">commonmodeerror </parameter>
+  <!--Input reco data collection name-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">recodata </parameter>
+  <!--Output data collection name-->
+  <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerData">recodata_cmmd </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyAlibavaConstantCommonModeProcessor" type="AlibavaConstantCommonModeProcessor">
+ <!--AlibavaConstantCommonModeProcessor computes the common mode values of each chip and their errors-->
+  <!--Common mode collection name, better not to change-->
+  <!--parameter name="CommonModeCollectionName" type="string">commonmode </parameter-->
+  <!--The number of iterations that should be used in common mode calculation-->
+  <!--parameter name="CommonModeErrorCalculationIteration" type="int">3 </parameter-->
+  <!--Common mode error collection name, better not to change-->
+  <!--parameter name="CommonModeErrorCollectionName" type="string">commonmodeerror </parameter-->
+  <!--Input data collection name (should be pedestal subtracted!)-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">recodata </parameter>
+  <!--The method with which to calculate the common mode. Options are: constant or slope-->
+  <!--parameter name="Method" type="string">slope </parameter-->
+  <!--The limit to the deviation of noise. The data that exceeds this deviation will be considered as signal and not be included in common mode error calculation-->
+  <!--parameter name="NoiseDeviation" type="float">2.5 </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyAlibavaConverter" type="AlibavaConverter">
+ <!--Reads data streams produced by an ALiBaVa and produces the corresponding LCIO output-->
+  <!--Selection of chip that you want to store data from. Chip numbers start from 0. If not set, all data (i.e. chip 0 and 1) will be stored-->
+  <!--parameter name="ChipSelection" type="IntVec"> </parameter-->
+  <!--The geometry identification number-->
+  <parameter name="GeoID" type="int">0 </parameter>
+  <!--This is the input file name-->
+  <parameter name="InputFileName" type="string">runXXXXXX.dat </parameter>
+  <!--Name of the collection-->
+  <parameter name="RawChipHeaderCollectionName" type="string" lcioOutType="TrackerData">chipheader </parameter>
+  <!--Name of the collection-->
+  <parameter name="RawDataCollectionName" type="string" lcioOutType="TrackerData">rawdata </parameter>
+  <!--Run number of file (formatted)-->
+  <parameter name="RunNumber" type="string">0 </parameter>
+  <!--The event number that AlibavaConverter should start storing. Default value is -1, in this case it will store every event-->
+  <!--parameter name="StartEventNum" type="int">-1 </parameter-->
+  <!--The event number that AlibavaConverter should stop storing. Default value is -1, in this case it will store every event-->
+  <!--parameter name="StopEventNum" type="int">-1 </parameter-->
+  <!--Alibava stores a pedestal and a noise set in the run header. These values are not used in the rest of the analysis, so it is optional to store them. By default they will not be stored, but it you want you can set this variable to true to store them in the header of the slcio file-->
+  <!--parameter name="StoreHeaderPedestalNoise" type="bool">false </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyAlibavaDataPlotter" type="AlibavaDataPlotter">
+ <!--AlibavaDataPlotter reads TrackerData of Alibava data and produces histograms-->
+  <!--The filename where the calibration values stored-->
+  <!--parameter name="CalibrationInputFile" type="string">notset </parameter-->
+  <!--Charge calibration collection name, better not to change-->
+  <!--parameter name="ChargeCalibrationCollectionName" type="string">notset </parameter-->
+  <!--Choose specific events to plot.-->
+  <!--parameter name="EventsToPlot" type="IntVec"> </parameter-->
+  <!--Input raw data collection name-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">rawdata </parameter>
+  <!--In case this variable is set, all signals will be multipled by this value.-->
+  <!--parameter name="MultiplySignalBy" type="float">1 </parameter-->
+  <!--Noise collection name, better not to change-->
+  <!--parameter name="NoiseCollectionName" type="string">notset </parameter-->
+  <!--Pedestal collection name, better not to change-->
+  <!--parameter name="PedestalCollectionName" type="string">notset </parameter-->
+  <!--The filename where the pedestal and noise values stored-->
+  <!--parameter name="PedestalInputFile" type="string">notset </parameter-->
+  <!--In case this variable is set (say x), x percent of all events will be plotted randomly. The number should be between 0 and 100-->
+  <!--parameter name="PlotSomePercentOfEvents" type="float">0 </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyAlibavaFilter" type="AlibavaFilter">
+ <!--AlibavaFilter filters input data to eliminate crosstalk and non-gaussian noise (Random Ghost Hits)!-->
+  <!--First correction value-->
+  <!--parameter name="Coefficient1" type="float">0.0373 </parameter-->
+  <!--Second correction value-->
+  <!--parameter name="Coefficient2" type="float">0.0162 </parameter-->
+  <!--The filename to read/write coefficients to-->
+  <!--parameter name="FIRCoefficientFile" type="string">filtercoefficients.txt </parameter-->
+  <!--Input reco data collection name-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">recodata_cmmd </parameter>
+  <!--The maximum ADC in a channel to be allowed. Higher ADCs will be set to 0 if RGH filtering is used.-->
+  <!--parameter name="MaxRGHADC" type="float">150 </parameter-->
+  <!--The maximum signal a channel is allowed to have. This factor times a channels noise is the limit. Should be larger than the cluster seed limit, otherwise no clusters will be found.-->
+  <!--parameter name="MaxSignalFactor" type="float">10 </parameter-->
+  <!--The highest number of cluster candidates in an event allowed before discarding it in RGH filtering.-->
+  <!--parameter name="MaxSuspects" type="int">1 </parameter-->
+  <!--The minimum noise a channel has to have to consider RGH filtering. Set to 0 to do all good channels.-->
+  <!--parameter name="MinRGHnoise" type="float">6 </parameter-->
+  <!--The ratio of noise in negative ADCs required for a neighbour to cut a seed.-->
+  <!--parameter name="NegativeNoise" type="float">2 </parameter-->
+  <!--Noise collection name-->
+  <parameter name="NoiseCollectionName" type="string">finalnoise </parameter>
+  <!--The filename where the final noise is stored-->
+  <parameter name="NoiseInputFile" type="string">finalnoise.slcio </parameter>
+  <!--Output filtered data collection name-->
+  <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerData">recodata_filtered </parameter>
+  <!--Set to true to use RGH filtering instead of FIR filtering. RGH filtering assumes a polarity of +1!-->
+  <parameter name="RGHfilter" type="bool">false </parameter>
+  <!--FIR filter coefficients from a previous iteration can be read if this is switched on.-->
+  <!--parameter name="ReadFIRCoefficients" type="bool">false </parameter-->
+  <!--The used cluster seed cut, used to determine the number of cluster candidates in RGH filtering-->
+  <!--parameter name="SeedCut" type="float">5 </parameter-->
+  <!--Set to true to use Coefficient1 and Coefficient2 or read from file. This should be sufficient for most applications. If false, then the (define nc N) filter coefficients in the source code will be used.-->
+  <parameter name="UseSimpleMethod" type="bool">true </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyAlibavaHeader" type="AlibavaHeader">
+ <!--AlibavaHeader does some analysis of the beetle chip header data to determine cross-talk. Input of raw header and channel data expected!-->
+  <!--Header collection name-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">chipheader </parameter>
+  <!--The filename to write coefficients to-->
+  <!--parameter name="OutputFile" type="string"> </parameter-->
+  <!--The collection the data of channel 0 is stored in-->
+  <parameter name="RawDataCollection" type="string">rawdata </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyAlibavaMerger" type="AlibavaMerger">
+ <!--AlibavaMerger merges the Alibava cluster data stream with the telescope data stream.-->
+  <!--The name of the alibava collection we want to merge-->
+  <parameter name="AlibavaCollectionName" type="string">original_zsdata </parameter>
+  <!--The name of the secondary alibava collection we want to merge-->
+  <parameter name="AlibavaCollectionName2" type="string">clusters </parameter>
+  <!--The filename where the alibava data is stored-->
+  <parameter name="AlibavaFile" type="string">alibava.slcio </parameter>
+  <!--The event count the Alibava is behind (read: earlier than) the Telescope. 1 means alibava event 1 == telescope event 0, etc.-->
+  <parameter name="EventdifferenceAlibava" type="int">0 </parameter>
+  <!--The event count the telescope is behind (read: earlier than) the Alibava. 1 means alibava event 0 == telescope event 1, etc.-->
+  <parameter name="EventdifferenceTelescope" type="int">0 </parameter>
+  <!--The name of the output collection we want to create-->
+  <parameter name="OutputCollectionName" type="string">original_zsdata </parameter>
+  <!--The name of the secondary output collection we want to create-->
+  <parameter name="OutputCollectionName2" type="string">combinedcluster </parameter>
+  <!--The name of the tertiary output collection we want to create-->
+  <parameter name="OutputCollectionName3" type="string">zsdata_m26 </parameter>
+  <!--The verbosity of the merged hits: 0 to only write events where we have a hit in both systems, 1 for events where we at least have one alibava hit, 2 for events where we at least have one telescope hit and 3 for writing out all events, even if there are no hits in them-->
+  <parameter name="OutputMode" type="int">0 </parameter>
+  <!--Option to decrement/increment the telescope plane sensor id-->
+  <parameter name="PlaneShiftTelescope" type="int">0 </parameter>
+  <!--The name of the telescope collection we want to merge-->
+  <parameter name="TelescopeCollectionName" type="string">original_zsdata </parameter>
+  <!--The name of the secondary telescope collection we want to merge-->
+  <parameter name="TelescopeCollectionName2" type="string">cluster_m26 </parameter>
+  <!--The filename where the telescope data is stored-->
+  <parameter name="TelescopeFile" type="string">telescope.slcio </parameter>
+  <!--The unsensitive axis of our strip sensor-->
+  <parameter name="UnsensitiveAxis" type="string">x </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyAlibavaPedestalNoiseProcessor" type="AlibavaPedestalNoiseProcessor">
+ <!--AlibavaPedestalNoiseProcessor computes the pedestal and noise values of each channel-->
+  <!--Input raw data collection name-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">rawdata </parameter>
+  <!--Noise collection name, better not to change-->
+  <!--parameter name="NoiseCollectionName" type="string">noise </parameter-->
+  <!--Pedestal collection name, better not to change-->
+  <!--parameter name="PedestalCollectionName" type="string">pedestal </parameter-->
+  <!--The filename to store the pedestal and noise values-->
+  <parameter name="PedestalOutputFile" type="string">outputped.slcio </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyAlibavaPedestalSubtraction" type="AlibavaPedestalSubtraction">
+ <!--AlibavaPedestalSubtraction subtracts the provided pedestal values from the input raw data.-->
+  <!--Input raw data collection name-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">rawdata </parameter>
+  <!--Noise collection name, better not to change-->
+  <parameter name="NoiseCollectionName" type="string">noise </parameter>
+  <!--Output data collection name-->
+  <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerData">recodata </parameter>
+  <!--Pedestal collection name, better not to change-->
+  <parameter name="PedestalCollectionName" type="string">pedestal </parameter>
+  <!--The filename where the pedestal and noise values are stored-->
+  <parameter name="PedestalInputFile" type="string">pedestal.slcio </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyAlibavaSimConverter" type="AlibavaSimConverter">
+ <!--AlibavaSimConverter converts Allpix simulated zs lcio data into 'noisy' Alibava lcio data!-->
+  <!--Selection of chip that you want to store data from. Chip numbers start from 0. If not set, all data (i.e. chip 0 and 1) will be stored-->
+  <!--parameter name="ChipSelection" type="IntVec"> </parameter-->
+  <!--Mean of the commonmode noise to be added to each strip if CommonmodeSigma > 0-->
+  <!--parameter name="CommonmodeMean" type="double">0 </parameter-->
+  <!--Sigma of the commonmode noise to be added to each strip if > 0-->
+  <!--parameter name="CommonmodeSigma" type="double">20 </parameter-->
+  <!--Header name-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">Det350 </parameter>
+  <!--Mean of the Gaussian noise to be added to each strip if NoiseSigma > 0-->
+  <!--parameter name="NoiseMean" type="double">0 </parameter-->
+  <!--Sigma of the Gaussian noise to be added to each strip if > 0-->
+  <!--parameter name="NoiseSigma" type="double">5 </parameter-->
+  <!--The collection we output-->
+  <parameter name="OutputCollectionName" type="string">rawdata </parameter>
+  <!--Mean of the pedestal noise to be added to each strip if PedestalSigma > 0-->
+  <!--parameter name="PedestalMean" type="double">500 </parameter-->
+  <!--Sigma of the pedestal noise to be added to each strip if > 0-->
+  <!--parameter name="PedestalSigma" type="double">10 </parameter-->
+  <!--Scale all signals by this factor-->
+  <!--parameter name="Ratio" type="double">1 </parameter-->
+  <!--Mean of the event TDC to be set-->
+  <!--parameter name="TDCMean" type="double">20 </parameter-->
+  <!--Sigma of the event TDC to be set-->
+  <!--parameter name="TDCSigma" type="double">5 </parameter-->
+  <!--The unsensitive axis of our strip sensor-->
+  <parameter name="UnsensitiveAxis" type="string">x </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyAlibavaTimeCutProcessor" type="AlibavaTimeCutProcessor">
+ <!--AlibavaTimeCutProcessor masks events if their TDC time value is not in the range specified by TimeCutMin and TimeCutMax -->
+  <!--The maximum tdc time that is acceptable to use in an Event-->
+  <parameter name="TimeCutMax" type="float">100 </parameter>
+  <!--The minimum tdc time that is acceptable to use in an Event-->
+  <parameter name="TimeCutMin" type="float">0 </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyCBCClustering" type="CBCClustering">
+ <!--CBCClustering clusters the CBC data stream.-->
+  <!--The name of the CBC data collection we want to write-->
+  <parameter name="CBCDataOutputCollectionName" type="string">cbc_data_output </parameter>
+  <!--The name of the CBC collection we want to read-->
+  <parameter name="CBCInputCollectionName" type="string">cbc_input </parameter>
+  <!--The name of the CBC pulse collection we want to write-->
+  <parameter name="CBCPulseOutputCollectionName" type="string">cbc_pulse_output </parameter>
+  <!--The total number of channels in the sensor-->
+  <parameter name="ChannelCount" type="int">1016 </parameter>
+  <!--The maximum allowed number of clusters in an event, events with more clusters will be discarded-->
+  <parameter name="MaxClusterCountPerEvent" type="int">4 </parameter>
+  <!--The maximum allowed cluster size, larger clusters will be discarded as noise-->
+  <parameter name="MaxClusterSize" type="int">4 </parameter>
+  <!--The unsensitive axis of the CBC-->
+  <parameter name="NonSensitiveAxis" type="string">x </parameter>
+  <!--The sensor id to write-->
+  <parameter name="OutputSensorID" type="int">6 </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Zero Suppression Mode? 0 for off, 1 for first, 2 for second sensor-->
+  <parameter name="ZSMode" type="int">0 </parameter>
+</processor>
+
+ <processor name="MyCBCHitRecovery" type="CBCHitRecovery">
+ <!--CBCHitRecovery recovers the real hit positions from the virtual dut and track.-->
+  <!--The name of the CBC data collection we want to write-->
+  <parameter name="CBCDataOutputCollectionName" type="string">cbc_data_output </parameter>
+  <!--The name of the CBC collection we want to read-->
+  <parameter name="CBCInputCollectionName" type="string">cbc_input </parameter>
+  <!--The ids of the real DUTs (has to be two)-->
+  <parameter name="CBCRealDUTsVec" type="IntVec"> </parameter>
+  <!--The id of the virtual CBC DUT-->
+  <parameter name="CBCVirtualDUTId" type="int">0 </parameter>
+  <!--The name of the fithits collection we want to read-->
+  <parameter name="InputFitHitsCollectionName" type="string">fithits_input </parameter>
+  <!--The name of the Tracks collection we want to read-->
+  <parameter name="InputTrackCollectionName" type="string">tracks_input </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyCBCSimConverter" type="CBCSimConverter">
+ <!--CBCSimConverter converts allpix simulated data into tracker-data lcio data!-->
+  <!--The number of channels in the system-->
+  <parameter name="ChanCount" type="int">254 </parameter>
+  <!--Input collection name-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">Det351 </parameter>
+  <!--The unsensitive axis of the CBC-->
+  <parameter name="NonSensitiveAxis" type="string">x </parameter>
+  <!--The collection we output-->
+  <parameter name="OutputCollectionName" type="string">rawdata </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyCMSBuncher" type="CMSBuncher">
+ <!--CMSBuncher groups events together, based on LCIO time stamps. This mimics a long read-out frame.-->
+  <!--The name of the telescope collection we want to read-->
+  <parameter name="InputCollectionName" type="string">collection1 </parameter>
+  <!--The name of the output collection we want to create-->
+  <parameter name="OutputCollectionName" type="string">collection2 </parameter>
+  <!--The time of a frame. Unit is micro seconds-->
+  <parameter name="SingleFrameTime" type="int">115 </parameter>
+  <!--The filename where the telescope data is stored-->
+  <parameter name="TelescopeFile" type="string">dummy_telescope.slcio </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyCMSMerger" type="CMSMerger">
+ <!--CMSMerger merges the CBC data stream with the telescope data stream, based on events or TLU time stamps.-->
+  <!--The name of the CBC data collection we want to merge - sensor 1-->
+  <parameter name="CBCDataCollectionName1" type="string">cbc_collection1d </parameter>
+  <!--The name of the CBC data collection we want to merge - sensor 2-->
+  <parameter name="CBCDataCollectionName2" type="string">cbc_collection2d </parameter>
+  <!--The name of the CBC pulse collection we want to merge - sensor 1-->
+  <parameter name="CBCPulseCollectionName1" type="string">cbc_collection1p </parameter>
+  <!--The name of the CBC pulse collection we want to merge - sensor 2-->
+  <parameter name="CBCPulseCollectionName2" type="string">cbc_collection2p </parameter>
+  <!--The sensorID of the telescope plane to use for correlation plots-->
+  <parameter name="CorrelationPlane" type="int">2 </parameter>
+  <!--Merge events based on event number (true) or on event time (false)-->
+  <parameter name="EventMerge" type="bool">true </parameter>
+  <!--The name of the output collection we want to create-->
+  <parameter name="OutputCollectionName" type="string">output_collection1 </parameter>
+  <!--The name of the secondary output collection we want to create-->
+  <parameter name="OutputCollectionName2" type="string">output_collection2 </parameter>
+  <!--The name of the tertiary output collection we want to create-->
+  <parameter name="OutputCollectionName3" type="string">output_collection3 </parameter>
+  <!--Read this number of CBC events before reading the first telescope event-->
+  <parameter name="ReadCBCAhead" type="int">0 </parameter>
+  <!--Read this number of telescope events before reading the first CBC event-->
+  <parameter name="ReadTelescopeAhead" type="int">0 </parameter>
+  <!--The name of the telescope collection we want to merge-->
+  <parameter name="TelescopeCollectionName" type="string">telescope_collection1 </parameter>
+  <!--The name of the secondary telescope collection we want to merge-->
+  <parameter name="TelescopeCollectionName2" type="string">telescope_collection2 </parameter>
+  <!--The filename where the telescope data is stored-->
+  <parameter name="TelescopeFile" type="string">dummy_telescope.slcio </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyCMSStubGenerator" type="CMSStubGenerator">
+ <!--CMSStubGenerator merges the two CBC sensors' hits into stubs, based on the cluster positions. In modes 1 and 2, it can also drop either sensor's hits to have only one sensor remaining.-->
+  <!--This is the first DUT sensorID.-->
+  <parameter name="DUTPlane1" type="int">6 </parameter>
+  <!--This is the second DUT sensorID.-->
+  <parameter name="DUTPlane2" type="int">7 </parameter>
+  <!--Input hit collection name. Hits should be in global coordinates and pre-aligned-->
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit">  </parameter>
+  <!--Keep the DUT hits in mode 0 after creating subs or discard them?-->
+  <parameter name="KeepDUTHits" type="bool">true </parameter>
+  <!--Maximum distance in channels for two clusters to constitute a stub-->
+  <parameter name="MaxResidual" type="float">0 </parameter>
+  <!--0 to merge hits. 1 to drop hits from plane 1, 2 to drop hits from plane 2-->
+  <parameter name="Mode" type="int">0 </parameter>
+  <!--Output hit collection name-->
+  <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit">  </parameter>
+  <!--SensorID of the output stub.-->
+  <parameter name="OutputSensorID" type="int">8 </parameter>
+  <!--Do we require an event to have the stub flag set to create an offline stub? 1 for on, 0 for off.-->
+  <parameter name="RequireStub" type="int">1 </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyConditionsProcessor" type="ConditionsProcessor">
+ <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
+  <!--Initialization of a conditions database handler-->
+  <!--parameter name="DBCondHandler" type="StringVec">conditionsName /lccd/myfolder HEAD  </parameter-->
+  <!--Initialization of a conditions db file handler-->
+  <!--parameter name="DBFileHandler" type="StringVec">conditionsName conditions.slcio collectionName  </parameter-->
+  <!--Initialization string for conditions database-->
+  <parameter name="DBInit" type="string">localhost:lccd_test:calvin:hobbes </parameter>
+  <!--Initialization of a data file handler-->
+  <!--parameter name="DataFileHandler" type="StringVec">conditionsName  </parameter-->
+  <!--Initialization of a simple conditions file handler-->
+  <!--parameter name="SimpleFileHandler" type="StringVec">conditionsName conditions.slcio collectionName  </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelAPIXTbTrackTuple" type="EUTelAPIXTbTrackTuple">
+ <!--Prepare tbtrack style n-tuple with track fit results-->
+  <!--Int std::vector containing the IDs of the DUTs-->
+  <parameter name="DUTIDs" type="IntVec"> </parameter>
+  <!--DUT zero surpressed data colection name-->
+  <parameter name="DutZsColName" type="string">zsdata_apix </parameter>
+  <!--Name of the input Track collection-->
+  <parameter name="InputTrackCollectionName" type="string" lcioInType="Track">fittracks </parameter>
+  <!--Name of the plane-wide hit-data hit collection-->
+  <parameter name="InputTrackerHitCollectionName" type="string" lcioInType="TrackerHit">fitpoints </parameter>
+  <!--Path/File where root-file should be stored-->
+  <parameter name="OutputPath" type="string">NTuple.root </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelAlignGBL" type="EUTelAlignGBL">
+ <!--EUTelAlignGBL uses the MILLE program to write data files for MILLEPEDE II.-->
+  <!--Number of alignment constants used. Available mode are: 
+XYZShifts - shifts in X and Y
+XYShiftsRotZ - shifts in X and Y and rotation around the Z axis,
+XYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis-->
+  <!--parameter name="AlignMode" type="string">XYShiftsRotZ </parameter-->
+  <!--Name of the Millepede binary file.-->
+  <!--parameter name="BinaryFilename" type="string">mille.bin </parameter-->
+  <!--The three sensors used as the downstream triplet.-->
+  <!--parameter name="DownstreamTriplet" type="IntVec">3 4 5  </parameter-->
+  <!--Beam energy [GeV]-->
+  <parameter name="Ebeam" type="double">4 </parameter>
+  <!--Exclude planes from fit according to their sensor ids.-->
+  <!--parameter name="ExcludePlanes" type="IntVec"> </parameter-->
+  <!--Fix sensor planes in the fit according to their sensor ids.-->
+  <!--parameter name="FixedPlanes" type="IntVec"> </parameter-->
+  <!--Generate a steering file for the pede program.-->
+  <!--parameter name="GeneratePedeSteerfile" type="int">0 </parameter-->
+  <!--Hit collections name-->
+  <parameter name="HitCollectionName" type="StringVec" lcioInType="TrackerHit">corrhits  </parameter>
+  <!--Bool: 1/0 (yes/no)-->
+  <parameter name="IsFirstAlignStep" type="int">0 </parameter>
+  <!--The last plane (z-ordered) which still should be attached to the upstream triplet.-->
+  <!--parameter name="LastUpstreamSensor" type="int">2 </parameter-->
+  <!--Maximal number of track candidates.-->
+  <!--parameter name="MaxTrackCandidates" type="int">2000 </parameter-->
+  <!--Maximal number of track candidates (Total).-->
+  <!--parameter name="MaxTrackCandidatesTotal" type="int">10000000 </parameter-->
+  <!--Name of the steering file for the pede program.-->
+  <!--parameter name="PedeSteerfileName" type="string">steer_mille.txt </parameter-->
+  <!--X Resolution of sensors (z-ordered).-->
+  <!--parameter name="ResolutionX" type="FloatVec"> </parameter-->
+  <!--Y Resolution of sensors (z-ordered).-->
+  <!--parameter name="ResolutionY" type="FloatVec"> </parameter-->
+  <!--The three sensors used as the upstream triplet.-->
+  <!--parameter name="UpstreamTriplet" type="IntVec">0 1 2  </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Downstream triplet residual cut [um]-->
+  <!--parameter name="driCut" type="double">0.4 </parameter-->
+  <!--Global factor to Highland formula-->
+  <parameter name="kappa" type="double">1 </parameter>
+  <!--Upstream-Downstream Track matching cut [um]-->
+  <!--parameter name="sixCut" type="double">0.6 </parameter-->
+  <!--t(d)riplet slope cut [radian]-->
+  <!--parameter name="slopeCut" type="double">0.01 </parameter-->
+  <!--Upstream triplet residual cut [um]-->
+  <!--parameter name="triCut" type="double">0.3 </parameter-->
+</processor>
+
+ <processor name="MyEUTelAutoPedestalNoiseProcessor" type="EUTelAutoPedestalNoiseProcessor">
+ <!--EUTelAutoPedestalNoiseProcessor produces initial pedestal / noise / status with user provided values-->
+  <!--The initial value of noise (one value for detector)-->
+  <!--parameter name="InitNoiseValue" type="FloatVec">1 1 1 1 1 1  </parameter-->
+  <!--The initial value of pedestal (one value for detector)-->
+  <!--parameter name="InitPedestalValue" type="FloatVec">0 0 0 0 0 0  </parameter-->
+  <!--The maximum pixel along x (default 255, one value per detector)-->
+  <!--parameter name="MaxXVector" type="IntVec">255 255 255 255 255 255  </parameter-->
+  <!--The maximum pixel along y (default 255, one value per detector)-->
+  <!--parameter name="MaxYVector" type="IntVec">255 255 255 255 255 255  </parameter-->
+  <!--The minimum pixel along x (default 0, one value per detector)-->
+  <!--parameter name="MinXVector" type="IntVec">0 0 0 0 0 0  </parameter-->
+  <!--The minimum pixel along y (default 0, one value per detector)-->
+  <!--parameter name="MinYVector" type="IntVec">0 0 0 0 0 0  </parameter-->
+  <!--Noise local collection-->
+  <parameter name="NoiseCollectionName" type="string" lcioOutType="TrackerData">noise </parameter>
+  <!--Pedestal local collection-->
+  <parameter name="PedestalCollectionName" type="string" lcioOutType="TrackerData">pedestal </parameter>
+  <!--The sensorID for the generated collection (one per detector)-->
+  <!--parameter name="SensorIDVec" type="IntVec">0 1 2 3 4 5  </parameter-->
+  <!--Pixel status collection-->
+  <parameter name="StatusCollectionName" type="string" lcioOutType="TrackerRawData">status </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelCalculateEtaProcessor" type="EUTelCalculateEtaProcessor">
+ <!--EUTelCalculateEtaProcessor calculates the eta function for a given set of clusters-->
+  <!--Input cluster collection-->
+  <parameter name="ClusterCollectionName" type="string" lcioInType="TrackerPulse">cluster </parameter>
+  <!--To use only kGoodQuality write 0 here-->
+  <parameter name="ClusterQualitySelection" type="int">0 </parameter>
+  <!--Write FULL: full cluster, NxMPixel: for a NxM sub-cluster, NPixel: to use only N pixel-->
+  <parameter name="ClusterTypeSelection" type="string">FULL </parameter>
+  <!--Set the name of the Eta collection along x-->
+  <parameter name="EtaXCollectionName" type="string">xEtaCondition </parameter>
+  <!--Set the name of the Eta collection along y-->
+  <parameter name="EtaYCollectionName" type="string">yEtaCondition </parameter>
+  <!--Write here how many events you want to use for eta calculation (-1 for all)-->
+  <parameter name="EventNumber" type="int">-1 </parameter>
+  <!--The number of pixel with the highest signal (only for NPixel)-->
+  <parameter name="NPixelSize" type="int">5 </parameter>
+  <!--Write here in how many bins the seed pixel should be divided (x and y)-->
+  <parameter name="NumberOfBins" type="IntVec">1000 1000  </parameter>
+  <!--The size along x and y of the subcluster (only for NxMPixel)-->
+  <parameter name="NxMPixelClusterSize" type="IntVec">3 3  </parameter>
+  <!--This is the name of the output condition file-->
+  <parameter name="OutputEtaFileName" type="string">etafile </parameter>
+  <!--reject single pixel cluster. 1=reject, 0=keep, 2=reject clusters with two pixels, where the second pixel is not diagonal to the seed. -->
+  <!--parameter name="RejectSinglePixelCluster" type="int">0 </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelCalibrateEventProcessor" type="EUTelCalibrateEventProcessor">
+ <!--EUTelCalibrateEventProcessor subtracts the pedestal value from the input data-->
+  <!--Name of the output calibrated data collection-->
+  <parameter name="CalibratedDataCollectionName" type="string" lcioOutType="TrackerData">data </parameter>
+  <!--Flag to switch on (1) or off (0) the detector debug histogram filling-->
+  <parameter name="DebugHistoFilling" type="bool">false </parameter>
+  <!--This is the name of the histogram information file-->
+  <parameter name="HistoInfoFileName" type="string">histoinfo.xml </parameter>
+  <!--Threshold of pixel SNR for hit rejection-->
+  <parameter name="HitRejectionCut" type="float">3.5 </parameter>
+  <!--Maximum allowed number of rejected pixels per row (only with RowWise)-->
+  <parameter name="MaxNoOfRejectedPixelPerRow" type="int">25 </parameter>
+  <!--Maximum allowed number of rejected pixel per event-->
+  <parameter name="MaxNoOfRejectedPixels" type="int">3000 </parameter>
+  <!--Maximum allowed number of skipped rows (only with RowWise)-->
+  <parameter name="MaxNoOfSkippedRow" type="int">15 </parameter>
+  <!--Noise from the condition file-->
+  <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData">noise </parameter>
+  <!--Pedestal from the condition file-->
+  <parameter name="PedestalCollectionName" type="string" lcioInType="TrackerData">pedestal </parameter>
+  <!--Flag to switch on the common mode suppression algorithm. 0 -> off, 1 -> full frame,  2 -> row wise-->
+  <parameter name="PerformCommonMode" type="int">1 </parameter>
+  <!--Input raw data collection-->
+  <parameter name="RawDataCollectionName" type="string" lcioInType="TrackerRawData">rawdata </parameter>
+  <!--Pixel status from the condition file-->
+  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData">status </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelClusterFilter" type="EUTelClusterFilter">
+ <!--EUTelClusterFilter is a very powerful tool. It allows to select among an input collection of TrackerPulse
+only the clusters fulfilling a certain set of selection criteria.
+The user can modify the switch on and off each selection cut and set the proper value for that via the processor parameter.-->
+  <!--This is the minimum allowed total charge in to a cluster.
+One floating point number for each sensor in the telescope-->
+  <parameter name="ClusterMinTotalCharge" type="FloatVec">90 75 80  </parameter>
+  <!--This is the minimum charge that a cluster of N pixels has to have.
+The first figure has to be the number of pixels to consider in the cluster, 
+then one float number for each sensor.-->
+  <parameter name="ClusterNMinCharge" type="FloatVec">9 90 75 80  </parameter>
+  <!--This is the minimum SNR that a cluster of N pixels has to have.
+The first figure has to be the number of pixels to consider in the cluster, 
+then one float number for each sensor. Setting N = 0 is enough to disable the cut.-->
+  <parameter name="ClusterNMinSNR" type="FloatVec">9 25 21 20  </parameter>
+  <!--This is the minimum charge that a cluster of N times N pixels has to have.
+The first figure is the subcluster size in pixels (odd number), then one floating number for each 
+planes. To switch this selection off, set all numbers to zero.-->
+  <parameter name="ClusterNxNMinCharge" type="FloatVec">3 0 0 0  </parameter>
+  <!--This is the minimum SNR that a cluster of N times N pixels has to have.
+The first figure is the subcluster size in pixels (odd number), then one floating number for each 
+planes. To switch this selection off, set at least the first number to zero.-->
+  <parameter name="ClusterNxNMinSNR" type="FloatVec">3 0 0 0  </parameter>
+  <!--This is the required quality for the cluster.
+One integer number for each detector according to ClusterQuality.
+Put a negative number to disable the cut-->
+  <parameter name="ClusterQuality" type="IntVec">0 0 0  </parameter>
+  <!--This is a cut on the number of hit pixels inside the digital fixed frame
+cluster algorithm. One cut for each sensor plane.
+-->
+  <parameter name="DFFNumberOfHits" type="IntVec">0 0 0 0 0 0 0 0 0  </parameter>
+  <!--This is the input Tracker Pulse collection that should be filtered-->
+  <parameter name="InputPulseCollectionName" type="string" lcioInType="TrackerPulse">cluster </parameter>
+  <!--Define here ROI's. The first number (integer) is the detector ID.
+The other four float are xBotLeft  yBotLeft xTopRight yTopRight.
+To disable it, just put a negative number as detector ID.-->
+  <parameter name="InsideRegion" type="FloatVec">-1 10 10 40 40  </parameter>
+  <!--This is maximum allowed cluster noise.
+One floating number for each detector. Write a negative number to disable the cut-->
+  <parameter name="MaxClusterNoise" type="FloatVec">50 45 48  </parameter>
+  <!--This is the maximum allowed number of cluster per plane.
+ One integer number for each detector. Write a negative number to disable the cut-->
+  <parameter name="MaxClusterPerPlane" type="IntVec">-1 -1 -1  </parameter>
+  <!--This is the minimum required number of cluster per plane.
+One integer number for each detector. Write 0 to disable the cut-->
+  <parameter name="MinClusterPerPlane" type="IntVec">0 0 0  </parameter>
+  <!--This is the minimum allow total cluster SNR
+One floating number for each detector. Write 0 to disable the cut-->
+  <parameter name="MinTotalClusterSNR" type="FloatVec">10 12 11  </parameter>
+  <!--This is the name of the noise collection.
+The presence of this collection in the event is allowing all the noise based selection cuts-->
+  <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData">noiseDB </parameter>
+  <!--This is the output Tracker Pulse collection containing the filtered clusters-->
+  <parameter name="OutputPulseCollectionName" type="string" lcioOutType="TrackerPulse">filteredcluster </parameter>
+  <!--Define here ROI's. The first number (integer) is the detector ID.
+The other four float are xBotLeft  yBotLeft xTopRight yTopRight.
+To disable it, just put a negative number as detector ID.-->
+  <parameter name="OutsideRegion" type="FloatVec">-1 10 10 40 40  </parameter>
+  <!--Setting this to true will select only events having the same number 
+of hits for each plane.-->
+  <parameter name="SameNumberOfHits" type="bool">false </parameter>
+  <!--This is the minimum allowed charge that the seed pixel of a cluster has to have.
+One floating number for each detector-->
+  <parameter name="SeedMinCharge" type="FloatVec">20 25 21  </parameter>
+  <!--This is the minimum allowed SNR that the seed pixel of a cluster has to have.
+One floating number for each detector. Set to 0 to disable-->
+  <parameter name="SeedMinSNR" type="FloatVec">10 12 14  </parameter>
+  <!--If true, a SkipEventException is thrown if after selection
+there are no cluster left.-->
+  <!--parameter name="SkipEmptyEvent" type="bool">false </parameter-->
+  <!--This is the name of the status collection.
+The presence of this collection in the event is allowing all the noise based selection cuts-->
+  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData">statusDB </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelClusterSeparationProcessor" type="EUTelClusterSeparationProcessor">
+ <!--EUTelClusterSeparationProcessor separates merging clusters-->
+  <!--Cluster collection name -->
+  <parameter name="ClusterCollectionName" type="string" lcioInType="TrackerPulse">cluster </parameter>
+  <!--Cluster output collection name-->
+  <parameter name="ClusterOutputCollectionName" type="string" lcioOutType="TrackerPulse">splitcluster </parameter>
+  <!--Minimum distance allowed between separated clusters (0 == only touching clusters)-->
+  <parameter name="MinimumDistance" type="float">0 </parameter>
+  <!--Select which algorithm to use for cluster separation-->
+  <parameter name="SeparationAlgorithm" type="string">FlagOnly </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelClusteringProcessor" type="EUTelClusteringProcessor">
+ <!--EUTelClusteringProcessor is looking for clusters into a calibrated pixel matrix.-->
+  <!--The list of cluster N to be filled.For example 7 means filling the cluster spectra with the 7 most significant pixels-->
+  <!--parameter name="ClusterN" type="IntVec">4 9 14 19 25  </parameter-->
+  <!--The list of cluster NxN to be filled.For example 3 means filling the 3x3 histogram spectrum-->
+  <!--parameter name="ClusterNxN" type="IntVec">3 5  </parameter-->
+  <!--Select here which algorithm should be used for clustering.
+Available algorithms are:
+-> FixedFrame: for custer with a given size
+-> BrickedCluster: for bricked clustering on raw data-->
+  <parameter name="ClusteringAlgo" type="string">FixedFrame </parameter>
+  <!--Select herewith the type of the data format you are expecting from the sensors.
+Available types of the data format:
+-> Analog: smooth distribution of pixel ADC values from Min to Max
+-> Digital: descrete distribution of pixel ADC values from Min to Max
+-> Binary: only two values of the signal - 0 and 1
+-->
+  <parameter name="DataFormatType" type="string">Binary </parameter>
+  <!--The list of sensor ids that have to be excluded from the clustering.-->
+  <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
+  <!--Threshold in SNR for cluster identification-->
+  <parameter name="FFClusterCut" type="float">3 </parameter>
+  <!--Maximum allowed cluster size along x (only odd numbers)-->
+  <parameter name="FFClusterSizeX" type="int">5 </parameter>
+  <!--Maximum allowed cluster size along y (only odd numbers)-->
+  <parameter name="FFClusterSizeY" type="int">5 </parameter>
+  <!--Threshold in SNR for seed pixel identification-->
+  <parameter name="FFSeedCut" type="float">4.5 </parameter>
+  <!--This is the name of the histogram information file-->
+  <parameter name="HistoInfoFileName" type="string">histoinfo.xml </parameter>
+  <!--Switch on or off the histogram filling-->
+  <parameter name="HistogramFilling" type="bool">true </parameter>
+  <!--This is the name of the hotpixel collection-->
+  <!--parameter name="HotPixelCollectionName" type="string">hotpixel_m26 </parameter-->
+  <!--Input calibrated data not zero suppressed collection name-->
+  <parameter name="NZSDataCollectionName" type="string" lcioInType="TrackerData">data </parameter>
+  <!--Noise (input) collection name-->
+  <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData">noise </parameter>
+  <!--Cluster (output) collection name-->
+  <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse">cluster </parameter>
+  <!--Threshold in SNR for clusters contained in ZS data-->
+  <parameter name="SparseClusterCut" type="float">3 </parameter>
+  <!--Minimum distance between sparsified pixel ( touching == sqrt(2)) -->
+  <parameter name="SparseMinDistance" type="float">0 </parameter>
+  <!--Minimum distance squared between sparsified pixel ( touching == 2) -->
+  <parameter name="SparseMinDistanceSquared" type="int">2 </parameter>
+  <!--Threshold in SNR for seed pixel contained in ZS data-->
+  <parameter name="SparseSeedCut" type="float">4.5 </parameter>
+  <!--Pixel status (input) collection name-->
+  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData">status </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Select here which algorithm should be used for clustering.
+Available algorithms are:
+-> SparseCluster: for cluster in ZS frame
+-> SparseCluster2: for cluster in ZS frame with better performance
+-> FixedFrame: for cluster with a given size
+-> DFixedFrame: for digital cluster with a given size
+-> BrickedCluster: for bricked clustering on zs data
+-->
+  <parameter name="ZSClusteringAlgo" type="string">SparseCluster </parameter>
+  <!--Input of Zero Suppressed data-->
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData">zsdata </parameter>
+</processor>
+
+ <processor name="MyEUTelCopyPedestalProcessor" type="EUTelCopyPedestalProcessor">
+ <!--EUTelCopyPedestalProcessor copies the condition data into local writable collections-->
+  <!--Noise local collection-->
+  <parameter name="NoiseCollectionName" type="string" lcioOutType="TrackerData">noise </parameter>
+  <!--Noise input condition-->
+  <parameter name="NoiseConditionName" type="string" lcioInType="TrackerData">noiseDB </parameter>
+  <!--Pedestal local collection-->
+  <parameter name="PedestalCollectionName" type="string" lcioOutType="TrackerData">pedestal </parameter>
+  <!--Pedestal input condition-->
+  <parameter name="PedestalConditionName" type="string" lcioInType="TrackerData">pedestalDB </parameter>
+  <!--Pixel status collection-->
+  <parameter name="StatusCollectionName" type="string" lcioOutType="TrackerRawData">status </parameter>
+  <!--Status input condition-->
+  <parameter name="StatusConditionName" type="string" lcioInType="TrackerRawData">statusDB </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelCorrelator" type="EUTelCorrelator">
+ <!--EUTelCorrelator fills histograms with correlation plots-->
+  <!--Minimum allowed cluster charge to be taken into account for the correlation plots (default = 2)-->
+  <parameter name="ClusterChargeMinimum" type="int">2 </parameter>
+  <!--How many events are needed to get reasonable correlation plots (and Offset DB)? (default=1000)-->
+  <parameter name="Events" type="int">1000 </parameter>
+  <!--SensorID of fixed plane-->
+  <!--parameter name="FixedPlane" type="int">0 </parameter-->
+  <!--Name of histogram info xml file-->
+  <!--parameter name="HistogramInfoFilename" type="string">histoinfo.xml </parameter-->
+  <!--This is the name of the hot pixel collection to be saved into the output slcio file-->
+  <!--parameter name="HotPixelCollectionName" type="string">hotpixel </parameter-->
+  <!--List of cluster collections-->
+  <parameter name="InputClusterCollections" type="StringVec" lcioInType="TrackerPulse"> </parameter>
+  <!--Hit collection name-->
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit">hit </parameter>
+  <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
+  <!--parameter name="MinNumberOfCorrelatedHits" type="int">5 </parameter-->
+  <!--Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <!--parameter name="ResidualsXMax" type="FloatVec">10 10 10 10 10 10  </parameter-->
+  <!--Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <!--parameter name="ResidualsXMin" type="FloatVec">-10 -10 -10 -10 -10 -10  </parameter-->
+  <!--Maximal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <!--parameter name="ResidualsYMax" type="FloatVec">10 10 10 10 10 10  </parameter-->
+  <!--Minimal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <!--parameter name="ResidualsYMin" type="FloatVec">-10 -10 -10 -10 -10 -10  </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelDUTHistograms" type="EUTelDUTHistograms">
+ <!--Analysis of DUT performance based on the analytic track fit results-->
+  <!--Alignment corrections for DUT: shift (in mm) in X, Y and rotation around Z-->
+  <parameter name="DUTalignment" type="FloatVec">0 0 0  </parameter>
+  <!--DUT sensor pitch in X-->
+  <parameter name="DUTpitchX" type="double">0.0184 </parameter>
+  <!--DUT sensor pitch in Y-->
+  <parameter name="DUTpitchY" type="double">0.0184 </parameter>
+  <!--Maximum allowed distance between fit and matched DUT hit in [mm]-->
+  <parameter name="DistMax" type="double">0.1 </parameter>
+  <!--Name of the histogram information file-->
+  <parameter name="HistoInfoFileName" type="string">histoinfo.xml </parameter>
+  <!--Name of the input DUT hit collection-->
+  <parameter name="InputFitHitCollectionName" type="string" lcioInType="TrackerHit">dummy </parameter>
+  <!--Name of the input DUT hit collection-->
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit">hit </parameter>
+  <!--Name of the input DUT hit collection-->
+  <parameter name="InputRecHitCollectionName" type="string" lcioInType="TrackerHit">localHit </parameter>
+  <!--Name of the input Track collection-->
+  <parameter name="InputTrackCollectionName" type="string" lcioInType="Track">testfittracks </parameter>
+  <!--Id of telescope layer which should be used as DUT-->
+  <parameter name="ManualDUTid" type="int">0 </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--cluster size X cut -->
+  <!--parameter name="cluSizeXCut" type="int">-1 </parameter-->
+  <!--cluster size Y cut -->
+  <!--parameter name="cluSizeYCut" type="int">-1 </parameter-->
+  <!--number of hit on a track with _cluSizeX cluster size -->
+  <!--parameter name="trackNCluXCut" type="int">0 </parameter-->
+  <!--number of hit on a track with _cluSizeY cluster size -->
+  <!--parameter name="trackNCluYCut" type="int">0 </parameter-->
+</processor>
+
+ <processor name="MyEUTelDUTPosition" type="EUTelDUTPosition">
+ <!--EUTelDUTPosition gets the final position of sensors and a DUT in the global coordinate system. This can then be used for futher analysis, or just for information -->
+  <!--The DUT position will be written to this file!-->
+  <!--parameter name="DUTPositionFile" type="string">fail2.txt </parameter-->
+  <!--The collection name after the final alignment-->
+  <!--parameter name="FinalCollection" type="string">AlignedHit10 </parameter-->
+  <!--The sensor ID of the DUT.-->
+  <!--parameter name="ManualDUTID" type="int">6 </parameter-->
+  <!--The sorted sensor position of the DUT (usually 3).-->
+  <!--parameter name="ManualDUTPosition" type="int">3 </parameter-->
+  <!--The sensors' position will be written to this file!-->
+  <!--parameter name="OutputFile" type="string">fail.txt </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelDafAlign" type="EUTelDafAlign">
+ <!--This processor preforms track reconstruction. The tracks are used for alignment of a partially aligned system.-->
+  <!--Names of alignment collections, should be in same order as application-->
+  <!--parameter name="AlignmentCollectionNames" type="StringVec"> </parameter-->
+  <!--This is the name of the alignment collection to be saved into the slcio file-->
+  <!--parameter name="AlignmentConstantCollectionName" type="string">alignment </parameter-->
+  <!--Name of LCIO db file where alignment constantds will be stored-->
+  <!--parameter name="AlignmentConstantLCIOFile" type="string">alignment.slcio </parameter-->
+  <!--Name of binary input file for Millepede.-->
+  <!--parameter name="BinaryFilename" type="string">mille.bin </parameter-->
+  <!--DAF fitter: The cutoff value for a measurement to be included in the fit.-->
+  <!--parameter name="Chi2Cutoff" type="float">300 </parameter-->
+  <!--List of sensor IDs for the DUT planes. Used to make the decision on whether ro accept the track or not. These planes are not used in track finder, and not in the track fitter unless option 'useDutsInFit' is set.-->
+  <!--parameter name="DutPlanes" type="IntVec"> </parameter-->
+  <!--Sigma of telescope resolution in the global X plane,-->
+  <!--parameter name="DutResolutionX" type="float">115.4 </parameter-->
+  <!--Sigma of telescope resolution in the global Y plane,-->
+  <!--parameter name="DutResolutionY" type="float">14.4 </parameter-->
+  <!--Beam energy [GeV], used to calculate amount of scatter-->
+  <!--parameter name="Ebeam" type="float">120 </parameter-->
+  <!--Track finding: The maximum allowed normalized distance between to hits in the xy plane for inclusion in track candidate.-->
+  <!--parameter name="FinderRadius" type="float">300 </parameter-->
+  <!--Names of input hit collections-->
+  <parameter name="HitCollectionName" type="StringVec">hit  </parameter>
+  <!--Should plots be made and filled?-->
+  <!--parameter name="MakePlots" type="bool">false </parameter-->
+  <!--Maximum allowed global chi2/ndof-->
+  <!--parameter name="MaxChi2OverNdof" type="float">9999 </parameter-->
+  <!--Maximum allowed local X of hit. All clusters containing hits outside will be discarded from alignment.-->
+  <!--parameter name="MaxCol" type="IntVec"> </parameter-->
+  <!--Maximum allowed local Y of hit. All clusters containing hits outside will be discarded from alignment.-->
+  <!--parameter name="MaxRow" type="IntVec"> </parameter-->
+  <!--maximum devianve for dx/dz in CKF track finder-->
+  <!--parameter name="MaxXdxDeviance" type="float">0.01 </parameter-->
+  <!--maximum devianve for dy/dz in CKF track finder-->
+  <!--parameter name="MaxYdxDeviance" type="float">0.01 </parameter-->
+  <!--Minimum allowed local X of hit. All clusters containing hits outside will be discarded from alignment.-->
+  <!--parameter name="MinCol" type="IntVec"> </parameter-->
+  <!--Minimum allowed local Y of hit. All clusters containing hits outside will be discarded from alignment.-->
+  <!--parameter name="MinRow" type="IntVec"> </parameter-->
+  <!--How many DUT hits do we need in order to accept track?-->
+  <!--parameter name="NDutHits" type="int">0 </parameter-->
+  <!--dx/dz assumed by track finder-->
+  <!--parameter name="NominalDxdz" type="float">0 </parameter-->
+  <!--dy/dz assumed by track finder-->
+  <!--parameter name="NominalDydz" type="float">0 </parameter-->
+  <!--Name of the steering file for the pede program.-->
+  <!--parameter name="PedeSteerfileName" type="string">steer_mille.txt </parameter-->
+  <!--Radiation lengths of planes, ordered by z-pos..-->
+  <!--parameter name="RadiationLengths" type="FloatVec"> </parameter-->
+  <!--How many telescope planes do we require to be included in the fit?-->
+  <!--parameter name="RequireNTelPlanes" type="float">0 </parameter-->
+  <!--Max X for residual cuts. All sensors shoule be included, same order as parameter DutPlanes-->
+  <!--parameter name="ResidualXMax" type="FloatVec"> </parameter-->
+  <!--Min X for residual cuts. All sensors shoule be included, same order as parameter DutPlanes-->
+  <!--parameter name="ResidualXMin" type="FloatVec"> </parameter-->
+  <!--Max Y for residual cuts. All sensors shoule be included, same order as parameter DutPlanes-->
+  <!--parameter name="ResidualYMax" type="FloatVec"> </parameter-->
+  <!--Min Y for residual cuts. All sensors shoule be included, same order as parameter DutPlanes-->
+  <!--parameter name="ResidualYMin" type="FloatVec"> </parameter-->
+  <!--Sigma resolution of planes, ordered by z-pos.-->
+  <!--parameter name="ResolutionX" type="FloatVec"> </parameter-->
+  <!--Sigma resolution of planes, ordered by z-pos.-->
+  <!--parameter name="ResolutionY" type="FloatVec"> </parameter-->
+  <!--Build steering file, binary input file, and execute the pede program.-->
+  <!--parameter name="RunPede" type="bool">true </parameter-->
+  <!--List of sensor IDs to where scales of X and Y axis should be free-->
+  <!--parameter name="Scale" type="IntVec"> </parameter-->
+  <!--List of sensor IDs to where scales of X axis should be free-->
+  <!--parameter name="ScaleX" type="IntVec"> </parameter-->
+  <!--List of sensor IDs to where scales of Y axis should be free-->
+  <!--parameter name="ScaleY" type="IntVec"> </parameter-->
+  <!--Sigma of telescope resolution in the global X plane,-->
+  <!--parameter name="TelResolutionX" type="float">5.3 </parameter-->
+  <!--Sigma of telescope resolution in the global Y plane,-->
+  <!--parameter name="TelResolutionY" type="float">5.3 </parameter-->
+  <!--List of sensor IDs for the telescope planes. These planes are used for the track finder, and track fitter.-->
+  <parameter name="TelescopePlanes" type="IntVec"> </parameter>
+  <!--List of sensor IDs to where translations should be free-->
+  <!--parameter name="Translate" type="IntVec"> </parameter-->
+  <!--List of sensor IDs to where translations should be free in the x direction-->
+  <!--parameter name="TranslateX" type="IntVec"> </parameter-->
+  <!--List of sensor IDs to where translations should be free in the y direction-->
+  <!--parameter name="TranslateY" type="IntVec"> </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--List of sensor IDs to where rotation over z-axis should be free-->
+  <!--parameter name="ZRotate" type="IntVec"> </parameter-->
+  <!--Name of the clusterfinder which should be used, available are: simpleCluster and combinatorialKF-->
+  <parameter name="clusterfinder" type="string">simpleCluster </parameter>
+  <!--List of hit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
+  <parameter name="mccollections" type="StringVec"> </parameter>
+</processor>
+
+ <processor name="MyEUTelDafFitter" type="EUTelDafFitter">
+ <!--This processor preforms track reconstruction. The tracks are as final track fit for analysis.-->
+  <!--Should plots be made and filled?-->
+  <!--parameter name="AddToLCIO" type="bool">true </parameter-->
+  <!--Names of alignment collections, should be in same order as application-->
+  <!--parameter name="AlignmentCollectionNames" type="StringVec"> </parameter-->
+  <!--DAF fitter: The cutoff value for a measurement to be included in the fit.-->
+  <!--parameter name="Chi2Cutoff" type="float">300 </parameter-->
+  <!--List of sensor IDs for the DUT planes. Used to make the decision on whether ro accept the track or not. These planes are not used in track finder, and not in the track fitter unless option 'useDutsInFit' is set.-->
+  <!--parameter name="DutPlanes" type="IntVec"> </parameter-->
+  <!--Sigma of telescope resolution in the global X plane,-->
+  <!--parameter name="DutResolutionX" type="float">115.4 </parameter-->
+  <!--Sigma of telescope resolution in the global Y plane,-->
+  <!--parameter name="DutResolutionY" type="float">14.4 </parameter-->
+  <!--Beam energy [GeV], used to calculate amount of scatter-->
+  <!--parameter name="Ebeam" type="float">120 </parameter-->
+  <!--Track finding: The maximum allowed normalized distance between to hits in the xy plane for inclusion in track candidate.-->
+  <!--parameter name="FinderRadius" type="float">300 </parameter-->
+  <!--Set this to true if you want DUTs to be included in the track fit-->
+  <!--parameter name="FitDuts" type="bool">false </parameter-->
+  <!--Names of input hit collections-->
+  <parameter name="HitCollectionName" type="StringVec">hit  </parameter>
+  <!--Should plots be made and filled?-->
+  <!--parameter name="MakePlots" type="bool">false </parameter-->
+  <!--Maximum allowed global chi2/ndof-->
+  <!--parameter name="MaxChi2OverNdof" type="float">9999 </parameter-->
+  <!--maximum devianve for dx/dz in CKF track finder-->
+  <!--parameter name="MaxXdxDeviance" type="float">0.01 </parameter-->
+  <!--maximum devianve for dy/dz in CKF track finder-->
+  <!--parameter name="MaxYdxDeviance" type="float">0.01 </parameter-->
+  <!--How many DUT hits do we need in order to accept track?-->
+  <!--parameter name="NDutHits" type="int">0 </parameter-->
+  <!--dx/dz assumed by track finder-->
+  <!--parameter name="NominalDxdz" type="float">0 </parameter-->
+  <!--dy/dz assumed by track finder-->
+  <!--parameter name="NominalDydz" type="float">0 </parameter-->
+  <!--Radiation lengths of planes, ordered by z-pos..-->
+  <!--parameter name="RadiationLengths" type="FloatVec"> </parameter-->
+  <!--How many telescope planes do we require to be included in the fit?-->
+  <!--parameter name="RequireNTelPlanes" type="float">0 </parameter-->
+  <!--Sigma resolution of planes, ordered by z-pos.-->
+  <!--parameter name="ResolutionX" type="FloatVec"> </parameter-->
+  <!--Sigma resolution of planes, ordered by z-pos.-->
+  <!--parameter name="ResolutionY" type="FloatVec"> </parameter-->
+  <!--Sigma of telescope resolution in the global X plane,-->
+  <!--parameter name="TelResolutionX" type="float">5.3 </parameter-->
+  <!--Sigma of telescope resolution in the global Y plane,-->
+  <!--parameter name="TelResolutionY" type="float">5.3 </parameter-->
+  <!--List of sensor IDs for the telescope planes. These planes are used for the track finder, and track fitter.-->
+  <parameter name="TelescopePlanes" type="IntVec"> </parameter>
+  <!--Collection name for fitted tracks-->
+  <parameter name="TrackCollectionName" type="string" lcioOutType="Track">fittracks </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Name of the clusterfinder which should be used, available are: simpleCluster and combinatorialKF-->
+  <parameter name="clusterfinder" type="string">simpleCluster </parameter>
+  <!--List of hit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
+  <parameter name="mccollections" type="StringVec"> </parameter>
+</processor>
+
+ <processor name="MyEUTelDafMaterial" type="EUTelDafMaterial">
+ <!--This processor preforms track reconstruction. The tracks are used to estimate material thicknesses and measurement resolutions.-->
+  <!--Names of alignment collections, should be in same order as application-->
+  <!--parameter name="AlignmentCollectionNames" type="StringVec"> </parameter-->
+  <!--DAF fitter: The cutoff value for a measurement to be included in the fit.-->
+  <!--parameter name="Chi2Cutoff" type="float">300 </parameter-->
+  <!--List of sensor IDs for the DUT planes. Used to make the decision on whether ro accept the track or not. These planes are not used in track finder, and not in the track fitter unless option 'useDutsInFit' is set.-->
+  <!--parameter name="DutPlanes" type="IntVec"> </parameter-->
+  <!--Sigma of telescope resolution in the global X plane,-->
+  <!--parameter name="DutResolutionX" type="float">115.4 </parameter-->
+  <!--Sigma of telescope resolution in the global Y plane,-->
+  <!--parameter name="DutResolutionY" type="float">14.4 </parameter-->
+  <!--Beam energy [GeV], used to calculate amount of scatter-->
+  <!--parameter name="Ebeam" type="float">120 </parameter-->
+  <!--Track finding: The maximum allowed normalized distance between to hits in the xy plane for inclusion in track candidate.-->
+  <!--parameter name="FinderRadius" type="float">300 </parameter-->
+  <!--Names of input hit collections-->
+  <parameter name="HitCollectionName" type="StringVec">hit  </parameter>
+  <!--Should plots be made and filled?-->
+  <!--parameter name="MakePlots" type="bool">false </parameter-->
+  <!--Maximum allowed global chi2/ndof-->
+  <!--parameter name="MaxChi2OverNdof" type="float">9999 </parameter-->
+  <!--Maximum allowed local X of hit. All clusters containing hits outside will be discarded from alignment.-->
+  <!--parameter name="MaxCol" type="IntVec"> </parameter-->
+  <!--Maximum allowed local Y of hit. All clusters containing hits outside will be discarded from alignment.-->
+  <!--parameter name="MaxRow" type="IntVec"> </parameter-->
+  <!--maximum devianve for dx/dz in CKF track finder-->
+  <!--parameter name="MaxXdxDeviance" type="float">0.01 </parameter-->
+  <!--maximum devianve for dy/dz in CKF track finder-->
+  <!--parameter name="MaxYdxDeviance" type="float">0.01 </parameter-->
+  <!--Minimum allowed local X of hit. All clusters containing hits outside will be discarded from alignment.-->
+  <!--parameter name="MinCol" type="IntVec"> </parameter-->
+  <!--Minimum allowed local Y of hit. All clusters containing hits outside will be discarded from alignment.-->
+  <!--parameter name="MinRow" type="IntVec"> </parameter-->
+  <!--How many DUT hits do we need in order to accept track?-->
+  <!--parameter name="NDutHits" type="int">0 </parameter-->
+  <!--dx/dz assumed by track finder-->
+  <!--parameter name="NominalDxdz" type="float">0 </parameter-->
+  <!--dy/dz assumed by track finder-->
+  <!--parameter name="NominalDydz" type="float">0 </parameter-->
+  <!--Plane Index for thickness estimator-->
+  <!--parameter name="RadLengthIndex" type="IntVec"> </parameter-->
+  <!--Radiation lengths of planes, ordered by z-pos..-->
+  <!--parameter name="RadiationLengths" type="FloatVec"> </parameter-->
+  <!--How many telescope planes do we require to be included in the fit?-->
+  <!--parameter name="RequireNTelPlanes" type="float">0 </parameter-->
+  <!--Plane Index for sigma X estimator-->
+  <!--parameter name="ResXIndex" type="IntVec"> </parameter-->
+  <!--Plane Index for sigma Y estimator-->
+  <!--parameter name="ResYIndex" type="IntVec"> </parameter-->
+  <!--Max X for residual cuts. All sensors shoule be included, same order as parameter DutPlanes-->
+  <!--parameter name="ResidualXMax" type="FloatVec"> </parameter-->
+  <!--Min X for residual cuts. All sensors shoule be included, same order as parameter DutPlanes-->
+  <!--parameter name="ResidualXMin" type="FloatVec"> </parameter-->
+  <!--Max Y for residual cuts. All sensors shoule be included, same order as parameter DutPlanes-->
+  <!--parameter name="ResidualYMax" type="FloatVec"> </parameter-->
+  <!--Min Y for residual cuts. All sensors shoule be included, same order as parameter DutPlanes-->
+  <!--parameter name="ResidualYMin" type="FloatVec"> </parameter-->
+  <!--Sigma resolution of planes, ordered by z-pos.-->
+  <!--parameter name="ResolutionX" type="FloatVec"> </parameter-->
+  <!--Sigma resolution of planes, ordered by z-pos.-->
+  <!--parameter name="ResolutionY" type="FloatVec"> </parameter-->
+  <!--Plane Index for scale X estimator-->
+  <!--parameter name="ScaleXIndex" type="IntVec"> </parameter-->
+  <!--Plane Index for scale Y estimator-->
+  <!--parameter name="ScaleYIndex" type="IntVec"> </parameter-->
+  <!--Plane Index for shift X estimator-->
+  <!--parameter name="ShiftXIndex" type="IntVec"> </parameter-->
+  <!--Plane Index for shift Y estimator-->
+  <!--parameter name="ShiftYIndex" type="IntVec"> </parameter-->
+  <!--Sigma of telescope resolution in the global X plane,-->
+  <!--parameter name="TelResolutionX" type="float">5.3 </parameter-->
+  <!--Sigma of telescope resolution in the global Y plane,-->
+  <!--parameter name="TelResolutionY" type="float">5.3 </parameter-->
+  <!--List of sensor IDs for the telescope planes. These planes are used for the track finder, and track fitter.-->
+  <parameter name="TelescopePlanes" type="IntVec"> </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Plane Index for Z Pos estimator-->
+  <!--parameter name="ZPosIndex" type="IntVec"> </parameter-->
+  <!--Plane Index for Z Rot estimator-->
+  <!--parameter name="ZRotIndex" type="IntVec"> </parameter-->
+  <!--Name of the clusterfinder which should be used, available are: simpleCluster and combinatorialKF-->
+  <parameter name="clusterfinder" type="string">simpleCluster </parameter>
+  <!--List of hit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
+  <parameter name="mccollections" type="StringVec"> </parameter>
+</processor>
+
+ <processor name="MyEUTelExampleProcessorCorrelator" type="EUTelExampleProcessorCorrelator">
+ <!--EUTelExampleProcessorCorrelator fills histograms with correlation plots between the telescope hits and the DUT ones-->
+  <!--DUT hit collection name-->
+  <parameter name="DUTHitCollection" type="string" lcioInType="TrackerHit">hit_DUT </parameter>
+  <!--Telescope hit collection name-->
+  <parameter name="TelescopeHitCollection" type="string" lcioInType="TrackerHit">hit </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelFitHistograms" type="EUTelFitHistograms">
+ <!--Histogram track fit results-->
+  <!--Flag for producing additional histograms for alignment consistency check-->
+  <parameter name="AlignCheckHistograms" type="bool">false </parameter>
+  <!--ID of the layer used for beam based alignment check-->
+  <parameter name="BeamReferenceID" type="int">0 </parameter>
+  <!--Print out every DebugEnevtCount event-->
+  <parameter name="DebugEventCount" type="int">100 </parameter>
+  <!--Name of the histogram information file-->
+  <parameter name="HistoInfoFileName" type="string">histoinfo.xml </parameter>
+  <!--Name of the input Track collection-->
+  <parameter name="InputCollectionName" type="string" lcioInType="Track">testfittracks </parameter>
+  <!--IDs of two layers used to check internal telescope alignment-->
+  <parameter name="TelescopeReferenceIDs" type="IntVec">0 1  </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelFitTuple" type="EUTelFitTuple">
+ <!--Prepare n-tuple with track fit results-->
+  <!--Alignment corrections for DUT: shift in X, Y and rotation around Z-->
+  <parameter name="DUTalignment" type="FloatVec">0 0 0  </parameter>
+  <!--Maximum allowed distance between fit and matched DUT hit-->
+  <parameter name="DistMax" type="double">0.1 </parameter>
+  <!--Name of the input Track collection-->
+  <parameter name="InputCollectionName" type="string" lcioInType="Track">telescopetracks </parameter>
+  <!--Name of the input DUT hit collection-->
+  <parameter name="InputDUTCollectionName" type="string" lcioInType="TrackerHit">duthit </parameter>
+  <!--Id of sensor layer which should be used as DUT-->
+  <parameter name="ManualDUTid" type="int">0 </parameter>
+  <!--Value used for missing measurements-->
+  <parameter name="MissingValue" type="double">-100 </parameter>
+  <!--Flag for manual DUT selection-->
+  <parameter name="UseManualDUT" type="bool">false </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelFitTupleAlibava" type="EUTelFitTupleAlibava">
+ <!--Prepare n-tuple with track fit results. Do some DUT analysis.-->
+  <!--To compare matched hit positions against reconstructed clusters we need the name of the Alibava cluster collection.-->
+  <!--parameter name="AlibavaClusterCollectionName" type="string">alibava_clusters </parameter-->
+  <!--Is there an Alibava DUT? If so, the alibava header data and reco data will also be written into the ntuple.-->
+  <parameter name="AlibavaOutput" type="bool">true </parameter>
+  <!--If we are outputing the alibava data, this is the collection it is stored in.-->
+  <!--parameter name="AlibavaRecoCollectionName" type="string">recodata_cmmd </parameter-->
+  <!--Alibava data from before a filtering step-->
+  <!--parameter name="AlibavaUnfilteredCollectionName" type="string">recodata_cmmd </parameter-->
+  <!--The hit collection name of previously applied alignments, e.g. 'AlignedHit'-->
+  <!--parameter name="AlignedHitPrefix" type="string">AlignedHit </parameter-->
+  <!--To reconstruct the local DUT coordinates, all alignment collection names which have been applied must be entered here. The order should correspond to their application, i.e.: alignment1 alignment2 etc.-->
+  <!--parameter name="AlignmentCollectionName" type="StringVec"> </parameter-->
+  <!--These coordinates will be read from the gear file and used to position the DUT in the telescope and determine the track impact position. 0 to continue with a coordinate as it is in the input file collection, 1 to load the corresponding shift or rotation from the gear file. If the DUT is rotated, the coordinate should be switched on! Coordinates are: (X, Y, Z, ZY, ZX, XY).-->
+  <parameter name="DUTalignment" type="FloatVec">0 0 0 0 0 0  </parameter>
+  <!--Maximum allowed distance in mm between fit and matched DUT hit in X.-->
+  <parameter name="DistMax_X" type="double">0.1 </parameter>
+  <!--Maximum allowed distance in mm between fit and matched DUT hit in Y.-->
+  <parameter name="DistMax_Y" type="double">0.1 </parameter>
+  <!--This processor can provide additional alignment for the DUT from its residuals. This is the flag to switch this on.-->
+  <!--parameter name="DoAlignment" type="bool">false </parameter-->
+  <!--If the DoAlignment flag is set, set this to true to provide alignment in XY-direction (gamma). False will provide alignment in ZY-direction (alpha), if x is the unsensitive axis or in ZX-direction (beta), if y is the unsensitive axis.-->
+  <!--parameter name="DoGamma" type="bool">true </parameter-->
+  <!--Additional residual histograms are created with these fiducial cuts: Xmin, Xmax, Ymin, Ymax. All are in global coordinates and in mm.-->
+  <!--parameter name="Fiducial" type="FloatVec">-99 99 -99 99  </parameter-->
+  <!--Name of the input track collection.-->
+  <parameter name="InputCollectionName" type="string" lcioInType="Track">testfittracks </parameter>
+  <!--Name of the input DUT hit collection.-->
+  <parameter name="InputDUTCollectionName" type="string" lcioInType="TrackerHit">hit </parameter>
+  <!--The telescope layer ID of the DUT.-->
+  <parameter name="ManualDUTid" type="int">0 </parameter>
+  <!--The maximum number of tracks considered per event.-->
+  <!--parameter name="MaxTracksPerEvent" type="int">99 </parameter-->
+  <!--Value written to the ntuple for missing measurements.-->
+  <parameter name="MissingValue" type="double">-100 </parameter>
+  <!--The original hit collection name before any alignment is added.-->
+  <!--parameter name="OriginalHitCollection" type="string">PreAlignedHit2 </parameter-->
+  <!--Any pre-Prealignment applied to the original hit collection.-->
+  <!--parameter name="OriginalPreAlignment" type="string">prealignment </parameter-->
+  <!--If we want to do our own DUT alignment here, this is the filename it will be stored in.-->
+  <!--parameter name="OutputAlignment" type="string">hackalignment.slcio </parameter-->
+  <!--The polarity of our DUT. -1 for p-type, 1 for n-type-->
+  <!--parameter name="Polarity" type="int">-1 </parameter-->
+  <!--The hit collection name of previously applied prealignments, e.g. 'PreAlignedHit'-->
+  <!--parameter name="PreAlignedHitPrefix" type="string">PreAlignedHit </parameter-->
+  <!--To reconstruct the local DUT coordinates, all prealignment collection names which have been applied must be entered here. The order should correspond to their application, i.e.: prealignment1 prealignment2 etc.-->
+  <!--parameter name="PreAlignmentCollectionName" type="StringVec"> </parameter-->
+  <!--If this flag is set to true, an aligned hit from the DUT will be dealigned with the loaded alignment and prealignment collections and compared to the original DUT hit. This is only to check the correct loading and application of DUT alignment constants. DEBUG2 or lower should be set-->
+  <!--parameter name="RecheckDealignment" type="bool">false </parameter-->
+  <!--The name of the reference collection. This is needed to get the correct Z DUT position after alignments.-->
+  <!--parameter name="ReferenceCollectionName" type="string">referenceHit </parameter-->
+  <!--The hit collection name without any alignment, e.g. 'hit'-->
+  <!--parameter name="UnAlignedHitPrefix" type="string">hit </parameter-->
+  <!--If we have a strip sensor DUT, set the unsensitive axis here (x or y). This will be used for the additional alignment (if you switch it on).-->
+  <!--parameter name="UnsensitiveAxis" type="string">x </parameter-->
+  <!--Set to true to use any DUT.-->
+  <parameter name="UseManualDUT" type="bool">false </parameter>
+  <!--Subtract any pre-Prealignment applied to the original hit collection?-->
+  <!--parameter name="UseOriginalPreAlignment" type="bool">true </parameter-->
+  <!--Use an existing track fit to estimate impact position? If false, a guess will be used.-->
+  <!--parameter name="UseTrackFit" type="bool">false </parameter-->
+  <!--Use triplet from upstream telescope to estimate impact position? If false, result of UseTrackFit will be used-->
+  <!--parameter name="UseTriplet" type="bool">false </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelFixDUTAlignment" type="EUTelFixDUTAlignment">
+ <!--Does some very hacky stuff: Mode 0: creates a user-specified DUT alignment. Mode 1: creates 4 dummy hits for each telescope plane and the DUT. The total DUT alignment steps can then be applied to these hits to get the final alignment of the DUT sensor.-->
+  <!--Mode 0: DUT rotation in A.-->
+  <!--parameter name="DUTrotA" type="double">0 </parameter-->
+  <!--Mode 0: DUT rotation in B.-->
+  <!--parameter name="DUTrotB" type="double">0 </parameter-->
+  <!--Mode 0: DUT rotation in C.-->
+  <!--parameter name="DUTrotC" type="double">0 </parameter-->
+  <!--Mode 0: DUT shift in X.-->
+  <!--parameter name="DUTshiftX" type="double">0 </parameter-->
+  <!--Mode 0: DUT shift in Y.-->
+  <!--parameter name="DUTshiftY" type="double">0 </parameter-->
+  <!--Mode 0: DUT shift in Z.-->
+  <!--parameter name="DUTshiftZ" type="double">0 </parameter-->
+  <!--How many dummy events should be written?-->
+  <parameter name="EventsToWrite" type="int">1 </parameter>
+  <!--The output hit collection name (mode 1)-->
+  <!--parameter name="HitCollectionName" type="string">hit </parameter-->
+  <!--Mode 0: The sensor ID of the DUT.-->
+  <!--parameter name="ManualDUTID" type="int">6 </parameter-->
+  <!--Which mode: 0 or 1-->
+  <parameter name="Mode" type="int">1 </parameter>
+  <!--The output file to write into (both modes)-->
+  <parameter name="OutputFileName" type="string">file.slcio </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelGBLFitter" type="EUTelGBLFitter">
+ <!--Analysis for DATURA reference analysis -->
+  <!--Same as TelescopeResolution, but now only for y-direction. Also, there needs to be an additional leading NEGATIVE number for the sensorID. E.g. -20 0.5 0.7 0.4 0.3 would correspond to <sensorID (20)> <avg> <CS 1> <CS 2> <CS greater 2>, this could be followed by a further section which again starts with a negative number for the next sensorID-->
+  <!--parameter name="DUTXResolutions" type="FloatVec">0.0035 0.0035 0.0035 0.0035 0.0035 0.0035 0.0035 0.0035  </parameter-->
+  <!--Same as DUTXResolutions but in y-direction.-->
+  <!--parameter name="DUTYResolutions" type="FloatVec">0.0035 0.0035 0.0035 0.0035 0.0035 0.0035 0.0035 0.0035  </parameter-->
+  <!--Beam energy [GeV]-->
+  <parameter name="Ebeam" type="double">0 </parameter>
+  <!--Name of the input TrackerHit collection of the telescope-->
+  <parameter name="InputCollection" type="string" lcioInType="TrackerHit"> </parameter>
+  <!--Resolution parameter for each cluster size (CS) for all telescope planes. First value is average of all CSes, subsequently for CS=1 them CS=2 and so on. The last value is for all CSes larger than the previous ones. I.e. if you provide five values: <avg> <CS 1> <CS 2> <CS 3> <CS greater 3>-->
+  <parameter name="TelescopeResolution" type="FloatVec">0.0035 0.0035 0.0035 0.0035 0.0035 0.0035 0.0035 0.0035  </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--radius on DUT plane to accept match with triplet-->
+  <parameter name="eff_radius" type="double">0.1 </parameter>
+  <!--Planes to be excluded from the track fit-->
+  <parameter name="excludedPlanes" type="IntVec"> </parameter>
+  <!--global factor to Highland formula-->
+  <parameter name="kappa" type="double">1 </parameter>
+  <!--cut for matching in x coordinate in mm-->
+  <parameter name="matchingCut" type="double">0.15 </parameter>
+  <!--Cut on Prob(chi2,ndf) rejecting bad tracks with prob < cut-->
+  <parameter name="probchi2Cut" type="double">0.01 </parameter>
+  <!--cut for track slopes in x coordinate in rad-->
+  <parameter name="slopeCut" type="double">0.002 </parameter>
+  <!--Upstream/Downstream triplet residual cut [mm]-->
+  <!--parameter name="triResCut" type="double">0.1 </parameter-->
+</processor>
+
+ <processor name="MyEUTelHistogramMaker" type="EUTelHistogramMaker">
+ <!--EUTelHistogramMaker fills reference and control histograms-->
+  <!--The list of cluster N to be filled.For example 7 means filling the cluster spectra with the 7 most significant pixels-->
+  <!--parameter name="ClusterN" type="IntVec">4 9 14 19 25  </parameter-->
+  <!--The list of cluster NxN to be filled.For example 3 means filling the 3x3 histogram spectrum-->
+  <!--parameter name="ClusterNxN" type="IntVec">3 5  </parameter-->
+  <!--This is the name of the histogram information file-->
+  <parameter name="HistoInfoFileName" type="string">histoinfo.xml </parameter>
+  <!--The name of the noise collections-->
+  <parameter name="NoiseCollectionName" type="StringVec" lcioInType="TrackerData">noise  </parameter>
+  <!--Input tracker pulse collection-->
+  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse">pulse </parameter>
+  <!--The name of the status collections.-->
+  <parameter name="StatusCollectionName" type="StringVec" lcioInType="TrackerRawData">status  </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelLineFit" type="EUTelLineFit">
+ <!--EUTelLineFit will fit a straight line-->
+  <!--Alignment Constants for fifth Telescope Layer:
+ off_x, off_y, theta_x, theta_y, theta_z-->
+  <!--parameter name="AlignmentConstantsFifthLayer" type="FloatVec">0 0 0 0 0  </parameter-->
+  <!--Alignment Constants for fourth Telescope Layer:
+ off_x, off_y, theta_x, theta_y, theta_z-->
+  <!--parameter name="AlignmentConstantsFourthLayer" type="FloatVec">0 0 0 0 0  </parameter-->
+  <!--Alignment Constants for second Telescope Layer:
+ off_x, off_y, theta_x, theta_y, theta_z-->
+  <!--parameter name="AlignmentConstantsSecondLayer" type="FloatVec">0 0 0 0 0  </parameter-->
+  <!--Alignment Constants for sixth Telescope Layer:
+ off_x, off_y, theta_x, theta_y, theta_z-->
+  <!--parameter name="AlignmentConstantsSixthLayer" type="FloatVec">0 0 0 0 0  </parameter-->
+  <!--Alignment Constants for third Telescope Layer:
+ off_x, off_y, theta_x, theta_y, theta_z-->
+  <!--parameter name="AlignmentConstantsThirdLayer" type="FloatVec">0 0 0 0 0  </parameter-->
+  <!--Hit collection name-->
+  <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit">hit </parameter>
+  <!--Collection name for fitted particle hits (positions)-->
+  <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit">fithits </parameter>
+  <!--Collection name for fitted tracks-->
+  <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track">fittracks </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelMille" type="EUTelMille">
+ <!--EUTelMille uses the MILLE program to write data files for MILLEPEDE II.-->
+  <!--Number of alignment constants used. Available mode are: 
+XYShiftsRotZ - shifts in the X and Y directions and a rotation around the Z axis,
+XYShifts - only shifts in the X and Y directions
+XYShiftsAllRot - shifts in the X,Y and Z directions and rotations around all three axis-->
+  <!--parameter name="AlignMode" type="string">XYShiftsRotZ </parameter-->
+  <!--This is the name of the alignment collection to be saved into the slcio file-->
+  <!--parameter name="AlignmentConstantCollectionName" type="string">alignment </parameter-->
+  <!--This is the name of the LCIO file name with the output alignmentconstants (add .slcio)-->
+  <!--parameter name="AlignmentConstantLCIOFile" type="string">alignment.slcio </parameter-->
+  <!--Set how many hits (=planes) can be missing on a track candidate.-->
+  <!--parameter name="AllowedMissingHits" type="int">0 </parameter-->
+  <!--Name of the Millepede binary file.-->
+  <!--parameter name="BinaryFilename" type="string">mille.bin </parameter-->
+  <!--Maximal allowed distance between hits entering the fit per 10 cm space between the planes.-->
+  <!--parameter name="DistanceMax" type="float">2000 </parameter-->
+  <!--Maximal allowed distance between hits entering the fit per 10 cm space between the planes. One value for each neighbor planes. DistanceMax will be used for each pair if this vector is empty.-->
+  <!--parameter name="DistanceMaxVec" type="FloatVec"> </parameter-->
+  <!--Exclude planes from fit according to their sensor ids.-->
+  <!--parameter name="ExcludePlanes" type="IntVec"> </parameter-->
+  <!--Fixes the given alignment parameters in the fit if alignMode==3 is used. For each sensor an integer must be specified (If no value is given, then all parameters will be free). bit 0 = x shift, bit 1 = y shift, bit 2 = z shift, bit 3 = alpha, bit 4 = beta, bit 5 = gamma. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <!--parameter name="FixParameter" type="IntVec">24 24 24 24 24 24  </parameter-->
+  <!--Fix sensor planes in the fit according to their sensor ids.-->
+  <!--parameter name="FixedPlanes" type="IntVec"> </parameter-->
+  <!--Generate a steering file for the pede program.-->
+  <!--parameter name="GeneratePedeSteerfile" type="int">0 </parameter-->
+  <!--Hit collections name-->
+  <parameter name="HitCollectionName" type="StringVec" lcioInType="TrackerHit">corrhits  </parameter>
+  <!--This is the name of the hot pixel collection to be saved into the output slcio file-->
+  <!--parameter name="HotPixelCollectionName" type="string"> </parameter-->
+  <!--Selects the source of input hits.
+0 - hits read from hitfile and simple straight line trackfinding will be  performed internally. 
+1 - hits read from output of tracking processor. 
+2 - Test mode. Simple internal simulation and simple trackfinding. 
+3 - Mixture of a track collection from the telescope and hit collections for the DUT (only one DUT layer can be used unfortunately)-->
+  <!--parameter name="InputMode" type="int">0 </parameter-->
+  <!--Maximal number of track candidates in a event.-->
+  <!--parameter name="MaxTrackCandidates" type="int">2000 </parameter-->
+  <!--Stop processor after this maximum number of track candidates (Total) is reached.-->
+  <!--parameter name="MaxTrackCandidatesTotal" type="int">10000000 </parameter-->
+  <!--Remove Mimosa26 clusters with a charge (i.e. number of fired pixels in cluster) below or equal to this value-->
+  <!--parameter name="MimosaClusterChargeMin" type="int">1 </parameter-->
+  <!--Use only events with one hit in every plane.-->
+  <!--parameter name="OnlySingleHitEvents" type="bool">false </parameter-->
+  <!--Use only events with one track candidate.-->
+  <!--parameter name="OnlySingleTrackEvents" type="bool">false </parameter-->
+  <!--Name of the steering file for the pede program.-->
+  <!--parameter name="PedeSteerfileName" type="string">steer_mille.txt </parameter-->
+  <!--FOR EXPERTS: List of commands that should be included in the pede steering file. Use '\' to seperate options and introduce a line break.-->
+  <!--parameter name="PedeSteeringAdditionalCmds" type="StringVec"> </parameter-->
+  <!--Start values for the alignment for the angle alpha.-->
+  <!--parameter name="PedeUserStartValuesAlpha" type="FloatVec">0 0 0 0 0 0  </parameter-->
+  <!--Start values for the alignment for the angle beta.-->
+  <!--parameter name="PedeUserStartValuesBeta" type="FloatVec">0 0 0 0 0 0  </parameter-->
+  <!--Start values for the alignment for the angle gamma.-->
+  <!--parameter name="PedeUserStartValuesGamma" type="FloatVec">0 0 0 0 0 0  </parameter-->
+  <!--Start values for the alignment for shifts in the X direction.-->
+  <!--parameter name="PedeUserStartValuesX" type="FloatVec">0 0 0 0 0 0  </parameter-->
+  <!--Start values for the alignment for shifts in the Y direction.-->
+  <!--parameter name="PedeUserStartValuesY" type="FloatVec">0 0 0 0 0 0  </parameter-->
+  <!--Start values for the alignment for shifts in the Z direction.-->
+  <!--parameter name="PedeUserStartValuesZ" type="FloatVec">0 0 0 0 0 0  </parameter-->
+  <!--Maximal values of the hit residuals in the X direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <!--parameter name="ResidualsXMax" type="FloatVec">0 0 0 0 0 0  </parameter-->
+  <!--Minimal values of the hit residuals in the X direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <!--parameter name="ResidualsXMin" type="FloatVec">0 0 0 0 0 0  </parameter-->
+  <!--Maximal values of the hit residuals in the Y direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <!--parameter name="ResidualsYMax" type="FloatVec">0 0 0 0 0 0  </parameter-->
+  <!--Minimal values of the hit residuals in the Y direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <!--parameter name="ResidualsYMin" type="FloatVec">0 0 0 0 0 0  </parameter-->
+  <!--X resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <!--parameter name="ResolutionX" type="FloatVec">10 10 10 10 10 10  </parameter-->
+  <!--Y resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <!--parameter name="ResolutionY" type="FloatVec">10 10 10 10 10 10  </parameter-->
+  <!--Z resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <!--parameter name="ResolutionZ" type="FloatVec">10 10 10 10 10 10  </parameter-->
+  <!--Execute the pede program using the generated steering file.-->
+  <!--parameter name="RunPede" type="bool">true </parameter-->
+  <!--(default) Resolution of the telescope for Millepede (sigma_x=sigma_y) used only if plane dependent resolution is set inconsistently.-->
+  <!--parameter name="TelescopeResolution" type="float">3 </parameter-->
+  <!--Rotation around the x axis of the sensors in test mode (to be determined by the alignment).-->
+  <!--parameter name="TestModeSensorAlpha" type="FloatVec">0 0 0 0 0 0  </parameter-->
+  <!--Rotation around the y axis of the sensors in test mode (to be determined by the alignment).-->
+  <!--parameter name="TestModeSensorBeta" type="FloatVec">0 0 0 0 0 0  </parameter-->
+  <!--Rotation around the z axis of the sensors in test mode (to be determined by the alignment).-->
+  <!--parameter name="TestModeSensorGamma" type="FloatVec">0 0 0 0 0 0  </parameter-->
+  <!--Resolution assumed for the sensors in test mode.-->
+  <!--parameter name="TestModeSensorResolution" type="float">3 </parameter-->
+  <!--X shifts of the sensors in test mode (to be determined by the alignment).-->
+  <!--parameter name="TestModeSensorXShifts" type="FloatVec">0 0 0 0 0 0  </parameter-->
+  <!--Y shifts of the sensors in test mode (to be determined by the alignment).-->
+  <!--parameter name="TestModeSensorYShifts" type="FloatVec">0 0 0 0 0 0  </parameter-->
+  <!--Z positions of the sensors in test mode.-->
+  <!--parameter name="TestModeSensorZPositions" type="FloatVec">20000 40000 60000 80000 100000 120000  </parameter-->
+  <!--Width of the track slope distribution in the x direction-->
+  <!--parameter name="TestModeXTrackSlope" type="float">0.0005 </parameter-->
+  <!--Width of the track slope distribution in the y direction-->
+  <!--parameter name="TestModeYTrackSlope" type="float">0.0005 </parameter-->
+  <!--Track collection name. This is only relevant if InputMode is set to larger to 1-->
+  <parameter name="TrackCollectionName" type="string" lcioInType="Track">fittracks </parameter>
+  <!--Give start values for pede by hand (0 - automatic calculation of start values, 1 - start values defined by user).-->
+  <!--parameter name="UsePedeUserStartValues" type="int">0 </parameter-->
+  <!--Use cuts on the residuals to reduce the combinatorial background.-->
+  <!--parameter name="UseResidualCuts" type="bool">false </parameter-->
+  <!--Do not use all pixels for alignment, only these in the rectangular (A|B) e.g. (0,0) and (C|D) e.g. (100|100) of sensor S. Type in the way S1 A1 B1 C1 D1 S2 A2 B2 C2 D2 ...-->
+  <!--parameter name="UseSensorRectangular" type="IntVec"> </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelMilleGBL" type="EUTelMilleGBL">
+ <!--EUTelMilleGBL searches for tracks and fits them with GBL. Tracks are passed to MILLEPEDE II to get alignment constants and the fitted tracks, the fitted hits and the alignment constants are written to LCIO for possible further analysis.-->
+  <!--Number of alignment constants used. Available modes are: 1: shift in Z only. 2: shifts in X and Y. 3: shifts in X and Y and rotation around the Z axis, 4: shifts in X,Y and Z and rotation around the Z axis. 5: shifts in X,Y and rotations around all axis, fix Z. 6: shifts in X,Y and Z and rotations around all axis. 7: Shifts in X, Y and Z. Note that in modes 5 and 6, alignment constants in alpha and beta will only be returned for rotated/tilted sensors.-->
+  <!--parameter name="AlignMode" type="int">3 </parameter-->
+  <!--All alignment collection names which have been applied must be entered here. The order should correspond to their application, i.e.: alignment1 alignment2 etc.-->
+  <!--parameter name="AlignmentCollectionName" type="StringVec"> </parameter-->
+  <!--This is the name of the alignment collection to be saved into the lcio file.-->
+  <!--parameter name="AlignmentConstantCollectionName" type="string">alignment </parameter-->
+  <!--This is the name of the LCIO file name with the output alignment generated by this processor.-->
+  <!--parameter name="AlignmentConstantLCIOFile" type="string">alignment.slcio </parameter-->
+  <!--The name of the Millepede binary output file.-->
+  <!--parameter name="BinaryFilename" type="string">mille.bin </parameter-->
+  <!--Cut in Chi2/Ndf, tracks below are accepted.-->
+  <!--parameter name="Chi2NdfCut" type="double">10 </parameter-->
+  <!--The coordinator step PreAlignment to be loaded.-->
+  <!--parameter name="CoordinatorPreAlignmentCollectionName" type="string">coordinatorprealignment </parameter-->
+  <!--Method with which to get the DUT fit position: 0 = centre of the DUT (bad if DUT is rotated), 1 = extrapolate from triplet and get intersect with plane, 2 = extrapolate from driplet, 3 = get average from methods 1 and 2.-->
+  <!--parameter name="DUTFitMethod" type="int">3 </parameter-->
+  <!--DUT resolution in x [um].-->
+  <!--parameter name="DUTResX" type="double">55 </parameter-->
+  <!--DUT resolution in y [um].-->
+  <!--parameter name="DUTResY" type="double">25 </parameter-->
+  <!--Do an additional DUT alignment after track search? 1 = DUT alignment in alpha, 2 = DUT alignment in beta, 3 = DUT alignment in gamma with unsensitive x-axis, 4 = DUT alignment in gamma with unsensitive y-axis, 0 = no additional alignment.-->
+  <!--parameter name="DoDUTAlignment" type="int">0 </parameter-->
+  <!--Use this processor to do Prealignment? In this case, no tracking is performed. 1 = yes, 0 = no, 2 = yes, with zero Prealignment, aka output an alignment file with zeros to preserve file structure.-->
+  <!--parameter name="DoPreAlignment" type="int">0 </parameter-->
+  <!--Beam energy in GeV.-->
+  <parameter name="Ebeam" type="double">4 </parameter>
+  <!--Exclude planes from tracking and alignment, according to their sensor ids.-->
+  <!--parameter name="ExcludePlanes" type="IntVec"> </parameter-->
+  <!--Fixes the given alignment parameters of a sensor in the fit. For each sensor (even excluded ones) an integer must be specified. If no value or not enough values are given, then all parameters will be free. Bit 0 = x shift, bit 1 = y shift, bit 2 = z shift, bit 3 = alpha, bit 4 = beta, bit 5 = gamma. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id. This can override free parameters from AlignMode.-->
+  <!--parameter name="FixParameter" type="IntVec"> </parameter-->
+  <!--Fix position of sensor planes in the fit according to their sensor ids.-->
+  <!--parameter name="FixedPlanes" type="IntVec"> </parameter-->
+  <!--Generate a steering file for pede? 0 = false, 1 = true.-->
+  <!--parameter name="GeneratePedeSteerfile" type="int">0 </parameter-->
+  <!--Input hit collections names.-->
+  <parameter name="HitCollectionName" type="StringVec" lcioInType="TrackerHit">corrhits  </parameter>
+  <!--Maximum allowed hit distance within planes 1 and 4 in um for a hit to be considered isolated.-->
+  <!--parameter name="IsolationCut" type="double">40 </parameter-->
+  <!--The sensor id number of the DUT.-->
+  <!--parameter name="ManualDUTid" type="int">-1 </parameter-->
+  <!--Maximal number of track candidates in the whole run, set to less than 0 to deactivate.-->
+  <!--parameter name="MaxTrackCandidatesTotal" type="int">10000000 </parameter-->
+  <!--The name of the output fit hit collection.-->
+  <!--parameter name="OutputHitCollection" type="string">fithits </parameter-->
+  <!--The name of the output track fit collection.-->
+  <!--parameter name="OutputTrackCollection" type="string">fittracks </parameter-->
+  <!--Name of the steering file for the pede program.-->
+  <!--parameter name="PedeSteerfileName" type="string">steer_mille.txt </parameter-->
+  <!--All prealignment collection names which have been applied must be entered here. The order should correspond to their application, i.e.: prealignment1 prealignment2 etc.-->
+  <!--parameter name="PreAlignmentCollectionName" type="StringVec"> </parameter-->
+  <!--Probability cut, tracks above are accepted.-->
+  <!--parameter name="ProbCut" type="double">0.01 </parameter-->
+  <!--Reference plane resolution in x [um].-->
+  <!--parameter name="REFResX" type="double">10 </parameter-->
+  <!--Reference plane resolution in y [um].-->
+  <!--parameter name="REFResY" type="double">10 </parameter-->
+  <!--Require DUT hit for valid track? 0 = false, 1 = true.-->
+  <!--parameter name="RequireDUTHit" type="int">1 </parameter-->
+  <!--Execute the pede program using the generated steering file? 0 = false, 1 = true.-->
+  <!--parameter name="RunPede" type="int">0 </parameter-->
+  <!--Track slope cut in x, tracks below are accepted.-->
+  <!--parameter name="SlopeCutDUTx" type="double">10 </parameter-->
+  <!--Track slope cut in y, tracks below are accepted.-->
+  <!--parameter name="SlopeCutDUTy" type="double">10 </parameter-->
+  <!--Which sensor IDs belong to the telescope? This should be used if there are non-standard (0,1,2,3,4,5) telescope plane sensor IDs in the setup.-->
+  <!--parameter name="TelescopePlanes" type="IntVec">0 1 2 3 4 5  </parameter-->
+  <!--Telescope resolution in x [um].-->
+  <!--parameter name="TelescopeResX" type="double">15 </parameter-->
+  <!--Telescope resolution in y [um].-->
+  <!--parameter name="TelescopeResY" type="double">15 </parameter-->
+  <!--Flag to fill dt histograms. Will increase histogram file size quite a bit.-->
+  <!--parameter name="TimeDependencyHistos" type="bool">false </parameter-->
+  <!--If we use an external track fit, what is the collection name?-->
+  <!--parameter name="TrackFitCollectionName" type="string">TrackCandidateHitCollection </parameter-->
+  <!--Use Reference Plane? If so, set the sensor id (usually 7). To deactivate, set to below 0.-->
+  <!--parameter name="UseREF" type="int">-1 </parameter-->
+  <!--Use external track fit?-->
+  <!--parameter name="UseTrackFit" type="bool">false </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Flag to enable X0 scattering histograms. Will need lots of memory!-->
+  <!--parameter name="X0Histos" type="bool">false </parameter-->
+  <!--Downstream triplet residual cut [um].-->
+  <!--parameter name="driCut" type="double">400 </parameter-->
+  <!--Downstream driplet reference plane residual cut in x [um].-->
+  <!--parameter name="driCutREFx" type="double">3000 </parameter-->
+  <!--Downstream driplet reference plane residual cut in y [um].-->
+  <!--parameter name="driCutREFy" type="double">3000 </parameter-->
+  <!--Upstream-downstream track matching cut [um].-->
+  <!--parameter name="sixCut" type="double">600 </parameter-->
+  <!--Upstream triplet residual cut [um].-->
+  <!--parameter name="triCut" type="double">300 </parameter-->
+  <!--Upstream triplet DUT residual cut in x [um].-->
+  <!--parameter name="triCutDUTx" type="double">3000 </parameter-->
+  <!--Upstream triplet DUT residual cut in y [um].-->
+  <!--parameter name="triCutDUTy" type="double">3000 </parameter-->
+</processor>
+
+ <processor name="MyEUTelMissingCoordinateEstimator" type="EUTelMissingCoordinateEstimator">
+ <!--EUTelMissingCoordinateEstimator:This processor estimates the missing coordinate on a strip sensor by extrapolating a straight line from two reference planes. No promises that this will work with tilted sensors and/or with magnetic fields. The merged input hits should be pre aligned for better results.-->
+  <!--List of sensorIDs with a missing coordinate to be found. Note that if the specified coordinate already exists it will be overwritten-->
+  <parameter name="DUTPlanes" type="IntVec"> </parameter>
+  <!--Input hit collection name. Hits should be in global coordinates and pre-aligned-->
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> </parameter>
+  <!--This processor will look for hits in the known coordinate to determine if the hits are correlated. The hits will be considered as correlated if the residual is smaller than MaxResidual-->
+  <parameter name="MaxResidual" type="float">10 </parameter>
+  <!--The coordinate axis that needs to be estimated. You have to set this to either X or Y.-->
+  <parameter name="MissingCoordinate" type="string">X </parameter>
+  <!--Allow an individual DUT hit to be transformed into multiple hits? If false, only the closest extrapolated position will be used.-->
+  <parameter name="MultiHitMode" type="bool">true </parameter>
+  <!--Output hit collection name-->
+  <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> </parameter>
+  <!--List of sensorIDs of which hits will be used to estimate the missing coordinate on the DUT. You have to give exactly 2 sensorIDs. For better results use the ones that are closest to your DUT-->
+  <parameter name="ReferencePlanes" type="IntVec"> </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelNativeReader" type="EUTelNativeReader">
+ <!--Reads data streams produced by EUDAQ and produced the corresponding LCIO output-->
+  <!--This is the depfet produced output collection-->
+  <parameter name="DEPFETOutputCollection" type="string" lcioOutType="TrackerData">rawdata_dep </parameter>
+  <!--This is the eudrb producer output collection when read in RAW mode-->
+  <parameter name="EUBRDRawModeOutputCollection" type="string" lcioOutType="TrackerRawData">rawdata </parameter>
+  <!--Type of sparsified pixel data structure (use SparsePixelType enumerator)-->
+  <!--parameter name="EUDRBSparsePixelType" type="int">1 </parameter-->
+  <!--This si the mimotel output collection when read in ZS mode-->
+  <parameter name="EUDRBZSModeOutputCollection" type="string" lcioOutType="TrackerData">zsdata </parameter>
+  <!--The geometry identification number-->
+  <parameter name="GeoID" type="int">0 </parameter>
+  <!--This is the input file name-->
+  <parameter name="InputFileName" type="string">run012345.raw </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelOutputProcessor" type="EUTelOutputProcessor">
+ <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
+  <!--drops the named collections from the event-->
+  <!--parameter name="DropCollectionNames" type="StringVec">TPCHits HCalHits  </parameter-->
+  <!--drops all collections of the given type from the event-->
+  <!--parameter name="DropCollectionTypes" type="StringVec">SimTrackerHit SimCalorimeterHit  </parameter-->
+  <!-- write complete objects in subset collections to the file (i.e. ignore subset flag)-->
+  <!--parameter name="FullSubsetCollections" type="StringVec">MCParticlesSkimmed  </parameter-->
+  <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
+  <!--parameter name="KeepCollectionNames" type="StringVec">MyPreciousSimTrackerHits  </parameter-->
+  <!-- name of output file -->
+  <parameter name="LCIOOutputFile" type="string">outputfile.slcio </parameter>
+  <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
+  <parameter name="LCIOWriteMode" type="string">None </parameter>
+  <!--Set it to true to remove intermediate EORE in merged runs-->
+  <parameter name="SkipIntermediateEORE" type="bool">true </parameter>
+  <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
+  <!--parameter name="SplitFileSizekB" type="int">1992294 </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelPedeGEAR" type="EUTelPedeGEAR">
+ <!--EUTelPedeGEAR calls PEDE to process a MILLE binary file and create an updated GEAR file with the updated MILLEPEDE II alignment constants.-->
+  <!--Number of alignment constants used. Available mode are: 
+		XYShiftsRotZ - shifts in the X and Y directions and a rotation around the Z axis,
+		XYShifts - only shifts in the X and Y directions
+		XYShiftsAllRot - shifts in the X,Y and Z directions and rotations around all three axis-->
+  <!--parameter name="AlignMode" type="string">XYShiftsRotZ </parameter-->
+  <!--Exclude planes from fit according to their sensor ids.-->
+  <!--parameter name="ExcludePlanes" type="IntVec"> </parameter-->
+  <!--Fix sensor planes in the fit according to their sensor ids.-->
+  <!--parameter name="FixedPlanes" type="IntVec"> </parameter-->
+  <!--Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file-->
+  <!--parameter name="NewGEARSuffix" type="string">_aligned </parameter-->
+  <!--Offset scale factor.-->
+  <!--parameter name="OffsetScaleFactor" type="int">1000 </parameter-->
+  <!--Name of the steering file for the pede program.-->
+  <!--parameter name="PedeSteerfileName" type="string">steer_mille.txt </parameter-->
+  <!--Apply the obtained rotation to the preexisting offset vector or not..-->
+  <!--parameter name="RotateOffsetVec" type="bool">false </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelPedestalNoiseProcessor" type="EUTelPedestalNoiseProcessor">
+ <!--EUTelPedestalNoiseProcessor computes the pedestal and noise values of a pixel detector-->
+  <!--Set to true if the pedestal should also be saved as ASCII files-->
+  <parameter name="ASCIIOutputSwitch" type="bool">true </parameter>
+  <!--Perform an additional loop for bad pixel masking-->
+  <!--parameter name="AdditionalMaskingLoop" type="bool">true </parameter-->
+  <!--Select the algorithm for bad pixel masking. Possible values are:
+ NoiseDistribution: removing pixels with noise above PixelMaskUpperNoiseCut in sigma unit
+ AbsoluteNoiseValue: removing pixels with noise above PixelMaskUpperAbsNoiseCut in ADC value
+ DeadPixel: removing pixels with noise below PixelMaskLowerAbsNoiseCut in ADC value
+ AbsolutePedeValue: removing pixels having pedestal too low or high using PixelMaskUpperAbsPedeCut and PixelMaskLowerAbsPedeCut-->
+  <parameter name="BadPixelMaskingAlgorithm" type="StringVec">NoiseDistribution DeadPixel  </parameter>
+  <!--Select the algorithm for pede/noise calculation-->
+  <parameter name="CalculationAlgorithm" type="string">MeanRMS </parameter>
+  <!--Select the algorithm for the common mode calculation. Possible values are:
+ FullFrame: all pixels in the frame are averaged
+ RowWise: pixels are averaged line by line-->
+  <parameter name="CommonModeAlgorithm" type="string">FullFrame </parameter>
+  <!--First event for pedestal calculation-->
+  <parameter name="FirstEvent" type="int">0 </parameter>
+  <!--This is the name of the histogram information file-->
+  <parameter name="HistoInfoFileName" type="string">histoinfo.xml </parameter>
+  <!--Threshold for rejection of hit pixel (SNR units)-->
+  <parameter name="HitRejectionCut" type="float">4 </parameter>
+  <!--Perform a fast first loop to improve the efficiency of hit rejection-->
+  <!--parameter name="HitRejectionPreLoop" type="bool">true </parameter-->
+  <!--Last event for pedestal calculation-->
+  <parameter name="LastEvent" type="int">-1 </parameter>
+  <!--Maximum allowed number of rejected pixels per row (only with RowWise)-->
+  <parameter name="MaxNoOfRejectedPixelPerRow" type="int">25 </parameter>
+  <!--Maximum allowed number of rejected pixels per event-->
+  <parameter name="MaxNoOfRejectedPixels" type="int">1000 </parameter>
+  <!--Maximum allowed number of skipped rows (only with RowWise)-->
+  <parameter name="MaxNoOfSkippedRow" type="int">15 </parameter>
+  <!--Number of common mode suppression iterations-->
+  <parameter name="NoOfCMIteration" type="int">1 </parameter>
+  <!--Noise collection name-->
+  <!--parameter name="NoiseCollectionName" type="string">noiseDB </parameter-->
+  <!--The filename (w/o .slcio) to store the pedestal file-->
+  <parameter name="OutputPedeFile" type="string">outputpede </parameter>
+  <!--Pedestal collection name-->
+  <!--parameter name="PedestalCollectionName" type="string">pedestalDB </parameter-->
+  <!--Lower threshold for bad pixel identification using DeadPixel-->
+  <parameter name="PixelMaskLowerAbsNoiseCut" type="float">0.2 </parameter>
+  <!--Lower threshold for bad pixel identification using AbsolutePedeValue-->
+  <parameter name="PixelMaskLowerAbsPedeCut" type="float">-15 </parameter>
+  <!--This is the maximum allowed firing % frequency, being 0.1% the Gaussian limit
+Used only during the additional masking loop-->
+  <parameter name="PixelMaskMaxFiringFrequency" type="float">0.2 </parameter>
+  <!--Upper threshold for bad pixel identification using NoiseDistribution-->
+  <parameter name="PixelMaskUpperAbsNoiseCut" type="float">3.5 </parameter>
+  <!--Upper threshold for bad pixel identification using AbsolutePedeValue-->
+  <parameter name="PixelMaskUpperAbsPedeCut" type="float">15 </parameter>
+  <!--Upper threshold for bad pixel identification using NoiseDistribution-->
+  <parameter name="PixelMaskUpperNoiseCut" type="float">3.5 </parameter>
+  <!--Input raw data collection-->
+  <parameter name="RawDataCollectionNameVec" type="StringVec" lcioInType="TrackerRawData">rawdata  </parameter>
+  <!--Status collection name-->
+  <!--parameter name="StatusCollectionName" type="string">statusDB </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelPreAlign" type="EUTelPreAlign">
+ <!--Apply alignment constants to hit collection-->
+  <!--Name of LCIO db file where alignment constantds will be stored-->
+  <!--parameter name="AlignmentConstantLCIOFile" type="string">alignment.slcio </parameter-->
+  <!--Dump alignment into GEAR file instead of prealignment database-->
+  <!--parameter name="DumpGEAR" type="bool">false </parameter-->
+  <!--How many events should be used for an approximation to the X,Y shifts (pre-alignment)? (default=50000)-->
+  <parameter name="Events" type="int">50000 </parameter>
+  <!--The list of sensor IDs that shall be excluded.-->
+  <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
+  <!--The list of sensor IDs for which the X coordinate shall be excluded.-->
+  <!--parameter name="ExcludedPlanesXCoord" type="IntVec"> </parameter-->
+  <!--The list of sensor IDs for which the Y coordinate  shall be excluded.-->
+  <!--parameter name="ExcludedPlanesYCoord" type="IntVec"> </parameter-->
+  <!--SensorID of fixed plane-->
+  <!--parameter name="FixedPlane" type="int">0 </parameter-->
+  <!--Switch on or off the histogram filling-->
+  <!--parameter name="HistogramFilling" type="bool">true </parameter-->
+  <!--This is the name of the hot pixel collection that clusters should be checked against (optional).-->
+  <!--parameter name="HotPixelCollectionName" type="string"> </parameter-->
+  <!--The name of the input hit collection-->
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit">hit </parameter>
+  <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
+  <!--parameter name="MinNumberOfCorrelatedHits" type="int">5 </parameter-->
+  <!--Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file-->
+  <!--parameter name="NewGEARSuffix" type="string">_pre </parameter-->
+  <!--Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <!--parameter name="ResidualsXMax" type="FloatVec">10 10 10 10 10 10  </parameter-->
+  <!--Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <!--parameter name="ResidualsXMin" type="FloatVec">-10 -10 -10 -10 -10 -10  </parameter-->
+  <!--Maximal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <!--parameter name="ResidualsYMax" type="FloatVec">10 10 10 10 10 10  </parameter-->
+  <!--Minimal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <!--parameter name="ResidualsYMin" type="FloatVec">-10 -10 -10 -10 -10 -10  </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelProcessorAnalysisPALPIDEfs" type="EUTelProcessorAnalysisPALPIDEfs">
+ <!--Analysis of the fitted tracks-->
+  <!--Alignment constant from the condition file-->
+  <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject">alignment </parameter>
+  <!--Alignment constant from the condition file-->
+  <parameter name="AlignmentPAlpideConstantName" type="string" lcioInType="LCGenericObject">alignmentPAlpide </parameter>
+  <!--Chip IDs-->
+  <!--parameter name="ChipID" type="StringVec">   </parameter-->
+  <!--Chip Version-->
+  <!--parameter name="ChipVersion" type="int">3 </parameter-->
+  <!--This is the name of the collection containing the pixels belonging to a dead column-->
+  <!--parameter name="DeadColumnCollectionName" type="string">deadColumn </parameter-->
+  <!--Particle energy-->
+  <!--parameter name="Energy" type="double">6 </parameter-->
+  <!--This is the name of the histogram information file-->
+  <parameter name="HistoInfoFileName" type="string">histoinfo.xml </parameter>
+  <!--Switch on or off the histogram filling-->
+  <parameter name="HistogramFilling" type="bool">true </parameter>
+  <!--Size of the hole in X axis (mm)-->
+  <!--parameter name="HoleSizeX" type="FloatVec">1 29  </parameter-->
+  <!--Size of the hole in Y axis (mm)-->
+  <!--parameter name="HoleSizeY" type="FloatVec">9 12.5  </parameter-->
+  <!--This is the name of the hotpixel collection of the pALPIDE-->
+  <!--parameter name="HotPixelCollectionName" type="string"> </parameter-->
+  <!--Name of the input TrackerHit collection-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerHit">colhit </parameter>
+  <!--Name of the input fitted TrackerHit collection-->
+  <parameter name="InputFittedHitName" type="string" lcioInType="TrackerHit">fithit </parameter>
+  <!--Irradiation level-->
+  <!--parameter name="Irradiation" type="StringVec">   </parameter-->
+  <!--This is allowed distance between the track and the hit-->
+  <parameter name="Limit" type="double">0.05 </parameter>
+  <!--This is the maximum number of pixels in one cluster for the clustershape analysis-->
+  <parameter name="MaxNumberOfPixels" type="int">3 </parameter>
+  <!--This is minimum timestamp required to consider an event-->
+  <parameter name="MinTimeStamp" type="double">0 </parameter>
+  <!--More tracks are allowed in one event-->
+  <parameter name="MoreTracks" type="bool">false </parameter>
+  <!--This is the name of the file which contains the pixels which were masked during datataking-->
+  <!--parameter name="NoiseMaskFileName" type="string"> </parameter-->
+  <!--Folder name where all the settings of each run will be saved-->
+  <!--parameter name="OutputSettingsFolderName" type="string">./ </parameter-->
+  <!--PreAlignment constant from the condition file-->
+  <parameter name="PreAlignmentConstantName" type="string" lcioInType="LCGenericObject">prealign </parameter>
+  <!--Data taking rate-->
+  <!--parameter name="Rate" type="string"> </parameter-->
+  <!--Calculate track to hit association without allowing the tracks to share hits-->
+  <parameter name="RealAssociation" type="bool">false </parameter>
+  <!--This is the name of the file where the IDs of the cluster shapes will be saved-->
+  <!--parameter name="ShapeOutputFileName" type="string">./shapeDistribution.txt </parameter-->
+  <!--Show fake efficiency-->
+  <parameter name="ShowFake" type="bool">true </parameter>
+  <!--Input track collection name-->
+  <parameter name="TrackCollectionName" type="string" lcioInType="Track">track </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Write cluster shapes to file?-->
+  <parameter name="WriteShapes" type="bool">false </parameter>
+  <!--Input of Zero Suppressed data-->
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData">zsdata </parameter>
+  <!--This is the ID of the DUT-->
+  <parameter name="dutID" type="int">6 </parameter>
+  <!--This is the maximum number of planes that can have more than one hit-->
+  <parameter name="nPlanesWithMoreHits" type="int">4 </parameter>
+</processor>
+
+ <processor name="MyEUTelProcessorAnalysisPALPIDEfsNoise" type="EUTelProcessorAnalysisPALPIDEfsNoise">
+ <!--Ananlysis of noise runs-->
+  <!--Chip IDs-->
+  <!--parameter name="ChipID" type="StringVec">   </parameter-->
+  <!--Particle energy-->
+  <!--parameter name="Energy" type="double">6 </parameter-->
+  <!--Switch on or off the histogram filling-->
+  <parameter name="HistogramFilling" type="bool">true </parameter>
+  <!--Irradiation level-->
+  <!--parameter name="Irradiation" type="StringVec">   </parameter-->
+  <!--Folder name where all the settings of each run will be saved-->
+  <!--parameter name="OutputSettingsFolderName" type="string">./ </parameter-->
+  <!--Data taking rate-->
+  <!--parameter name="Rate" type="string"> </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Input of Zero Suppressed data-->
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData">zsdata </parameter>
+  <!--DUT IDs-->
+  <!--parameter name="dutIDs" type="StringVec">   </parameter-->
+</processor>
+
+ <processor name="MyEUTelProcessorApplyAlignment" type="EUTelProcessorApplyAlignment">
+ <!--Apply alignment constants to hit collection-->
+  <!--Alignment constant from the condition file-->
+  <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject">alignment </parameter>
+  <!--The name of the input hit collection-->
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit">hit </parameter>
+  <!--The name of the output hit collection-->
+  <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit">correctedHit </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelProcessorClusterAnalysis" type="EUTelProcessorClusterAnalysis">
+ <!--Analysing cluster properties such as cluster shape and average cluster size.-->
+  <!--Chip IDs-->
+  <!--parameter name="ChipID" type="StringVec">   </parameter-->
+  <!--This is the name of file to which all the information on the pixels belonging to the clusters is saved to.-->
+  <!--parameter name="ClusterAnalysisFileName" type="string">clusterAnalysis.txt </parameter-->
+  <!--This is the name of the collection containing the pixels belonging to a dead column-->
+  <!--parameter name="DeadColumnCollectionName" type="string">deadColumn </parameter-->
+  <!--Particle energy-->
+  <!--parameter name="Energy" type="double">6 </parameter-->
+  <!--This is the name of the histogram information file-->
+  <parameter name="HistoInfoFileName" type="string">histoinfo.xml </parameter>
+  <!--Switch on or off the histogram filling-->
+  <parameter name="HistogramFilling" type="bool">true </parameter>
+  <!--This is the name of the hotpixel collection of the pALPIDE-->
+  <!--parameter name="HotPixelCollectionName" type="string"> </parameter-->
+  <!--Irradiation level-->
+  <!--parameter name="Irradiation" type="StringVec">   </parameter-->
+  <!--This is the maximum number of pixels in one cluster for the clustershape analysis-->
+  <parameter name="MaxNumberOfPixels" type="int">3 </parameter>
+  <!--This is the name of the file which contains the pixels which were masked during datataking-->
+  <!--parameter name="NoiseMaskFileName" type="string"> </parameter-->
+  <!--Folder name where all the settings of each run will be saved-->
+  <!--parameter name="OutputSettingsFolderName" type="string">./ </parameter-->
+  <!--Data taking rate-->
+  <!--parameter name="Rate" type="string"> </parameter-->
+  <!--Safety distance (in pixel) of clusters being associated to a sector and to the boundaries of the chip.-->
+  <!--parameter name="SectorSafetyPixels" type="int">2 </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Input of Zero Suppressed data-->
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData">zsdata </parameter>
+  <!--This is the ID of the DUT-->
+  <parameter name="dutID" type="int">6 </parameter>
+  <!--This is the maximum amount of sectors-->
+  <parameter name="nSectors" type="int">8 </parameter>
+</processor>
+
+ <processor name="MyEUTelProcessorCoordinateTransformHits" type="EUTelProcessorCoordinateTransformHits">
+ <!--EUTelLocaltoGlobalHitMaker is responsible to change local coordinates to global. This is done using the EUTelGeometryClass-->
+  <!--Set to true to undo the alignment instead-->
+  <!--parameter name="Undo Alignment (boolean)" type="bool">false </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Local input hit collection name-->
+  <parameter name="hitCollectionNameInput" type="string" lcioInType="TrackerHit">local_hit </parameter>
+  <!--Global output hit collection name-->
+  <parameter name="hitCollectionNameOutput" type="string" lcioOutType="TrackerHit">global_hit </parameter>
+</processor>
+
+ <processor name="MyEUTelProcessorDeadColumnFinder" type="EUTelProcessorDeadColumnFinder">
+ <!--Search of dead columns in the chip-->
+  <!--This is the name of the dead column collection-->
+  <!--parameter name="DeadColumnCollectionName" type="string">deadColumn </parameter-->
+  <!--This is the name of the LCIO file containing the pixels belonging to a dead column-->
+  <!--parameter name="DeadColumnFileName" type="string">dead.slcio </parameter-->
+  <!--Switch on or off the histogram filling-->
+  <parameter name="HistogramFilling" type="bool">true </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Input of Zero Suppressed data-->
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData">zsdata </parameter>
+</processor>
+
+ <processor name="MyEUTelProcessorFilteringHitFilter" type="EUTelProcessorFilteringHitFilter">
+ <!--EUTelProcessorFilteringHitFilter selects hits that fulfill all specified requirements from input collection.-->
+  <!--Input hits collection name-->
+  <parameter name="HitInputCollectionName" type="string" lcioInType="TrackerHit">HitCollection </parameter>
+  <!--Output hits collection name-->
+  <parameter name="HitOutputCollectionName" type="string" lcioOutType="TrackerHit">FilteredHitCollection </parameter>
+  <!--Output hits collection name-->
+  <parameter name="HotPixelCollectionName" type="string" lcioOutType="TrackerHit">HotPixelCollection </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Select hits with given plane IDs (all - if empty)-->
+  <!--parameter name="WantPlaneID" type="IntVec"> </parameter-->
+</processor>
+
+ <processor name="MyEUTelProcessorGeometricClustering" type="EUTelProcessorGeometricClustering">
+ <!--EUTelProcessorGeometricClustering is looking for clusters into a calibrated pixel matrix.-->
+  <!--The list of sensor ids that have to be excluded from the clustering.-->
+  <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
+  <!--This is the name of the histogram information file-->
+  <parameter name="HistoInfoFileName" type="string">histoinfo.xml </parameter>
+  <!--Switch on or off the histogram filling-->
+  <parameter name="HistogramFilling" type="bool">true </parameter>
+  <!--Cluster (output) collection name-->
+  <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse">cluster </parameter>
+  <!--Time cut in time units of your sensor-->
+  <parameter name="TCut" type="float">3.40282e+38 </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Input of Zero Suppressed data-->
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData">zsdata </parameter>
+</processor>
+
+ <processor name="MyEUTelProcessorHitMaker" type="EUTelProcessorHitMaker">
+ <!--EUTelProcessorHitMaker is responsible to translate cluster centers from the local frame of reference 
+to the external frame of reference using the GEAR geometry description-->
+  <!--Hit coordinates are calculated in local reference frame of sensor-->
+  <!--parameter name="EnableLocalCoordidates" type="bool">false </parameter-->
+  <!--Output hit collection name-->
+  <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> </parameter>
+  <!--Input cluster collection name-->
+  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelProcessorNoisyClusterMasker" type="EUTelProcessorNoisyClusterMasker">
+ <!--EUTelProcessorNoisyClusterMasker masks pulses which contain hot pixels. For this, the quality field of pulses is used to encode the kNoisyCluster enum provided by EUTelescope.-->
+  <!--Name of the hot pixel collection.-->
+  <!--parameter name="HotPixelCollectionName" type="string">hotpixel </parameter-->
+  <!--Input of zero suppressed data, still containing hot pixels-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerPulse">cluster </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelProcessorNoisyClusterRemover" type="EUTelProcessorNoisyClusterRemover">
+ <!--EUTelProcessorNoisyClusterRemover removes masked noisy clusters (TrackerPulses) from a collection, please note that the clusters have to be masked previously. This processor does not read in a hot pixel collection, it simply removes previusly masked TrackerPulses.-->
+  <!--Input collection containing noise masked tracker pulse objects-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerPulse">noisy_cluster </parameter>
+  <!--Output collection where noisy clusters have been removed-->
+  <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerPulse">noisefree_clusters </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelProcessorNoisyPixelFinder" type="EUTelProcessorNoisyPixelFinder">
+ <!--EUTelProcessorNoisyPixelFinder computes the firing frequency of pixels and applies a cut on this value to mask (NOT remove) noisy pixels.-->
+  <!--The list of sensor IDs that shall be excluded.-->
+  <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
+  <!--This is the name of the hot pixel collection to be saved into the output slcio file-->
+  <!--parameter name="HotPixelCollectionName" type="string">noisyPixel </parameter-->
+  <!--This is the name of the LCIO file name with the output noisyPixel db (add .slcio)-->
+  <!--parameter name="HotPixelDBFile" type="string">noisyPixel.slcio </parameter-->
+  <!--This float number [0,1] represents the maximum allowed firing frequency
+within the selected number of event per cycle-->
+  <parameter name="MaxAllowedFiringFreq" type="float">0.2 </parameter>
+  <!--The number of events to be considered for each update cycle-->
+  <parameter name="NoOfEvents" type="int">100 </parameter>
+  <!--Bin count for noisy pixel count versus noise cut histogram-->
+  <!--parameter name="NoisyPixelNoHistogramBins" type="int">1000 </parameter-->
+  <!--Upper limit for noisy pixel count versus noise cut histogram-->
+  <!--parameter name="NoisyPixelNoHistogramUpperLimit" type="double">0.0006 </parameter-->
+  <!--The sensorID for the generated collection (one per detector)-->
+  <!--parameter name="SensorIDVec" type="IntVec"> </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Input of Zero Suppressed data-->
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData">zsdata </parameter>
+</processor>
+
+ <processor name="MyEUTelProcessorNoisyPixelRemover" type="EUTelProcessorNoisyPixelRemover">
+ <!--EUTelProcessorNoisyPixelRemover removes noisy pixels (TrackerData) from a collection. This processor requires a noisy pixel collection.-->
+  <!--Input collection containing noisy raw data-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">noisy_raw_data_collection </parameter>
+  <!--Name of the noisy pixel collection.-->
+  <parameter name="NoisyPixelCollectionName" type="string">noisypixel </parameter>
+  <!--Output collection where noisy pixels have been removed-->
+  <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerData">noisefree_raw_data_collection </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelProcessorRawHistos" type="EUTelProcessorRawHistos">
+ <!--EUTelProcessorRawHistos computes the firing frequency of pixels and applies a cut on this value to mask (NOT remove) hot pixels.-->
+  <!--Name of the noisy pixel collection-->
+  <!--parameter name="NoisyPixelCollectionName" type="string">noisypixel </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Input of Zero Suppressed data-->
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData">zsdata </parameter>
+</processor>
+
+ <processor name="MyEUTelProcessorSparseClustering" type="EUTelProcessorSparseClustering">
+ <!--EUTelProcessorSparseClustering is looking for clusters into a calibrated pixel matrix.-->
+  <!--The list of sensor ids that have to be excluded from the clustering.-->
+  <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
+  <!--This is the name of the histogram information file-->
+  <parameter name="HistoInfoFileName" type="string">histoinfo.xml </parameter>
+  <!--Switch on or off the histogram filling-->
+  <parameter name="HistogramFilling" type="bool">true </parameter>
+  <!--Cluster (output) collection name-->
+  <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse">cluster </parameter>
+  <!--Minimum distance squared between sparsified pixel ( touching == 2) -->
+  <parameter name="SparseMinDistanceSquared" type="int">2 </parameter>
+  <!--Time cut in time units of your sensor-->
+  <parameter name="TCut" type="float">3.40282e+38 </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Input of Zero Suppressed data-->
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData">zsdata </parameter>
+</processor>
+
+ <processor name="MyEUTelProcessorSpuriousClusterFinder" type="EUTelProcessorSpuriousClusterFinder">
+ <!--EUTelProcessorSpuriousClusterFinder finds and anlalyses spurious clusters (x cluster size 2, y cluster size 3, with a particular cluster shape)-->
+  <!--Input of Reconstructed Hit data-->
+  <parameter name="ReconstructedHitCollectionName" type="string" lcioInType="TrackerHit">hit </parameter>
+  <!--Input of True Hit data-->
+  <parameter name="TrueHitCollectionName" type="string" lcioInType="TrackerHit">true_hits </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelProcessorTrueHitAnalysis" type="EUTelProcessorTrueHitAnalysis">
+ <!--EUTelProcessorTrueHitAnalysis compares the true simulated hits with the reconstructed hits-->
+  <!--Input of Reconstructed Hit data-->
+  <parameter name="ReconstructedHitCollectionName" type="string" lcioInType="TrackerHit">hit </parameter>
+  <!--Input of True Hit data-->
+  <parameter name="TrueHitCollectionName" type="string" lcioInType="TrackerHit">true_hits </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelProcessorTrueTrackAnalysis" type="EUTelProcessorTrueTrackAnalysis">
+ <!--EUTelProcessorTrueTrackAnalysis compares the reconstructed track fitpoints with the true hits and true track fitpoints-->
+  <!--Input of reconstructed track fitpoints-->
+  <parameter name="ReconstructedTrackFitpointCollectionName" type="string" lcioInType="TrackerHit">fitpoints </parameter>
+  <!--Input of true hit data-->
+  <parameter name="TrueHitCollectionName" type="string" lcioInType="TrackerHit">true_hits </parameter>
+  <!--Input of true track fitpoints-->
+  <parameter name="TrueTrackFitpointCollectionName" type="string" lcioInType="TrackerHit">true_track_fitpoints </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelRawDataSparsifier" type="EUTelRawDataSparsifier">
+ <!--EUTelRawDataSparsifier transform full frame raw data in ZS calibrated data mimicking the EUDRB behavior. -->
+  <!--Noise from the condition file-->
+  <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData">noise </parameter>
+  <!--Pedestal from the condition file-->
+  <parameter name="PedestalCollectionName" type="string" lcioInType="TrackerData">pedestal </parameter>
+  <!--Input raw data collection-->
+  <parameter name="RawDataCollectionName" type="string" lcioInType="TrackerRawData">rawdata </parameter>
+  <!--A vector of float containing for each plane the multiplication factor for the noise-->
+  <parameter name="SigmaCut" type="FloatVec">2.5 2.5 2.5 2.5 2.5  </parameter>
+  <!--Type of sparsified pixel data structure (use SparsePixelType enum)-->
+  <parameter name="SparsePixelType" type="int">1 </parameter>
+  <!--Name of the output sparsified data collection-->
+  <parameter name="SparsifiedDataCollectionName" type="string" lcioOutType="TrackerData">data </parameter>
+  <!--Pixel status from the condition file-->
+  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData">status </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelStrasMimoTelReader" type="EUTelStrasMimoTelReader">
+ <!--Reads the data output file produced by the Strasbourg DAQ.
+In principle it should work for each kind of detector, but since there are some
+hardcoded numbers it is working for the MimoTel only (for the time being)-->
+  <!--Name of the CDS collection-->
+  <parameter name="CDSCollectionName" type="string" lcioOutType="TrackerRawData">cds </parameter>
+  <!--Name of the Frame0 collection-->
+  <parameter name="Frame0CollectionName" type="string" lcioOutType="TrackerRawData">frame0 </parameter>
+  <!--Name of the Frame1 collection-->
+  <parameter name="Frame1CollectionName" type="string" lcioOutType="TrackerRawData">frame1 </parameter>
+  <!--The run to be converted (the number only)-->
+  <parameter name="LEPSIRunNumber" type="int">500 </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Number of pixels along the x axis-->
+  <parameter name="XNoOfPixel" type="int">66 </parameter>
+  <!--Number of pixels along the x axis-->
+  <parameter name="YNoOfPixel" type="int">256 </parameter>
+</processor>
+
+ <processor name="MyEUTelSucimaImagerReader" type="EUTelSucimaImagerReader">
+ <!--Reads SUCIMA Imager ASCII data files and creates LCEvent with TrackerRawData collection.
+Make sure to not specify any LCIOInputFiles in the steering in order to read SUCIMA Imager files.-->
+  <!--Number of pixels along X-->
+  <parameter name="NoOfXPixel" type="int">512 </parameter>
+  <!--Number of pixels along Y-->
+  <parameter name="NoOfYPixel" type="int">512 </parameter>
+  <!--Input file-->
+  <parameter name="SUCIMAImagerFileName" type="string">input.dat </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelTestFitter" type="EUTelTestFitter">
+ <!--Analytical track fitting processor for EUDET telescope-->
+  <!--Ids of layers for which alignment corrections are given-->
+  <!--parameter name="AlignLayerIDs" type="IntVec"> </parameter-->
+  <!--Rotation around Z for layer alignment-->
+  <!--parameter name="AlignLayerRotZ" type="FloatVec"> </parameter-->
+  <!--Alignment corrections in X for these layers-->
+  <!--parameter name="AlignLayerShiftX" type="FloatVec"> </parameter-->
+  <!--Alignment corrections in Y for these layers-->
+  <!--parameter name="AlignLayerShiftY" type="FloatVec"> </parameter-->
+  <!--Allow same hit to be used in more than one track-->
+  <!--parameter name="AllowAmbiguousHits" type="bool">false </parameter-->
+  <!--Allowed number of missing hits in the track-->
+  <parameter name="AllowMissingHits" type="int">0 </parameter>
+  <!--Allowed number of hits removed from the track-->
+  <parameter name="AllowSkipHits" type="int">0 </parameter>
+  <!--Beam direction tilt in X-Z plane [rad] (for beam constraint)-->
+  <!--parameter name="BeamSlopeX" type="double">0 </parameter-->
+  <!--Beam direction tilt in Y-Z plane [rad] (for beam constraint)-->
+  <!--parameter name="BeamSlopeY" type="double">0 </parameter-->
+  <!--Assumed angular spread of the beam [rad] (for beam constraint)-->
+  <!--parameter name="BeamSpread" type="double">0 </parameter-->
+  <!--Maximum Chi2 for accepted track fit-->
+  <parameter name="Chi2Max" type="double">100 </parameter>
+  <!--Minimum Chi2 for accepted track fit-->
+  <parameter name="Chi2Min" type="double">0 </parameter>
+  <!--Collection name for corrected particle positions-->
+  <parameter name="CorrectedHitCollectionName" type="string" lcioOutType="TrackerHit">corrfithits </parameter>
+  <!--Beam energy [GeV]-->
+  <parameter name="Ebeam" type="double">6 </parameter>
+  <!--Name of the histogram information file-->
+  <parameter name="HistoInfoFileName" type="string">histoinfo.xml </parameter>
+  <!--Name of the input TrackerHit collection-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerHit">meshit </parameter>
+  <!--Flag for storing input (measured) hits in track-->
+  <parameter name="InputHitsInTrack" type="bool">false </parameter>
+  <!--Ids of layers for which position masks are applied-->
+  <!--parameter name="MaskLayerIDs" type="IntVec"> </parameter-->
+  <!--Upper mask edge in X-->
+  <!--parameter name="MaskMaxX" type="FloatVec"> </parameter-->
+  <!--Upper mask edge in Y-->
+  <!--parameter name="MaskMaxY" type="FloatVec"> </parameter-->
+  <!--Lower mask edge in X-->
+  <!--parameter name="MaskMinX" type="FloatVec"> </parameter-->
+  <!--Lower mask edge in Y-->
+  <!--parameter name="MaskMinY" type="FloatVec"> </parameter-->
+  <!--Maximum number of considered hits per plane-->
+  <parameter name="MaxPlaneHits" type="int">100 </parameter>
+  <!--Maximum number of hits to be shared by more than one track-->
+  <!--parameter name="MaximumAmbiguousHits" type="int">2 </parameter-->
+  <!--Chi2 penalty for missing hit in the track-->
+  <parameter name="MissingHitPenalty" type="double">0 </parameter>
+  <!--Collection name for fitted particle hits (positions)-->
+  <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit">testfithits </parameter>
+  <!--Flag for storing output (fitted) hits in track-->
+  <parameter name="OutputHitsInTrack" type="bool">true </parameter>
+  <!--Collection name for fitted tracks-->
+  <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track">testfittracks </parameter>
+  <!--Ids of layers which should be treated as passive in the fit-->
+  <!--parameter name="PassiveLayerIDs" type="IntVec"> </parameter-->
+  <!--X resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <!--parameter name="ResolutionX" type="FloatVec">10 10 10 10 10 10  </parameter-->
+  <!--Y resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <!--parameter name="ResolutionY" type="FloatVec">10 10 10 10 10 10  </parameter-->
+  <!--Z resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <!--parameter name="ResolutionZ" type="FloatVec">10 10 10 10 10 10  </parameter-->
+  <!--Flag for searching multiple tracks in events with multiple hits-->
+  <!--parameter name="SearchMultipleTracks" type="bool">true </parameter-->
+  <!--Chi2 penalty for removing hit from the track-->
+  <parameter name="SkipHitPenalty" type="double">100 </parameter>
+  <!--Ids of layers which should NOT be included in the fit-->
+  <!--parameter name="SkipLayerIDs" type="IntVec"> </parameter-->
+  <!--Maximum hit distance from the expected position, used for hit preselection in [mm]-->
+  <!--parameter name="SlopeDistanceMax" type="float">1 </parameter-->
+  <!--Limit on track slope change when passing sensor layer (in X direction)-->
+  <!--parameter name="SlopeXLimit" type="float">0.001 </parameter-->
+  <!--Limit on track slope change when passing sensor layer (in Y direction)-->
+  <!--parameter name="SlopeYLimit" type="float">0.001 </parameter-->
+  <!--Flag for using beam direction constraint in the fit-->
+  <!--parameter name="UseBeamConstraint" type="bool">false </parameter-->
+  <!--Flag for including DUT measurement in the fit-->
+  <parameter name="UseDUT" type="bool">false </parameter>
+  <!--Flag for using nominal resolution instead of position errors-->
+  <parameter name="UseNominalResolution" type="bool">true </parameter>
+  <!--Use expected track direction to constraint number of considered hit combinations (track preselection).-->
+  <!--parameter name="UseSlope" type="bool">true </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Ids of layers for which position window cut are applied-->
+  <!--parameter name="WindowLayerIDs" type="IntVec"> </parameter-->
+  <!--Upper window edge in X-->
+  <!--parameter name="WindowMaxX" type="FloatVec"> </parameter-->
+  <!--Upper window edge in Y-->
+  <!--parameter name="WindowMaxY" type="FloatVec"> </parameter-->
+  <!--Lower window edge in X-->
+  <!--parameter name="WindowMinX" type="FloatVec"> </parameter-->
+  <!--Lower window edge in Y-->
+  <!--parameter name="WindowMinY" type="FloatVec"> </parameter-->
+  <!--List of alignment collections which are neede to get track position on a Sensor surface -->
+  <parameter name="alignmentCollectionNames" type="StringVec">alignment  </parameter>
+</processor>
+
+ <processor name="MyEUTelTripletGBL" type="EUTelTripletGBL">
+ <!--Analysis for DATURA reference analysis -->
+  <!--boolian to switch b/w cluster charge (0, false) and cluster dimension (1, true) used as cluster size-->
+  <parameter name="ClusterSizeSwitch" type="bool">true </parameter>
+  <!--Beam energy [GeV]-->
+  <parameter name="Ebeam" type="double">0 </parameter>
+  <!--Name of the input TrackerHit collection of the telescope-->
+  <parameter name="InputCollectionTelescope" type="string" lcioInType="TrackerHit"> </parameter>
+  <!--resolution parameter for each Cluster size, same for all planes. first value is average of all CSes. Up to CS6 plus larger than 6, hence in total 8 numbers. Disable with -1, e.g. (3.5e-3, -1, -1, ...., -1)-->
+  <!--parameter name="Resolution" type="FloatVec">0.0035 0.0035 0.0035 0.0035 0.0035 0.0035 0.0035 0.0035  </parameter-->
+  <!--thickness parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <!--parameter name="Thickness" type="FloatVec">0.05 0.05 0.05 0.05 0.05 0.05  </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--plane to be considered the DUT and excluded from the track fit-->
+  <parameter name="dut_plane" type="int">3 </parameter>
+  <!--radius on DUT plane to accept match with triplet-->
+  <parameter name="eff_radius" type="double">0.1 </parameter>
+  <!--global factor to Highland formula-->
+  <parameter name="kappa" type="double">1 </parameter>
+  <!--cut for matching in x coordinate in mm-->
+  <parameter name="matchingCut" type="double">0.15 </parameter>
+  <!--Cut on Prob(chi2,ndf) rejecting bad tracks with prob < cut-->
+  <parameter name="probchi2Cut" type="double">0.01 </parameter>
+  <!--cut for track slopes in x coordinate in rad-->
+  <parameter name="slopeCut" type="double">0.002 </parameter>
+  <!--Upstream/Downstream triplet residual cut [mm]-->
+  <!--parameter name="triResCut" type="double">0.1 </parameter-->
+</processor>
+
+ <processor name="MyEUTelTripletGBLKinkEstimator" type="EUTelTripletGBLKinkEstimator">
+ <!--Analysis for DATURA reference analysis -->
+  <!--Beam energy [GeV]-->
+  <parameter name="Ebeam" type="double">0 </parameter>
+  <!--Name of the input TrackerHit collection of the telescope-->
+  <parameter name="InputCollectionTelescope" type="string" lcioInType="TrackerHit"> </parameter>
+  <!--resolution parameter for each Cluster size, same for all planes. first value is average of all CSes. Up to CS6 plus larger than 6, hence in total 8 numbers. Disable with -1, e.g. (3.5e-3, -1, -1, ...., -1)-->
+  <!--parameter name="Resolution" type="FloatVec">0.0035 0.0035 0.0035 0.0035 0.0035 0.0035 0.0035 0.0035  </parameter-->
+  <!--thickness parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <!--parameter name="Thickness" type="FloatVec">0.05 0.05 0.05 0.05 0.05 0.05 0.05  </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--aluminium plane to be considered as passive DUT-->
+  <parameter name="dut_plane" type="int">-1 </parameter>
+  <!--radius on DUT plane to accept match with triplet-->
+  <parameter name="eff_radius" type="double">0.1 </parameter>
+  <!--global factor to Highland formula-->
+  <parameter name="kappa" type="double">1 </parameter>
+  <!--cut for matching in x coordinate in mm-->
+  <parameter name="matchingCut" type="double">0.15 </parameter>
+  <!--Cut on Prob(chi2,ndf) rejecting bad tracks with prob < cut-->
+  <parameter name="probchi2Cut" type="double">0.01 </parameter>
+  <!--cut for track slopes in x coordinate in rad-->
+  <parameter name="slopeCut" type="double">0.002 </parameter>
+  <!--thickness of alu target, if present-->
+  <parameter name="targetthick" type="double">0 </parameter>
+  <!--Upstream/Downstream triplet residual cut [mm]-->
+  <!--parameter name="triResCut" type="double">0.1 </parameter-->
+</processor>
+
+ <processor name="MyEUTelTrueHitDafFitter" type="EUTelTrueHitDafFitter">
+ <!--This processor preforms track reconstruction with true hits-->
+  <!--DAF fitter: The cutoff value for a measurement to be included in the fit.-->
+  <!--parameter name="Chi2Cutoff" type="float">300 </parameter-->
+  <!--List of sensor IDs for the DUT planes. Used to make the decision on whether ro accept the track or not. These planes are not used in track finder, and not in the track fitter unless option 'useDutsInFit' is set.-->
+  <!--parameter name="DutPlanes" type="IntVec"> </parameter-->
+  <!--Sigma of telescope resolution in the global X plane,-->
+  <!--parameter name="DutResolutionX" type="float">115.4 </parameter-->
+  <!--Sigma of telescope resolution in the global Y plane,-->
+  <!--parameter name="DutResolutionY" type="float">14.4 </parameter-->
+  <!--Beam energy [GeV], used to calculate amount of scatter-->
+  <!--parameter name="Ebeam" type="float">120 </parameter-->
+  <!--Track finding: The maximum allowed normalized distance between to hits in the xy plane for inclusion in track candidate.-->
+  <!--parameter name="FinderRadius" type="float">300 </parameter-->
+  <!--Set this to true if you want DUTs to be included in the track fit-->
+  <!--parameter name="FitDuts" type="bool">false </parameter-->
+  <!--Collection name for fitpoints of true track-->
+  <parameter name="FitpointCollectionName" type="string" lcioOutType="TrackerHit">true_track_fitpoints </parameter>
+  <!--Maximum allowed global chi2/ndof-->
+  <!--parameter name="MaxChi2OverNdof" type="float">9999 </parameter-->
+  <!--maximum devianve for dx/dz in CKF track finder-->
+  <!--parameter name="MaxXdxDeviance" type="float">0.01 </parameter-->
+  <!--maximum devianve for dy/dz in CKF track finder-->
+  <!--parameter name="MaxYdxDeviance" type="float">0.01 </parameter-->
+  <!--How many DUT hits do we need in order to accept track?-->
+  <!--parameter name="NDutHits" type="int">0 </parameter-->
+  <!--dx/dz assumed by track finder-->
+  <!--parameter name="NominalDxdz" type="float">0 </parameter-->
+  <!--dy/dz assumed by track finder-->
+  <!--parameter name="NominalDydz" type="float">0 </parameter-->
+  <!--Radiation lengths of planes, ordered by z-pos..-->
+  <!--parameter name="RadiationLengths" type="FloatVec"> </parameter-->
+  <!--How many telescope planes do we require to be included in the fit?-->
+  <!--parameter name="RequireNTelPlanes" type="float">0 </parameter-->
+  <!--Sigma resolution of planes, ordered by z-pos.-->
+  <!--parameter name="ResolutionX" type="FloatVec"> </parameter-->
+  <!--Sigma resolution of planes, ordered by z-pos.-->
+  <!--parameter name="ResolutionY" type="FloatVec"> </parameter-->
+  <!--Sigma of telescope resolution in the global X plane,-->
+  <!--parameter name="TelResolutionX" type="float">5.3 </parameter-->
+  <!--Sigma of telescope resolution in the global Y plane,-->
+  <!--parameter name="TelResolutionY" type="float">5.3 </parameter-->
+  <!--List of sensor IDs for the telescope planes. These planes are used for the track finder, and track fitter.-->
+  <parameter name="TelescopePlanes" type="IntVec"> </parameter>
+  <!--Collection name for fitted true tracks-->
+  <parameter name="TrackCollectionName" type="string" lcioOutType="Track">true_track </parameter>
+  <!--Input of True Hit data-->
+  <parameter name="TrueHitCollectionName" type="string" lcioInType="TrackerHit">true_hits </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Name of the clusterfinder which should be used, available are: simpleCluster and combinatorialKF-->
+  <parameter name="clusterfinder" type="string">simpleCluster </parameter>
+</processor>
+
+ <processor name="MyEUTelUpdatePedestalNoiseProcessor" type="EUTelUpdatePedestalNoiseProcessor">
+ <!--EUTelUpdatePedestalNoiseProcessor periodically updates the pedestaland noise values-->
+  <!--The value of the fixed weight (only for fixed weight algorithm-->
+  <!--parameter name="FixedWeightValue" type="int">100 </parameter-->
+  <!--Noise local collection-->
+  <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData">noise </parameter>
+  <!--Pedestal local collection-->
+  <parameter name="PedestalCollectionName" type="string" lcioInType="TrackerData">pedestal </parameter>
+  <!--A pixel to be monitored (detectorID, xCoord, yCoord). Add as many line as this as you wish-->
+  <!--parameter name="PixelMonitored" type="IntVec">0 10 15  </parameter-->
+  <!--Raw data collection name-->
+  <parameter name="RawDataCollectionName" type="string" lcioInType="TrackerRawData">rawdata </parameter>
+  <!--Pixel status collection-->
+  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData">status </parameter>
+  <!--The algorithm to be used for pedestal update-->
+  <parameter name="UpdateAlgorithm" type="string">FixedWeight </parameter>
+  <!--How often the algorithm should be applied-->
+  <parameter name="UpdateFrequency" type="int">10 </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+ <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+  <!--Print event number for every n-th event-->
+  <parameter name="EveryNEvents" type="int">1000 </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--print the event timestamp as read from LCIO-->
+  <!--parameter name="printTimestamp" type="bool">false </parameter-->
+</processor>
+
+ <processor name="MyEventSelector" type="EventSelector">
+ <!--EventSelector returns true if given event was specified in EventList-->
+  <!--event list - pairs of Eventnumber RunNumber-->
+  <parameter name="EventList" type="IntVec"> </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyLCIOOutputProcessor" type="LCIOOutputProcessor">
+ <!--Writes the current event to the specified LCIO outputfile. Needs to be the last ActiveProcessor.-->
+  <!--drops the named collections from the event-->
+  <!--parameter name="DropCollectionNames" type="StringVec">TPCHits HCalHits  </parameter-->
+  <!--drops all collections of the given type from the event-->
+  <!--parameter name="DropCollectionTypes" type="StringVec">SimTrackerHit SimCalorimeterHit  </parameter-->
+  <!-- write complete objects in subset collections to the file (i.e. ignore subset flag)-->
+  <!--parameter name="FullSubsetCollections" type="StringVec">MCParticlesSkimmed  </parameter-->
+  <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
+  <!--parameter name="KeepCollectionNames" type="StringVec">MyPreciousSimTrackerHits  </parameter-->
+  <!-- name of output file -->
+  <parameter name="LCIOOutputFile" type="string">outputfile.slcio </parameter>
+  <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
+  <parameter name="LCIOWriteMode" type="string">None </parameter>
+  <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
+  <!--parameter name="SplitFileSizekB" type="int">1992294 </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyPh2ACF2LCIOConverter" type="Ph2ACF2LCIOConverter">
+ <!--Reads Ph2ACF data streams and converts to LCIO-->
+  <!--Name of the collection for the bottom sensor-->
+  <parameter name="BottomRawDataCollectionName" type="string" lcioOutType="TrackerData">rawdata2 </parameter>
+  <!--The Ph2ACF data type, options are 'raw' and 'slink'-->
+  <parameter name="DataFormat" type="string">raw </parameter>
+  <!--This is the input file name-->
+  <parameter name="InputFileName" type="string">runXXXXXX.dat </parameter>
+  <!--The maximum number of events to read-->
+  <parameter name="MaxRecordNumber" type="int">-1 </parameter>
+  <!--The number of CBC chips on each front end-->
+  <parameter name="NumberOfChips" type="int">2 </parameter>
+  <!--The number of front ends connected-->
+  <parameter name="NumberOfFrontends" type="int">1 </parameter>
+  <!--Formatted run number of file-->
+  <parameter name="RunNumber" type="string">0 </parameter>
+  <!--Name of the collection for the top sensor-->
+  <parameter name="TopRawDataCollectionName" type="string" lcioOutType="TrackerData">rawdata1 </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MySimpleFastMCProcessor" type="SimpleFastMCProcessor">
+ <!--SimpleFastMCProcessor creates ReconstrcutedParticles from MCParticles according to the resolution given in the steering file.-->
+  <!--Resolution of charged particles in polar angle range:  d(1/P)  th_min  th_max-->
+  <parameter name="ChargedResolution" type="FloatVec">5e-05 0 1.5708  </parameter>
+  <!--Name of the MCParticle input collection-->
+  <parameter name="InputCollectionName" type="string" lcioInType="MCParticle">MCParticle </parameter>
+  <!--Name of the MCTruthMapping output collection-->
+  <parameter name="MCTruthMappingCollectionName" type="string" lcioOutType="LCRelation">MCTruthMapping </parameter>
+  <!--No reconstructed particles are produced for smaller momenta (in [GeV])-->
+  <parameter name="MomentumCut" type="float">0.001 </parameter>
+  <!--Resolution dE/E=A+B/sqrt(E/GeV) of neutral hadrons in polar angle range: A  B th_min  th_max-->
+  <parameter name="NeutralHadronResolution" type="FloatVec">0.04 0.5 0 1.5708  </parameter>
+  <!--Resolution dE/E=A+B/sqrt(E/GeV) of photons in polar angle range: A  B th_min  th_max-->
+  <parameter name="PhotonResolution" type="FloatVec">0.01 0.1 0 1.5708  </parameter>
+  <!--Name of the ReconstructedParticles output collection-->
+  <parameter name="RecoParticleCollectionName" type="string" lcioOutType="ReconstructedParticle">ReconstructedParticles </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyStatusmonitor" type="Statusmonitor">
+ <!--Statusmonitor prints out information on running Marlin Job: Prints number of runs run and current number of the event. Counting is sequential and not the run or event ID.-->
+  <!--Print the event number every N events-->
+  <parameter name="HowOften" type="int">10000 </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyStdHepReader" type="StdHepReader">
+ <!--Reads StdHep files as input and creates LCIO events with MCParticle collections. Make sure to not specify any LCIOInputFiles in the steering in order to read StdHep files.-->
+  <!--input file-->
+  <parameter name="StdHepFileName" type="string">input.stdhep </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="MyTestProcessor" type="TestProcessor">
+ <!--Simple processor to test the marlin application. Prints run and event number.-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+
+</marlin>
