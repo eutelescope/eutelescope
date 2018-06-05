@@ -101,13 +101,14 @@ ENDFUNCTION()
 ##############################
 #  aconite-4chipLocal tests  #
 ##############################
+
 OPTION(TEST_ACONITE4CHIP-LOCAL "Perform aconite-4chipLocal tests?" ON)
 
 IF(TEST_ACONITE4CHIP-LOCAL)
-    FILE(GLOB TEST_LIST_MODULES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} aconite-4chipLocal_test/test_*)
-    LIST(LENGTH TEST_LIST_MODULES NUM_TEST_MODULES)
-    MESSAGE(STATUS "aconite-4chipLocal tests: ${NUM_TEST_MODULES} tests")
-    FOREACH(TEST ${TEST_LIST_MODULES})
+    FILE(GLOB TEST_LIST_ACONITE RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} aconite-4chipLocal_test/test_*)
+    LIST(LENGTH TEST_LIST_ACONITE NUM_TEST_ACONITE)
+    MESSAGE(STATUS "aconite-4chipLocal tests: ${NUM_TEST_ACONITE} tests")
+    FOREACH(TEST ${TEST_LIST_ACONITE})
         ADD_EUTEL_TEST(${TEST} aconite-4chipLocal)
     ENDFOREACH()
 ELSE()
@@ -117,13 +118,14 @@ ENDIF()
 ##############################
 #  gbl_local tests           #
 ##############################
+
 OPTION(TEST_GBL-LOCAL "Perform gbl_local tests?" ON)
 
 IF(TEST_GBL-LOCAL)
-    FILE(GLOB TEST_LIST_MODULES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} gbl_local_test/test_*)
-    LIST(LENGTH TEST_LIST_MODULES NUM_TEST_MODULES)
-    MESSAGE(STATUS "gbl_local tests: ${NUM_TEST_MODULES} tests")
-    FOREACH(TEST ${TEST_LIST_MODULES})
+    FILE(GLOB TEST_LIST_GBL RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} gbl_local_test/test_*)
+    LIST(LENGTH TEST_LIST_GBL NUM_TEST_GBL)
+    MESSAGE(STATUS "gbl_local tests: ${NUM_TEST_GBL} tests")
+    FOREACH(TEST ${TEST_LIST_GBL})
         ADD_EUTEL_TEST(${TEST} gbl_local)
     ENDFOREACH()
 ELSE()
