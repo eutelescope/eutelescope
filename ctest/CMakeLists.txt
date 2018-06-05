@@ -99,9 +99,8 @@ FUNCTION(ADD_EUTEL_TEST TEST SUBDIR)
 ENDFUNCTION()
 
 ##############################
-# "aconite-4chipLocal tests  #
+#  aconite-4chipLocal tests  #
 ##############################
-
 OPTION(TEST_ACONITE4CHIP-LOCAL "Perform aconite-4chipLocal tests?" ON)
 
 IF(TEST_ACONITE4CHIP-LOCAL)
@@ -113,4 +112,20 @@ IF(TEST_ACONITE4CHIP-LOCAL)
     ENDFOREACH()
 ELSE()
     MESSAGE(STATUS "aconite-4chipLocal tests: tests deactivated.")
+ENDIF()
+
+##############################
+#  gbl_local tests           #
+##############################
+OPTION(TEST_GBL-LOCAL "Perform gbl_local tests?" ON)
+
+IF(TEST_GBL-LOCAL)
+    FILE(GLOB TEST_LIST_MODULES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} gbl_local_test/test_*)
+    LIST(LENGTH TEST_LIST_MODULES NUM_TEST_MODULES)
+    MESSAGE(STATUS "gbl_local tests: ${NUM_TEST_MODULES} tests")
+    FOREACH(TEST ${TEST_LIST_MODULES})
+        ADD_EUTEL_TEST(${TEST} gbl_local)
+    ENDFOREACH()
+ELSE()
+    MESSAGE(STATUS "gbl_local tests: tests deactivated.")
 ENDIF()
