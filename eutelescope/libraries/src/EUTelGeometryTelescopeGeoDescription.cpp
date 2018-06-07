@@ -144,8 +144,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 		}
 	}
 
-	setSiPlanesLayoutID( _siPlanesParameters->getSiPlanesID() ) ;
-
+	setLayoutID( _siPlanesParameters->getSiPlanesID() ) ;
 
 	// create an array with the z positions of each layer
 	for (size_t iPlane_sz = 0; iPlane_sz < nPlanes; iPlane_sz++) {
@@ -243,7 +242,7 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
 	_trackerPlanesParameters = const_cast< gear::TrackerPlanesParameters*> (&( _gearManager->getTrackerPlanesParameters()));
 	_trackerPlanesLayerLayout = const_cast< gear::TrackerPlanesLayerLayout*> (&(_trackerPlanesParameters->getTrackerPlanesLayerLayout()));
 
-	setSiPlanesLayoutID( _trackerPlanesParameters->getLayoutID() ) ;
+	setLayoutID( _trackerPlanesParameters->getLayoutID() ) ;
 
 	_sensorIDVec.clear();
 	
@@ -411,7 +410,7 @@ _geoManager(nullptr)
 	//Set ROOTs verbosity to only display error messages or higher (so info will not be streamed to stderr)
 	gErrorIgnoreLevel =  kError;  
 	//Pixel Geometry manager creation
-	_pixGeoMgr = new EUTelGenericPixGeoMgr();
+	_pixGeoMgr = std::make_unique<EUTelGenericPixGeoMgr>();
 }
 
 void EUTelGeometryTelescopeGeoDescription::readGear() {
@@ -446,8 +445,6 @@ void EUTelGeometryTelescopeGeoDescription::readGear() {
 
 EUTelGeometryTelescopeGeoDescription::~EUTelGeometryTelescopeGeoDescription() {
 	_geoManager.release();
-	delete _pixGeoMgr;
-	_pixGeoMgr = nullptr;
 }
 
 /**
@@ -687,12 +684,11 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
     if ( dumpRoot ) _geoManager->Export( geomName.c_str() );
 
    for(auto& mapEntry: _planePath) {
-		auto pathName = mapEntry.second;
+		auto const & pathName = mapEntry.second;
 		auto sensorID = mapEntry.first;
     	_geoManager->cd( pathName.c_str() );
-		_TGeoMatrixMap[sensorID] = _geoManager->GetCurrentNode()->GetMatrix();
-	} 
-
+		  _TGeoMatrixMap[sensorID] = _geoManager->GetCurrentNode()->GetMatrix();
+	  } 
     return;
 }
 
@@ -867,7 +863,6 @@ double EUTelGeometryTelescopeGeoDescription::planeRadLengthGlobalIncidence(int p
 }
 
 double EUTelGeometryTelescopeGeoDescription::planeRadLengthLocalIncidence(int planeID, Eigen::Vector3d incidenceDir) {
-	
 	incidenceDir.normalize();
 	double normRad;
 
@@ -891,8 +886,6 @@ double EUTelGeometryTelescopeGeoDescription::planeRadLengthLocalIncidence(int pl
 	return normRad/scale;
 }
 
-
-
 void EUTelGeometryTelescopeGeoDescription::updateSiPlanesLayout() {
 	auto siplanesParameters = const_cast<gear::SiPlanesParameters*> (&( _gearManager->getSiPlanesParameters()));
 	auto siplanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> (&(_siPlanesParameters->getSiPlanesLayerLayout()));
@@ -915,7 +908,6 @@ void EUTelGeometryTelescopeGeoDescription::updateSiPlanesLayout() {
 		siplanesLayerLayout->setLayerRotationZX( iPlane, siPlaneYRotation(sensorID) );
 		siplanesLayerLayout->setLayerRotationXY( iPlane, siPlaneZRotation(sensorID) );
 	}
-
 
 	// ------- add to GearMgr ----
 	if( _gearManager != nullptr ) {
@@ -945,13 +937,11 @@ void EUTelGeometryTelescopeGeoDescription::updateTrackerPlanesLayout() {
 		GEARLayerPtr->setPositionYunc(layerPosUnc.coeff(1));
 		GEARLayerPtr->setPositionZunc(layerPosUnc.coeff(2));
 
-
 /*  
     virtual void setRotationXYunc( double value)   = 0;
     virtual void setRotationZXunc( double value)   = 0;
     virtual void setRotationZYunc( double value)   = 0;
 */
-
 	}
 
 	// ------- add to GearMgr ----

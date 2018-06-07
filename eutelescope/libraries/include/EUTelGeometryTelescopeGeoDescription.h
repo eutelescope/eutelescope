@@ -27,13 +27,6 @@
 #include "EUTelGeoSupportClasses.h"
 #include "EUTelUtility.h"
 
-// ROOT
-#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
-#include "TMatrixD.h"
-#else
-#error *** You need ROOT to compile this code.  ***
-#endif
-
 // Eigen
 #include <Eigen/Core>
 
@@ -41,9 +34,6 @@
 #include "TGeoManager.h"
 #include "TGeoMatrix.h"
 #include "TVector3.h"
-
-// built only if GEAR is available
-#ifdef USE_GEAR
 
 /** @class EUTelGeometryTelescopeGeoDescription
  * This class is supposed to keep globally accesible
@@ -54,32 +44,24 @@
  */
 namespace eutelescope {
   namespace geo {
-
     // Iterate over registered GEAR objects and construct their TGeo
     // representation
-    const Double_t PI = 3.141592653589793;
-    const Double_t DEG = 180. / PI;
-    const Double_t RADIAN = PI / 180.;
+    const double PI = 3.141592653589793;
+    const double DEG = 180. / PI;
+    const double RADIAN = PI / 180.;
 
     class EUTelGeometryTelescopeGeoDescription {
-
     private:
-      /** */
+      /** Default constructor */
       EUTelGeometryTelescopeGeoDescription();
-
-      /** */
-      DISALLOW_COPY_AND_ASSIGN(
-          EUTelGeometryTelescopeGeoDescription) // prevent users from making
-                                                // (default) copies of
-                                                // processors
 
       /** need only for pede2lcio*/
       gear::GearMgr *_gearManager;
 
-      /** */
+      /** Flag if the SiPlanesLayerLayout in GEAR is used*/
       bool _siPlanesDefined;
 
-      /** */
+      /** Flag if the rackerPlanesLayerLayout in GEAR is used*/
       bool _telPlanesDefined;
 
       /** Silicon planes parameters as described in GEAR
@@ -104,41 +86,51 @@ namespace eutelescope {
        */
       gear::SiPlanesLayerLayout *_siPlanesLayerLayout;
 
-      /** */
+      /** Tracker planes parameters as described in GEAR */
       gear::TrackerPlanesParameters *_trackerPlanesParameters;
 
-      /** */
+      /** Tracker planes layout as described in GEAR */
       gear::TrackerPlanesLayerLayout *_trackerPlanesLayerLayout;
 
-      /** */
-      size_t _siPlanesLayoutID;
+      /** The layout ID from the GEAR files */
+      size_t _layoutID;
 
-      float _initialDisplacement;
-
-      /** Vector of Sensor IDs */
+      /** Vector of Sensor IDs 
+       * Ordered according to their global z-position 
+       * */
       std::vector<int> _sensorIDVec;
 
       /** Pointer to the pixel geometry manager */
-      EUTelGenericPixGeoMgr *_pixGeoMgr;
+      std::unique_ptr<EUTelGenericPixGeoMgr> _pixGeoMgr;
 
       /** Flag if geoemtry is already initialized */
       bool _isGeoInitialized;
 
-      /** Map containing plane path (string) and corresponding planeID */
+      /** Map containing the path to the TGeoNode in ROOT's TGeo framework for each plane (identified by its planeID) */
       std::map<int, std::string> _planePath;
-	  std::map<int, TGeoMatrix*> _TGeoMatrixMap;
-      /** */
+
+      /** Map holding the transformation matrix for each plane (identified by its planeID) */
+	    std::map<int, TGeoMatrix*> _TGeoMatrixMap;
+
+      /** Conter to indicate if instance of this object exists */
       static unsigned _counter;
 
+      /** Map containing the normal vector of each plane */
       std::map<int, TVector3> _planeNormalMap;
+      /** Map containing the x-direction vector of each plane */
       std::map<int, TVector3> _planeXMap;
+      /** Map containing the y-direction vector of each plane */
       std::map<int, TVector3> _planeYMap;
+      /** Map containing the radiation length of each plane */
       std::map<int, double> _planeRadMap;
 
-      std::vector<std::unique_ptr<EUTelLayer>> _telescopeLayers;
-      std::map<int, EUTelLayer *> _telescopeLayerMap;
+      /** Map containing all materials defined in GEAR file */
       std::map<std::string, EUTelMaterial> _materialMap;
-      std::map<int, EUTelActive *> _activeMap;
+
+      //TODO
+      std::vector<std::unique_ptr<EUTelLayer>> _telescopeLayers;
+      std::map<int, EUTelLayer*> _telescopeLayerMap;
+      std::map<int, EUTelActive*> _activeMap;
 
     public:
       /** Retrieves the instanstance of geometry.
@@ -151,40 +143,25 @@ namespace eutelescope {
       /** */
       void updateGearManager();
 
-      /** */
+      /** Increment the static instance counter */
       unsigned counter() { return _counter++; }
 
       auto getActivePlaneMap() const -> decltype(_activeMap) {
         return _activeMap;
       }
 
-      void setInitialDisplacementToFirstPlane(float initialDisplacement) {
-        _initialDisplacement = initialDisplacement;
-      };
-
       /** needed only for pede2lcio*/
       void setGearManager(gear::GearMgr *value) { _gearManager = value; }
 
       /** Number of planes in the setup */
-      inline size_t getSiPlanesLayoutID() const { return _siPlanesLayoutID; };
+      inline size_t getLayoutID() const { return _layoutID; };
 
       /** Number of planes in the setup */
-      void setSiPlanesLayoutID(size_t value) { _siPlanesLayoutID = value; };
+      void setLayoutID(size_t value) { _layoutID = value; };
 
       /** Number of planes in the setup */
       size_t nPlanes() const { return _activeMap.size(); };
 
-      /** set methods */
-      /** set X position  */
-      /*
-              inline void setPlaneOffset(int sensorID, Eigen::Vector3d pos){
-         return; this->clearMemoizedValues(); };
-
-              inline void setPlaneAbsolutePosition(int sensorID, Eigen::Vector3d
-         pos){ return; this->clearMemoizedValues(); };
-              inline void setPlaneAbsolutePosition(int sensorID, double x,
-         double y, double z){ return; this->clearMemoizedValues(); };
-      */
       inline void alignGlobalPos(int sensorID, Eigen::Vector3d const &pos) {
         std::cout << "Aligning sensor: " << sensorID << " to position: " << pos
                   << std::endl;
@@ -209,44 +186,6 @@ namespace eutelescope {
         this->clearMemoizedValues();
         return;
       };
-
-      /*
-              inline void setPlaneOffset(int sensorID, double x, double y,
-         double z){ return; this->clearMemoizedValues(); };
-
-              inline void setParentLayerPosition(int sensorID, double x, double
-         y, double z){
-                      _activeMap.at(sensorID)->setParentPosition(x, y, z);
-                      this->clearMemoizedValues();
-                      return;
-              };
-      */
-      /** set X rotation  */
-      //	inline void setPlaneXRotation(int sensorID, double value){
-      //_planeSetup[sensorID].alpha = value; this->clearMemoizedValues(); };
-
-      /** set Y rotation  */
-      //	inline void setPlaneYRotation(int sensorID, double value){
-      //_planeSetup[sensorID].beta = value; this->clearMemoizedValues(); };
-
-      /** set Z rotation  */
-      //	inline void setPlaneZRotation(int sensorID, double value){
-      //_planeSetup[sensorID].gamma = value; this->clearMemoizedValues(); };
-
-      /** set X rotation in radians */
-      //	inline void setPlaneXRotationRadians(int sensorID, double
-      //value){ _planeSetup[sensorID].alpha = value*DEG;
-      //this->clearMemoizedValues(); };
-
-      /** set Y rotation in radians */
-      //	inline void setPlaneYRotationRadians(int sensorID, double
-      //value){ _planeSetup[sensorID].beta = value*DEG;
-      //this->clearMemoizedValues(); };
-
-      /** set Z rotation in radians */
-      //	inline void setPlaneZRotationRadians(int sensorID, double
-      //value){ _planeSetup[sensorID].gamma = value*DEG;
-      //this->clearMemoizedValues(); };
 
       inline void setPlanePitch(int sensorID, double xPitch, double yPitch) {
         _activeMap.at(sensorID)->setPitch(xPitch, yPitch);
@@ -458,10 +397,6 @@ namespace eutelescope {
           std::map<const int, double> &, std::map<const int, double> &);
       double addKapton(std::map<const int, double> &mapSensor);
 
-      float getInitialDisplacementToFirstPlane() const {
-        return _initialDisplacement;
-      };
-
       /** Magnetic field */
       const gear::BField &getMagneticField() const {
         return _gearManager->getBField();
@@ -522,5 +457,4 @@ namespace eutelescope {
     }
   } // namespace geo
 } // namespace eutelescope
-#endif // USE_GEAR
 #endif /* EUTELGEOMETRYTELESCOPEGEODESCRIPTION_H */

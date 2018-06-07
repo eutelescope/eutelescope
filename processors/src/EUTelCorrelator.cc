@@ -224,12 +224,12 @@ void EUTelCorrelator::processRunHeader(LCRunHeader *rdr) {
         << "This may mean that the GeoID parameter was not set" << endl;
 
   if (static_cast<unsigned int>(runHeader->getGeoID()) !=
-      geo::gGeometry().getSiPlanesLayoutID()) {
+      geo::gGeometry().getLayoutID()) {
     streamlog_out(WARNING5)
         << "Error during the geometry consistency check: " << endl
         << "The run header says the GeoID is " << runHeader->getGeoID() << endl
         << "The GEAR description says is     "
-        << geo::gGeometry().getSiPlanesLayoutID() << endl;
+        << geo::gGeometry().getLayoutID() << endl;
   }
 
   delete runHeader;

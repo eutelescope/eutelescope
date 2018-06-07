@@ -722,13 +722,13 @@ void EUTelMille::processRunHeader(LCRunHeader *rdr) {
   // quitting ask the user what to do.
 
   if (static_cast<unsigned int>(header->getGeoID()) !=
-      geo::gGeometry().getSiPlanesLayoutID()) {
+      geo::gGeometry().getLayoutID()) {
     streamlog_out(ERROR2) << "Error during the geometry consistency check: "
                           << endl;
     streamlog_out(ERROR2) << "The run header says the GeoID is "
                           << header->getGeoID() << endl;
     streamlog_out(ERROR2) << "The GEAR description says is     "
-                          << geo::gGeometry().getSiPlanesLayoutID() << endl;
+                          << geo::gGeometry().getLayoutID() << endl;
   }
 
   // increment the run counter
