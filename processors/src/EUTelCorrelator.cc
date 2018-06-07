@@ -150,11 +150,6 @@ EUTelCorrelator::EUTelCorrelator()
                             "hits (planes->track candidate) (default=5)",
                             _minNumberOfCorrelatedHits, 5);
 
-  registerOptionalParameter(
-      "HotPixelCollectionName", "This is the name of the hot pixel collection "
-                                "to be saved into the output slcio file",
-      _hotPixelCollectionName, static_cast<string>("hotpixel"));
-
   registerOptionalParameter("HistogramInfoFilename",
                             "Name of histogram info xml file",
                             _histoInfoFileName, string("histoinfo.xml"));

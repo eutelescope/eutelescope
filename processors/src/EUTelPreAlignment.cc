@@ -64,11 +64,6 @@ EUTelPreAlign::EUTelPreAlign() : Processor("EUTelPreAlign") {
       "Name of LCIO db file where alignment constantds will be stored",
       _alignmentConstantLCIOFile, std::string("alignment.slcio"));
 
-  registerOptionalParameter("HotPixelCollectionName",
-                            "This is the name of the hot pixel collection that "
-                            "clusters should be checked against (optional).",
-                            _hotPixelCollectionName, std::string(""));
-
   registerProcessorParameter("Events", "How many events should be used for an "
                                        "approximation to the X,Y shifts "
                                        "(pre-alignment)? (default=50000)",
@@ -199,60 +194,8 @@ void EUTelPreAlign::processRunHeader(LCRunHeader *rdr) {
   ++_iRun;
 }
 
-void EUTelPreAlign::FillHotPixelMap(LCEvent *event) {
-
-  if (_hotPixelCollectionName.empty())
-    return;
-
-  LCCollectionVec *hotPixelCollectionVec = nullptr;
-  try {
-    hotPixelCollectionVec = static_cast<LCCollectionVec *>(
-        event->getCollection(_hotPixelCollectionName));
-    streamlog_out(DEBUG5) << "Hotpixel database "
-                          << _hotPixelCollectionName.c_str() << " found"
-                          << endl;
-  } catch (...) {
-    streamlog_out(WARNING5) << "Hotpixel database "
-                            << _hotPixelCollectionName.c_str() << " not found"
-                            << endl;
-    return;
-  }
-
-  CellIDDecoder<TrackerDataImpl> cellDecoder(hotPixelCollectionVec);
-
-  for (int i = 0; i < hotPixelCollectionVec->getNumberOfElements(); i++) {
-    TrackerDataImpl *hotPixelData =
-        dynamic_cast<TrackerDataImpl *>(hotPixelCollectionVec->getElementAt(i));
-    SparsePixelType type = static_cast<SparsePixelType>(
-        static_cast<int>(cellDecoder(hotPixelData)["sparsePixelType"]));
-
-    int sensorID = static_cast<int>(cellDecoder(hotPixelData)["sensorID"]);
-
-    if (type == kEUTelGenericSparsePixel) {
-      auto m26Data =
-          std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(
-              hotPixelData);
-      auto &pixelVec = m26Data->getPixels();
-
-      for (auto &m26Pixel : pixelVec) {
-        try {
-          _hotPixelMap[sensorID].push_back(
-              std::make_pair(m26Pixel.getXCoord(), m26Pixel.getYCoord()));
-        } catch (...) {
-          streamlog_out(ERROR5)
-              << " cannot add pixel to hotpixel map! SensorID: " << sensorID
-              << ", X:" << m26Pixel.getXCoord()
-              << ", Y:" << m26Pixel.getYCoord() << endl;
-          abort();
-        }
-      }
-    }
-  }
-}
-
 void EUTelPreAlign::processEvent(LCEvent *event) {
   if (isFirstEvent())
-    FillHotPixelMap(event);
 
   ++_iEvt;
 
@@ -302,9 +245,6 @@ void EUTelPreAlign::processEvent(LCEvent *event) {
 
         TrackerHitImpl *hit = dynamic_cast<TrackerHitImpl *>(
             inputCollectionVec->getElementAt(iHit));
-        // Hits with a hot pixel are ignored
-        if (hitContainsHotPixels(hit))
-          continue;
 
         const double *pos = hit->getPosition();
         int iHitID = hitDecoder(hit)["sensorID"];
@@ -371,95 +311,6 @@ void EUTelPreAlign::processEvent(LCEvent *event) {
 
   if (isFirstEvent())
     _isFirstEvent = false;
-}
-
-bool EUTelPreAlign::hitContainsHotPixels(TrackerHitImpl *hit) {
-
-  // if no hot pixel map was loaded, just return here
-  if (_hotPixelMap.size() == 0)
-    return false;
-
-  try {
-    LCObjectVec clusterVector = hit->getRawHits();
-
-    if (hit->getType() == kEUTelSparseClusterImpl) {
-      TrackerDataImpl *clusterFrame =
-          static_cast<TrackerDataImpl *>(clusterVector[0]);
-
-      auto cluster =
-          std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(
-              clusterFrame);
-      int sensorID = cluster->getDetectorID();
-      auto &pixelVec = cluster->getPixels();
-
-      for (auto &m26Pixel : pixelVec) {
-        {
-          try {
-            if (std::find(_hotPixelMap.at(sensorID).begin(),
-                          _hotPixelMap.at(sensorID).end(),
-                          std::make_pair(m26Pixel.getXCoord(),
-                                         m26Pixel.getYCoord())) !=
-                _hotPixelMap.at(sensorID).end()) {
-              return true; // if TRUE  this hit will be skipped
-            }
-          } catch (const std::out_of_range &oor) {
-            streamlog_out(DEBUG0)
-                << " Could not find hot pixel map for sensor ID " << sensorID
-                << ": " << oor.what() << endl;
-          }
-        }
-      }
-
-      return false;
-    } else if (hit->getType() == kEUTelBrickedClusterImpl) {
-
-      // fixed cluster implementation. Remember it
-      //  can come from
-      //  both RAW and ZS data
-
-      streamlog_out(WARNING5) << " Hit type kEUTelBrickedClusterImpl is not "
-                                 "implemented in hotPixel finder method, all "
-                                 "pixels are considered for PreAlignment."
-                              << endl;
-
-    } else if (hit->getType() == kEUTelDFFClusterImpl) {
-
-      // fixed cluster implementation. Remember it can come from
-      // both RAW and ZS data
-      streamlog_out(WARNING5)
-          << " Hit type kEUTelDFFClusterImpl is not implemented in hotPixel "
-             "finder method, all pixels are considered for PreAlignment."
-          << endl;
-    } else if (hit->getType() == kEUTelFFClusterImpl) {
-
-      // fixed cluster implementation. Remember it can come from
-      // both RAW and ZS data
-      streamlog_out(WARNING5)
-          << " Hit type kEUTelFFClusterImpl is not implemented in hotPixel "
-             "finder method, all pixels are considered for PreAlignment."
-          << endl;
-    } else {
-      streamlog_out(WARNING5)
-          << " Hit type is not known and is not implemented in hotPixel finder "
-             "method, all pixels are considered for PreAlignment."
-          << endl;
-    }
-  } catch (exception &e) {
-    streamlog_out(ERROR4)
-        << "something went wrong in EUTelPreAlign::hitContainsHotPixels: "
-        << e.what() << endl;
-  } catch (...) {
-    // if anything went wrong in the above return FALSE, meaning do not skip
-    // this hit
-
-    streamlog_out(ERROR4)
-        << "something went wrong in EUTelPreAlign::hitContainsHotPixels "
-        << endl;
-    return 0;
-  }
-
-  // if none of the above worked return FALSE, meaning do not skip this hit
-  return 0;
 }
 
 void EUTelPreAlign::end() {

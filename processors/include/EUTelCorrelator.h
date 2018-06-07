@@ -304,23 +304,6 @@ namespace eutelescope {
      */
     std::map<int, int> _sensorIDtoZOrderMap;
 
-    //! Hot pixel collection name.
-    /*!
-     * this collection is saved in a db file to be used at the clustering level
-     */
-    std::string _hotPixelCollectionName;
-
-    //! Vector of map arrays, keeps record of hit pixels
-    /*! The vector elements are sorted by Detector ID
-     *  For each Detector unique ID element a map of pixels is created.
-     *  first level key   sensor unique
-     *              value sensor map
-     *  sensor map key    unique row number
-     *             value  vector of column numbers.
-     */
-
-    std::map<std::string, bool> _hotPixelMap;
-
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
     /** Histogram info file name */
@@ -378,7 +361,6 @@ namespace eutelescope {
     static std::string _hitYCorrShiftProjectionHistoName;
 
 #endif
-
     bool _hasClusterCollection;
     bool _hasHitCollection;
 
