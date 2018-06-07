@@ -124,31 +124,8 @@ namespace eutelescope {
     virtual void processRunHeader(LCRunHeader *run);
     virtual void processEvent(LCEvent *evt);
     virtual void end();
-    virtual bool hitContainsHotPixels(TrackerHitImpl *hit);
-
-    //! Called for first event per run
-    /*! Reads hotpixel information from hotPixelCollection into hotPixelMap
-     * to be used in the sensor exclusion area logic
-     */
-    virtual void FillHotPixelMap(LCEvent *event);
 
   private:
-    //! Hot pixel collection name.
-    /*!
-     * this collection is saved in a db file to be used at the clustering level
-     */
-    std::string _hotPixelCollectionName;
-
-    //! map of vectors, keeps record of hit pixels
-    /*!
-     *  For each Detector a vector is stored in a map.
-     *  Each vector holds pairs of integers (representing X and Y pixel array
-     * positions).
-     *  If an element (i.e. the X and Y position of a pixel) is present in the
-     * vector,
-     *  this indicates that the corresponding pixel was marked "hot"
-     */
-    std::map<int, std::vector<std::pair<short, short>>> _hotPixelMap;
 
     //! How many events are needed to get reasonable correlation plots
     /*! (and Offset DB values)
