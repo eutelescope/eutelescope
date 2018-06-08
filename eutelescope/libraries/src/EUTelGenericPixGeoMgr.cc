@@ -41,7 +41,7 @@ void EUTelGenericPixGeoMgr::addCastedPlane(int planeID, int xPixel, int yPixel,
                                            double xSize, double ySize,
                                            double zSize, double radLength,
                                            std::string planeVolume) {
-  EUTelGenericPixGeoDescr *pixgeodescrptr = NULL;
+  EUTelGenericPixGeoDescr *pixgeodescrptr = nullptr;
   int xSizeMap = static_cast<int>(1000 * xSize + 0.5);
   int ySizeMap = static_cast<int>(1000 * ySize + 0.5);
   int zSizeMap = static_cast<int>(1000 * zSize + 0.5);
@@ -77,7 +77,7 @@ void EUTelGenericPixGeoMgr::addCastedPlane(int planeID, int xPixel, int yPixel,
 
 void EUTelGenericPixGeoMgr::addPlane(int planeID, std::string geoName,
                                      std::string planeVolume) {
-  EUTelGenericPixGeoDescr *pixgeodescrptr = NULL;
+  EUTelGenericPixGeoDescr *pixgeodescrptr = nullptr;
   std::map<std::string, EUTelGenericPixGeoDescr *>::iterator it;
 
   // Check if the geoemtry is loaded already (e.g. for some other plane)
@@ -101,7 +101,7 @@ void EUTelGenericPixGeoMgr::addPlane(int planeID, std::string geoName,
     // Load shared library, be sure to export the path of the lib to
     // LD_LIBRARY_PATH!
     void *hndl = dlopen(libName.c_str(), RTLD_NOW);
-    if (hndl == NULL) {
+    if (hndl == nullptr) {
       streamlog_out(ERROR7) << "Loading of " << libName
                             << " failed: " << dlerror() << std::endl;
       throw std::runtime_error("dlopen could not open shared libraray");

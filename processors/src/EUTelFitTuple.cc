@@ -317,7 +317,7 @@ void EUTelFitTuple::processEvent(LCEvent *event) {
     return;
   }
 
-  LCCollection *hitcol = NULL;
+  LCCollection *hitcol = nullptr;
   bool _DUTok = true;
 
   try {
@@ -424,7 +424,7 @@ void EUTelFitTuple::processEvent(LCEvent *event) {
 
         EVENT::LCObjectVec rawdata = meshit->getRawHits();
 
-        if (rawdata.size() > 0 && rawdata.at(0) != NULL) {
+        if (rawdata.size() > 0 && rawdata.at(0) != nullptr) {
           EUTelVirtualCluster *cluster = new EUTelFFClusterImpl(
               static_cast<TrackerDataImpl *>(rawdata.at(0)));
           _measuredQ[hitPlane] = cluster->getTotalCharge();
@@ -518,7 +518,7 @@ void EUTelFitTuple::processEvent(LCEvent *event) {
 
         EVENT::LCObjectVec rawdata = meshit->getRawHits();
 
-        if (rawdata.size() > 0 && rawdata.at(0) != NULL) {
+        if (rawdata.size() > 0 && rawdata.at(0) != nullptr) {
           EUTelVirtualCluster *cluster = new EUTelFFClusterImpl(
               static_cast<TrackerDataImpl *>(rawdata.at(0)));
           dutQ = cluster->getTotalCharge();

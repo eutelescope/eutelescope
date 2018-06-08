@@ -78,7 +78,7 @@ bool EUTelHistogramManager::init() {
       EUTelHistogramInfo *histoInfo = new EUTelHistogramInfo;
       histoInfo->_name = pHistoNode->Attribute("name");
 
-      if (pHistoNode->Attribute("type") == NULL) {
+      if (pHistoNode->Attribute("type") == nullptr) {
         delete doc;
         delete histoInfo;
         throw ParseException(
@@ -87,7 +87,7 @@ bool EUTelHistogramManager::init() {
       } else
         histoInfo->_type = pHistoNode->Attribute("type");
 
-      if (pHistoNode->Attribute("title") == NULL)
+      if (pHistoNode->Attribute("title") == nullptr)
         histoInfo->_title = "";
       else
         histoInfo->_title = pHistoNode->Attribute("title");

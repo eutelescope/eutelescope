@@ -354,8 +354,8 @@ void EUTelHistogramMaker::processEvent(LCEvent *evt) {
           ->fill(static_cast<double>(xSeed), static_cast<double>(ySeed), 1.);
 
       if (_noiseHistoSwitch) {
-        TrackerDataImpl *noiseMatrix = NULL;
-        TrackerRawDataImpl *statusMatrix = NULL;
+        TrackerDataImpl *noiseMatrix = nullptr;
+        TrackerRawDataImpl *statusMatrix = nullptr;
         bool found = false;
         size_t i = 0;
         while (!found && i < noiseCollectionVec.size()) {

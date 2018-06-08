@@ -913,7 +913,7 @@ void EUTelTrueHitDafFitter::bookHistos() {
       AIDAProcessor::histogramFactory(this)->createHistogram1D(
           "logchi2", 100, 0, std::log10(maxNdof * _maxChi2));
 
-  if (_aidaHistoMap["chi2"] == NULL) {
+  if (_aidaHistoMap["chi2"] == nullptr) {
 
     streamlog_out(ERROR2) << "Problem with histo booking. Check paths!"
                           << std::endl;

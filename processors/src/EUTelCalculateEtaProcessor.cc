@@ -348,7 +348,7 @@ void EUTelCalculateEtaProcessor::processEvent(LCEvent *event) {
         if (cluster->getClusterQuality() ==
             static_cast<ClusterQuality>(_clusterQuality)) {
 
-          EUTelBrickedClusterImpl *p_tmpBrickedCluster = NULL;
+          EUTelBrickedClusterImpl *p_tmpBrickedCluster = nullptr;
           if (type == kEUTelBrickedClusterImpl) {
             p_tmpBrickedCluster =
                 dynamic_cast<EUTelBrickedClusterImpl *>(cluster);

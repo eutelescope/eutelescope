@@ -734,7 +734,7 @@ void EUTelFitTupleAlibava::processEvent ( LCEvent * event )
     }
 
     // the hit input collection of the event
-    LCCollection* hitcol = NULL;
+    LCCollection* hitcol = nullptr;
     bool _DUTok = true;
     try
     {
@@ -860,7 +860,7 @@ void EUTelFitTupleAlibava::processEvent ( LCEvent * event )
 		_measuredQ[hitPlane] = 0.0;
 
 		EVENT::LCObjectVec rawdata =  meshit -> getRawHits ( );
-		if ( rawdata.size ( ) > 0 && rawdata.at ( 0 ) != NULL )
+		if ( rawdata.size ( ) > 0 && rawdata.at ( 0 ) != nullptr )
 		{
 		    EUTelVirtualCluster * cluster = new EUTelFFClusterImpl ( static_cast < TrackerDataImpl* > ( rawdata.at ( 0 ) ) );
 		    _measuredQ[hitPlane] = cluster -> getTotalCharge ( );
