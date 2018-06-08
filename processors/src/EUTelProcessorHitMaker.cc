@@ -284,10 +284,10 @@ void EUTelProcessorHitMaker::processEvent(LCEvent *event) {
       //! has to be applied on top of that!
       //! So prepare a brickedCluster pointer now:
 
-      EUTelBrickedClusterImpl *p_tmpBrickedCluster = NULL;
+      EUTelBrickedClusterImpl *p_tmpBrickedCluster = nullptr;
       if (clusterType == kEUTelBrickedClusterImpl) {
         p_tmpBrickedCluster = dynamic_cast<EUTelBrickedClusterImpl *>(cluster);
-        if (p_tmpBrickedCluster == NULL) {
+        if (p_tmpBrickedCluster == nullptr) {
           streamlog_out(ERROR4)
               << " .COULD NOT CREATE EUTelBrickedClusterImpl* !!!" << endl;
           throw UnknownDataTypeException(

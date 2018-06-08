@@ -87,7 +87,7 @@ void EUTelProcessorApplyAlign::init() {
   _iEvt = 0;
 
   // check if the GEAR manager pointer is not null!
-  if (Global::GEAR == NULL) {
+  if (Global::GEAR == nullptr) {
     streamlog_out(ERROR4)
         << "The GearMgr is not available, for an unknown reason." << endl;
     exit(-1);

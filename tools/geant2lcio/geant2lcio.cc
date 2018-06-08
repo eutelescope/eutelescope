@@ -359,7 +359,7 @@ int main(int argc, char ** argv) {
 
             TrackerHitImpl * meshit = new TrackerHitImpl;
 
-            if(meshit == NULL) 
+            if(meshit == nullptr) 
                   cerr << "TrackerHitImpl allocation failed" << endl;
 
        // Store plane number  as hit type:

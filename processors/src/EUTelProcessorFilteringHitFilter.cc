@@ -108,8 +108,8 @@ void EUTelProcessorFilteringHitFilter::processEvent(LCEvent *event) {
   // cout << " processEvent continue: " << endl;
 
   // Try to access the collection
-  LCCollectionVec *hitInputCollection = NULL;
-  LCCollectionVec *hitOutputCollection = NULL;
+  LCCollectionVec *hitInputCollection = nullptr;
+  LCCollectionVec *hitOutputCollection = nullptr;
 
   bool bHitOutputCollectionExists = false;
   try {

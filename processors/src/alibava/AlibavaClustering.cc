@@ -207,7 +207,7 @@ void AlibavaClustering::processEvent ( LCEvent * anEvent )
     LCCollectionVec * clusterCollection;
 
     // the sparse collection 
-    LCCollectionVec * sparseClusterCollectionVec = NULL;
+    LCCollectionVec * sparseClusterCollectionVec = nullptr;
     sparseClusterCollectionVec =  new LCCollectionVec ( LCIO::TRACKERDATA );
 
     // the filtered collection

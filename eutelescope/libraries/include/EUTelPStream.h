@@ -33,7 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <algorithm> // for min()
 #include <cerrno>    // for errno
-#include <cstddef>   // for size_t, NULL
 #include <cstdlib>   // for exit()
 #include <ios>
 #include <istream>

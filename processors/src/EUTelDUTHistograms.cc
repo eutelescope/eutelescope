@@ -2381,7 +2381,7 @@ int EUTelDUTHistograms::read_track(LCEvent *event) {
   _bgmeasuredX.clear();
   _bgmeasuredY.clear();
 
-  LCCollection *hitcol = NULL;
+  LCCollection *hitcol = nullptr;
   try {
     hitcol = event->getCollection(_inputHitColName);
   } catch (lcio::DataNotAvailableException &e) {

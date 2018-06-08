@@ -2977,7 +2977,7 @@ void EUTelMille::end() {
             // (with offset of 22 chars since pch points to beginning of
             // "Sum(..." string just found)
             const char *pch = static_cast<const char*>(memchr(pch0 + 22, '=', 180));
-            if (pch != NULL) {
+            if (pch != nullptr) {
               char str[16];
               // now copy the numbers after the equal sign
               strncpy(str, pch + 1, 15);

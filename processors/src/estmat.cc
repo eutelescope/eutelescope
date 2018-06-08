@@ -600,7 +600,7 @@ FITTERTYPE Minimizer::operator()(void) {
 // void EstMat::initSim(int nPlanes){
 //   //Initialize random number generators, tracker system, ...
 //   //seed with time
-//   srandom ( time(NULL) );
+//   srandom ( time(nullptr) );
 
 //   system.setClusterRadius( 100000.0f);
 //   system.setNominalXdz(0.0f);
@@ -1029,7 +1029,7 @@ void EstMat::simplexSearch(Minimizer *minimizeMe, size_t iterations,
   for (int ii = 0; ii < restarts; ii++) {
     cout << "iteration " << ii << endl;
     const gsl_multimin_fminimizer_type *T = gsl_multimin_fminimizer_nmsimplex2;
-    gsl_multimin_fminimizer *s = NULL;
+    gsl_multimin_fminimizer *s = nullptr;
     gsl_vector *ss, *x;
     gsl_multimin_function minex_func;
 

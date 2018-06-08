@@ -148,7 +148,7 @@ void CBCClustering::processEvent ( LCEvent * anEvent )
 	LCCollectionVec * clusterCollection;
 
 	// the sparse collection we output
-	LCCollectionVec * sparseClusterCollectionVec = NULL;
+	LCCollectionVec * sparseClusterCollectionVec = nullptr;
 	sparseClusterCollectionVec =  new LCCollectionVec ( LCIO::TRACKERDATA );
 
 	try
