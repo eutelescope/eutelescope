@@ -5,14 +5,15 @@ sudo: required
 services:
     - docker
 env:
- - DOCKER_IMG=merualhemio/eutel-fedora26
- - DOCKER_IMG=merualhemio/eutel-slc6
- - DOCKER_IMG=merualhemio/eutel-ubuntu17
- - DOCKER_IMG=merualhemio/eutel-cerncentos7
  - DOCKER_IMG=merualhemio/eutel-archlinux
- - DOCKER_IMG=merualhemio/eutel-fedora28
- - DOCKER_IMG=merualhemio/eutel-ubuntu18
  - DOCKER_IMG=merualhemio/eutel-opensuse-tumbleweed
+ - DOCKER_IMG=merualhemio/eutel-slc6
+ - DOCKER_IMG=merualhemio/eutel-cerncentos7
+ - DOCKER_IMG=merualhemio/eutel-ubuntu16
+ - DOCKER_IMG=merualhemio/eutel-ubuntu17
+ - DOCKER_IMG=merualhemio/eutel-ubuntu18
+ - DOCKER_IMG=merualhemio/eutel-fedora26
+ - DOCKER_IMG=merualhemio/eutel-fedora28
  - DOCKER_IMG=merualhemio/eutel-debian9
  
 script:
