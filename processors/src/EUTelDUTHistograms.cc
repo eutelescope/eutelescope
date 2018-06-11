@@ -181,7 +181,7 @@ void EUTelDUTHistograms::init() {
   _nRun = 0;
   _maptrackid = 0;
 
-  _zDUT = geo::gGeometry().siPlaneZPosition(_iDUT);
+  _zDUT = geo::gGeometry().getPlaneZPosition(_iDUT);
 
   // Print out geometry information
 

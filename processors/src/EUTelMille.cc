@@ -473,7 +473,7 @@ void EUTelMille::init() {
     _sensorIDVec.push_back(sensorID);
     _sensorIDVecMap.insert(make_pair(sensorID, i));
     sensorIDMap.insert(
-        make_pair(geo::gGeometry().siPlaneZPosition(sensorID), sensorID));
+        make_pair(geo::gGeometry().getPlaneZPosition(sensorID), sensorID));
   }
 
   _histogramSwitch = true;
@@ -2197,9 +2197,9 @@ void EUTelMille::processEvent(LCEvent *event) {
                 double z_sensor = 0.;
 
                 int sensorID = _sensorIDVec[help];
-                x_sensor = geo::gGeometry().siPlaneXPosition(sensorID);
-                y_sensor = geo::gGeometry().siPlaneYPosition(sensorID);
-                z_sensor = geo::gGeometry().siPlaneZPosition(sensorID);
+                x_sensor = geo::gGeometry().getPlaneXPosition(sensorID);
+                y_sensor = geo::gGeometry().getPlaneYPosition(sensorID);
+                z_sensor = geo::gGeometry().getPlaneZPosition(sensorID);
                 
                 // << ", " << z_sensor << std::endl;
                 x_sensor *= 1000.;
@@ -2488,9 +2488,9 @@ TVector3 EUTelMille::Line2Plane(int iplane, const TVector3 &lpoint,
   TVector3 hitInPlane;
 
   int sensorID = _orderedSensorID[iplane];
-  hitInPlane.SetXYZ(geo::gGeometry().siPlaneXPosition(sensorID) * 1000,
-                    geo::gGeometry().siPlaneYPosition(sensorID) * 1000,
-                    geo::gGeometry().siPlaneZPosition(sensorID) * 1000);
+  hitInPlane.SetXYZ(geo::gGeometry().getPlaneXPosition(sensorID) * 1000,
+                    geo::gGeometry().getPlaneYPosition(sensorID) * 1000,
+                    geo::gGeometry().getPlaneZPosition(sensorID) * 1000);
   TVector3 norm2Plane = TVector3( geo::gGeometry().siPlaneNormal(sensorID)[0], 
                                   geo::gGeometry().siPlaneNormal(sensorID)[1],
                                   geo::gGeometry().siPlaneNormal(sensorID)[2]);

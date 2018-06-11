@@ -92,12 +92,12 @@ inline void prepareGEAR( const string& oldGearfileName, const string& newGearfil
         if( ( itrAlignmentConstant = alignmentConstants.find( sensorID ) ) != alignmentConstants.end() ) {
 
 
-            xplane = geo::gGeometry().siPlaneXPosition(sensorID) ; 
-            yplane = geo::gGeometry().siPlaneYPosition(sensorID) ; 
-            zplane = geo::gGeometry().siPlaneZPosition(sensorID) ;
- 	    xrot   = geo::gGeometry().siPlaneXRotation(sensorID) ;
- 	    yrot   = geo::gGeometry().siPlaneYRotation(sensorID) ;
-	    zrot   = geo::gGeometry().siPlaneZRotation(sensorID) ;
+            xplane = geo::gGeometry().getPlaneXPosition(sensorID) ; 
+            yplane = geo::gGeometry().getPlaneYPosition(sensorID) ; 
+            zplane = geo::gGeometry().getPlaneZPosition(sensorID) ;
+ 	    xrot   = geo::gGeometry().getPlaneXRotationDegrees(sensorID) ;
+ 	    yrot   = geo::gGeometry().getPlaneYRotationDegrees(sensorID) ;
+	    zrot   = geo::gGeometry().getPlaneZRotationDegrees(sensorID) ;
 
 	    TRotation invR;
 	    invR.RotateX( xrot );
@@ -156,12 +156,12 @@ inline void prepareGEAR( const string& oldGearfileName, const string& newGearfil
             streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<delta_r0[1];
             streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<delta_r0[2]<<endl; 
 
-            xplane = geo::gGeometry().siPlaneXPosition(sensorID) ; 
-            yplane = geo::gGeometry().siPlaneYPosition(sensorID) ; 
-            zplane = geo::gGeometry().siPlaneZPosition(sensorID) ;
- 	    xrot   = geo::gGeometry().siPlaneXRotationRadians(sensorID) ;
- 	    yrot   = geo::gGeometry().siPlaneYRotationRadians(sensorID) ;
-	    zrot   = geo::gGeometry().siPlaneZRotationRadians(sensorID) ;
+            xplane = geo::gGeometry().getPlaneXPosition(sensorID) ; 
+            yplane = geo::gGeometry().getPlaneYPosition(sensorID) ; 
+            zplane = geo::gGeometry().getPlaneZPosition(sensorID) ;
+ 	    xrot   = geo::gGeometry().getPlaneXRotationRadians(sensorID) ;
+ 	    yrot   = geo::gGeometry().getPlaneYRotationRadians(sensorID) ;
+	    zrot   = geo::gGeometry().getPlaneZRotationRadians(sensorID) ;
 
         }
     }

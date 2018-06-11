@@ -474,8 +474,8 @@ void EUTelProcessorHitMaker::bookHistos(int sensorID) {
   // means that the sensor is wrong
   // by all its size.
   double safetyFactor = 1.2;
-  double xPosition = geo::gGeometry().siPlaneXPosition(sensorID);
-  double yPosition = geo::gGeometry().siPlaneYPosition(sensorID);
+  double xPosition = geo::gGeometry().getPlaneXPosition(sensorID);
+  double yPosition = geo::gGeometry().getPlaneYPosition(sensorID);
   double xSize = geo::gGeometry().siPlaneXSize(sensorID);
   double ySize = geo::gGeometry().siPlaneYSize(sensorID);
   int xBin = geo::gGeometry().siPlaneXNpixels(sensorID);

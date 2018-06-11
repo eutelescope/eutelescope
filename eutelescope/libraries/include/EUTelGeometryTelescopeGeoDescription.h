@@ -225,57 +225,54 @@ namespace eutelescope {
         return _activeMap.at(sensorID)->getFlipMatrix().coeff(1, 1);
       };
 
-      /** Returns the given plane's position in global coordinates */ 
+      /** Returns the given plane's position in global coordinates, in [mm] */ 
       auto getPlanePosition(int sensorID) const
           -> decltype(_activeMap.at(sensorID)->getPosition()) {
         return _activeMap.at(sensorID)->getPosition();
       }
 
-      /** X coordinate of center of sensor
-       * with given ID in global coordinate frame */
-      double siPlaneXPosition(int sensorID) {
+      /** X position of sensor center in the global coordinate frame, in [mm] */
+      double getPlaneXPosition(int sensorID) {
         return _activeMap.at(sensorID)->getPosition().coeff(0);
       };
 
-      /** Y coordinate of center of sensor
-       * with given ID in global coordinate frame */
-      double siPlaneYPosition(int sensorID) {
+      /** Y position of sensor center in the global coordinate frame, in [mm] */
+      double getPlaneYPosition(int sensorID) {
         return _activeMap.at(sensorID)->getPosition().coeff(1);
       };
 
-      /** Z coordinate of center of sensor
-       * with given ID in global coordinate frame */
-      double siPlaneZPosition(int sensorID) {
+      /** Z position of sensor center in the global coordinate frame, in [mm] */
+      double getPlaneZPosition(int sensorID) {
         return _activeMap.at(sensorID)->getPosition().coeff(2);
       };
 
       /** Rotation around X axis of the global coordinate frame */
-      double siPlaneXRotation(int sensorID) {
+      double getPlaneXRotationDegrees(int sensorID) {
         return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(0)*DEG;
       };
 
       /** Rotation around Y axis of global coordinate frame */
-      double siPlaneYRotation(int sensorID) {
+      double getPlaneYRotationDegrees(int sensorID) {
         return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(1)*DEG;
       };
 
       /** Rotation around Z axis of global coordinate frame */
-      double siPlaneZRotation(int sensorID) {
+      double getPlaneZRotationDegrees(int sensorID) {
         return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(2)*DEG;
       };
 
       /** Rotation around X axis of the global coordinate frame */
-      double siPlaneXRotationRadians(int sensorID) {
+      double getPlaneXRotationRadians(int sensorID) {
         return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(0);
       };
 
       /** Rotation around Y axis of global coordinate frame */
-      double siPlaneYRotationRadians(int sensorID) {
+      double getPlaneYRotationRadians(int sensorID) {
         return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(1);
       };
 
       /** Rotation around Z axis of global coordinate frame */
-      double siPlaneZRotationRadians(int sensorID) {
+      double getPlaneZRotationRadians(int sensorID) {
         return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(2);
       };
 

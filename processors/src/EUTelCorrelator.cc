@@ -193,13 +193,13 @@ void EUTelCorrelator::init() {
     _maxX[sensorID] = geo::gGeometry().siPlaneXNpixels(sensorID) - 1;
     _maxY[sensorID] = geo::gGeometry().siPlaneYNpixels(sensorID) - 1;
 
-    _hitMinX[sensorID] = geo::gGeometry().siPlaneXPosition(sensorID) -
+    _hitMinX[sensorID] = geo::gGeometry().getPlaneXPosition(sensorID) -
                          0.5 * geo::gGeometry().siPlaneXSize(sensorID);
-    _hitMaxX[sensorID] = geo::gGeometry().siPlaneXPosition(sensorID) +
+    _hitMaxX[sensorID] = geo::gGeometry().getPlaneXPosition(sensorID) +
                          0.5 * geo::gGeometry().siPlaneXSize(sensorID);
-    _hitMinY[sensorID] = geo::gGeometry().siPlaneYPosition(sensorID) -
+    _hitMinY[sensorID] = geo::gGeometry().getPlaneYPosition(sensorID) -
                          0.5 * geo::gGeometry().siPlaneYSize(sensorID);
-    _hitMaxY[sensorID] = geo::gGeometry().siPlaneYPosition(sensorID) +
+    _hitMaxY[sensorID] = geo::gGeometry().getPlaneYPosition(sensorID) +
                          0.5 * geo::gGeometry().siPlaneYSize(sensorID);
   }
 
@@ -1199,20 +1199,20 @@ EUTelCorrelator::guessSensorOffset(int internalSensorID, int externalSensorID,
 
   // get rotated sensor coordinates (only in pixel number: col num)
 
-  xPos_in += geo::gGeometry().siPlaneXPosition(internalSensorID) +
+  xPos_in += geo::gGeometry().getPlaneXPosition(internalSensorID) +
              geo::gGeometry().siPlaneXSize(internalSensorID) / 2.;
 
   xCooPos_in = xCooPos_in;
 
-  yPos_in += geo::gGeometry().siPlaneYPosition(internalSensorID) +
+  yPos_in += geo::gGeometry().getPlaneYPosition(internalSensorID) +
              geo::gGeometry().siPlaneYSize(internalSensorID) / 2.;
 
   yCooPos_in = yCooPos_in;
 
-  xPos_ex += geo::gGeometry().siPlaneXPosition(externalSensorID) +
+  xPos_ex += geo::gGeometry().getPlaneXPosition(externalSensorID) +
              geo::gGeometry().siPlaneXSize(externalSensorID) / 2.;
 
-  yPos_ex += geo::gGeometry().siPlaneYPosition(externalSensorID) +
+  yPos_ex += geo::gGeometry().getPlaneYPosition(externalSensorID) +
              geo::gGeometry().siPlaneYSize(externalSensorID) / 2.;
 
   std::vector<double> cluster_offset;

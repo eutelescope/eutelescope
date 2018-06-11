@@ -137,7 +137,7 @@ void EUTelGBLFitter::init() {
   _nPlanes = _sensorIDVec.size();
 
   for(auto& sensorID: _sensorIDVec) {
-    auto const & pos = geo::gGeometry().siPlaneZPosition(sensorID);
+    auto const & pos = geo::gGeometry().getPlaneZPosition(sensorID);
     _planePosition.emplace_back( pos );
     auto const & z = geo::gGeometry().siPlaneZSize(sensorID);
     auto const & rad = geo::gGeometry().siPlaneRadLength(sensorID);

@@ -216,7 +216,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 	}
 
 	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), [&](int a, int b)-> bool {
-		return siPlaneZPosition(a) < siPlaneZPosition(b);
+		return getPlaneZPosition(a) < getPlaneZPosition(b);
 	}); 
 
 	for(auto& layer: _telescopeLayers){
@@ -318,8 +318,8 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
 			auto nPixelsY = sensitiveLayer.getNpixelY();
 
 			if( (sizeX != 0 || sizeY != 0 ) && ( pitchX != 0 || pitchY != 0 ) ) {
-				streamlog_out(ERROR5) << "YOURE FUCKING WITH GEAR! on plane: " << activeID <<'\n' << "values for size as well as pitch & noPixels are defined" 
-										<< " you must either define no of pixels and pitch and not use the external pixel libraries or merely size and nothign else!\n";
+				streamlog_out(ERROR5) << "You're messing with GEAR! On plane: " << activeID <<'\n' << "values for size as well as pitch, and noPixels are defined." 
+										<< " You must either define the number of pixels and their pitch and not use the external pixel libraries or merely size and nothign else!\n";
 			}
 
 			if( pitchX == 0 ) {
@@ -384,7 +384,7 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
 
 
 	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), [&](int a, int b)-> bool {
-		return siPlaneZPosition(a) < siPlaneZPosition(b);
+		return getPlaneZPosition(a) < getPlaneZPosition(b);
 	}); 
 
 	std::cout << "Sensor IDs ordered by Z: \n";
@@ -475,14 +475,14 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	strId << SensorId;
 
 	// Get sensor center position
-	xc = siPlaneXPosition( SensorId );
-	yc = siPlaneYPosition( SensorId );
-	zc = siPlaneZPosition( SensorId );
+	xc = getPlaneXPosition( SensorId );
+	yc = getPlaneYPosition( SensorId );
+	zc = getPlaneZPosition( SensorId );
 
 	// Get sensor orientation
-	alpha = siPlaneXRotation( SensorId ); //  in degrees !
-	beta  = siPlaneYRotation( SensorId ); // 
-	gamma = siPlaneZRotation( SensorId ); // 
+	alpha = getPlaneXRotationDegrees( SensorId ); //  in degrees !
+	beta  = getPlaneYRotationDegrees( SensorId ); // 
+	gamma = getPlaneZRotationDegrees( SensorId ); // 
 
 	rotRef1 = planeFlip1( SensorId );
 	rotRef2 = planeFlip2( SensorId );
@@ -694,9 +694,9 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
 }
 
 Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::rotationMatrixFromAngles(int sensorID) {
-	return Utility::rotationMatrixFromAngles( static_cast<long double>(siPlaneXRotationRadians(sensorID)), 
-                                            static_cast<long double>(siPlaneYRotationRadians(sensorID)), 
-                                            static_cast<long double>(siPlaneZRotationRadians(sensorID)));
+	return Utility::rotationMatrixFromAngles( static_cast<long double>(getPlaneXRotationRadians(sensorID)), 
+                                            static_cast<long double>(getPlaneYRotationRadians(sensorID)), 
+                                            static_cast<long double>(getPlaneZRotationRadians(sensorID)));
 }
 
 Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::globalXAxis(int sensorID) {
@@ -711,7 +711,7 @@ Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::globalYAxis(int sensorID) 
 
 Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::getOffsetVector(int sensorID) {
 	Eigen::Vector3d offsetVec;
-	offsetVec << siPlaneXPosition(sensorID), siPlaneYPosition(sensorID), siPlaneZPosition(sensorID); 
+	offsetVec << getPlaneXPosition(sensorID), getPlaneYPosition(sensorID), getPlaneZPosition(sensorID); 
 	return offsetVec;
 }
 
@@ -849,7 +849,7 @@ double EUTelGeometryTelescopeGeoDescription::planeRadLengthGlobalIncidence(int p
 	if( mapIt != _planeRadMap.end() ) {
 		normRad = mapIt->second;
 	} else {
-		Eigen::Vector3d planePosition(siPlaneXPosition(planeID), siPlaneYPosition(planeID), siPlaneZPosition(planeID));
+		Eigen::Vector3d planePosition(getPlaneXPosition(planeID), getPlaneYPosition(planeID), getPlaneZPosition(planeID));
 
 		//We have to propagate halfway to to front and halfway back + a minor safety margin
 		Eigen::Vector3d startPoint = planePosition - 0.51*siPlaneZSize(planeID)*planeNormal;
@@ -870,7 +870,7 @@ double EUTelGeometryTelescopeGeoDescription::planeRadLengthLocalIncidence(int pl
 	if( mapIt != _planeRadMap.end() ) {
 		normRad = mapIt->second;
 	} else {
-		Eigen::Vector3d planePosition(siPlaneXPosition(planeID), siPlaneYPosition(planeID), siPlaneZPosition(planeID));
+		Eigen::Vector3d planePosition(getPlaneXPosition(planeID), getPlaneYPosition(planeID), getPlaneZPosition(planeID));
 		Eigen::Vector3d planeNormal = siPlaneNormal(planeID);
 	
 		//We have to propagate halfway to to front and halfway back + a minor safety margin
@@ -897,14 +897,14 @@ void EUTelGeometryTelescopeGeoDescription::updateSiPlanesLayout() {
     auto iPlane = static_cast<int>(iPlane_sz);
 		int sensorID =  _sensorIDVec.at(iPlane);
 
-		std::cout << "Set layer " << sensorID << " gamma to: " <<  siPlaneZRotation(sensorID) << std::endl;
+		std::cout << "Set layer " << sensorID << " gamma to: " <<  getPlaneZRotationDegrees(sensorID) << std::endl;
 
-		siplanesLayerLayout->setLayerPositionX( iPlane, siPlaneXPosition(sensorID) );
-		siplanesLayerLayout->setLayerPositionY(  iPlane, siPlaneYPosition(sensorID) );
-		siplanesLayerLayout->setLayerPositionZ(  iPlane, siPlaneZPosition(sensorID) );
-		siplanesLayerLayout->setLayerRotationZY( iPlane, siPlaneXRotation(sensorID) );
-		siplanesLayerLayout->setLayerRotationZX( iPlane, siPlaneYRotation(sensorID) );
-		siplanesLayerLayout->setLayerRotationXY( iPlane, siPlaneZRotation(sensorID) );
+		siplanesLayerLayout->setLayerPositionX( iPlane, getPlaneXPosition(sensorID) );
+		siplanesLayerLayout->setLayerPositionY(  iPlane, getPlaneYPosition(sensorID) );
+		siplanesLayerLayout->setLayerPositionZ(  iPlane, getPlaneZPosition(sensorID) );
+		siplanesLayerLayout->setLayerRotationZY( iPlane, getPlaneXRotationDegrees(sensorID) );
+		siplanesLayerLayout->setLayerRotationZX( iPlane, getPlaneYRotationDegrees(sensorID) );
+		siplanesLayerLayout->setLayerRotationXY( iPlane, getPlaneZRotationDegrees(sensorID) );
 	}
 
 	// ------- add to GearMgr ----
