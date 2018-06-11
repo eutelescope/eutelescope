@@ -44,7 +44,7 @@ namespace eutelescope {
 using namespace eutelescope;
 
 EUTelEUDRBReader::EUTelEUDRBReader()
-    : DataSourceProcessor("EUTelEUDRBReader"), _fileHeader(NULL) {
+    : DataSourceProcessor("EUTelEUDRBReader"), _fileHeader(nullptr) {
 
   _description =
       "Reads data files and creates LCEvent with TrackerRawData collection.\n"
