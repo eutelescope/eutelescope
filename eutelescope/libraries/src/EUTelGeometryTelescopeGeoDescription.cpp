@@ -57,9 +57,9 @@ EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getI
 }
 
 //Note  that to determine these axis we MUST use the geometry class after initialisation. By this I mean directly from the root file create.
-TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID )
+Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID )
 {
-	std::map<int, TVector3>::iterator mapIt = _planeNormalMap.find(planeID);
+	auto mapIt = _planeNormalMap.find(planeID);
 	if( mapIt != _planeNormalMap.end() ) {
 		return mapIt->second;
 	} else {
@@ -68,7 +68,7 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID )
 			std::array<double,3> const zAxisLocal {{0,0,1}};
 			std::array<double,3> zAxisGlobal; 
 			local2MasterVec(planeID, zAxisLocal, zAxisGlobal); 
-			TVector3 normVec(zAxisGlobal.data());
+			Eigen::Vector3d normVec(zAxisGlobal.data());
 			_planeNormalMap[planeID] = normVec;
 			return normVec;
 		} else {
@@ -81,8 +81,8 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID )
 }
 
 /**TODO: Replace me: NOP*/
-TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneXAxis( int planeID ) {
-	std::map<int, TVector3>::iterator mapIt = _planeXMap.find(planeID);
+Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::siPlaneXAxis( int planeID ) {
+	auto mapIt = _planeXMap.find(planeID);
 	if( mapIt != _planeXMap.end() ) {
 		return mapIt->second;
 	} else {
@@ -91,7 +91,7 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneXAxis( int planeID ) {
 			std::array<double,3> const xAxisLocal {{1,0,0}};
 			std::array<double,3> xAxisGlobal; 
 			local2MasterVec(planeID, xAxisLocal, xAxisGlobal); 
-			TVector3 xVec(xAxisGlobal.data());
+			Eigen::Vector3d xVec(xAxisGlobal.data());
 			_planeXMap[planeID] = xVec;
 			return xVec;
 		} else {
@@ -104,8 +104,8 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneXAxis( int planeID ) {
 }
 
 /**TODO: Replace me: NOP*/
-TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneYAxis( int planeID ) {
-	std::map<int, TVector3>::iterator mapIt = _planeYMap.find(planeID);
+Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::siPlaneYAxis( int planeID ) {
+	auto mapIt = _planeYMap.find(planeID);
 	if( mapIt != _planeYMap.end() ) {
 		return mapIt->second;
 	} else {
@@ -114,7 +114,7 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneYAxis( int planeID ) {
 			std::array<double,3> const yAxisLocal {{0,1,0}};
 			std::array<double,3> yAxisGlobal; 
 			local2MasterVec(planeID, yAxisLocal, yAxisGlobal); 
-			TVector3 yVec(yAxisGlobal.data());
+			Eigen::Vector3d yVec(yAxisGlobal.data());
 			_planeYMap[planeID] = yVec;
 			return yVec;
 		} else {
@@ -153,7 +153,8 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 		auto ID = _siPlanesLayerLayout->getID(iPlane);
 
 		auto thisMat = EUTelMaterial(0, 0, 0);
-		thisMat._radLength = _siPlanesLayerLayout->getSensitiveRadLength(iPlane); 
+    //The radiation length is in [mm]
+		thisMat._radLength = _siPlanesLayerLayout->getSensitiveRadLength(iPlane);
 		_materialMap.insert(std::make_pair(std::to_string(ID),thisMat));
 
 		auto thisLayer = std::make_unique<EUTelLayer>(ID);
@@ -254,9 +255,9 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
 		auto mat = EUTelMaterial(GEARMat.getA(), GEARMat.getZ(), GEARMat.getDensity());
 
 		if(GEARMat.getRadLength() == 0) {
-			mat._radLength = getRadLength(mat._A,mat._Z)/GEARMat.getDensity();
+			mat._radLength = getRadLength(mat._A,mat._Z)/GEARMat.getDensity()*10;
 			std::cout << "Radiation length computed to be: " <<  getRadLength(mat._A,mat._Z) << " g*cm^-2" << '\n';
-			std::cout << "Yielding: " <<  getRadLength(mat._A,mat._Z)/GEARMat.getDensity() << " cm" << std::endl;
+			std::cout << "Yielding: " <<  getRadLength(mat._A,mat._Z)/GEARMat.getDensity()*10 << " mm" << std::endl;
 		} else {
 			mat._radLength = GEARMat.getRadLength();
 		}
@@ -483,10 +484,10 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	beta  = siPlaneYRotation( SensorId ); // 
 	gamma = siPlaneZRotation( SensorId ); // 
 
-	rotRef1 = siPlaneRotation1( SensorId );
-	rotRef2 = siPlaneRotation2( SensorId );
-	rotRef3 = siPlaneRotation3( SensorId );
-	rotRef4 = siPlaneRotation4( SensorId );
+	rotRef1 = planeFlip1( SensorId );
+	rotRef2 = planeFlip2( SensorId );
+	rotRef3 = planeFlip3( SensorId );
+	rotRef4 = planeFlip4( SensorId );
 
 	//We must check that the input is correct. Since this is a combination of initial rotations and reflections the determinate must be 1 or -1
 	int determinant = rotRef1*rotRef4 - rotRef2*rotRef3;
@@ -716,9 +717,9 @@ Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::getOffsetVector(int sensor
 
 Eigen::Matrix3i EUTelGeometryTelescopeGeoDescription::getFlipMatrix(int sensorID) {
 	Eigen::Matrix3i flipMat;
-	flipMat << 	siPlaneRotation1(sensorID),	siPlaneRotation2(sensorID),	0,
-			siPlaneRotation3(sensorID), 	siPlaneRotation4(sensorID),	0,
-			0,				0,				1;	
+	flipMat << 	planeFlip1(sensorID),	planeFlip2(sensorID),	0,
+			        planeFlip3(sensorID), planeFlip4(sensorID),	0,
+			        0                   , 0                   , 1;	
 	return flipMat;
 }
 
@@ -842,8 +843,7 @@ double EUTelGeometryTelescopeGeoDescription::planeRadLengthGlobalIncidence(int p
 	incidenceDir.normalize();
 	double normRad;
 	
-	TVector3 planeNormalT = siPlaneNormal(planeID);
-	Eigen::Vector3d planeNormal(planeNormalT(0), planeNormalT(1), planeNormalT(2));
+	Eigen::Vector3d planeNormal = siPlaneNormal(planeID);
 	
 	std::map<int, double>::iterator mapIt = _planeRadMap.find(planeID);
 	if( mapIt != _planeRadMap.end() ) {
@@ -871,9 +871,7 @@ double EUTelGeometryTelescopeGeoDescription::planeRadLengthLocalIncidence(int pl
 		normRad = mapIt->second;
 	} else {
 		Eigen::Vector3d planePosition(siPlaneXPosition(planeID), siPlaneYPosition(planeID), siPlaneZPosition(planeID));
-
-		TVector3 planeNormalT = siPlaneNormal(planeID);
-		Eigen::Vector3d planeNormal(planeNormalT(0), planeNormalT(1), planeNormalT(2));
+		Eigen::Vector3d planeNormal = siPlaneNormal(planeID);
 	
 		//We have to propagate halfway to to front and halfway back + a minor safety margin
 		Eigen::Vector3d startPoint = planePosition - 0.51*siPlaneZSize(planeID)*planeNormal;

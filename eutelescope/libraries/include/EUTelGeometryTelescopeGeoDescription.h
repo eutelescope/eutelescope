@@ -1,7 +1,3 @@
-/*
- * File:   EUTelGeometryTelescopeGeoDescription.h
- *
- */
 #ifndef EUTELGEOMETRYTELESCOPEGEODESCRIPTION_H
 #define EUTELGEOMETRYTELESCOPEGEODESCRIPTION_H
 
@@ -33,7 +29,6 @@
 // ROOT
 #include "TGeoManager.h"
 #include "TGeoMatrix.h"
-#include "TVector3.h"
 
 /** @class EUTelGeometryTelescopeGeoDescription
  * This class is supposed to keep globally accesible
@@ -44,11 +39,9 @@
  */
 namespace eutelescope {
   namespace geo {
-    // Iterate over registered GEAR objects and construct their TGeo
-    // representation
-    const double PI = 3.141592653589793;
-    const double DEG = 180. / PI;
-    const double RADIAN = PI / 180.;
+    static const double PI = 3.141592653589793;
+    static const double DEG = 180. / PI;
+    static const double RADIAN = PI / 180.;
 
     class EUTelGeometryTelescopeGeoDescription {
     private:
@@ -116,11 +109,11 @@ namespace eutelescope {
       static unsigned _counter;
 
       /** Map containing the normal vector of each plane */
-      std::map<int, TVector3> _planeNormalMap;
+      std::map<int, Eigen::Vector3d> _planeNormalMap;
       /** Map containing the x-direction vector of each plane */
-      std::map<int, TVector3> _planeXMap;
+      std::map<int, Eigen::Vector3d> _planeXMap;
       /** Map containing the y-direction vector of each plane */
-      std::map<int, TVector3> _planeYMap;
+      std::map<int, Eigen::Vector3d> _planeYMap;
       /** Map containing the radiation length of each plane */
       std::map<int, double> _planeRadMap;
 
@@ -135,12 +128,11 @@ namespace eutelescope {
     public:
       /** Retrieves the instanstance of geometry.
        * Performs lazy intialization if necessary.
-       * @TODO this routine has to be considered to be constant
        */
       static EUTelGeometryTelescopeGeoDescription &
       getInstance(gear::GearMgr *_g);
 
-      /** */
+      /**TODO */
       void updateGearManager();
 
       /** Increment the static instance counter */
@@ -162,58 +154,78 @@ namespace eutelescope {
       /** Number of planes in the setup */
       size_t nPlanes() const { return _activeMap.size(); };
 
+      /** Align a given plane (sensorID) to a provided global position 
+       *  As this modifies the geometrical position it is important to
+       *  clear memoized values
+       */
       inline void alignGlobalPos(int sensorID, Eigen::Vector3d const &pos) {
-        std::cout << "Aligning sensor: " << sensorID << " to position: " << pos
-                  << std::endl;
+        streamlog_out(MESSAGE4) << "Aligning sensor: " << sensorID
+                                << " to position: " << pos << std::endl;
         _activeMap.at(sensorID)->alignPos(pos);
         this->clearMemoizedValues();
         return;
       };
 
-      inline void alignGlobalPos(int sensorID, double x, double y, double z) {
+      /** Align a given plane (sensorID) to a provided global position 
+       *  As this modifies the geometrical position it is important to
+       *  clear memoized values
+       */
+      inline void alignGlobalPos(int sensorID, double const & x, double const & y, double const & z) {
         Eigen::Vector3d pos = Eigen::Vector3d(x, y, z);
-        std::cout << "Aligning sensor: " << sensorID << " to position: " << pos
-                  << std::endl;
-        _activeMap.at(sensorID)->alignPos(pos);
-        this->clearMemoizedValues();
+        alignGlobalPos(sensorID, pos);
         return;
       };
 
+      /** Align a given plane (sensorID) to provided global rotations 
+       *  As this modifies the geometrical position it is important to
+       *  clear memoized values
+       */
       inline void alignGlobalRot(int sensorID, Eigen::Matrix3d const &rot) {
-        std::cout << "Aligning sensor: " << sensorID << " to rotation: " << rot
-                  << std::endl;
+        streamlog_out(MESSAGE4) << "Aligning sensor: " << sensorID
+                                << " to rotation: " << rot << std::endl;
         _activeMap.at(sensorID)->alignRot(rot);
         this->clearMemoizedValues();
         return;
       };
 
-      inline void setPlanePitch(int sensorID, double xPitch, double yPitch) {
+      /** Set the given plane's typical pixel pitch in [mm] 
+       *  Note that this in not well defined for irregular sensors, thus this
+       *  value should not be used if in doubt - it is intended for dynamic 
+       *  histogram binning etc. where a deviation from this value can be
+       *  tolerated
+       */
+      inline void setPlanePitch(int sensorID, double const & xPitch, double const & yPitch) {
         _activeMap.at(sensorID)->setPitch(xPitch, yPitch);
       }
+
+      /** Set the given plane's amoutn of pixels in x- and y-direction
+       * I.e. the plane's pixel matrix dimensions
+       */
       inline void setPlaneNoPixels(int sensorID, int xNo, int yNo) {
         _activeMap.at(sensorID)->setNoPixels(xNo, yNo);
       }
-      // GETTER
-      /** */
-      int siPlaneRotation1(int sensorID) {
+
+      /** Get the first flip matrix coefficient for the given plane */
+      int planeFlip1(int sensorID) {
         return _activeMap.at(sensorID)->getFlipMatrix().coeff(0, 0);
       };
 
-      /** */
-      int siPlaneRotation2(int sensorID) {
+      /** Get the second flip matrix coefficient for the given plane */
+      int planeFlip2(int sensorID) {
         return _activeMap.at(sensorID)->getFlipMatrix().coeff(1, 0);
       };
 
-      /** */
-      int siPlaneRotation3(int sensorID) {
+      /** Get the third flip matrix coefficient for the given plane */
+      int planeFlip3(int sensorID) {
         return _activeMap.at(sensorID)->getFlipMatrix().coeff(0, 1);
       };
 
-      /** */
-      int siPlaneRotation4(int sensorID) {
+      /** Get the fourth flip matrix coefficient for the given plane */
+      int planeFlip4(int sensorID) {
         return _activeMap.at(sensorID)->getFlipMatrix().coeff(1, 1);
       };
 
+      /** Returns the given plane's position in global coordinates */ 
       auto getPlanePosition(int sensorID) const
           -> decltype(_activeMap.at(sensorID)->getPosition()) {
         return _activeMap.at(sensorID)->getPosition();
@@ -312,7 +324,7 @@ namespace eutelescope {
         return _activeMap.at(sensorID)->getResolution().second;
       };
 
-      /** Sensor medium radiation length */
+      /** Return the sensor's radiation length in [mm]*/
       double siPlaneRadLength(int sensorID) {
         return _activeMap.at(sensorID)->getRadLength();
       };
@@ -323,11 +335,11 @@ namespace eutelescope {
       };
 
       /** Plane normal vector (nx,ny,nz) */
-      TVector3 siPlaneNormal(int);
+      Eigen::Vector3d siPlaneNormal(int);
 
-      TVector3 siPlaneXAxis(int);
+      Eigen::Vector3d siPlaneXAxis(int);
 
-      TVector3 siPlaneYAxis(int);
+      Eigen::Vector3d siPlaneYAxis(int);
 
       /** Vector of all sensor IDs */
       const std::vector<int> &sensorIDsVec() const { return _sensorIDVec; };
@@ -378,17 +390,6 @@ namespace eutelescope {
       void master2Local(int, const double[], double[]);
       void local2MasterVec(int, const double[], double[]);
       void master2LocalVec(int, const double[], double[]);
-
-      bool findIntersectionWithCertainID(float x0, float y0, float z0, float px,
-                                         float py, float pz, float beamQ,
-                                         int nextPlaneID,
-                                         float outputPosition[],
-                                         TVector3 &outputMomentum,
-                                         float &arcLength, int &newNextPlaneID);
-
-      TVector3 getXYZMomentumfromArcLength(TVector3 momentum,
-                                           TVector3 globalPositionStart,
-                                           float charge, float arcLength);
 
       // This outputs the total percentage radiation length for the full
       // detector system.

@@ -2486,13 +2486,14 @@ void EUTelMille::processEvent(LCEvent *event) {
 TVector3 EUTelMille::Line2Plane(int iplane, const TVector3 &lpoint,
                                 const TVector3 &lvector) {
   TVector3 hitInPlane;
-  TVector3 norm2Plane;
 
   int sensorID = _orderedSensorID[iplane];
   hitInPlane.SetXYZ(geo::gGeometry().siPlaneXPosition(sensorID) * 1000,
                     geo::gGeometry().siPlaneYPosition(sensorID) * 1000,
                     geo::gGeometry().siPlaneZPosition(sensorID) * 1000);
-  norm2Plane = geo::gGeometry().siPlaneNormal(sensorID);
+  TVector3 norm2Plane = TVector3( geo::gGeometry().siPlaneNormal(sensorID)[0], 
+                                  geo::gGeometry().siPlaneNormal(sensorID)[1],
+                                  geo::gGeometry().siPlaneNormal(sensorID)[2]);
 
   TVector3 point(1., 1., 1.);
 

@@ -250,9 +250,7 @@ TEST_F(eutelgeotestTest, NormalVectorTest) {
 		
 		Eigen::Vector3d zVComp = xV.cross(yV);
 
-		TVector3 normGeoFW = eugeo::gGeometry().siPlaneNormal( sensorID );
-
-		Eigen::Vector3d zVGeoFW ( normGeoFW[0], normGeoFW[1], normGeoFW[2] );
+		Eigen::Vector3d zVGeoFW = eugeo::gGeometry().siPlaneNormal( sensorID );
 		for(size_t i = 0; i < 3; i++) {
 			ASSERT_NEAR(zVGeoFW[i], zVComp[i], abs_err);	
 			ASSERT_NEAR(zVGeoFW[i], zV[i], abs_err);

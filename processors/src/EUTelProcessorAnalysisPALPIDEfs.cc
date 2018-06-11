@@ -185,10 +185,10 @@ void EUTelProcessorAnalysisPALPIDEfs::init() {
       ySize = geo::gGeometry().siPlaneYSize(layerIndex);            // mm
       xPitch = geo::gGeometry().siPlaneXPitch(layerIndex);          // mm
       yPitch = geo::gGeometry().siPlaneYPitch(layerIndex);          // mm
-      xPointing[0] = geo::gGeometry().siPlaneRotation1(layerIndex); // was -1 ;
-      xPointing[1] = geo::gGeometry().siPlaneRotation2(layerIndex); // was  0 ;
-      yPointing[0] = geo::gGeometry().siPlaneRotation3(layerIndex); // was  0 ;
-      yPointing[1] = geo::gGeometry().siPlaneRotation4(layerIndex); // was -1 ;
+      xPointing[0] = geo::gGeometry().planeFlip1(layerIndex); // was -1 ;
+      xPointing[1] = geo::gGeometry().planeFlip2(layerIndex); // was  0 ;
+      yPointing[0] = geo::gGeometry().planeFlip3(layerIndex); // was  0 ;
+      yPointing[1] = geo::gGeometry().planeFlip4(layerIndex); // was -1 ;
       xPixel = geo::gGeometry().siPlaneXNpixels(layerIndex);
       yPixel = geo::gGeometry().siPlaneYNpixels(layerIndex);
       try {
