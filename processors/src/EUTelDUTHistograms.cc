@@ -181,7 +181,7 @@ void EUTelDUTHistograms::init() {
   _nRun = 0;
   _maptrackid = 0;
 
-  _zDUT = geo::gGeometry().siPlaneZPosition(_iDUT);
+  _zDUT = geo::gGeometry().getPlaneZPosition(_iDUT);
 
   // Print out geometry information
 
@@ -1976,7 +1976,7 @@ int EUTelDUTHistograms::getClusterSize(int sensorID, TrackerHit *hit,
 int EUTelDUTHistograms::getSubMatrix(int detectorID, float xlocal) {
   // quarters : 0-287, 288-575, 576-863, 864-1151
   int fourlocal = static_cast<int>(xlocal * 4.);
-  int subquarter = fourlocal / geo::gGeometry().siPlaneXNpixels(detectorID);
+  int subquarter = fourlocal / geo::gGeometry().getPlaneNumberOfPixelsX(detectorID);
   return subquarter;
 }
 

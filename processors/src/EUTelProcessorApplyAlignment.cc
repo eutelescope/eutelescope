@@ -181,11 +181,11 @@ void EUTelProcessorApplyAlign::processEvent(LCEvent *event) {
             static_cast<EUTelAlignmentConstant *>(
                 alignmentCollectionVec->getElementAt(positionIter->second));
         // Rotations
-        double xPlaneCenter = geo::gGeometry().siPlaneXPosition(sensorID);
-        double yPlaneCenter = geo::gGeometry().siPlaneYPosition(sensorID);
-        double zPlaneThickness = geo::gGeometry().siPlaneZSize(sensorID);
+        double xPlaneCenter = geo::gGeometry().getPlaneXPosition(sensorID);
+        double yPlaneCenter = geo::gGeometry().getPlaneYPosition(sensorID);
+        double zPlaneThickness = geo::gGeometry().getPlaneZSize(sensorID);
         double zPlaneCenter =
-            geo::gGeometry().siPlaneZPosition(sensorID) + zPlaneThickness / 2.;
+            geo::gGeometry().getPlaneZPosition(sensorID) + zPlaneThickness / 2.;
 
         TVector3 inputVec(inputPosition[0] - xPlaneCenter,
                           inputPosition[1] - yPlaneCenter,

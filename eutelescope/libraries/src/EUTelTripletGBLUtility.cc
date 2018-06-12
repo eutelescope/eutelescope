@@ -264,7 +264,7 @@ bool EUTelTripletGBLUtility::IsTripletIsolated(EUTelTripletGBLUtility::triplet c
 
 bool EUTelTripletGBLUtility::AttachDUT(EUTelTripletGBLUtility::triplet & triplet, std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int dutID,  double dist_cut){
 
-	auto zPos = geo::gGeometry().siPlaneZPosition(dutID);
+	auto zPos = geo::gGeometry().getPlaneZPosition(dutID);
 	int minHitIx = -1;
 	double minDist = std::numeric_limits<double>::max();
 	double cut_squared = dist_cut*dist_cut;	
@@ -304,7 +304,7 @@ return false;
 /*
 bool EUTelTripletGBLUtility::AttachDUT(std::vector<EUTelTripletGBLUtility::triplet> & triplets, std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int dutID, double trip_res_cut, double trip_slope_cut){
 
-	auto zPos = geo::gGeometry().siPlaneZPosition(dutID);
+	auto zPos = geo::gGeometry().getPlaneZPosition(dutID);
 
 	struct distance {
 		EUTelTripletGBLUtility::triplet * triplet;

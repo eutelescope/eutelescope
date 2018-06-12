@@ -473,7 +473,7 @@ void EUTelMille::init() {
     _sensorIDVec.push_back(sensorID);
     _sensorIDVecMap.insert(make_pair(sensorID, i));
     sensorIDMap.insert(
-        make_pair(geo::gGeometry().siPlaneZPosition(sensorID), sensorID));
+        make_pair(geo::gGeometry().getPlaneZPosition(sensorID), sensorID));
   }
 
   _histogramSwitch = true;
@@ -722,13 +722,13 @@ void EUTelMille::processRunHeader(LCRunHeader *rdr) {
   // quitting ask the user what to do.
 
   if (static_cast<unsigned int>(header->getGeoID()) !=
-      geo::gGeometry().getSiPlanesLayoutID()) {
+      geo::gGeometry().getLayoutID()) {
     streamlog_out(ERROR2) << "Error during the geometry consistency check: "
                           << endl;
     streamlog_out(ERROR2) << "The run header says the GeoID is "
                           << header->getGeoID() << endl;
     streamlog_out(ERROR2) << "The GEAR description says is     "
-                          << geo::gGeometry().getSiPlanesLayoutID() << endl;
+                          << geo::gGeometry().getLayoutID() << endl;
   }
 
   // increment the run counter
@@ -2197,9 +2197,9 @@ void EUTelMille::processEvent(LCEvent *event) {
                 double z_sensor = 0.;
 
                 int sensorID = _sensorIDVec[help];
-                x_sensor = geo::gGeometry().siPlaneXPosition(sensorID);
-                y_sensor = geo::gGeometry().siPlaneYPosition(sensorID);
-                z_sensor = geo::gGeometry().siPlaneZPosition(sensorID);
+                x_sensor = geo::gGeometry().getPlaneXPosition(sensorID);
+                y_sensor = geo::gGeometry().getPlaneYPosition(sensorID);
+                z_sensor = geo::gGeometry().getPlaneZPosition(sensorID);
                 
                 // << ", " << z_sensor << std::endl;
                 x_sensor *= 1000.;
@@ -2486,13 +2486,14 @@ void EUTelMille::processEvent(LCEvent *event) {
 TVector3 EUTelMille::Line2Plane(int iplane, const TVector3 &lpoint,
                                 const TVector3 &lvector) {
   TVector3 hitInPlane;
-  TVector3 norm2Plane;
 
   int sensorID = _orderedSensorID[iplane];
-  hitInPlane.SetXYZ(geo::gGeometry().siPlaneXPosition(sensorID) * 1000,
-                    geo::gGeometry().siPlaneYPosition(sensorID) * 1000,
-                    geo::gGeometry().siPlaneZPosition(sensorID) * 1000);
-  norm2Plane = geo::gGeometry().siPlaneNormal(sensorID);
+  hitInPlane.SetXYZ(geo::gGeometry().getPlaneXPosition(sensorID) * 1000,
+                    geo::gGeometry().getPlaneYPosition(sensorID) * 1000,
+                    geo::gGeometry().getPlaneZPosition(sensorID) * 1000);
+  TVector3 norm2Plane = TVector3( geo::gGeometry().getPlaneNormalVector(sensorID)[0], 
+                                  geo::gGeometry().getPlaneNormalVector(sensorID)[1],
+                                  geo::gGeometry().getPlaneNormalVector(sensorID)[2]);
 
   TVector3 point(1., 1., 1.);
 

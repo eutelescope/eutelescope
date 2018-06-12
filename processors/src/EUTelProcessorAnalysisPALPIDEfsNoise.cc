@@ -47,8 +47,8 @@ void EUTelProcessorAnalysisPALPIDEfsNoise::init() {
   _nLayer = geo::gGeometry().nPlanes();
   vector<int> tmp(4, 0);
   for (int iLayer = 0; iLayer < _nLayer; iLayer++) {
-    _xPixel.push_back(geo::gGeometry().siPlaneXNpixels(iLayer));
-    _yPixel.push_back(geo::gGeometry().siPlaneYNpixels(iLayer));
+    _xPixel.push_back(geo::gGeometry().getPlaneNumberOfPixelsX(iLayer));
+    _yPixel.push_back(geo::gGeometry().getPlaneNumberOfPixelsY(iLayer));
     _nFiredPixel.push_back(tmp);
     //    cerr << iLayer << "\t" << nFiredPixel[0][iLayer] << endl;
   }

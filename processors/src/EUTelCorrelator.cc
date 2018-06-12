@@ -187,20 +187,20 @@ void EUTelCorrelator::init() {
 
     _minX[sensorID] = 0;
     _minY[sensorID] = 0;
-    _maxX[sensorID] = geo::gGeometry().siPlaneXNpixels(sensorID) - 1;
-    _maxY[sensorID] = geo::gGeometry().siPlaneYNpixels(sensorID) - 1;
+    _maxX[sensorID] = geo::gGeometry().getPlaneNumberOfPixelsX(sensorID) - 1;
+    _maxY[sensorID] = geo::gGeometry().getPlaneNumberOfPixelsY(sensorID) - 1;
 
-    _maxX[sensorID] = geo::gGeometry().siPlaneXNpixels(sensorID) - 1;
-    _maxY[sensorID] = geo::gGeometry().siPlaneYNpixels(sensorID) - 1;
+    _maxX[sensorID] = geo::gGeometry().getPlaneNumberOfPixelsX(sensorID) - 1;
+    _maxY[sensorID] = geo::gGeometry().getPlaneNumberOfPixelsY(sensorID) - 1;
 
-    _hitMinX[sensorID] = geo::gGeometry().siPlaneXPosition(sensorID) -
-                         0.5 * geo::gGeometry().siPlaneXSize(sensorID);
-    _hitMaxX[sensorID] = geo::gGeometry().siPlaneXPosition(sensorID) +
-                         0.5 * geo::gGeometry().siPlaneXSize(sensorID);
-    _hitMinY[sensorID] = geo::gGeometry().siPlaneYPosition(sensorID) -
-                         0.5 * geo::gGeometry().siPlaneYSize(sensorID);
-    _hitMaxY[sensorID] = geo::gGeometry().siPlaneYPosition(sensorID) +
-                         0.5 * geo::gGeometry().siPlaneYSize(sensorID);
+    _hitMinX[sensorID] = geo::gGeometry().getPlaneXPosition(sensorID) -
+                         0.5 * geo::gGeometry().getPlaneXSize(sensorID);
+    _hitMaxX[sensorID] = geo::gGeometry().getPlaneXPosition(sensorID) +
+                         0.5 * geo::gGeometry().getPlaneXSize(sensorID);
+    _hitMinY[sensorID] = geo::gGeometry().getPlaneYPosition(sensorID) -
+                         0.5 * geo::gGeometry().getPlaneYSize(sensorID);
+    _hitMaxY[sensorID] = geo::gGeometry().getPlaneYPosition(sensorID) +
+                         0.5 * geo::gGeometry().getPlaneYSize(sensorID);
   }
 
   _outputCorrelatedHitCollectionVec = nullptr;
@@ -224,12 +224,12 @@ void EUTelCorrelator::processRunHeader(LCRunHeader *rdr) {
         << "This may mean that the GeoID parameter was not set" << endl;
 
   if (static_cast<unsigned int>(runHeader->getGeoID()) !=
-      geo::gGeometry().getSiPlanesLayoutID()) {
+      geo::gGeometry().getLayoutID()) {
     streamlog_out(WARNING5)
         << "Error during the geometry consistency check: " << endl
         << "The run header says the GeoID is " << runHeader->getGeoID() << endl
         << "The GEAR description says is     "
-        << geo::gGeometry().getSiPlanesLayoutID() << endl;
+        << geo::gGeometry().getLayoutID() << endl;
   }
 
   delete runHeader;
@@ -857,20 +857,20 @@ void EUTelCorrelator::bookHistos() {
                 histoMgr->getHistogramInfo(_clusterXCorrelationHistoName);
             xBin = (isHistoManagerAvailable && histoInfo)
                        ? histoInfo->_xBin
-                       : geo::gGeometry().siPlaneXNpixels(row);
+                       : geo::gGeometry().getPlaneNumberOfPixelsX(row);
             xMin =
                 (isHistoManagerAvailable && histoInfo) ? histoInfo->_xMin : 0.;
             xMax = (isHistoManagerAvailable && histoInfo)
                        ? histoInfo->_xMax
-                       : geo::gGeometry().siPlaneXNpixels(row);
+                       : geo::gGeometry().getPlaneNumberOfPixelsX(row);
             yBin = (isHistoManagerAvailable && histoInfo)
                        ? histoInfo->_yBin
-                       : geo::gGeometry().siPlaneXNpixels(col);
+                       : geo::gGeometry().getPlaneNumberOfPixelsX(col);
             yMin =
                 (isHistoManagerAvailable && histoInfo) ? histoInfo->_yMin : 0.;
             yMax = (isHistoManagerAvailable && histoInfo)
                        ? histoInfo->_yMax
-                       : geo::gGeometry().siPlaneXNpixels(col);
+                       : geo::gGeometry().getPlaneNumberOfPixelsX(col);
 
             AIDA::IHistogram2D *histo2D =
                 AIDAProcessor::histogramFactory(this)->createHistogram2D(
@@ -891,20 +891,20 @@ void EUTelCorrelator::bookHistos() {
                 histoMgr->getHistogramInfo(_clusterYCorrelationHistoName);
             xBin = (isHistoManagerAvailable && histoInfo)
                        ? histoInfo->_xBin
-                       : geo::gGeometry().siPlaneYNpixels(row);
+                       : geo::gGeometry().getPlaneNumberOfPixelsY(row);
             xMin =
                 (isHistoManagerAvailable && histoInfo) ? histoInfo->_xMin : 0.;
             xMax = (isHistoManagerAvailable && histoInfo)
                        ? histoInfo->_xMax
-                       : geo::gGeometry().siPlaneYNpixels(row);
+                       : geo::gGeometry().getPlaneNumberOfPixelsY(row);
             yBin = (isHistoManagerAvailable && histoInfo)
                        ? histoInfo->_yBin
-                       : geo::gGeometry().siPlaneYNpixels(col);
+                       : geo::gGeometry().getPlaneNumberOfPixelsY(col);
             yMin =
                 (isHistoManagerAvailable && histoInfo) ? histoInfo->_yMin : 0.;
             yMax = (isHistoManagerAvailable && histoInfo)
                        ? histoInfo->_yMax
-                       : geo::gGeometry().siPlaneYNpixels(col);
+                       : geo::gGeometry().getPlaneNumberOfPixelsY(col);
 
             histo2D = AIDAProcessor::histogramFactory(this)->createHistogram2D(
                 tempHistoName.c_str(), xBin, xMin, xMax, yBin, yMin, yMax);
@@ -940,18 +940,18 @@ void EUTelCorrelator::bookHistos() {
                 (isHistoManagerAvailable && histoInfo) ? histoInfo->_xBin : 100;
             colMin = (isHistoManagerAvailable && histoInfo)
                          ? histoInfo->_xMin
-                         : -0.5 * geo::gGeometry().siPlaneXSize(row);
+                         : -0.5 * geo::gGeometry().getPlaneXSize(row);
             colMax = (isHistoManagerAvailable && histoInfo)
                          ? histoInfo->_xMax
-                         : 0.5 * geo::gGeometry().siPlaneXSize(row);
+                         : 0.5 * geo::gGeometry().getPlaneXSize(row);
             rowNBin =
                 (isHistoManagerAvailable && histoInfo) ? histoInfo->_yBin : 100;
             rowMin = (isHistoManagerAvailable && histoInfo)
                          ? histoInfo->_yMin
-                         : -0.5 * geo::gGeometry().siPlaneXSize(col);
+                         : -0.5 * geo::gGeometry().getPlaneXSize(col);
             rowMax = (isHistoManagerAvailable && histoInfo)
                          ? histoInfo->_yMax
-                         : 0.5 * geo::gGeometry().siPlaneXSize(col);
+                         : 0.5 * geo::gGeometry().getPlaneXSize(col);
 
             AIDA::IHistogram2D *histo2D =
                 AIDAProcessor::histogramFactory(this)->createHistogram2D(
@@ -982,18 +982,18 @@ void EUTelCorrelator::bookHistos() {
                 (isHistoManagerAvailable && histoInfo) ? histoInfo->_xBin : 100;
             colMin = (isHistoManagerAvailable && histoInfo)
                          ? histoInfo->_xMin
-                         : -0.5 * geo::gGeometry().siPlaneYSize(row);
+                         : -0.5 * geo::gGeometry().getPlaneYSize(row);
             colMax = (isHistoManagerAvailable && histoInfo)
                          ? histoInfo->_xMax
-                         : 0.5 * geo::gGeometry().siPlaneYSize(row);
+                         : 0.5 * geo::gGeometry().getPlaneYSize(row);
             rowNBin =
                 (isHistoManagerAvailable && histoInfo) ? histoInfo->_yBin : 100;
             rowMin = (isHistoManagerAvailable && histoInfo)
                          ? histoInfo->_yMin
-                         : -0.5 * geo::gGeometry().siPlaneYSize(col);
+                         : -0.5 * geo::gGeometry().getPlaneYSize(col);
             rowMax = (isHistoManagerAvailable && histoInfo)
                          ? histoInfo->_yMax
-                         : 0.5 * geo::gGeometry().siPlaneYSize(col);
+                         : 0.5 * geo::gGeometry().getPlaneYSize(col);
 
             histo2D = AIDAProcessor::histogramFactory(this)->createHistogram2D(
                 tempHistoName.c_str(), rowNBin, rowMin, rowMax, colNBin, colMin,
@@ -1016,18 +1016,18 @@ void EUTelCorrelator::bookHistos() {
                 (isHistoManagerAvailable && histoInfo) ? histoInfo->_xBin : 100;
             colMin = (isHistoManagerAvailable && histoInfo)
                          ? histoInfo->_xMin
-                         : -0.5 * geo::gGeometry().siPlaneXSize(row);
+                         : -0.5 * geo::gGeometry().getPlaneXSize(row);
             colMax = (isHistoManagerAvailable && histoInfo)
                          ? histoInfo->_xMax
-                         : 0.5 * geo::gGeometry().siPlaneXSize(row);
+                         : 0.5 * geo::gGeometry().getPlaneXSize(row);
             rowNBin =
                 (isHistoManagerAvailable && histoInfo) ? histoInfo->_yBin : 100;
             rowMin = (isHistoManagerAvailable && histoInfo)
                          ? histoInfo->_yMin
-                         : -0.5 * geo::gGeometry().siPlaneXSize(col);
+                         : -0.5 * geo::gGeometry().getPlaneXSize(col);
             rowMax = (isHistoManagerAvailable && histoInfo)
                          ? histoInfo->_yMax
-                         : 0.5 * geo::gGeometry().siPlaneXSize(col);
+                         : 0.5 * geo::gGeometry().getPlaneXSize(col);
 
             histo2D = AIDAProcessor::histogramFactory(this)->createHistogram2D(
                 tempHistoName.c_str(), rowNBin, rowMin, rowMax, colNBin, colMin,
@@ -1049,18 +1049,18 @@ void EUTelCorrelator::bookHistos() {
                 (isHistoManagerAvailable && histoInfo) ? histoInfo->_xBin : 100;
             colMin = (isHistoManagerAvailable && histoInfo)
                          ? histoInfo->_xMin
-                         : -0.5 * geo::gGeometry().siPlaneYSize(row);
+                         : -0.5 * geo::gGeometry().getPlaneYSize(row);
             colMax = (isHistoManagerAvailable && histoInfo)
                          ? histoInfo->_xMax
-                         : 0.5 * geo::gGeometry().siPlaneYSize(row);
+                         : 0.5 * geo::gGeometry().getPlaneYSize(row);
             rowNBin =
                 (isHistoManagerAvailable && histoInfo) ? histoInfo->_yBin : 100;
             rowMin = (isHistoManagerAvailable && histoInfo)
                          ? histoInfo->_yMin
-                         : -0.5 * geo::gGeometry().siPlaneYSize(col);
+                         : -0.5 * geo::gGeometry().getPlaneYSize(col);
             rowMax = (isHistoManagerAvailable && histoInfo)
                          ? histoInfo->_yMax
-                         : 0.5 * geo::gGeometry().siPlaneYSize(col);
+                         : 0.5 * geo::gGeometry().getPlaneYSize(col);
 
             histo2D = AIDAProcessor::histogramFactory(this)->createHistogram2D(
                 tempHistoName.c_str(), rowNBin, rowMin, rowMax, colNBin, colMin,
@@ -1177,13 +1177,13 @@ EUTelCorrelator::guessSensorOffset(int internalSensorID, int externalSensorID,
   double externalYCenter = cluCenter.at(3);
 
   double xDet_in =
-      internalXCenter * geo::gGeometry().siPlaneXPitch(internalSensorID);
+      internalXCenter * geo::gGeometry().getPlaneXPitch(internalSensorID);
   double yDet_in =
-      internalYCenter * geo::gGeometry().siPlaneYPitch(internalSensorID);
+      internalYCenter * geo::gGeometry().getPlaneYPitch(internalSensorID);
   double xDet_ex =
-      externalXCenter * geo::gGeometry().siPlaneXPitch(externalSensorID);
+      externalXCenter * geo::gGeometry().getPlaneXPitch(externalSensorID);
   double yDet_ex =
-      externalYCenter * geo::gGeometry().siPlaneYPitch(externalSensorID);
+      externalYCenter * geo::gGeometry().getPlaneYPitch(externalSensorID);
 
   double xCoo_in = internalXCenter;
   double yCoo_in = internalYCenter;
@@ -1199,21 +1199,21 @@ EUTelCorrelator::guessSensorOffset(int internalSensorID, int externalSensorID,
 
   // get rotated sensor coordinates (only in pixel number: col num)
 
-  xPos_in += geo::gGeometry().siPlaneXPosition(internalSensorID) +
-             geo::gGeometry().siPlaneXSize(internalSensorID) / 2.;
+  xPos_in += geo::gGeometry().getPlaneXPosition(internalSensorID) +
+             geo::gGeometry().getPlaneXSize(internalSensorID) / 2.;
 
   xCooPos_in = xCooPos_in;
 
-  yPos_in += geo::gGeometry().siPlaneYPosition(internalSensorID) +
-             geo::gGeometry().siPlaneYSize(internalSensorID) / 2.;
+  yPos_in += geo::gGeometry().getPlaneYPosition(internalSensorID) +
+             geo::gGeometry().getPlaneYSize(internalSensorID) / 2.;
 
   yCooPos_in = yCooPos_in;
 
-  xPos_ex += geo::gGeometry().siPlaneXPosition(externalSensorID) +
-             geo::gGeometry().siPlaneXSize(externalSensorID) / 2.;
+  xPos_ex += geo::gGeometry().getPlaneXPosition(externalSensorID) +
+             geo::gGeometry().getPlaneXSize(externalSensorID) / 2.;
 
-  yPos_ex += geo::gGeometry().siPlaneYPosition(externalSensorID) +
-             geo::gGeometry().siPlaneYSize(externalSensorID) / 2.;
+  yPos_ex += geo::gGeometry().getPlaneYPosition(externalSensorID) +
+             geo::gGeometry().getPlaneYSize(externalSensorID) / 2.;
 
   std::vector<double> cluster_offset;
 

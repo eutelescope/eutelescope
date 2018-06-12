@@ -175,29 +175,29 @@ void EUTelProcessorAnalysisPALPIDEfs::init() {
 
   for (int iz = 0; iz < _nTelPlanes; iz++)
     if (_planeID[iz] == _dutID) {
-      dutZ = geo::gGeometry().siPlaneZPosition(iz);
+      dutZ = geo::gGeometry().getPlaneZPosition(iz);
       layerIndex = iz;
-      xSize = geo::gGeometry().siPlaneXSize(layerIndex);
-      ySize = geo::gGeometry().siPlaneYSize(layerIndex);
-      xZero = geo::gGeometry().siPlaneXPosition(layerIndex);        // mm
-      yZero = geo::gGeometry().siPlaneYPosition(layerIndex);        // mm
-      xSize = geo::gGeometry().siPlaneXSize(layerIndex);            // mm
-      ySize = geo::gGeometry().siPlaneYSize(layerIndex);            // mm
-      xPitch = geo::gGeometry().siPlaneXPitch(layerIndex);          // mm
-      yPitch = geo::gGeometry().siPlaneYPitch(layerIndex);          // mm
-      xPointing[0] = geo::gGeometry().siPlaneRotation1(layerIndex); // was -1 ;
-      xPointing[1] = geo::gGeometry().siPlaneRotation2(layerIndex); // was  0 ;
-      yPointing[0] = geo::gGeometry().siPlaneRotation3(layerIndex); // was  0 ;
-      yPointing[1] = geo::gGeometry().siPlaneRotation4(layerIndex); // was -1 ;
-      xPixel = geo::gGeometry().siPlaneXNpixels(layerIndex);
-      yPixel = geo::gGeometry().siPlaneYNpixels(layerIndex);
+      xSize = geo::gGeometry().getPlaneXSize(layerIndex);
+      ySize = geo::gGeometry().getPlaneYSize(layerIndex);
+      xZero = geo::gGeometry().getPlaneXPosition(layerIndex);        // mm
+      yZero = geo::gGeometry().getPlaneYPosition(layerIndex);        // mm
+      xSize = geo::gGeometry().getPlaneXSize(layerIndex);            // mm
+      ySize = geo::gGeometry().getPlaneYSize(layerIndex);            // mm
+      xPitch = geo::gGeometry().getPlaneXPitch(layerIndex);          // mm
+      yPitch = geo::gGeometry().getPlaneYPitch(layerIndex);          // mm
+      xPointing[0] = geo::gGeometry().planeFlip1(layerIndex); // was -1 ;
+      xPointing[1] = geo::gGeometry().planeFlip2(layerIndex); // was  0 ;
+      yPointing[0] = geo::gGeometry().planeFlip3(layerIndex); // was  0 ;
+      yPointing[1] = geo::gGeometry().planeFlip4(layerIndex); // was -1 ;
+      xPixel = geo::gGeometry().getPlaneNumberOfPixelsX(layerIndex);
+      yPixel = geo::gGeometry().getPlaneNumberOfPixelsY(layerIndex);
       try {
         gRotation[0] =
-            geo::gGeometry().siPlaneZRotation(layerIndex); // Euler gamma ;
+            geo::gGeometry().getPlaneZRotationDegrees(layerIndex); // Euler gamma ;
         gRotation[1] =
-            geo::gGeometry().siPlaneYRotation(layerIndex); // Euler beta  ;
+            geo::gGeometry().getPlaneYRotationDegrees(layerIndex); // Euler beta  ;
         gRotation[2] =
-            geo::gGeometry().siPlaneXRotation(layerIndex); // Euler alpha ;
+            geo::gGeometry().getPlaneXRotationDegrees(layerIndex); // Euler alpha ;
       } catch (...) {
         streamlog_out(MESSAGE5) << " no sensor rotation is given in the GEAR "
                                    "steering file, assume NONE "
@@ -2467,11 +2467,11 @@ bool EUTelProcessorAnalysisPALPIDEfs::RemoveAlign(
     double &xposfit, double &yposfit) {
   // Remove the alignment in the same way it was applied by the
   // EUTelProcessorApplyAlignment.cc
-  double xPlaneCenter = geo::gGeometry().siPlaneXPosition(_dutID);
-  double yPlaneCenter = geo::gGeometry().siPlaneYPosition(_dutID);
-  double zPlaneThickness = geo::gGeometry().siPlaneZSize(_dutID);
+  double xPlaneCenter = geo::gGeometry().getPlaneXPosition(_dutID);
+  double yPlaneCenter = geo::gGeometry().getPlaneYPosition(_dutID);
+  double zPlaneThickness = geo::gGeometry().getPlaneZSize(_dutID);
   double zPlaneCenter =
-      geo::gGeometry().siPlaneZPosition(_dutID) + zPlaneThickness / 2.;
+      geo::gGeometry().getPlaneZPosition(_dutID) + zPlaneThickness / 2.;
   TVector3 inputVec(fitpos[0] - xPlaneCenter, fitpos[1] - yPlaneCenter,
                     fitpos[2] - zPlaneCenter);
   // cerr << zPlaneThickness << "\t" << zPlaneCenter << endl;

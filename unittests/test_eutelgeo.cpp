@@ -250,34 +250,56 @@ TEST_F(eutelgeotestTest, NormalVectorTest) {
 		
 		Eigen::Vector3d zVComp = xV.cross(yV);
 
-		TVector3 normGeoFW = eugeo::gGeometry().siPlaneNormal( sensorID );
-
-		Eigen::Vector3d zVGeoFW ( normGeoFW[0], normGeoFW[1], normGeoFW[2] );
+		Eigen::Vector3d zVGeoFW = eugeo::gGeometry().getPlaneNormalVector( sensorID );
 		for(size_t i = 0; i < 3; i++) {
 			ASSERT_NEAR(zVGeoFW[i], zVComp[i], abs_err);	
 			ASSERT_NEAR(zVGeoFW[i], zV[i], abs_err);
-			ASSERT_NEAR(zVGeoFW.norm(), 1, abs_err);
 		}
+		ASSERT_NEAR(zVGeoFW.norm(), 1, abs_err);
 	}
 }
 
+/** TODO 
+ */  
 TEST_F(eutelgeotestTest, vectorOrderZTest) {
 	auto sensorIDVec = eugeo::gGeometry().sensorIDsVec();
 	std::vector<int> referenceVec = {8,0,1,2,3,4,5,7,6};
 	ASSERT_TRUE( std::equal(referenceVec.begin(), referenceVec.end(), sensorIDVec.begin()) );
 }
 
+/** TODO 
+ */  
+TEST_F(eutelgeotestTest, XAxisTest) {
+
+	double const abs_err = 1e-8;
+	
+	auto sensorIDVec = eugeo::gGeometry().sensorIDsVec();
+	for( auto sensorID: sensorIDVec ) {
+    
+		  eugeo::gGeometry().local2MasterVec(sensorID, xVecN, rVec);
+		  Eigen::Vector3d xV( rVec[0], rVec[1], rVec[2] );
+      auto vec_x = eugeo::gGeometry().getPlaneXVector(sensorID);
+
+		for(size_t i = 0; i < 3; i++) {
+			ASSERT_NEAR(vec_x[i], rVec[i], abs_err);	
+		}
+		ASSERT_NEAR(vec_x.norm(), 1, abs_err);
+	}
+}
+
 TEST_F(eutelgeotestTest, radLengthTest1) {
 	Eigen::Vector3d begin = {0,0,-5};
 	Eigen::Vector3d end = {0,0,5};
-	std::cout << "Rad: " << eugeo::gGeometry().FindRad(begin, end) << std::endl;
+	std::cout << "Rad: " << eugeo::gGeometry().getRadiationLengthBetweenPoints(begin, end) << std::endl;
 
 	Eigen::Vector3d begin2 = {0,0,3};
-	std::cout << "Rad: " << eugeo::gGeometry().FindRad(begin2, end) << std::endl;
+	std::cout << "Rad: " << eugeo::gGeometry().getRadiationLengthBetweenPoints(begin2, end) << std::endl;
 
 	Eigen::Vector3d begin3 = {0,0,134};
 	Eigen::Vector3d end3 = {12,0,146};
-	std::cout << "Rad: " << eugeo::gGeometry().FindRad(begin3, end3) << std::endl;
+	std::cout << "Rad: " << eugeo::gGeometry().getRadiationLengthBetweenPoints(begin3, end3) << std::endl;
 }
+
+
 
 // }  // namespace - could surround eutelgeotestTest in a namespace

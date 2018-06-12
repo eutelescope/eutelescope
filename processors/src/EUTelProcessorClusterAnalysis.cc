@@ -113,8 +113,8 @@ void EUTelProcessorClusterAnalysis::init() {
 
   // beware, sometimes dutID is 3, sometimes it is 6
   int iLayer = _dutID;
-  _xPixel = geo::gGeometry().siPlaneXNpixels(iLayer);
-  _yPixel = geo::gGeometry().siPlaneYNpixels(iLayer);
+  _xPixel = geo::gGeometry().getPlaneNumberOfPixelsX(iLayer);
+  _yPixel = geo::gGeometry().getPlaneNumberOfPixelsY(iLayer);
   _sectorWidth = _xPixel / _nSectors;
   //
   Cluster cluster;

@@ -119,7 +119,7 @@ void EUTelPedeGEAR::init() {
        it != sensorIDVec.end(); it++) {
     int sensorID = *it;
     sensorIDMap.insert(
-        std::make_pair(geo::gGeometry().siPlaneZPosition(sensorID), sensorID));
+        std::make_pair(geo::gGeometry().getPlaneZPosition(sensorID), sensorID));
   }
 
   // the user is giving sensor ids for the planes to be excluded. this
@@ -463,9 +463,9 @@ void EUTelPedeGEAR::end() {
                     << std::endl;
 
           Eigen::Vector3d oldOffset;
-          oldOffset << geo::gGeometry().siPlaneXPosition(sensorID),
-              geo::gGeometry().siPlaneYPosition(sensorID),
-              geo::gGeometry().siPlaneZPosition(sensorID);
+          oldOffset << geo::gGeometry().getPlaneXPosition(sensorID),
+              geo::gGeometry().getPlaneYPosition(sensorID),
+              geo::gGeometry().getPlaneZPosition(sensorID);
 		
 		if(_rotateOldOffsetVec) {
 			oldOffset = rotAlign*oldOffset;          

@@ -137,10 +137,10 @@ void EUTelGBLFitter::init() {
   _nPlanes = _sensorIDVec.size();
 
   for(auto& sensorID: _sensorIDVec) {
-    auto const & pos = geo::gGeometry().siPlaneZPosition(sensorID);
+    auto const & pos = geo::gGeometry().getPlaneZPosition(sensorID);
     _planePosition.emplace_back( pos );
-    auto const & z = geo::gGeometry().siPlaneZSize(sensorID);
-    auto const & rad = geo::gGeometry().siPlaneRadLength(sensorID);
+    auto const & z = geo::gGeometry().getPlaneZSize(sensorID);
+    auto const & rad = geo::gGeometry().getPlaneRadiationLength(sensorID);
 
     if(sensorID < 6) {
         _planeRadLength.emplace_back(z/rad + 0.050 / 286.6); // Plane from GEAR + Kapton

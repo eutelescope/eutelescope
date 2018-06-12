@@ -9,31 +9,26 @@
 #include "gearimpl/TrackerPlanesLayerLayoutImpl.h"
 #include "gearimpl/TrackerPlanesParametersImpl.h"
 /** Helper classes to represent the geometry reflected in the GEAR file in
- *EUTelescope
- *	The description is based on layers and planes. A plane can either be an
- *active or passive
- *	one - where active derives from passive. Even for the case of a one
- *plane telescope, you will
- *	have one layer and one active (plane). The layer holds the alignment
- *information for all
- *	planes in it. Planes (i.e. active & passive) can further hold
- *corrections to this.
+ * EUTelescope .The description is based on layers and planes. A plane can 
+ * either be an active or passive one - where active derives from passive. 
+ * Even for the case of a one plane telescope, you will have one layer and 
+ * one active (plane). The layer holds the alignment information for all
+ * planes in it. Planes (i.e. active & passive) can further hold
+ * corrections to this.
  *
- *	The alignment of a layer is stored in two objects: the rotation matrix R
- *and a position
- *	vector V. A local coordinate x is transformed into a global X one by:
+ * The alignment of a layer is stored in two objects: the rotation matrix R
+ * and a position vector V. A local coordinate x is transformed into a 
+ * global X one by:
  *
  *			X = V + R*x
  *
- *	If additional alignment constants are stored for a plane, denoted by V'
- *and R' the
- *	transformation is as follows:
+ * If additional alignment constants are stored for a plane, denoted by V' 
+ * and R' the transformation is as follows:
  *
  *			X = (V+V') + (R'*R)x
  *
- *	Notice that the individual angles are NOT simply added, but the rotation
- *are carried
- *	out subsequently!
+ * Notice that the individual angles are NOT simply added, but the rotation
+ * are carried out subsequently!
  */
 namespace eutelescope {
   namespace geo {
@@ -46,7 +41,9 @@ namespace eutelescope {
       EUTelMaterial(double A, double Z, double rho)
           : _A(A), _Z(Z), _density(rho) {}
       EUTelMaterial(EUTelMaterial const &other) = default;
+
       double _A, _Z, _density;
+      // Radiation length in [mm]
       double _radLength = 0;
     };
 
@@ -57,12 +54,9 @@ namespace eutelescope {
     private:
       int _ID;
       gear::TrackerPlanesLayerImpl *_gearLayerPtr;
-
       std::string _info = "";
-
       std::vector<std::unique_ptr<EUTelActive>> _activeVec;
       std::vector<std::unique_ptr<EUTelPassive>> _passiveVec;
-
       Eigen::Matrix3d _rotMatrix;
       Eigen::Vector3d _posVector;
       Eigen::Vector3d _posUncVector;
@@ -127,10 +121,8 @@ namespace eutelescope {
       void reseatRotation(Eigen::Matrix3d const &rotVec);
 
       Eigen::Vector3d const &getPosVec() const { return _posVector; }
-
       Eigen::Vector3d const &getPosUncVec() const { return _posUncVector; }
       Eigen::Matrix3d const &getRotMat() const { return _rotMatrix; }
-
       Eigen::Vector3d const &getAngleVec() const { return _angleVector; }
     };
 

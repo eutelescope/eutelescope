@@ -191,9 +191,9 @@ void EUTelAlignGBL::init() {
 
   bool isStillUpstream = true;
   for(auto& sensorID: _sensorIDVec) {
-    _planePosition.emplace_back( geo::gGeometry().siPlaneZPosition(sensorID) );
-    auto z = geo::gGeometry().siPlaneZSize(sensorID);
-    auto rad = geo::gGeometry().siPlaneRadLength(sensorID);
+    _planePosition.emplace_back( geo::gGeometry().getPlaneZPosition(sensorID) );
+    auto z = geo::gGeometry().getPlaneZSize(sensorID);
+    auto rad = geo::gGeometry().getPlaneRadiationLength(sensorID);
     if(sensorID < 6) {
         _planeRadLength.emplace_back(55e-3 / 93.66 + 0.050 / 286.6); // Si + Kapton
     } else {
@@ -442,12 +442,12 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
             if(_printEventCounter < NO_PRINT_EVENT_COUNTER){
                std::cout << "---pair--\n" << triplet << driplet << '\n';
               std::cout << "Expects hit on 22 at:\n";
-              auto zPos = geo::gGeometry().siPlaneZPosition(22);
+              auto zPos = geo::gGeometry().getPlaneZPosition(22);
               auto trX = triplet.getx_at(zPos);
               auto trY = triplet.gety_at(zPos);
               std::cout << trX << "|" << trY << '\n';
               std::cout << "Expects hit on 21 at:\n";
-              zPos = geo::gGeometry().siPlaneZPosition(21);
+              zPos = geo::gGeometry().getPlaneZPosition(21);
               trX = driplet.getx_at(zPos);
               trY = driplet.gety_at(zPos);
               std::cout << trX << "|" << trY << '\n';        

@@ -209,14 +209,14 @@ void EUTelProcessorHitMaker::processEvent(LCEvent *event) {
         bookHistos(sensorID);
       }
 
-      resolutionX = geo::gGeometry().siPlaneXResolution(sensorID); // mm
-      resolutionY = geo::gGeometry().siPlaneYResolution(sensorID); // mm
+      resolutionX = geo::gGeometry().getPlaneXResolution(sensorID); // mm
+      resolutionY = geo::gGeometry().getPlaneYResolution(sensorID); // mm
 
-      xSize = geo::gGeometry().siPlaneXSize(sensorID); // mm
-      ySize = geo::gGeometry().siPlaneYSize(sensorID); // mm
+      xSize = geo::gGeometry().getPlaneXSize(sensorID); // mm
+      ySize = geo::gGeometry().getPlaneYSize(sensorID); // mm
 
-      xPitch = geo::gGeometry().siPlaneXPitch(sensorID); // mm
-      yPitch = geo::gGeometry().siPlaneYPitch(sensorID); // mm
+      xPitch = geo::gGeometry().getPlaneXPitch(sensorID); // mm
+      yPitch = geo::gGeometry().getPlaneYPitch(sensorID); // mm
     }
 
     // LOCAL coordinate system !!!!!!
@@ -445,14 +445,14 @@ void EUTelProcessorHitMaker::bookHistos(int sensorID) {
   // We add and subtract a constant so we know for sure we can see all hits on
   // the histogram.
   double constant = 5;
-  double xMin = -(geo::gGeometry().siPlaneXSize(sensorID) / 2) - constant;
-  double xMax = (geo::gGeometry().siPlaneXSize(sensorID) / 2) + constant;
+  double xMin = -(geo::gGeometry().getPlaneXSize(sensorID) / 2) - constant;
+  double xMax = (geo::gGeometry().getPlaneXSize(sensorID) / 2) + constant;
 
-  double yMin = -(geo::gGeometry().siPlaneYSize(sensorID) / 2) - constant;
-  double yMax = (geo::gGeometry().siPlaneYSize(sensorID) / 2) + constant;
+  double yMin = -(geo::gGeometry().getPlaneYSize(sensorID) / 2) - constant;
+  double yMax = (geo::gGeometry().getPlaneYSize(sensorID) / 2) + constant;
 
-  int xNBin = geo::gGeometry().siPlaneXNpixels(sensorID);
-  int yNBin = geo::gGeometry().siPlaneYNpixels(sensorID);
+  int xNBin = geo::gGeometry().getPlaneNumberOfPixelsX(sensorID);
+  int yNBin = geo::gGeometry().getPlaneNumberOfPixelsY(sensorID);
 
   AIDA::IHistogram2D *hitHistoLocal =
       AIDAProcessor::histogramFactory(this)->createHistogram2D(
@@ -474,12 +474,12 @@ void EUTelProcessorHitMaker::bookHistos(int sensorID) {
   // means that the sensor is wrong
   // by all its size.
   double safetyFactor = 1.2;
-  double xPosition = geo::gGeometry().siPlaneXPosition(sensorID);
-  double yPosition = geo::gGeometry().siPlaneYPosition(sensorID);
-  double xSize = geo::gGeometry().siPlaneXSize(sensorID);
-  double ySize = geo::gGeometry().siPlaneYSize(sensorID);
-  int xBin = geo::gGeometry().siPlaneXNpixels(sensorID);
-  int yBin = geo::gGeometry().siPlaneYNpixels(sensorID);
+  double xPosition = geo::gGeometry().getPlaneXPosition(sensorID);
+  double yPosition = geo::gGeometry().getPlaneYPosition(sensorID);
+  double xSize = geo::gGeometry().getPlaneXSize(sensorID);
+  double ySize = geo::gGeometry().getPlaneYSize(sensorID);
+  int xBin = geo::gGeometry().getPlaneNumberOfPixelsX(sensorID);
+  int yBin = geo::gGeometry().getPlaneNumberOfPixelsY(sensorID);
 
   xMin = safetyFactor * (xPosition - (0.5 * xSize));
   xMax = safetyFactor * (xPosition + (0.5 * xSize));

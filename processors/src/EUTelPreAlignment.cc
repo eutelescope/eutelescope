@@ -149,12 +149,12 @@ void EUTelPreAlign::init() {
        it != _sensorIDVec.end(); it++) {
     int sensorID = *it;
     if (sensorID == _fixedID) {
-      _fixedZ = geo::gGeometry().siPlaneZPosition(sensorID);
+      _fixedZ = geo::gGeometry().getPlaneZPosition(sensorID);
     } else {
       _preAligners.push_back(
-          PreAligner(geo::gGeometry().siPlaneXPitch(sensorID) / 10.,
-                     geo::gGeometry().siPlaneYPitch(sensorID) / 10.,
-                     geo::gGeometry().siPlaneZPosition(sensorID), sensorID));
+          PreAligner(geo::gGeometry().getPlaneXPitch(sensorID) / 10.,
+                     geo::gGeometry().getPlaneYPitch(sensorID) / 10.,
+                     geo::gGeometry().getPlaneZPosition(sensorID), sensorID));
     }
   }
 
@@ -372,14 +372,14 @@ void EUTelPreAlign::end() {
      double updatedXOff;
      double updatedYOff;
      if(it == _ExcludedPlanes.end()){///Only want to update if needed. Otherwise we get a pointless warning
-       updatedXOff = geo::gGeometry().siPlaneXPosition(sensorID) + _preAligners.at(ii).getPeakX();
-       updatedYOff = geo::gGeometry().siPlaneYPosition(sensorID) + _preAligners.at(ii).getPeakY();
+       updatedXOff = geo::gGeometry().getPlaneXPosition(sensorID) + _preAligners.at(ii).getPeakX();
+       updatedYOff = geo::gGeometry().getPlaneYPosition(sensorID) + _preAligners.at(ii).getPeakY();
      }else{
         updatedXOff=0;
         updatedYOff=0;
      }
 
-    double oldZPos = geo::gGeometry().siPlaneZPosition(sensorID);
+    double oldZPos = geo::gGeometry().getPlaneZPosition(sensorID);
 
     geo::gGeometry().alignGlobalPos(sensorID, updatedXOff, updatedYOff,
                                     oldZPos);

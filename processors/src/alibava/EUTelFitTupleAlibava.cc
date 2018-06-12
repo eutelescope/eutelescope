@@ -455,9 +455,9 @@ void EUTelFitTupleAlibava::getReference ( )
     _b_refhit = 0.0;
     _c_refhit = 0.0;
 
-    _x_refhit = geo::gGeometry ( ) .siPlaneXPosition ( _manualDUTid );
-    _y_refhit = geo::gGeometry ( ) .siPlaneYPosition ( _manualDUTid );
-    _z_refhit = geo::gGeometry ( ) .siPlaneZPosition ( _manualDUTid ) + 0.5 * geo::gGeometry ( ) .siPlaneZSize ( _manualDUTid );
+    _x_refhit = geo::gGeometry ( ) .getPlaneXPosition ( _manualDUTid );
+    _y_refhit = geo::gGeometry ( ) .getPlaneYPosition ( _manualDUTid );
+    _z_refhit = geo::gGeometry ( ) .getPlaneZPosition ( _manualDUTid ) + 0.5 * geo::gGeometry ( ) .getPlaneZSize ( _manualDUTid );
 
     double refVec[3];
     refVec[0] = 0.0;
@@ -466,9 +466,9 @@ void EUTelFitTupleAlibava::getReference ( )
 
     double gRotation[3] = { 0.0, 0.0, 0.0 };
 
-    gRotation[0] = geo::gGeometry ( ) .siPlaneZRotation ( _manualDUTid );
-    gRotation[1] = geo::gGeometry ( ) .siPlaneYRotation ( _manualDUTid );
-    gRotation[2] = geo::gGeometry ( ) .siPlaneXRotation ( _manualDUTid );
+    gRotation[0] = geo::gGeometry ( ) .getPlaneZRotationDegrees ( _manualDUTid );
+    gRotation[1] = geo::gGeometry ( ) .getPlaneYRotationDegrees ( _manualDUTid );
+    gRotation[2] = geo::gGeometry ( ) .getPlaneXRotationDegrees ( _manualDUTid );
     gRotation[0] = gRotation[0] * 3.1415926 / 180.0;
     gRotation[1] = gRotation[1] * 3.1415926 / 180.0;
     gRotation[2] = gRotation[2] * 3.1415926 / 180.0;

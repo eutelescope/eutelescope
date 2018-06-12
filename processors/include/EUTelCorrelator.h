@@ -275,12 +275,6 @@ namespace eutelescope {
     //! vector of Rotation Matrix elements
     std::vector<std::map<int, double>> _siPlanesRotations;
 
-    //! vector of Sensor Pitch X
-    std::vector<double> _siPlanesPitchX;
-
-    //! vector of Sensor Pitch Y
-    std::vector<double> _siPlanesPitchY;
-
     //! vector of Sensor Offset X
     std::vector<double> _siPlanesOffsetX;
 

@@ -298,13 +298,13 @@ void EUTelDafBase::gearRotate(size_t index, int sensorID) {
   daffitter::FitPlane<float> &pl = _system.planes.at(index);
 
   double gRotation[3] = {0., 0., 0.};
-  gRotation[0] = geo::gGeometry().siPlaneZRotationRadians(
+  gRotation[0] = geo::gGeometry().getPlaneZRotationRadians(
       sensorID); //_siPlanesLayerLayout->getLayerRotationXY(gearIndex); // Euler
                  //alpha
-  gRotation[1] = geo::gGeometry().siPlaneYRotationRadians(
+  gRotation[1] = geo::gGeometry().getPlaneYRotationRadians(
       sensorID); //_siPlanesLayerLayout->getLayerRotationZX(gearIndex); // Euler
                  //beta
-  gRotation[2] = geo::gGeometry().siPlaneXRotationRadians(
+  gRotation[2] = geo::gGeometry().getPlaneXRotationRadians(
       sensorID); //_siPlanesLayerLayout->getLayerRotationZY(gearIndex); // Euler
                  //gamma
   // transform into radians
@@ -318,7 +318,7 @@ void EUTelDafBase::gearRotate(size_t index, int sensorID) {
   TVector3 ref1 = TVector3(10.0, 0.0, 0.0);
   TVector3 ref2 = TVector3(0.0, 10.0, 0.0);
 
-  double zZero = geo::gGeometry().siPlaneZPosition(
+  double zZero = geo::gGeometry().getPlaneZPosition(
       sensorID); //_siPlanesLayerLayout->getSensitivePositionZ(gearIndex); // mm
   // double zThickness   =
   // _siPlanesLayerLayout->getSensitiveThickness(gearIndex); // mm
@@ -464,7 +464,7 @@ void EUTelDafBase::init() {
   _zSort.clear();
   int plane = 0;
   for (int sensorID : geo::gGeometry().sensorIDsVec()) {
-    _zSort[geo::gGeometry().siPlaneZPosition(sensorID) * 1000.0] = plane;
+    _zSort[geo::gGeometry().getPlaneZPosition(sensorID) * 1000.0] = plane;
     _indexIDMap[sensorID] = plane;
     plane++;
   }
@@ -480,14 +480,14 @@ void EUTelDafBase::init() {
     _nRef.push_back(3);
     //   int sensorID = _siPlanesLayerLayout->getID( (*zit).second );
     // Read sensitive as 0, in case the two are different
-    float zPos = geo::gGeometry().siPlaneZPosition(sensorID) * 1000.0;
+    float zPos = geo::gGeometry().getPlaneZPosition(sensorID) * 1000.0;
     // Figure out what kind of plane we are dealing with
     float errX(0.0f), errY(0.0f);
     bool excluded = true;
 
     // Get scatter using x / x0
-    float radLength = geo::gGeometry().siPlaneZSize(sensorID) /
-                      (geo::gGeometry().siPlaneRadLength(sensorID));
+    float radLength = geo::gGeometry().getPlaneZSize(sensorID) /
+                      (geo::gGeometry().getPlaneRadiationLength(sensorID));
     /*
             _siPlanesLayerLayout->getLayerThickness( (*zit).second ) /
        _siPlanesLayerLayout->getLayerRadLength( (*zit).second );
@@ -499,11 +499,11 @@ void EUTelDafBase::init() {
     // streamlog_out ( MESSAGE5 ) << " sen thick: " <<
     // _siPlanesLayerLayout->getSensitiveThickness( (*zit).second ) ;
     streamlog_out(MESSAGE5) << " sen thick: "
-                            << geo::gGeometry().siPlaneZSize(sensorID);
+                            << geo::gGeometry().getPlaneZSize(sensorID);
     // streamlog_out ( MESSAGE5 ) << " sens rad:  " <<
     // _siPlanesLayerLayout->getSensitiveRadLength( (*zit).second ) << endl;
     streamlog_out(MESSAGE5)
-        << " sens rad:  " << geo::gGeometry().siPlaneRadLength(sensorID)
+        << " sens rad:  " << geo::gGeometry().getPlaneRadiationLength(sensorID)
         << endl;
     if (_radLength.size() > index) {
       radLength = _radLength.at(index);
