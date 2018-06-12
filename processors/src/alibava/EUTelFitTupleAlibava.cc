@@ -457,7 +457,7 @@ void EUTelFitTupleAlibava::getReference ( )
 
     _x_refhit = geo::gGeometry ( ) .getPlaneXPosition ( _manualDUTid );
     _y_refhit = geo::gGeometry ( ) .getPlaneYPosition ( _manualDUTid );
-    _z_refhit = geo::gGeometry ( ) .getPlaneZPosition ( _manualDUTid ) + 0.5 * geo::gGeometry ( ) .siPlaneZSize ( _manualDUTid );
+    _z_refhit = geo::gGeometry ( ) .getPlaneZPosition ( _manualDUTid ) + 0.5 * geo::gGeometry ( ) .getPlaneZSize ( _manualDUTid );
 
     double refVec[3];
     refVec[0] = 0.0;

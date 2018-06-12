@@ -40,8 +40,8 @@ void EUTelProcessorDeadColumnFinder::init() {
   _nLayer = geo::gGeometry().nPlanes();
   vector<int> tmp(4, 0);
   for (int iLayer = 0; iLayer < _nLayer; iLayer++) {
-    _xPixel.push_back(geo::gGeometry().siPlaneXNpixels(iLayer));
-    _yPixel.push_back(geo::gGeometry().siPlaneYNpixels(iLayer));
+    _xPixel.push_back(geo::gGeometry().getPlaneNumberOfPixelsX(iLayer));
+    _yPixel.push_back(geo::gGeometry().getPlaneNumberOfPixelsY(iLayer));
     vector<bool> isDeadTmp(_xPixel[iLayer], false);
     isDead.push_back(isDeadTmp);
     //    cerr << iLayer << "\t" << nFiredPixel[0][iLayer] << endl;

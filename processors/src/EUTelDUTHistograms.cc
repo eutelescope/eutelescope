@@ -1976,7 +1976,7 @@ int EUTelDUTHistograms::getClusterSize(int sensorID, TrackerHit *hit,
 int EUTelDUTHistograms::getSubMatrix(int detectorID, float xlocal) {
   // quarters : 0-287, 288-575, 576-863, 864-1151
   int fourlocal = static_cast<int>(xlocal * 4.);
-  int subquarter = fourlocal / geo::gGeometry().siPlaneXNpixels(detectorID);
+  int subquarter = fourlocal / geo::gGeometry().getPlaneNumberOfPixelsX(detectorID);
   return subquarter;
 }
 

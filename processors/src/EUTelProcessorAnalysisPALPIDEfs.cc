@@ -177,20 +177,20 @@ void EUTelProcessorAnalysisPALPIDEfs::init() {
     if (_planeID[iz] == _dutID) {
       dutZ = geo::gGeometry().getPlaneZPosition(iz);
       layerIndex = iz;
-      xSize = geo::gGeometry().siPlaneXSize(layerIndex);
-      ySize = geo::gGeometry().siPlaneYSize(layerIndex);
+      xSize = geo::gGeometry().getPlaneXSize(layerIndex);
+      ySize = geo::gGeometry().getPlaneYSize(layerIndex);
       xZero = geo::gGeometry().getPlaneXPosition(layerIndex);        // mm
       yZero = geo::gGeometry().getPlaneYPosition(layerIndex);        // mm
-      xSize = geo::gGeometry().siPlaneXSize(layerIndex);            // mm
-      ySize = geo::gGeometry().siPlaneYSize(layerIndex);            // mm
-      xPitch = geo::gGeometry().siPlaneXPitch(layerIndex);          // mm
-      yPitch = geo::gGeometry().siPlaneYPitch(layerIndex);          // mm
+      xSize = geo::gGeometry().getPlaneXSize(layerIndex);            // mm
+      ySize = geo::gGeometry().getPlaneYSize(layerIndex);            // mm
+      xPitch = geo::gGeometry().getPlaneXPitch(layerIndex);          // mm
+      yPitch = geo::gGeometry().getPlaneYPitch(layerIndex);          // mm
       xPointing[0] = geo::gGeometry().planeFlip1(layerIndex); // was -1 ;
       xPointing[1] = geo::gGeometry().planeFlip2(layerIndex); // was  0 ;
       yPointing[0] = geo::gGeometry().planeFlip3(layerIndex); // was  0 ;
       yPointing[1] = geo::gGeometry().planeFlip4(layerIndex); // was -1 ;
-      xPixel = geo::gGeometry().siPlaneXNpixels(layerIndex);
-      yPixel = geo::gGeometry().siPlaneYNpixels(layerIndex);
+      xPixel = geo::gGeometry().getPlaneNumberOfPixelsX(layerIndex);
+      yPixel = geo::gGeometry().getPlaneNumberOfPixelsY(layerIndex);
       try {
         gRotation[0] =
             geo::gGeometry().getPlaneZRotationDegrees(layerIndex); // Euler gamma ;
@@ -2469,7 +2469,7 @@ bool EUTelProcessorAnalysisPALPIDEfs::RemoveAlign(
   // EUTelProcessorApplyAlignment.cc
   double xPlaneCenter = geo::gGeometry().getPlaneXPosition(_dutID);
   double yPlaneCenter = geo::gGeometry().getPlaneYPosition(_dutID);
-  double zPlaneThickness = geo::gGeometry().siPlaneZSize(_dutID);
+  double zPlaneThickness = geo::gGeometry().getPlaneZSize(_dutID);
   double zPlaneCenter =
       geo::gGeometry().getPlaneZPosition(_dutID) + zPlaneThickness / 2.;
   TVector3 inputVec(fitpos[0] - xPlaneCenter, fitpos[1] - yPlaneCenter,

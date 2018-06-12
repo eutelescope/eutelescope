@@ -2491,9 +2491,9 @@ TVector3 EUTelMille::Line2Plane(int iplane, const TVector3 &lpoint,
   hitInPlane.SetXYZ(geo::gGeometry().getPlaneXPosition(sensorID) * 1000,
                     geo::gGeometry().getPlaneYPosition(sensorID) * 1000,
                     geo::gGeometry().getPlaneZPosition(sensorID) * 1000);
-  TVector3 norm2Plane = TVector3( geo::gGeometry().siPlaneNormal(sensorID)[0], 
-                                  geo::gGeometry().siPlaneNormal(sensorID)[1],
-                                  geo::gGeometry().siPlaneNormal(sensorID)[2]);
+  TVector3 norm2Plane = TVector3( geo::gGeometry().getPlaneNormalVector(sensorID)[0], 
+                                  geo::gGeometry().getPlaneNormalVector(sensorID)[1],
+                                  geo::gGeometry().getPlaneNormalVector(sensorID)[2]);
 
   TVector3 point(1., 1., 1.);
 

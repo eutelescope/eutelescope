@@ -192,8 +192,8 @@ void EUTelAlignGBL::init() {
   bool isStillUpstream = true;
   for(auto& sensorID: _sensorIDVec) {
     _planePosition.emplace_back( geo::gGeometry().getPlaneZPosition(sensorID) );
-    auto z = geo::gGeometry().siPlaneZSize(sensorID);
-    auto rad = geo::gGeometry().siPlaneRadLength(sensorID);
+    auto z = geo::gGeometry().getPlaneZSize(sensorID);
+    auto rad = geo::gGeometry().getPlaneRadiationLength(sensorID);
     if(sensorID < 6) {
         _planeRadLength.emplace_back(55e-3 / 93.66 + 0.050 / 286.6); // Si + Kapton
     } else {

@@ -3564,8 +3564,8 @@ void EUTelClusteringProcessor::bookHistos() {
 void EUTelClusteringProcessor::getMaxPixels(int sensorID, int &maxX,
                                             int &maxY) {
   try {
-    maxX = geo::gGeometry().siPlaneXNpixels(sensorID) - 1;
-    maxY = geo::gGeometry().siPlaneYNpixels(sensorID) - 1;
+    maxX = geo::gGeometry().getPlaneNumberOfPixelsX(sensorID) - 1;
+    maxY = geo::gGeometry().getPlaneNumberOfPixelsY(sensorID) - 1;
   }
 
   catch (...) {

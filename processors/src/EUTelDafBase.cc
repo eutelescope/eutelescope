@@ -486,8 +486,8 @@ void EUTelDafBase::init() {
     bool excluded = true;
 
     // Get scatter using x / x0
-    float radLength = geo::gGeometry().siPlaneZSize(sensorID) /
-                      (geo::gGeometry().siPlaneRadLength(sensorID));
+    float radLength = geo::gGeometry().getPlaneZSize(sensorID) /
+                      (geo::gGeometry().getPlaneRadiationLength(sensorID));
     /*
             _siPlanesLayerLayout->getLayerThickness( (*zit).second ) /
        _siPlanesLayerLayout->getLayerRadLength( (*zit).second );
@@ -499,11 +499,11 @@ void EUTelDafBase::init() {
     // streamlog_out ( MESSAGE5 ) << " sen thick: " <<
     // _siPlanesLayerLayout->getSensitiveThickness( (*zit).second ) ;
     streamlog_out(MESSAGE5) << " sen thick: "
-                            << geo::gGeometry().siPlaneZSize(sensorID);
+                            << geo::gGeometry().getPlaneZSize(sensorID);
     // streamlog_out ( MESSAGE5 ) << " sens rad:  " <<
     // _siPlanesLayerLayout->getSensitiveRadLength( (*zit).second ) << endl;
     streamlog_out(MESSAGE5)
-        << " sens rad:  " << geo::gGeometry().siPlaneRadLength(sensorID)
+        << " sens rad:  " << geo::gGeometry().getPlaneRadiationLength(sensorID)
         << endl;
     if (_radLength.size() > index) {
       radLength = _radLength.at(index);

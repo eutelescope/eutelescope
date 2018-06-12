@@ -183,7 +183,7 @@ void EUTelProcessorApplyAlign::processEvent(LCEvent *event) {
         // Rotations
         double xPlaneCenter = geo::gGeometry().getPlaneXPosition(sensorID);
         double yPlaneCenter = geo::gGeometry().getPlaneYPosition(sensorID);
-        double zPlaneThickness = geo::gGeometry().siPlaneZSize(sensorID);
+        double zPlaneThickness = geo::gGeometry().getPlaneZSize(sensorID);
         double zPlaneCenter =
             geo::gGeometry().getPlaneZPosition(sensorID) + zPlaneThickness / 2.;
 

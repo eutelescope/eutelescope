@@ -152,8 +152,8 @@ void EUTelPreAlign::init() {
       _fixedZ = geo::gGeometry().getPlaneZPosition(sensorID);
     } else {
       _preAligners.push_back(
-          PreAligner(geo::gGeometry().siPlaneXPitch(sensorID) / 10.,
-                     geo::gGeometry().siPlaneYPitch(sensorID) / 10.,
+          PreAligner(geo::gGeometry().getPlaneXPitch(sensorID) / 10.,
+                     geo::gGeometry().getPlaneYPitch(sensorID) / 10.,
                      geo::gGeometry().getPlaneZPosition(sensorID), sensorID));
     }
   }
