@@ -122,11 +122,6 @@ AIDA::IHistogram1D * goodkyHistGBLAlign;
 std::vector<AIDA::IHistogram1D*> gooddxSensorHistGBLAlign;
 std::vector<AIDA::IHistogram1D*> gooddySensorHistGBLAlign;
 
-AIDA::IHistogram1D * goodx1HistGBLAlign;
-AIDA::IHistogram1D * goody1HistGBLAlign;
-AIDA::IHistogram1D * goodx6HistGBLAlign;
-AIDA::IHistogram1D * goody6HistGBLAlign;
-
 std::vector<AIDA::IHistogram1D*> gblAxHist;
 std::vector<AIDA::IHistogram1D*> gblAyHist;
 
