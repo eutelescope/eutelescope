@@ -164,7 +164,7 @@ INCLUDE_DIRECTORIES( ./geometries/include/ )
 INCLUDE_DIRECTORIES( ./external/millepede2/$ENV{MILLEPEDEII_VERSION} )
  
 # definitions to pass to the compiler
-ADD_DEFINITIONS( "-Wno-effc++ -Wall -std=c++11 -Wdisabled-optimization -Wold-style-cast -pedantic -Wextra -Wcast-align -Wcast-qual -Wuseless-cast -Wzero-as-null-pointer-constant -Wundef -Wctor-dtor-privacy -Wredundant-decls -Wdeprecated -Wformat-security -Wmissing-declarations -Wmissing-include-dirs -Wmissing-include-dirs -Wswitch-default -Wno-sign-promo -Werror" )
+ADD_DEFINITIONS( "-Wno-effc++ -Wall -std=c++14 -Wdisabled-optimization -Wold-style-cast -pedantic -Wextra -Wcast-align -Wcast-qual -Wuseless-cast -Wzero-as-null-pointer-constant -Wundef -Wctor-dtor-privacy -Wredundant-decls -Wdeprecated -Wformat-security -Wmissing-declarations -Wmissing-include-dirs -Wmissing-include-dirs -Wswitch-default -Wno-sign-promo -Werror" )
 
 # debuging warnings and switches - only active if  CMAKE_BUILD_TYPE  is set to debug
 SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -fno-inline -fdiagnostics-show-option -Weffc++ -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef"  CACHE STRING "Debug options." FORCE )
@@ -276,7 +276,6 @@ ADD_SUBDIRECTORY(ctest)
 option(utest "Build all tests." OFF)
 if(utest)
   add_subdirectory(unittests)
-  ADD_DEFINITIONS( "-std=c++11" )
 endif()
   
 #  _            _       
