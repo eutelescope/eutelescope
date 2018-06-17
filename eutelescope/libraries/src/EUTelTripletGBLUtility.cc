@@ -262,7 +262,7 @@ bool EUTelTripletGBLUtility::IsTripletIsolated(EUTelTripletGBLUtility::triplet c
   return IsolatedTrip;
 }
 
-bool EUTelTripletGBLUtility::AttachDUT(EUTelTripletGBLUtility::triplet & triplet, std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int dutID,  double dist_cut){
+bool EUTelTripletGBLUtility::AttachDUT(EUTelTripletGBLUtility::triplet & triplet, std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int dutID,  double dist_cut, int dut_dimension){
 
 	auto zPos = geo::gGeometry().getPlaneZPosition(dutID);
 	int minHitIx = -1;
@@ -279,7 +279,13 @@ bool EUTelTripletGBLUtility::AttachDUT(EUTelTripletGBLUtility::triplet & triplet
 		if(hit.plane == dutID) {
 			auto hitX = hit.x;
 			auto hitY = hit.y;
-			auto dist = (trX-hitX)*(trX-hitX)+(trY-hitY)*(trY-hitY);
+                        auto dist = 0;
+                        if( dut_dimension ==2) {
+			   dist = (trX-hitX)*(trX-hitX)+(trY-hitY)*(trY-hitY);
+                        }
+                        else {
+                           dist = (trX-hitX)*(trX-hitX); //when the dut is Strip sensor, assume the dut is placed with the strips along the global y-direction so the measurment is along the global x-direction;
+                        }
 //			std::cout << "Hit x/y: " << hitX << "|" << hitY << " dist: " << dist << '\n'; 
 			if(dist <= cut_squared && dist < minDist ){
 				minHitIx = static_cast<int>(ix);

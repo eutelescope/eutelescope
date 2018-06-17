@@ -119,6 +119,8 @@
   <parameter name="resolutionX" type="FloatVec"> @XResidualVec@ </parameter>
   <!--y-resolution of sensors (z-ordered) [mm]-->
   <parameter name="resolutionY" type="FloatVec"> @YResidualVec@ </parameter>
+  <!--Plane dimension (2 for pixel sensors and 1 for strip sensors) for all planes-->
+  <parameter name="planeDimensions" type="IntVec" > @planeDimensions@ </parameter>
   <!--Upstream-downstream triplet matching cut [mm]-->
   <parameter name="tripletsMatchingCut" type="double"> @TripletMatchingCut@ </parameter>
   <!--The three sensors used as the upstream triplet-->

@@ -160,6 +160,7 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelAlignGBL") {
   registerOptionalParameter("lastUpstreamSensor","The last plane (z-ordered) which still should be attached to the upstream triplet", _last_upstream_sensor, 2);
   registerOptionalParameter("resolutionX","x-resolution of sensors (z-ordered) [mm]", _x_resolution_vec ,std::vector<float>());
   registerOptionalParameter("resolutionY","y-resolution of sensors (z-ordered) [mm]", _y_resolution_vec ,std::vector<float>());
+  registerOptionalParameter("planeDimensions", "This is a number 1(strip sensor) or 2(pixel sensor) to identify the type of detector. Must be in z order and include all planes.", _planeDimension, IntVec());
   registerOptionalParameter("fixedPlanes","Fix sensor planes in the fit according to their sensor ids",_FixedPlanes_sensorIDs ,std::vector<int>());
   registerOptionalParameter("maxTrackCandidatesTotal","Maximal number of track candidates (Total)",_maxTrackCandidatesTotal, 10000000);
   registerOptionalParameter("maxTrackCandidates","Maximal number of track candidates",_maxTrackCandidates, 2000);
@@ -429,10 +430,13 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
             auto& driplet = track.get_downstream();
 
             for(auto dutID: _dut_ids) {
+              auto planeIt = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), dutID);
+              auto dimension = _planeDimension[planeIt - _sensorIDVec.begin()];
+              //std::cout<<"planeID = "<<dutID<< " dimension "<<dimension<<std::endl;
               if(_is_sensor_upstream[dutID]) {
-                gblutil.AttachDUT(triplet, _DUThitsVec, dutID, 3);
+                gblutil.AttachDUT(triplet, _DUThitsVec, dutID, 3 , dimension);
               } else {
-                gblutil.AttachDUT(driplet, _DUThitsVec, dutID, 3);
+                gblutil.AttachDUT(driplet, _DUThitsVec, dutID, 3 , dimension);
               }
             }
 /*

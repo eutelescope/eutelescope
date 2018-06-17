@@ -176,6 +176,8 @@ namespace eutelescope {
   std::vector<float> _x_resolution_vec;
   //ResolutionY
   std::vector<float> _y_resolution_vec;
+  //plane dimensions
+  std::vector<int> _planeDimension;
 
   std::map<int, bool> _is_sensor_upstream;
 
