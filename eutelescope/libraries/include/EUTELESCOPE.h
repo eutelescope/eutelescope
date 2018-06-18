@@ -50,8 +50,6 @@ namespace eutelescope {}
 #include <string>
 #include <vector>
 
-#include "make_unique.h"
-
 namespace eutelescope {
 
   //! Global constants used in the Eutelescope package
