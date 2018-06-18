@@ -770,6 +770,27 @@ void EUTelGeometryTelescopeGeoDescription::master2LocalVec( int sensorID, std::a
 	this->master2LocalVec(sensorID, globalVec.data(), localVec.data());
 }
 
+Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::getRotMatrixEig( int sensorID ) {
+	TMatrixD rot = getRotMatrix(sensorID);
+	Eigen::Matrix3d rotEig;
+	rotEig << rot[0][0], rot[0][1],rot[0][2],rot[1][0],rot[1][1],rot[1][2],rot[2][0] ,rot[2][1],rot[2][2];
+	return rotEig;
+}
+ 
+TMatrixD EUTelGeometryTelescopeGeoDescription::getRotMatrix( int sensorID ) {
+        const double local[] = {0,0,0};
+        double global[3];
+        TMatrixD TRotMatrix(3,3);
+        local2Master( sensorID,local, global );
+        _geoManager->FindNode( global[0], global[1], global[2] );
+        const TGeoHMatrix* globalH = _geoManager->GetCurrentMatrix();
+        const double* rotMatrix = globalH->GetRotationMatrix();
+        TRotMatrix[0][0] = *rotMatrix; TRotMatrix[0][1] = *(rotMatrix+1);TRotMatrix[0][2] = *(rotMatrix+2);
+        TRotMatrix[1][0] = *(rotMatrix+3); TRotMatrix[1][1] = *(rotMatrix+4);TRotMatrix[1][2] = *(rotMatrix+5);
+        TRotMatrix[2][0] = *(rotMatrix+6); TRotMatrix[2][1] = *(rotMatrix+7);TRotMatrix[2][2] = *(rotMatrix+8);
+	return TRotMatrix;
+}
+
 double EUTelGeometryTelescopeGeoDescription::getRadiationLengthBetweenPoints(Eigen::Vector3d const & startPt, Eigen::Vector3d const & endPt) {
 
 	Eigen::Vector3d track = endPt-startPt;

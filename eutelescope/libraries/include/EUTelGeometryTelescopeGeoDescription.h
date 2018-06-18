@@ -396,6 +396,9 @@ namespace eutelescope {
       void local2MasterVec(int, const double[], double[]);
       void master2LocalVec(int, const double[], double[]);
 
+      TMatrixD getRotMatrix( int sensorID );
+      Eigen::Matrix3d getRotMatrixEig( int sensorID );
+
       // This outputs the total percentage radiation length for the full
       // detector system.
 //      float calculateTotalRadiationLengthAndWeights(

@@ -262,7 +262,7 @@ bool EUTelTripletGBLUtility::IsTripletIsolated(EUTelTripletGBLUtility::triplet c
   return IsolatedTrip;
 }
 
-bool EUTelTripletGBLUtility::AttachDUT(EUTelTripletGBLUtility::triplet & triplet, std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int dutID,  double dist_cut, int dut_dimension){
+bool EUTelTripletGBLUtility::AttachDUT(EUTelTripletGBLUtility::triplet & triplet, std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int dutID,  double dist_cut, int dut_dimension, int dut_direction){
 
 	auto zPos = geo::gGeometry().getPlaneZPosition(dutID);
 	int minHitIx = -1;
@@ -274,17 +274,36 @@ bool EUTelTripletGBLUtility::AttachDUT(EUTelTripletGBLUtility::triplet & triplet
 
 //	std::cout << "Triplet x/y: " << trX << "|" << trY << '\n'; 
 
+        Eigen::Vector3d preG;
+        preG  << trX, trY, 0;
+
 	size_t ix = 0;	
 	for(auto& hit: hits) {
+        	double dist = 99999;
+		Eigen::Matrix3d rot  =  geo::gGeometry().getRotMatrixEig(hit.plane);
+        	Eigen::Matrix3d rotInv = rot.transpose();
+        	Eigen::Vector3d measG;
+        	Eigen::Vector3d diff;
+        	measG  << hit.x, hit.y, 0;
+        	diff = preG - measG;
+        	Eigen::Vector3d local;
+        	local = rotInv*diff;
 		if(hit.plane == dutID) {
-			auto hitX = hit.x;
-			auto hitY = hit.y;
-                        auto dist = 0;
                         if( dut_dimension ==2) {
-			   dist = (trX-hitX)*(trX-hitX)+(trY-hitY)*(trY-hitY);
-                        }
-                        else {
-                           dist = (trX-hitX)*(trX-hitX); //when the dut is Strip sensor, assume the dut is placed with the strips along the global y-direction so the measurment is along the global x-direction;
+                           streamlog_out(DEBUG0) <<"Pixel:  X delta: " << fabs(local[0]) << " Y delta: " << fabs(local[1]) << std::endl;
+			   dist = sqrt(pow(local[0],2)+pow(local[1],2));
+                        } else if(dut_dimension == 1) {
+                           if( dut_direction == 0) { 
+                             streamlog_out(DEBUG0) << "Strip: " <<"X delta: " << fabs(local[0]) << std::endl;
+                             dist = sqrt(pow(local[0],2));
+                           } else if(dut_direction == 1) {
+                             streamlog_out(DEBUG0) << "Strip: " <<"Y delta: " << fabs(local[1]) << std::endl;
+                             dist = sqrt(pow(local[1],2));
+                           } else {
+		             throw(lcio::Exception( "The direction of DUT is wrong!"));
+                           }
+                        } else {
+                           throw(lcio::Exception( "This is not a strip or pixel sensor!"));
                         }
 //			std::cout << "Hit x/y: " << hitX << "|" << hitY << " dist: " << dist << '\n'; 
 			if(dist <= cut_squared && dist < minDist ){

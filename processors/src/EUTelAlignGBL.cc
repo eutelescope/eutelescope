@@ -161,6 +161,7 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelAlignGBL") {
   registerOptionalParameter("resolutionX","x-resolution of sensors (z-ordered) [mm]", _x_resolution_vec ,std::vector<float>());
   registerOptionalParameter("resolutionY","y-resolution of sensors (z-ordered) [mm]", _y_resolution_vec ,std::vector<float>());
   registerOptionalParameter("planeDimensions", "This is a number 1(strip sensor) or 2(pixel sensor) to identify the type of detector. Must be in z order and include all planes.", _planeDimension, IntVec());
+  registerOptionalParameter("dutDirection", "This is a number 0(strip x axis) or 1(strip y axis) to identify the direction of DUT.", _dutDirection, 0);
   registerOptionalParameter("fixedPlanes","Fix sensor planes in the fit according to their sensor ids",_FixedPlanes_sensorIDs ,std::vector<int>());
   registerOptionalParameter("maxTrackCandidatesTotal","Maximal number of track candidates (Total)",_maxTrackCandidatesTotal, 10000000);
   registerOptionalParameter("maxTrackCandidates","Maximal number of track candidates",_maxTrackCandidates, 2000);
@@ -431,12 +432,19 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
 
             for(auto dutID: _dut_ids) {
               auto planeIt = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), dutID);
-              auto dimension = _planeDimension[planeIt - _sensorIDVec.begin()];
+              auto dimension = 2; 
+              auto direction = 2;
+              if ( _planeDimension.size() != 0) {
+                  dimension = _planeDimension[planeIt - _sensorIDVec.begin()];
+              }
+              if(dimension == 1) {
+                  direction = _dutDirection; 
+              }
               //std::cout<<"planeID = "<<dutID<< " dimension "<<dimension<<std::endl;
               if(_is_sensor_upstream[dutID]) {
-                gblutil.AttachDUT(triplet, _DUThitsVec, dutID, 3 , dimension);
+                gblutil.AttachDUT(triplet, _DUThitsVec, dutID, 3 , dimension, direction);
               } else {
-                gblutil.AttachDUT(driplet, _DUThitsVec, dutID, 3 , dimension);
+                gblutil.AttachDUT(driplet, _DUThitsVec, dutID, 3 , dimension, direction);
               }
             }
 /*

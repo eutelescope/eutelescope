@@ -262,7 +262,7 @@ namespace eutelescope {
       //! Match the upstream and downstream triplets to tracks
       void MatchTriplets(std::vector<EUTelTripletGBLUtility::triplet> const & up, std::vector<EUTelTripletGBLUtility::triplet> const & down, double z_match, double trip_matching_cut, std::vector<EUTelTripletGBLUtility::track> &track);
 
-	  bool AttachDUT(EUTelTripletGBLUtility::triplet & triplet, std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int dutID,  double trip_res_cut,  int dut_dimension);
+	  bool AttachDUT(EUTelTripletGBLUtility::triplet & triplet, std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int dutID,  double trip_res_cut,  int dut_dimension, int dut_direction );
 
 	  //bool AttachDUT(std::vector<EUTelTripletGBLUtility::triplet> & triplets, std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int dutIDs, double trip_res_cut, double trip_slope_cut);
 
