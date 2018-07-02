@@ -183,7 +183,7 @@ def check_program(name):
         prog = os.path.join(dir, name)
         if os.path.exists(prog): return prog
 
-def runMarlin(filenamebase, jobtask, silent):
+def runMarlin(jobtask, runnr, silent):
     """ Runs Marlin and stores log of output """
     from sys import exit # use sys.exit instead of built-in exit (latter raises exception)
     log = logging.getLogger('jobsub.' + jobtask)
@@ -223,6 +223,10 @@ def runMarlin(filenamebase, jobtask, silent):
             queue.put(line)
         out.close()
     ON_POSIX = 'posix' in sys.builtin_module_names
+
+    # base_name
+    filenamebase = 'output/' + jobtask + '-' + runnr
+    logfilebase = 'output/logs/' + jobtask + '-' + runnr
     cmd = cmd+" "+filenamebase+".xml"
     rcode = None # the return code that will be set by a later subprocess method
     try:
@@ -241,7 +245,7 @@ def runMarlin(filenamebase, jobtask, silent):
         tout.start()
         terr.start()
         # open log file
-        log_file = open(filenamebase+".log", "w")
+        log_file = open(logfilebase+".log", "w")
         # print timestamp to log file
         log_file.write("---=== Analysis started on " + datetime.datetime.now().strftime("%A, %d. %B %Y %I:%M%p") + " ===---\n\n")
         try:
@@ -300,53 +304,63 @@ def runMarlin(filenamebase, jobtask, silent):
         exit(1)
     return rcode
 
-def submitNAF(filenamebase, jobtask, qsubfile, runnr):
-    """ Submits the Marlin job to NAF """
+def submitHTCondor(jobtask, runnr, condorsubfile):
+    """ Submits the Marlin job to HTCondor """
     import os
     from sys import exit # use sys.exit instead of built-in exit (latter raises exception)
     log = logging.getLogger('jobsub.' + jobtask)
-    # We are running on NAF.
-
-    # check for qsub executable
-    cmd = check_program("qsub")
+    # check for condor_submit executable on your system
+    cmd = check_program("condor_submit")
     if cmd:
-        log.debug("Found qsub executable: " + cmd)
+        log.debug("Found condor_submit executable: " + cmd)
     else:
-        log.error("qsub executable not found in PATH!")
+        log.error("condor_submit executable not found in PATH!")
         exit(1)
 
-    # Add qsub parameters:
-    #qsub -@ qsubParams.txt BIN
-    qsub_options_str=''
-    for line in open(qsubfile):
+    # base_name
+    filenamebase = 'output/' + jobtask + '-' + runnr    
+    submit_name = jobtask + '-' + runnr + '_jobsub'
+    logbase = './output/logs/'
+
+    # creat script for environment and Marlin command
+    script_file = open(logbase + submit_name + '.sh', 'w')
+    path_EUTELESCOPE = os.environ.get('EUTELESCOPE')
+    script_file.write('source ' + path_EUTELESCOPE + '/build_env.sh \n')
+    script_file.write('sleep 1 \n')
+    script_file.write('Marlin ' + filenamebase + '.xml\n')
+    script_file.close()
+    os.popen('chmod u+x ' + logbase + submit_name + '.sh') #make it executable
+    
+    # option file
+    option_file = open(logbase + submit_name + '.submit', 'w')
+    option_file.write('executable\t= '+ logbase + submit_name + '.sh \n')
+    option_file.write('output\t= ' + logbase + jobtask + '-' + runnr + '.log\n')
+    option_file.write('error\t= ' + logbase + jobtask + '-' + runnr + '.error\n')
+    option_file.write('log\t= ' + logbase + jobtask + '-' + runnr + '.condor\n')
+    # Add condorsub parameters:
+    for line in open(condorsubfile):
         li=line.strip()
         if not li.startswith("#"):
-            qsub_options_str+=(str(line.rstrip())+' ')
+	  option_file.write(str(line.rstrip())+'\n')
+    option_file.write('queue\n')
+    option_file.close()
 
-    cmd = cmd+" "+qsub_options_str+" -N \"Run"+runnr+"\" "
-    
-    # check for Marlin executable
-    marlin = check_program("Marlin")
-    if marlin:
-        log.debug("Found Marlin executable: " + marlin)
-        cmd = cmd+" "+marlin
-    else:
-        log.error("Marlin executable not found in PATH!")
-        exit(1)
 
-    cmd = cmd+" "+filenamebase+".xml"
+    #send command
+    cmd = cmd + " " + logbase + submit_name + '.submit'
     rcode = None # the return code that will be set by a later subprocess method
-    try:
-        # run process
-        log.info ("Now submitting Marlin job: "+filenamebase+".xml to NAF")
-        log.debug ("Executing: "+cmd)
+    try: 
+        # run process 
+        log.info("Now submitting Marlin job: " + filenamebase + ".xml to HTCondor")
+        log.debug("Executing: " + cmd)
         os.popen(cmd)
     except OSError, e:
-        log.critical("Problem with NAF submission: Command '%s' resulted in error #%s, %s", cmd, e.errno, e.strerror)
+        log.critical("Problem with HTCondor submission: Command '%s' resulted in error #%s, %s", cmd, e.errno, e.strerror)
         exit(1)
+    
     return 0
 
-def submitLXPLUS(filenamebase, jobtask, bsubfile, runnr):
+def submitLXPLUS(jobtask, runnr, bsubfile):
     """ Submits the Marlin job to LXPLUS """
     import os
     from sys import exit # use sys.exit instead of built-in exit (latter raises exception)
@@ -364,7 +378,7 @@ def submitLXPLUS(filenamebase, jobtask, bsubfile, runnr):
     # Add bsub parameters:
     #bsub < bsubparams.txt BIN
     cmd = cmd+" < "+bsubfile+" -J \"Run"+runnr+"\" "
-    
+
     # check for Marlin executable
     marlin = check_program("Marlin")
     if marlin:
@@ -374,7 +388,9 @@ def submitLXPLUS(filenamebase, jobtask, bsubfile, runnr):
         log.error("Marlin executable not found in PATH!")
         exit(1)
 
+    filenamebase = 'output/' + jobtask + '-' + runnr
     filename = os.path.abspath(filenamebase+".xml")
+
     cmd = cmd+" "+filename
     rcode = None # the return code that will be set by a later subprocess method
     try:
@@ -387,7 +403,7 @@ def submitLXPLUS(filenamebase, jobtask, bsubfile, runnr):
         exit(1)
     return 0
 
-def zipLogs(path, filename):
+def zip_logs(path, filename):
     """  stores output from Marlin in zip file; enables compression if necessary module is available """
     import zipfile
     import os.path
@@ -402,10 +418,10 @@ def zipLogs(path, filename):
     try:
         zf = zipfile.ZipFile(os.path.join(path, filename)+".zip", mode='w') # create new zip file
         try:
-            zf.write(os.path.join("./", filename)+".xml", compress_type=compression) # store in zip file
-            zf.write(os.path.join("./", filename)+".log", compress_type=compression) # store in zip file
-            os.remove(os.path.join("./", filename)+".xml") # delete file
-            os.remove(os.path.join("./", filename)+".log") # delete file
+            zf.write(os.path.join("output/", filename)+".xml", compress_type=compression) # store in zip file
+            zf.write(os.path.join("output/", filename)+".log", compress_type=compression) # store in zip file
+            #os.remove(os.path.join("./", filename)+".xml") # delete file
+            #os.remove(os.path.join("./", filename)+".log") # delete file
             log.info("Logs written to "+os.path.join(path, filename)+".zip")
         finally:
             log.debug("Closing log archive file")
@@ -460,10 +476,11 @@ def main(argv=None):
     parser.add_argument('--version', action='version', version='Revision: $Revision$, $LastChangedDate$')
     parser.add_argument('--option', '-o', action='append', metavar="NAME=VALUE", help="Specify further options such as 'beamenergy=5.3'. This switch be specified several times for multiple options or can parse a comma-separated list of options. This switch overrides any config file options.")
     parser.add_argument("-c", "--conf-file", "--config", help="Load specified config file with global and task specific variables", metavar="FILE")
-    parser.add_argument("-n", "--naf-file", "--naf", help="Specify qsub parameter file for NAF submission. Run NAF submission via qsub instead of calling Marlin directly", metavar="FILE")
+    parser.add_argument("-csv", "--csv-file", help="Load additional run-specific variables from table (text file in csv format)", metavar="FILE")
+    parser.add_argument("-g", "--graphic", action="store_true", default=False)
+    parser.add_argument("-condor", "--condor_file", help="Specify parameter file for HTCondor submission. Run batch submission via condor_submit instead of calling Marlin directly", metavar="FILE")
     parser.add_argument("-lx", "--lxplus-file", "--lxplus", help="Specify bsub parameter file for LXPLUS submission. Run LXPLUS submission via bsub instead of calling Marlin directly", metavar="FILE")
     parser.add_argument("--concatenate", action="store_true", default=False, help="Modifies run range treatment: concatenate all runs into first run (e.g. to combine runs for alignment) by combining every options that includes the string '@RunRange@' multiple times, once for each run of the range specified.")
-    parser.add_argument("-csv", "--csv-file", help="Load additional run-specific variables from table (text file in csv format)", metavar="FILE")
     parser.add_argument("--log-file", help="Save submission log to specified file", metavar="FILE")
     parser.add_argument("-l", "--log", default="info", help="Sets the verbosity of log messages during job submission where LEVEL is either debug, info, warning or error", metavar="LEVEL")
     parser.add_argument("-s", "--silent", action="store_true", default=False, help="Suppress non-error (stdout) Marlin output to console")
@@ -472,7 +489,6 @@ def main(argv=None):
     parser.add_argument("--plain", action="store_true", default=False, help="Output written to stdout/stderr and log file in prefix-less format i.e. without time stamping")
     parser.add_argument("jobtask", help="Which task to submit (e.g. convert, hitmaker, align); task names are arbitrary and can be set up by the user; they determine e.g. the config section and default steering file names.")
     parser.add_argument("runs", help="The runs to be analyzed; can be a list of single runs and/or a range, e.g. 1056-1060.", nargs='*')
-    parser.add_argument("-g", "--graphic", action="store_true", default=False)
     args = parser.parse_args(argv)
 
     #if desired, import the colorer module
@@ -652,7 +668,7 @@ def main(argv=None):
                         if not field == "" and not field == "runnumber":                    
                             steeringString = ireplace("@" + field + "@", parameters_csv[run][field], steeringString)
                     except EOFError:
-                        log.warn("Parameter '" + field + "' from the csv file was not found in the template file (already overwritten by config file parameters?)")
+                        log.info("Parameter '" + field + "' from '" + args.csv_file + "' was not found in the cfg/template file. Parameter is not used in this step.")
             except KeyError:
                 log.warning("Run #" + runnr + " was not found in the specified CSV file - will skip this run! ")
                 continue
@@ -666,14 +682,14 @@ def main(argv=None):
         if not checkSteer(steeringString):
             return 1
 
-        if args.naf_file and args.lxplus_file:
-            log.critical("Not possible to submit to both NAF and LXPLUS at the same time!")
+        if args.condor_file and args.lxplus_file:
+            log.critical("Not possible to submit with both methods (condor and bsub)!")
             return 1
 
-        if args.naf_file:
-            args.naf_file = os.path.abspath(args.naf_file)
-            if not os.path.isfile(args.naf_file):
-                log.critical("NAF submission parameters file '"+args.naf_file+"' not found!")
+        if args.condor_file:
+            args.condor_file = os.path.abspath(args.condor_file)
+            if not os.path.isfile(args.condor_file):
+                log.critical("HTCondor submission parameters file '" + args.condor_file + "' not found!")
                 return 1
         elif args.lxplus_file:
             args.lxplus_file = os.path.abspath(args.lxplus_file)
@@ -693,8 +709,8 @@ def main(argv=None):
             os.chdir(basedirectory)
         
         # Write the steering file:
-        basefilename = args.jobtask+"-"+runnr
-        steeringFile = open(basefilename+".xml", "w")
+        basefilename = 'output/' + args.jobtask + "-" + runnr
+        steeringFile = open(basefilename + ".xml", "w")
 
         try:
             steeringFile.write(steeringString)
@@ -703,13 +719,13 @@ def main(argv=None):
 
         # bail out if running a dry run
         if args.dry_run:
-            log.info("Dry run: skipping Marlin execution. Steering file written to "+basefilename+'.xml')
-        elif args.naf_file:
-            rcode = submitNAF(basefilename, args.jobtask, args.naf_file, runnr) # start NAF submission
+            log.info("Dry run: skipping Marlin execution. Steering file written to " + basefilename + '.xml')
+        elif args.condor_file:
+            rcode = submitHTCondor(args.jobtask, runnr, args.condor_file) # start HTCondor submission
             if rcode == 0:
-                log.info("NAF job submitted")
+                log.info("HTCondor: job submitted")
             else:
-                log.error("NAF submission returned with error code "+str(rcode))
+                log.error("HTCondor submission returned with error code "+str(rcode))
         elif args.lxplus_file:
             rcode = submitLXPLUS(basefilename, args.jobtask, args.lxplus_file, runnr) # start LXPLUS submission
             if rcode == 0:
@@ -717,12 +733,12 @@ def main(argv=None):
             else:
                 log.error("LXPLUS submission returned with error code "+str(rcode))
         else:
-            rcode = runMarlin(basefilename, args.jobtask, args.silent) # start Marlin execution
+            rcode = runMarlin(args.jobtask, runnr, args.silent) # start Marlin execution
             if rcode == 0:
                 log.info("Marlin execution done")
             else:
                 log.error("Marlin returned with error code "+str(rcode))
-            zipLogs(parameters["logpath"], basefilename)
+            #zip_logs(parameters["logpath"], basefilename)
 
         # Return to old directory:
         if args.subdir:
