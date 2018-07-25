@@ -415,7 +415,8 @@ namespace eutelescope {
     kAPIX = 105,
     kFortis = 106,
     kTimepix = 107,
-    kCMSPixel = 108
+    kCMSPixel = 108,
+    kRD53A = 109
   };
 
   //! Readout mode
