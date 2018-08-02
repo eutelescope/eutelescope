@@ -17,11 +17,9 @@
 
    <execute>
       <processor name="AIDA"/>
-      <processor name="LoadRefHitDB"/>
+      <!--processor name="LoadRefHitDB"/-->
       <processor name="LoadPreAlignment"/>
       <processor name="ApplyPreAlignment"/>
-      <!--processor name="LoadAlignment"/-->
-      <!--processor name="ApplyAlignment"/-->
       <processor name="AlignStraight"/>
    </execute>
 
@@ -81,7 +79,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="ApplyPreAlignment" type="EUTelApplyAlignmentProcessor">
+ <processor name="ApplyPreAlignment" type="EUTelProcessorApplyAlignment">
  <!--Apply to the input hit the alignment corrections-->
   <!--Alignment constant from the condition file-->
   <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> prealign </parameter>
@@ -89,118 +87,6 @@
   <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
   <!--The name of the output hit collection-->
   <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> PreAlignedHit </parameter>
-  <!--Rotation Angle around X axis-->
-  <!--parameter name="Alpha" type="double" value="0"/-->
-  <!--Available directinos are:
- 0 --> direct  
- 1 --> reverse -->
-  <parameter name="ApplyAlignmentDirection" type="int" value="0"/>
-  <!--Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection? (default - false )-->
-  <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
-  <!--Rotation Angle around Y axis-->
-  <!--parameter name="Beta" type="double" value="0"/-->
-  <!--Available methods are:
- 0 -.-> shift only 
- 1 -.-> rotation first 
- 2 -.-> shift first -->
-  <parameter name="CorrectionMethod" type="int" value="1"/>
-  <!--Enable or disable DEBUG mode -->
-  <parameter name="DEBUG" type="bool" value="false"/>
-  <!--Implement geometry shifts and rotations as described in alignmentCollectionName -->
-  <parameter name="DoAlignCollection" type="bool" value="true"/>
-  <!--Apply alignment steps in one go. Is supposed to be used for reversealignment in reverse order, like: undoAlignment, undoPreAlignment, undoGear -->
-  <!--parameter name="DoAlignmentInOneGo" type="bool" value="false"/-->
-  <!--Implement geometry shifts and rotations as described in GEAR steering file -->
-  <!--parameter name="DoGear" type="bool" value="false"/-->
-  <!--Rotation Angle around Z axis-->
-  <!--parameter name="Gamma" type="double" value="0"/-->
-  <!--Enable or disable histograms-->
-  <parameter name="HistogramSwitch" type="bool" value="false"/>
-  <!--This is the name of the reference it collection (init at 0,0,0)-->
-  <!--parameter name="OutputReferenceCollection" type="string" value="output_refhit"/-->
-  <!--Events number to have DEBUG1 printed outs (default=10)-->
-  <parameter name="PrintEvents" type="int" value="0"/>
-  <!--This is the name of the reference it collection (init at 0,0,0)-->
-  <parameter name="ReferenceCollection" type="string" value="refhit"/>
-  <!--This is the name of the reference it collection (init at 0,0,0)-->
-  <!--parameter name="ReferenceHitFile" type="string" value="reference.slcio"/-->
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
-  <!--List of alignment collections that were applied to the DUT-->
-  <parameter name="alignmentCollectionNames" type="StringVec" value="prealign"/>
-  <!--List of hit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <!--<parameter name="hitCollectionNames" type="StringVec" value="hitCollectionNames"/>-->
-  <!--List of refhit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <!--<parameter name="refhitCollectionNames" type="StringVec" value="hitCollectionNames"/>-->
-</processor>
-
- <processor name="LoadAlignment" type="ConditionsProcessor">
-  <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
-  <!--Initialization of a conditions database handler-->
-  <!--parameter name="DBCondHandler" type="StringVec"> conditionsName /lccd/myfolder HEAD </parameter-->
-  <!--Initialization of a conditions db file handler-->
-  <!--parameter name="DBFileHandler" type="StringVec"> conditionsName conditions.slcio collectionName </parameter-->
-  <!--Initialization string for conditions database-->
-  <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
-    <!--Initialization of a data file handler-->
-  <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
-  <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> align1 @DatabasePath@/@FilePrefix@-alignmentgbl.slcio alignment </parameter>
-    <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
-</processor>
-
- <processor name="ApplyAlignment" type="EUTelApplyAlignmentProcessor">
-  <!--Apply to the input hit the alignment corrections-->
-  <!--Alignment constant from the condition file-->
-  <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> align1 </parameter>
-    <!--The name of the input hit collection-->
-  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> PreAlignedHit </parameter>
-    <!--The name of the output hit collection-->
-  <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> AlignedHit1 </parameter>
-    <!--Rotation Angle around X axis-->
-  <!--parameter name="Alpha" type="double" value="0"/-->
-  <!--Available directinos are:
-        0 --> direct
- 1 --> reverse -->
-  <parameter name="ApplyAlignmentDirection" type="int" value="0"/>
-    <!--Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection? (default - false )-->
-  <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
-    <!--Rotation Angle around Y axis-->
-  <!--parameter name="Beta" type="double" value="0"/-->
-  <!--Available methods are:
-        0 --> shift only
- 1 --> rotation first
- 2 --> shift first -->
-  <parameter name="CorrectionMethod" type="int" value="1"/>
-    <!--Enable or disable DEBUG mode -->
-  <parameter name="DEBUG" type="bool" value="false"/>
-    <!--Implement geometry shifts and rotations as described in alignmentCollectionName -->
-  <parameter name="DoAlignCollection" type="bool" value="true"/>
-    <!--Apply alignment steps in one go. Is supposed to be used for reversealignment in reverse order, like: undoAlignment, undoPreAlignment, undoGear -->
-  <!--parameter name="DoAlignmentInOneGo" type="bool" value="false"/-->
-  <!--Implement geometry shifts and rotations as described in GEAR steering file -->
-  <!--parameter name="DoGear" type="bool" value="false"/-->
-  <!--Rotation Angle around Z axis-->
-  <!--parameter name="Gamma" type="double" value="0"/-->
-  <!--Enable or disable histograms-->
-  <parameter name="HistogramSwitch" type="bool" value="false"/>
-    <!--This is the name of the reference it collection (init at 0,0,0)-->
-  <!--parameter name="OutputReferenceCollection" type="string" value="output_refhit"/-->
-  <!--Events number to have DEBUG1 printed outs (default=10)-->
-  <parameter name="PrintEvents" type="int" value="0"/>
-    <!--This is the name of the reference it collection (init at 0,0,0)-->
-  <parameter name="ReferenceCollection" type="string" value="refhit"/>
-    <!--This is the name of the reference it collection (init at 0,0,0)-->
-  <!--parameter name="ReferenceHitFile" type="string" value="reference.slcio"/-->
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
-  <!--List of alignment collections that were applied to the DUT-->
-  <parameter name="alignmentCollectionNames" type="StringVec" value="align1"/>
-    <!--List of hit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <!--<parameter name="hitCollectionNames" type="StringVec" value="hitCollectionNames"/>-->
-  <!--List of refhit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <!--<parameter name="refhitCollectionNames" type="StringVec" value="hitCollectionNames"/>-->
 </processor>
 
  <processor name="AlignStraight" type="EUTelMille">
@@ -213,7 +99,7 @@
 1 - shifts in the X and Y directions and a rotation around the Z axis,
 2 - only shifts in the X and Y directions
 3 - (EXPERIMENTAL) shifts in the X,Y and Z directions and rotations around all three axis-->
-  <parameter name="AlignMode" type="int" value="1"/>
+  <parameter name="AlignMode" type="string" value="XYShiftsAllRot"/>
   <!--This is the name of the alignment collection to be saved into the slcio file-->
   <!--parameter name="AlignmentConstantCollectionName" type="string" value="alignment"/-->
   <!--This is the name of the LCIO file name with the output alignmentconstants (add .slcio)-->
@@ -232,7 +118,7 @@
   <!--Exclude planes from fit according to their sensor ids.-->
   <parameter name="ExcludePlanes" type="IntVec" value="@ExcludePlanes@"/>
   <!--Fixes the given alignment parameters in the fit if alignMode==3 is used. For each sensor an integer must be specified (If no value is given, then all parameters will be free). bit 0 = x shift, bit 1 = y shift, bit 2 = z shift, bit 3 = alpha, bit 4 = beta, bit 5 = gamma. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="FixParameter" type="IntVec"> 28 28 28 60 28 28 28 </parameter>
+  <!--parameter name="FixParameter" type="IntVec"> 28 28 28 60 28 28 28 </parameter-->
   <!--Fix sensor planes in the fit according to their sensor ids.-->
   <parameter name="FixedPlanes" type="IntVec" value="@FixedPlanes@"/>
   <!--Generate a steering file for the pede program.-->
