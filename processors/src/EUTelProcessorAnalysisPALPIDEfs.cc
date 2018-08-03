@@ -2437,7 +2437,7 @@ bool EUTelProcessorAnalysisPALPIDEfs::emptyMiddle(
   for (int n = xMin - 1; n <= xMax + 1; n++) {
     for (int m = yMin - 1; m <= yMax + 1; m++) {
       bool empty_pixel = true;
-      for (int i = 0; i < pixVector.size(); i++) {
+      for (size_t i = 0; i < pixVector.size(); i++) {
         if (n == pixVector[i][0] && m == pixVector[i][1]) {
           empty_pixel = false;
           break;
