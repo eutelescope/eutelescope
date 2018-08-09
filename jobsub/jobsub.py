@@ -303,7 +303,7 @@ def runMarlin(jobtask, runnr, filenamebase, logbase, silent):
 
 def submitHTCondor(jobtask, runnr, filenamebase, logbase, condorsubfile):
     """ Submits the Marlin job to HTCondor """
-    import os
+    import os, shlex, subprocess
     from sys import exit # use sys.exit instead of built-in exit (latter raises exception)
     log = logging.getLogger('jobsub.' + jobtask)
     # check for condor_submit executable on your system
@@ -351,12 +351,19 @@ def submitHTCondor(jobtask, runnr, filenamebase, logbase, condorsubfile):
         # run process 
         log.info("Now submitting Marlin job: " + filenamebase + ".xml to HTCondor")
         log.debug("Executing: " + cmd)
-        os.popen(cmd)
+        p = subprocess.Popen(shlex.split(cmd),stdout=subprocess.PIPE)
+        condorID = p.stdout.read().rstrip('.\n').split(' ')[-1]
+
     except OSError, e:
         log.critical("Problem with HTCondor submission: Command '%s' resulted in error #%s, %s", cmd, e.errno, e.strerror)
         exit(1)
+
+    #ID file
+    ID_file = open(subbase + 'run' + runnr + '.id', 'w')
+    ID_file.write(condorID)
+    ID_file.close()
     
-    return 0
+    return 0,condorID
 
 def submitLXPLUS(jobtask, runnr, filenamebase, bsubfile):
     """ Submits the Marlin job to LXPLUS """
@@ -690,9 +697,9 @@ def main(argv=None):
         if args.dry_run:
             log.info("Dry run: skipping Marlin execution. Steering file written to " + basefilename + '.xml')
         elif args.condor_file:
-            rcode = submitHTCondor(args.jobtask, runnr, basefilename, parameters["logpath"], args.condor_file) # start HTCondor submission
+            rcode, condorID = submitHTCondor(args.jobtask, runnr, basefilename, parameters["logpath"], args.condor_file) # start HTCondor submission
             if rcode == 0:
-                log.info("HTCondor: job submitted")
+                log.info("HTCondor: job submitted with ID "+condorID)
             else:
                 log.error("HTCondor submission returned with error code "+str(rcode))
         elif args.lxplus_file:
