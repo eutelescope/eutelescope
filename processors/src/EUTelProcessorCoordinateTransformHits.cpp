@@ -111,7 +111,7 @@ void EUTelProcessorCoordinateTransformHits::processEvent(LCEvent* event)
 
 			if( !(properties & kHitInGlobalCoord) && !_undoAlignment )
 			{
-				streamlog_out(DEBUG5) << "Transforming hit from local to global!" << std::endl;
+				streamlog_out(DEBUG0) << "Transforming hit from local to global!" << std::endl;
 				geo::gGeometry().local2Master(sensorID, inputPos, outputPos);
 			}
 			else if( (properties & kHitInGlobalCoord) && _undoAlignment )
