@@ -438,7 +438,6 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
     alDer4(0,3) = triSlope.x; // dx/dz
     alDer4(1,3) = triSlope.y; // dx/dz
 
-    size_t DUTCount = _nPlanes-6;
     std::vector<double> rx (_nPlanes, -1.0);
     std::vector<double> ry (_nPlanes, -1.0);
     std::vector<bool> hasHit (_nPlanes, false);
@@ -448,12 +447,12 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
 
     for( size_t ipl = 0; ipl < _nPlanes; ++ipl ) {
       //We have to add all the planes, the up and downstream arm of the telescope will definitely have
-      //hits, the DUTs might not though! The first and last three planes are the telescope.
+      //hits, the DUTs might not though!
       EUTelTripletGBLUtility::hit const * hit = nullptr;
       auto sensorID = _sensorIDVec[ipl];
-      if(ipl < 3) {
+      if(std::find(_upstream_triplet_ids.begin(), _upstream_triplet_ids.end(), sensorID) != _upstream_triplet_ids.end()) {
         hit = &triplet.gethit(sensorID);
-      } else if( ipl < 3+DUTCount) {
+      } else if(std::find(_downstream_triplet_ids.begin(), _downstream_triplet_ids.end(), sensorID) != _downstream_triplet_ids.end()) {
         if(triplet.has_DUT(sensorID)) hit = &triplet.get_DUT_Hit(sensorID);
         else if(driplet.has_DUT(sensorID)) hit = &driplet.get_DUT_Hit(sensorID);
       } else {
