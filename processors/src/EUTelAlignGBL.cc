@@ -437,11 +437,10 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
       if(std::find(_upstream_triplet_ids.begin(), _upstream_triplet_ids.end(), sensorID) != _upstream_triplet_ids.end()) {
         hit = &triplet.gethit(sensorID);
       } else if(std::find(_downstream_triplet_ids.begin(), _downstream_triplet_ids.end(), sensorID) != _downstream_triplet_ids.end()) {
-        if(triplet.has_DUT(sensorID)) hit = &triplet.get_DUT_Hit(sensorID);
-        else if(driplet.has_DUT(sensorID)) hit = &driplet.get_DUT_Hit(sensorID);
-      } else {
-        hit = &driplet.gethit(sensorID);
+		hit = &driplet.gethit(sensorID);
       }
+      else if(triplet.has_DUT(sensorID)) hit = &triplet.get_DUT_Hit(sensorID);
+      else if(driplet.has_DUT(sensorID)) hit = &driplet.get_DUT_Hit(sensorID);
 
       //if there is no hit we take the plane position from the geo description
       double zz = hit ? hit->z : _planePosition[ipl];// [mm]
