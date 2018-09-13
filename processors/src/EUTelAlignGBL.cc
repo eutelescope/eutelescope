@@ -321,7 +321,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
       } else {
         _DUThitsVec.emplace_back(hitPosition, sensorID);
       }
-      if(_printEventCounter < NO_PRINT_EVENT_COUNTER) std::cout << "Hit on plane " << sensorID << " at " << hitPosition[0] << "|" << hitPosition[1]  << '\n';
+      if(_printEventCounter < NO_PRINT_EVENT_COUNTER) streamlog_out(DEBUG0) << "Hit on plane " << sensorID << " at " << hitPosition[0] << "|" << hitPosition[1]  << '\n';
     } // end loop over all hits in given collection
   }//loop over all input hit collection
 
@@ -333,13 +333,13 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
   gblutil.FindTriplets(_hitsVec, _downstream_triplet_ids, _downTriResCut, _downSlopeCut/1000., dripletVec, false);
 
   if(_printEventCounter < NO_PRINT_EVENT_COUNTER){
-    std::cout << "Triplets:\n";
+    streamlog_out(DEBUG2)  << "Triplets:\n";
     for(auto& triplet: tripletVec) {
-      std::cout << triplet << '\n';
+      streamlog_out(DEBUG2) << triplet << '\n';
     }
-    std::cout << "Driplets:\n";
+    streamlog_out(DEBUG2) << "Driplets:\n";
     for(auto& driplet: dripletVec) {
-      std::cout << driplet << '\n';
+      streamlog_out(DEBUG2) << driplet << '\n';
     }
   }
 
@@ -350,11 +350,10 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
   auto matchedTripletVec = std::vector<EUTelTripletGBLUtility::track>();
   gblutil.MatchTriplets(tripletVec, dripletVec, zMid, _upDownTripletMatchCut, matchedTripletVec);
 
-  if(_printEventCounter < NO_PRINT_EVENT_COUNTER) std::cout << "Matched to:\n"; 
+  if(_printEventCounter < NO_PRINT_EVENT_COUNTER) streamlog_out(DEBUG2) << "Matched to:\n"; 
 
   if(!_dut_ids.empty()) {
           for(auto& track: matchedTripletVec) {    
-            //std::cout << "Dist 22:\n";
             auto& triplet = track.get_upstream();
             auto& driplet = track.get_downstream();
 
@@ -365,28 +364,6 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
                 gblutil.AttachDUT(driplet, _DUThitsVec, dutID, 3);
               }
             }
-/*
-            auto has22 = gblutil.AttachDUT(triplet, _DUThitsVec, 22, 3 );    
-            //std::cout << "Dist 21:\n";
-            auto has21 = gblutil.AttachDUT(driplet, _DUThitsVec, 21, 3 );    
-            if(_printEventCounter < NO_PRINT_EVENT_COUNTER){
-               std::cout << "---pair--\n" << triplet << driplet << '\n';
-              std::cout << "Expects hit on 22 at:\n";
-              auto zPos = geo::gGeometry().getPlaneZPosition(22);
-              auto trX = triplet.getx_at(zPos);
-              auto trY = triplet.gety_at(zPos);
-              std::cout << trX << "|" << trY << '\n';
-              std::cout << "Expects hit on 21 at:\n";
-              zPos = geo::gGeometry().getPlaneZPosition(21);
-              trX = driplet.getx_at(zPos);
-              trY = driplet.gety_at(zPos);
-              std::cout << trX << "|" << trY << '\n';        
-              for(auto& hit: _DUThitsVec) {
-                if(hit.plane == 21 || hit.plane == 22) {
-                  std::cout << "Hit on " << hit.plane << " at: " << hit.x << "|" << hit.y << '\n';
-                }
-              }
-            }*/
           }
   }
   for(auto& track: matchedTripletVec) {
@@ -416,7 +393,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
       DUThits.emplace_back(it->second);
     }
 
-    if(_printEventCounter < NO_PRINT_EVENT_COUNTER) std::cout << "Track has " << DUThits.size() << " DUT hits\n";
+    if(_printEventCounter < NO_PRINT_EVENT_COUNTER) streamlog_out(DEBUG2) << "Track has " << DUThits.size() << " DUT hits\n";
 
     Eigen::Matrix2d alDer2; // alignment derivatives
     alDer2(0,0) = 1.0; // dx/dx GBL sign convetion
@@ -473,7 +450,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
         double xs = triplet.getx_at(zz);
         double ys = triplet.gety_at(zz);
 
-        if(_printEventCounter < NO_PRINT_EVENT_COUNTER) std::cout << "xs = " << xs << "   ys = " << ys << std::endl;
+        if(_printEventCounter < NO_PRINT_EVENT_COUNTER) streamlog_out(DEBUG2) << "xs = " << xs << "   ys = " << ys << std::endl;
 
         rx[ipl] = (hit->x - xs); // resid hit-triplet, in micrometer ...
         ry[ipl] = (hit->y - ys); // resid
