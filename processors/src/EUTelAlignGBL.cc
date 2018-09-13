@@ -346,7 +346,14 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
   ntriHistGBLAlign->fill( tripletVec.size()  );
   ndriHistGBLAlign->fill( dripletVec.size() );
 
-  double zMid = 0.5*(_planePosition[_nPlanes-3] + _planePosition[2]);
+  double zEndUpstreamTriplet = 0;
+  double zStartDownstreamTriplet = 0;
+  for (size_t ipl = 0; ipl < _nPlanes; ipl++){
+	if(_sensorIDVec[ipl] == _upstream_triplet_ids.at(2)) zEndUpstreamTriplet=_planePosition[ipl];
+    else if(_sensorIDVec[ipl] == _downstream_triplet_ids.at(0)) zStartDownstreamTriplet=_planePosition[ipl];
+  }
+
+  double zMid = 0.5*(zEndUpstreamTriplet + zStartDownstreamTriplet);
   auto matchedTripletVec = std::vector<EUTelTripletGBLUtility::track>();
   gblutil.MatchTriplets(tripletVec, dripletVec, zMid, _upDownTripletMatchCut, matchedTripletVec);
 
@@ -371,7 +378,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
     // GBL with triplet A as seed
     std::vector<gbl::GblPoint> traj_points;
     // build up trajectory:
-    std::vector<unsigned int> ilab; // 0-5 = telescope, 6 = DUT, 7 = REF
+    std::vector<unsigned int> ilab;
     vector<double> sPoint;
 
     // the arc length at the first measurement plane is 0.
