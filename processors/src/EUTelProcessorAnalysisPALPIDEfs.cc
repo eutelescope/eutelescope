@@ -2325,14 +2325,14 @@ void EUTelProcessorAnalysisPALPIDEfs::_EulerRotationBack(double *_telPos,
   TVector3 _Yaxis(0.0, 1.0, 0.0);
   TVector3 _Zaxis(0.0, 0.0, 1.0);
   // rotation order: X,Y,Z; rotation back order: Z,Y,X
-  if (TMath::Abs(_gRotation[0]) > 1e-6) {
-    _RotatedSensorHit.Rotate(-1. * _gRotation[0], _Zaxis); // in XY
-  }
   if (TMath::Abs(_gRotation[1]) > 1e-6) {
     _RotatedSensorHit.Rotate(-1. * _gRotation[1], _Yaxis); // in ZX
   }
   if (TMath::Abs(_gRotation[2]) > 1e-6) {
     _RotatedSensorHit.Rotate(-1. * _gRotation[2], _Xaxis); // in ZY
+  }
+  if (TMath::Abs(_gRotation[0]) > 1e-6) {
+    _RotatedSensorHit.Rotate(-1. * _gRotation[0], _Zaxis); // in XY
   }
 
   _telPos[0] = _RotatedSensorHit.X();
