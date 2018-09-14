@@ -120,6 +120,14 @@ namespace eutelescope {
       std::vector<size_t> _FixedPlanes; //only for internal usage
       std::vector<int> _FixedPlanes_sensorIDs; //this is going to be
 
+	  // Fixed directions for alignMode XYZShiftsXYZRot
+      std::vector<int> _FixedXShift;
+      std::vector<int> _FixedYShift;
+      std::vector<int> _FixedZShift;
+      std::vector<int> _FixedXRot;
+      std::vector<int> _FixedYRot;
+      std::vector<int> _FixedZRot;
+      
       double _eBeam;
 
       double _upTriResCut;

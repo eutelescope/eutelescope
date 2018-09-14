@@ -100,6 +100,12 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelAlignGBL") {
                               "\n\t\tXYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis"
                               "\n\t\tXYZShiftsRotXYZ - all shifts and rotations allowed",
                               _alignModeString, std::string{ "XYShiftsRotZ" });
+  registerOptionalParameter("fixedXShift","List of planes which should be fixed in X direction (only for alignMode XYZShiftsRotXYZ)",_FixedXShift ,std::vector<int>());
+  registerOptionalParameter("fixedYShift","List of planes which should be fixed in Y direction (only for alignMode XYZShiftsRotXYZ)",_FixedYShift ,std::vector<int>());
+  registerOptionalParameter("fixedZShift","List of planes which should be fixed in Z direction (only for alignMode XYZShiftsRotXYZ)",_FixedZShift ,std::vector<int>{0,1,2,3,4,5});
+  registerOptionalParameter("fixedZRot","List of planes which should have a fixed Z rotation (only for alignMode XYZShiftsRotXYZ)",_FixedZRot ,std::vector<int>());
+  registerOptionalParameter("fixedYRot","List of planes which should have a fixed Y rotation (only for alignMode XYZShiftsRotXYZ)",_FixedYRot ,std::vector<int>{0,1,2,3,4,5});
+  registerOptionalParameter("fixedXRot","List of planes which should have a fixed X rotation (only for alignMode XYZShiftsRotXYZ)",_FixedXRot ,std::vector<int>{0,1,2,3,4,5});
   registerOptionalParameter("upstreamTripletResidualCut", "Upstream triplet residual cut [mm]", _upTriResCut, 0.30);
   registerOptionalParameter("downstreamTripletResidualCut", "Downstream triplet residual cut [mm]", _downTriResCut, 0.40);
   registerOptionalParameter("upstreamTripletSlopeCut", "Upstream triplet slope cut [mrad]", _upSlopeCut, 3.);
@@ -523,7 +529,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
           globalLabels[0] = _sensorIDVec[ipl] * 10 + 1;
           globalLabels[1] = _sensorIDVec[ipl] * 10 + 2;
           globalLabels[2] = _sensorIDVec[ipl] * 10 + 3;
-          globalLabels[3] = _sensorIDVec[ipl] * 10 + 4; // z
+          globalLabels[3] = _sensorIDVec[ipl] * 10 + 4;
           globalLabels[4] = _sensorIDVec[ipl] * 10 + 5;
           globalLabels[5] = _sensorIDVec[ipl] * 10 + 6;
           alDer6 ( 0, 4 ) = deltaz; // dx/db
@@ -839,12 +845,36 @@ void EUTelAlignGBL::end() {
           steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0  0.0" << endl;
         }
         if( _alignMode == Utility::alignMode::XYZShiftsRotXYZ ) {
-          steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  0.0" << endl;
-          steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  0.0" << endl;
-          steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0  0.0" << endl;
-          steerFile << (_sensorIDVec[ipl] * 10 + 4) << "  0.0  0.0" << endl;
-          steerFile << (_sensorIDVec[ipl] * 10 + 5) << "  0.0  0.0" << endl;
-          steerFile << (_sensorIDVec[ipl] * 10 + 6) << "  0.0  0.0" << endl;
+		  if(std::find(_FixedXShift.begin(), _FixedXShift.end(), _sensorIDVec[ipl]) == _FixedXShift.end()) {
+            steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  0.0" << endl;
+	      } else {
+			steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  -1.0" << endl; 
+		  }
+		  if(std::find(_FixedYShift.begin(), _FixedYShift.end(), _sensorIDVec[ipl]) == _FixedYShift.end()) {
+            steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  0.0" << endl;
+	      } else {
+			steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  -1.0" << endl; 
+		  }
+		  if(std::find(_FixedZShift.begin(), _FixedZShift.end(), _sensorIDVec[ipl]) == _FixedZShift.end()) {
+            steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0  0.0" << endl;
+	      } else {
+			steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0  -1.0" << endl; 
+		  }
+		  if(std::find(_FixedXRot.begin(), _FixedXRot.end(), _sensorIDVec[ipl]) == _FixedXRot.end()) {
+            steerFile << (_sensorIDVec[ipl] * 10 + 4) << "  0.0  0.0" << endl; // LABELLING TO BE CHECKED
+	      } else {
+			steerFile << (_sensorIDVec[ipl] * 10 + 4) << "  0.0  -1.0" << endl; 
+		  }
+		  if(std::find(_FixedYRot.begin(), _FixedYRot.end(), _sensorIDVec[ipl]) == _FixedYRot.end()) {
+            steerFile << (_sensorIDVec[ipl] * 10 + 5) << "  0.0  0.0" << endl; // LABELLING TO BE CHECKED
+	      } else {
+			steerFile << (_sensorIDVec[ipl] * 10 + 5) << "  0.0  -1.0" << endl; 
+		  }
+		  if(std::find(_FixedZRot.begin(), _FixedZRot.end(), _sensorIDVec[ipl]) == _FixedZRot.end()) {
+            steerFile << (_sensorIDVec[ipl] * 10 + 6) << "  0.0  0.0" << endl; // LABELLING TO BE CHECKED
+	      } else {
+			steerFile << (_sensorIDVec[ipl] * 10 + 6) << "  0.0  -1.0" << endl; 
+		  }
         }
 
       }// not fixed
