@@ -218,9 +218,6 @@ void EUTelTripletGBLUtility::MatchTriplets(std::vector<triplet> const & up, std:
       // Fill kink map histogram:
       if( abs( kx ) > 0.002 || abs( ky ) > 0.002 ) sixxycHisto->fill( -xA, -yA );      
 
-      // apply fiducial cut
-      if ( fabs(xA) >  9.0) continue;
-      if (     -yA  < -4.0) continue;
       kinkx->fill( kx*1E3 ); //sqrt(<kink^2>) [mrad]
       kinky->fill( ky*1E3 ); //sqrt(<kink^2>) [mrad]
       kinkxy->fill( (fabs(kx)+fabs(ky))/2*1E3 ); // [mrad]
@@ -391,12 +388,6 @@ double EUTelTripletGBLUtility::PlaneEfficiency(std::vector<EUTelTripletGBLUtilit
       // check isolation
       if( !IsolatedTrip || !IsolatedDrip ) continue;
       //std::cout << " , isolated ";
-
-      // apply fiducial cut
-      if ( fabs(xA) >  9.0) continue;
-      if (     -yA  < -4.0) continue;
-
-      //std::cout << " , fiducial " << std::endl;
 
       eff_triplets.emplace_back(trip);
 
