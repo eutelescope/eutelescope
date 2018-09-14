@@ -58,7 +58,7 @@ EUTelPedeGEAR::EUTelPedeGEAR() : Processor("EUTelPedeGEAR") {
       "Number of alignment constants used. Available mode are: "
       "\n\t\tXYShiftsRotZ - shifts in the X and Y directions and a rotation around the Z axis,"
       "\n\t\tXYShifts - only shifts in the X and Y directions"
-      "\n\t\tXYShiftsAllRot - shifts in the X,Y and Z directions and rotations around all three axis",
+      "\n\t\tXYZShiftsRotXYZ - all shifts and rotations allowed",
       _alignModeString, std::string("XYShiftsRotZ"));
 
   registerOptionalParameter("PedeSteerfileName",
@@ -99,6 +99,8 @@ void EUTelPedeGEAR::init() {
   } else if( _alignModeString.compare("XYShifts") == 0 ) {
 	_alignMode = Utility::alignMode::XYShifts;
   } else if( _alignModeString.compare("XYShiftsAllRot") == 0 ) {
+	_alignMode = Utility::alignMode::XYShiftsAllRot;
+  } else if( _alignModeString.compare("XYZShiftsRotXYZ") == 0 ) {
 	_alignMode = Utility::alignMode::XYShiftsAllRot;
   } else {
 	streamlog_out(ERROR) << "The chosen AlignMode: '" << _alignModeString << "' is invalid. Please correct your steering template and retry!" << std::endl;
