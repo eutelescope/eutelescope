@@ -569,7 +569,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
       }
 
       streamlog_out(DEBUG2)  << " Is traj valid? " << traj.isValid() << std::endl;
-      traj.printPoints();
+      //traj.printPoints();
       //traj.printTrajectory();
       //traj.printData();
       _printEventCounter++;
