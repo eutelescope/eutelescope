@@ -97,7 +97,8 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelAlignGBL") {
   registerOptionalParameter("alignMode","Number of alignment constants used. Available mode are:"
                               "\n\t\tXYZShifts - shifts in X and Y"
                               "\n\t\tXYShiftsRotZ - shifts in X and Y and rotation around the Z axis,"
-                              "\n\t\tXYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis",
+                              "\n\t\tXYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis"
+                              "\n\t\tXYZShiftsRotXYZ - all shifts and rotations allowed",
                               _alignModeString, std::string{ "XYShiftsRotZ" });
   registerOptionalParameter("upstreamTripletResidualCut", "Upstream triplet residual cut [mm]", _upTriResCut, 0.30);
   registerOptionalParameter("downstreamTripletResidualCut", "Downstream triplet residual cut [mm]", _downTriResCut, 0.40);
@@ -241,6 +242,8 @@ void EUTelAlignGBL::init() {
     _alignMode = Utility::alignMode::XYShifts;
   } else if( _alignModeString.compare("XYZShiftsRotZ") == 0 ) {
     _alignMode = Utility::alignMode::XYZShiftsRotZ;
+  } else if( _alignModeString.compare("XYZShiftsRotXYZ") == 0 ) {
+    _alignMode = Utility::alignMode::XYZShiftsRotXYZ;
   } else {
     streamlog_out(ERROR) << "The chosen AlignMode: '" << _alignModeString << "' is invalid. Please correct your steering template and retry!" << std::endl;
     throw InvalidParameterException("AlignMode");
@@ -423,7 +426,21 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
     alDer4(1,1) = 1.0; // dy/dy
     alDer4(0,3) = triSlope.x; // dx/dz
     alDer4(1,3) = triSlope.y; // dx/dz
-
+    
+    Eigen::Matrix<double, 3,6> alDer6; // alignment derivatives
+    alDer6 ( 0, 0 ) = 1.0; // dx/dx
+	alDer6 ( 0, 1 ) = 0.0; // dx/dy
+	alDer6 ( 0, 2 ) = triSlope.x; // dx/dz
+	alDer6 ( 0, 3 ) = 0.0; // dx/da
+	alDer6 ( 1, 0 ) = 0.0; // dy/dx
+	alDer6 ( 1, 1 ) = 1.0; // dy/dy
+    alDer6 ( 1, 2 ) = triSlope.y; // dy/dz
+	alDer6 ( 1, 4 ) = 0.0; // dy/db
+    alDer6 ( 2, 0 ) = 0.0; // dz/dx
+	alDer6 ( 2, 1 ) = 0.0; // dz/dy
+	alDer6 ( 2, 2 ) = 1.0; // dz/dz
+	alDer6 ( 2, 5 ) = 0.0; // dz/dg
+	
     std::vector<double> rx (_nPlanes, -1.0);
     std::vector<double> ry (_nPlanes, -1.0);
     std::vector<bool> hasHit (_nPlanes, false);
@@ -471,29 +488,52 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
         if( _alignMode == Utility::alignMode::XYShifts ) { // only x and y shifts
           // global labels for MP:
           std::vector<int> globalLabels(2);
-          globalLabels[0] = 1 + 2*ipl;
-          globalLabels[1] = 2 + 2*ipl;
+          globalLabels[0] = _sensorIDVec[ipl] * 10 + 1;
+          globalLabels[1] = _sensorIDVec[ipl] * 10 + 2;
           point.addGlobals( globalLabels, alDer2 ); // for MillePede alignment
         }
         else if( _alignMode == Utility::alignMode::XYShiftsRotZ ) { // with rot
           std::vector<int> globalLabels(3);
-          globalLabels[0] = 1 + 3*ipl; // x
-          globalLabels[1] = 2 + 3*ipl; // y
-          globalLabels[2] = 3 + 3*ipl; // rot
+          globalLabels[0] = _sensorIDVec[ipl] * 10 + 1; // x
+          globalLabels[1] = _sensorIDVec[ipl] * 10 + 2; // y
+          globalLabels[2] = _sensorIDVec[ipl] * 10 + 3; // rot
           alDer3(0,2) = -ys; // dx/dphi
           alDer3(1,2) =  xs; // dy/dphi
           point.addGlobals( globalLabels, alDer3 ); // for MillePede alignment
         }
         else if( _alignMode == Utility::alignMode::XYZShiftsRotZ ) { // with rot and z shift
           std::vector<int> globalLabels(4);
-          globalLabels[0] = 1 + 4*ipl;
-          globalLabels[1] = 2 + 4*ipl;
-          globalLabels[2] = 3 + 4*ipl;
-          globalLabels[3] = 4 + 4*ipl; // z
+          globalLabels[0] = _sensorIDVec[ipl] * 10 + 1;
+          globalLabels[1] = _sensorIDVec[ipl] * 10 + 2;
+          globalLabels[2] = _sensorIDVec[ipl] * 10 + 3;
+          globalLabels[3] = _sensorIDVec[ipl] * 10 + 4; // z
           alDer4(0,2) = -ys; // dx/dphi
           alDer4(1,2) =  xs; // dy/dphi
           point.addGlobals( globalLabels, alDer4 ); // for MillePede alignment
         }
+        else if( _alignMode == Utility::alignMode::XYZShiftsRotXYZ ) { // everything
+		  double deltaz = hit->z - _planePosition[ipl];
+          // deltaz cannot be zero, otherwise this mode doesn't work
+          // 1e-6 in um is quite small
+          if ( deltaz < 1E-6 )
+          {
+		     deltaz = 1E-6;
+          }
+		  std::vector<int> globalLabels(6);
+          globalLabels[0] = _sensorIDVec[ipl] * 10 + 1;
+          globalLabels[1] = _sensorIDVec[ipl] * 10 + 2;
+          globalLabels[2] = _sensorIDVec[ipl] * 10 + 3;
+          globalLabels[3] = _sensorIDVec[ipl] * 10 + 4; // z
+          globalLabels[4] = _sensorIDVec[ipl] * 10 + 5;
+          globalLabels[5] = _sensorIDVec[ipl] * 10 + 6;
+          alDer6 ( 0, 4 ) = deltaz; // dx/db
+          alDer6 ( 0, 5 ) = -ys; // dx/dg
+          alDer6 ( 1, 3 ) = -deltaz; // dy/da
+          alDer6 ( 1, 5 ) = xs; // dy/dg
+          alDer6 ( 2, 3 ) = ys; // dz/da
+          alDer6 ( 2, 4 ) = -xs; // dz/db
+          point.addGlobals( globalLabels, alDer6 ); // for MillePede alignment
+		}
       }
 
       point.addScatterer( scat, _planeWscatSi[ipl] );
@@ -789,6 +829,14 @@ void EUTelAlignGBL::end() {
           steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  0.0" << endl;
           steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  0.0" << endl;
           steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0  0.0" << endl;
+        }
+        if( _alignMode == Utility::alignMode::XYZShiftsRotXYZ ) {
+          steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  0.0" << endl;
+          steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  0.0" << endl;
+          steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0  0.0" << endl;
+          steerFile << (_sensorIDVec[ipl] * 10 + 4) << "  0.0  0.0" << endl;
+          steerFile << (_sensorIDVec[ipl] * 10 + 5) << "  0.0  0.0" << endl;
+          steerFile << (_sensorIDVec[ipl] * 10 + 6) << "  0.0  0.0" << endl;
         }
 
       }// not fixed
