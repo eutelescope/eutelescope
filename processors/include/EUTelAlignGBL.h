@@ -128,6 +128,7 @@ namespace eutelescope {
       double _upSlopeCut;
       double _downSlopeCut;
       std::vector<float> _DUTCuts;
+      double _chi2cut;
       
       double _kappa;
 

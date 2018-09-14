@@ -105,6 +105,7 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelAlignGBL") {
   registerOptionalParameter("downstreamTripletSlopeCut", "Downstream triplet slope cut [mrad]", _downSlopeCut, 5.);
   registerOptionalParameter("tripletsMatchingCut", "Upstream-downstream triplet matching cut [mm]", _upDownTripletMatchCut, 0.60);
   registerOptionalParameter("DUTCuts", "Cuts in x and y for matching DUT hits [mm]", _DUTCuts, std::vector<float>{1.,1.});
+  registerOptionalParameter("chi2Cut", "Cut on the chi2 for the tracks to be passed to Millepede", _chi2cut, 0.001);
   registerOptionalParameter("generatePedeSteerfile","Generate a steering file for the pede program",_generatePedeSteerfile, 0);
   registerOptionalParameter("pedeSteerfileName","Name of the steering file for the pede program",_pedeSteerfileName, std::string{"steer_mille.txt"});
   registerProcessorParameter("kappa","Global factor to Highland formula, 1.0 means HL as is, 1.2 means 20/% additional scattering", _kappa, 1.0);
@@ -584,7 +585,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
     gblprbHistGBLAlign->fill( probchi );
 
     // bad fits:
-    if( probchi < 0.01 ) {
+    if( probchi < _chi2cut ) {
       badxHistGBLAlign->fill( xA ); // triplet at DUT
       badyHistGBLAlign->fill( yA );
       badaxHistGBLAlign->fill( triSlope.x*1E3 );
@@ -670,7 +671,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
     }
 
     // do not pass very bad tracks to mille
-    if(probchi > 0.001) {
+    if(probchi > _chi2cut) {
         traj.milleOut( *milleAlignGBL );
            nm++;
     }
