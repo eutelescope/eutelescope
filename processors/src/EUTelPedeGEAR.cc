@@ -127,7 +127,7 @@ void EUTelPedeGEAR::init() {
   // the user is giving sensor ids for the planes to be excluded. this
   // sensor ids have to be converted to a local index according to the
   // planes positions along the z axis.
-  for (size_t i = 0; i < _FixedPlanes_sensorIDs.size(); i++) {
+  for (size_t i = 0; i < _FixedPlanes_sensorIDs.size(); i++) { //what is this doing? probably fixed planes not needed here
     std::map<double, int>::iterator iter = sensorIDMap.begin();
     int counter = 0;
     while (iter != sensorIDMap.end()) {
@@ -165,7 +165,7 @@ void EUTelPedeGEAR::init() {
       }
     }
     if (!excluded)
-      _orderedSensorID_wo_excluded.push_back(iter->second);
+      _orderedSensorID_wo_excluded.push_back(iter->second); //I think this is not necessary anymore
     _orderedSensorID.push_back(iter->second);
 
     ++iter;
@@ -339,7 +339,6 @@ void EUTelPedeGEAR::end() {
       std::getline(millepede, line);
 
       int counter = 0;
-      int sensorID = _orderedSensorID.at(counter);
 
       while (!millepede.eof()) {
         bool goodLine = true;
@@ -350,7 +349,8 @@ void EUTelPedeGEAR::end() {
         } else {
           numpars = 6;
         }
-
+        
+        int sensorID = 0; // should be done better
         double xOff = 0;
         double yOff = 0;
         double zOff = 0;
@@ -393,6 +393,7 @@ void EUTelPedeGEAR::end() {
 
           if (_alignMode != Utility::alignMode::XYShiftsAllRot) {
             if (iParam == 0) {
+			  sensorID = (tokens[0] - 1) / 10; // should be done better
               xOff = tokens[1] / _offsetScaleFactor;
               //			if(!isFixed) xOffErr	=
               //tokens[4]/1000.;
@@ -408,6 +409,7 @@ void EUTelPedeGEAR::end() {
             }
           } else {
             if (iParam == 0) {
+			  sensorID = (tokens[0] - 1) / 10; // should be done better
               xOff = tokens[1] / _offsetScaleFactor;
               //			if(!isFixed) xOffErr	=
               //tokens[4]/1000.;
@@ -439,7 +441,6 @@ void EUTelPedeGEAR::end() {
 
         // right place to add the constant to the collection
         if (goodLine) {
-          sensorID = _orderedSensorID.at(counter);
           std::cout << "Alignment on sensor " << sensorID
                     << " determined to be: xOff: " << xOff << ", yOff: " << yOff
                     << ", zOff: " << zOff << ", alpha: " << alpha

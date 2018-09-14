@@ -562,7 +562,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
         s += step;
         traj_points.push_back(point1);
         sPoint.push_back( s );
-        step = 0.21*distplane; // remaing distance to next plane, in [mm]
+        step = 0.21*distplane; // remaining distance to next plane, in [mm]
       }
     } // loop over planes
 
@@ -878,17 +878,6 @@ void EUTelAlignGBL::end() {
         }
 
       }// not fixed
-
-      // special for z shift:
-
-      if( _alignMode == Utility::alignMode::XYZShiftsRotZ ) {
-        if( ipl == 1 ) //?
-          steerFile << (_sensorIDVec[ipl] * 10 + 4) << "  0.0 -1.0" << endl;
-        else if( ipl == 4 ) //?
-          steerFile << (_sensorIDVec[ipl] * 10 + 4) << "  0.0 -1.0" << endl;
-        else
-          steerFile << (_sensorIDVec[ipl] * 10 + 4) << "  0.0  0.0" << endl;
-      }
 
       counter++;
 
