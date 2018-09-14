@@ -127,7 +127,8 @@ namespace eutelescope {
       double _upDownTripletMatchCut;
       double _upSlopeCut;
       double _downSlopeCut;
-
+      std::vector<float> _DUTCuts;
+      
       double _kappa;
 
       int _maxTrackCandidates;

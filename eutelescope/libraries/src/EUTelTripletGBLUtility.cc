@@ -262,12 +262,11 @@ bool EUTelTripletGBLUtility::IsTripletIsolated(EUTelTripletGBLUtility::triplet c
   return IsolatedTrip;
 }
 
-bool EUTelTripletGBLUtility::AttachDUT(EUTelTripletGBLUtility::triplet & triplet, std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int dutID,  double dist_cut){
+bool EUTelTripletGBLUtility::AttachDUT(EUTelTripletGBLUtility::triplet & triplet, std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int dutID,  std::vector<float> dist_cuts){
 
 	auto zPos = geo::gGeometry().getPlaneZPosition(dutID);
 	int minHitIx = -1;
-	double minDist = std::numeric_limits<double>::max();
-	double cut_squared = dist_cut*dist_cut;	
+	double minDist = std::numeric_limits<float>::max();
 
 	auto trX = triplet.getx_at(zPos);
 	auto trY = triplet.gety_at(zPos);
@@ -279,9 +278,10 @@ bool EUTelTripletGBLUtility::AttachDUT(EUTelTripletGBLUtility::triplet & triplet
 		if(hit.plane == dutID) {
 			auto hitX = hit.x;
 			auto hitY = hit.y;
-			auto dist = (trX-hitX)*(trX-hitX)+(trY-hitY)*(trY-hitY);
+			auto distX = fabs(trX-hitX);
+			auto distY = fabs(trY-hitY);
 //			std::cout << "Hit x/y: " << hitX << "|" << hitY << " dist: " << dist << '\n'; 
-			if(dist <= cut_squared && dist < minDist ){
+			if(distX <= dist_cuts.at(0) && distY <= dist_cuts.at(1) && distX < minDist && distY < minDist ){
 				minHitIx = static_cast<int>(ix);
 				//std::cout << "Dist: " << dist << std::endl;
 			}
