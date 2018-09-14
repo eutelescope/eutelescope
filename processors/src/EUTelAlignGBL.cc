@@ -742,7 +742,7 @@ void EUTelAlignGBL::end() {
         excluded = 1;
     }
 
-    cout << "Plane " << ipl << " exclude = " << excluded << endl;
+    cout << "Plane " << _sensorIDVec[ipl] << " exclude = " << excluded << endl;
 
     if( excluded == 0 ) {
 
@@ -757,38 +757,38 @@ void EUTelAlignGBL::end() {
       if( fixed || (_FixedPlanes.size() == 0 && (ipl == firstnotexcl || ipl == lastnotexcl) ) ) {
         nfix++;
         if( _alignMode == Utility::alignMode::XYShifts ) {
-          steerFile << (counter * 2 + 1) << "  0.0 -1.0" << endl;
-          steerFile << (counter * 2 + 2) << "  0.0 -1.0" << endl;
+          steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0 -1.0" << endl;
+          steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0 -1.0" << endl;
         }
         if( _alignMode == Utility::alignMode::XYShiftsRotZ ) {
-          steerFile << (counter * 3 + 1) << "  0.0 -1.0" << endl; // fix x
-          steerFile << (counter * 3 + 2) << "  0.0 -1.0" << endl; // fix y
-          steerFile << (counter * 3 + 3) << "  0.0 -1.0" << endl; // fix rot
+          steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0 -1.0" << endl; // fix x
+          steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0 -1.0" << endl; // fix y
+          steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0 -1.0" << endl; // fix rot
         }
         if( _alignMode == Utility::alignMode::XYZShiftsRotZ ) {
-          steerFile << (counter * 4 + 1) << "  0.0 -1.0" << endl;
-          steerFile << (counter * 4 + 2) << "  0.0 -1.0" << endl;
-          steerFile << (counter * 4 + 3) << "  0.0 -1.0" << endl;
+          steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0 -1.0" << endl;
+          steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0 -1.0" << endl;
+          steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0 -1.0" << endl;
         }
       }
 
       else {
 
         if( _alignMode == Utility::alignMode::XYShifts ) {
-          steerFile << (counter * 2 + 1) << "  0.0  0.0" << endl;
-          steerFile << (counter * 2 + 2) << "  0.0  0.0" << endl;
+          steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  0.0" << endl;
+          steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  0.0" << endl;
         }
 
         if( _alignMode == Utility::alignMode::XYShiftsRotZ ) {
-          steerFile << (counter * 3 + 1) << "  0.0  0.0" << endl;
-          steerFile << (counter * 3 + 2) << "  0.0  0.0" << endl;
-          steerFile << (counter * 3 + 3) << "  0.0  0.0" << endl;
+          steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  0.0" << endl;
+          steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  0.0" << endl;
+          steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0  0.0" << endl;
         }
 
         if( _alignMode == Utility::alignMode::XYZShiftsRotZ ) {
-          steerFile << (counter * 4 + 1) << "  0.0  0.0" << endl;
-          steerFile << (counter * 4 + 2) << "  0.0  0.0" << endl;
-          steerFile << (counter * 4 + 3) << "  0.0  0.0" << endl;
+          steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  0.0" << endl;
+          steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  0.0" << endl;
+          steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0  0.0" << endl;
         }
 
       }// not fixed
@@ -796,12 +796,12 @@ void EUTelAlignGBL::end() {
       // special for z shift:
 
       if( _alignMode == Utility::alignMode::XYZShiftsRotZ ) {
-        if( ipl == 1 )
-          steerFile << (counter * 4 + 4) << "  0.0 -1.0" << endl;
-        else if( ipl == 4 )
-          steerFile << (counter * 4 + 4) << "  0.0 -1.0" << endl;
+        if( ipl == 1 ) //?
+          steerFile << (_sensorIDVec[ipl] * 10 + 4) << "  0.0 -1.0" << endl;
+        else if( ipl == 4 ) //?
+          steerFile << (_sensorIDVec[ipl] * 10 + 4) << "  0.0 -1.0" << endl;
         else
-          steerFile << (counter * 4 + 4) << "  0.0  0.0" << endl;
+          steerFile << (_sensorIDVec[ipl] * 10 + 4) << "  0.0  0.0" << endl;
       }
 
       counter++;
