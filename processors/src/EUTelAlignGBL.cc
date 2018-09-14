@@ -90,7 +90,7 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelAlignGBL") {
   registerOptionalParameter("lastUpstreamSensor","The last plane (z-ordered) which still should be attached to the upstream triplet", _last_upstream_sensor, 2);
   registerOptionalParameter("resolutionX","x-resolution of sensors (z-ordered) [mm]", _x_resolution_vec ,std::vector<float>());
   registerOptionalParameter("resolutionY","y-resolution of sensors (z-ordered) [mm]", _y_resolution_vec ,std::vector<float>());
-  registerOptionalParameter("fixedPlanes","Fix sensor planes in the fit according to their sensor ids",_FixedPlanes_sensorIDs ,std::vector<int>());
+  registerOptionalParameter("fixedPlanes","Fix sensor planes in the fit according to their sensor ids (it is recommended to fix two telescope planes)",_FixedPlanes_sensorIDs ,std::vector<int>{0,5});
   registerOptionalParameter("maxTrackCandidatesTotal","Maximal number of track candidates (Total)",_maxTrackCandidatesTotal, 10000000);
   registerOptionalParameter("maxTrackCandidates","Maximal number of track candidates",_maxTrackCandidates, 2000);
   registerOptionalParameter("milleBinaryFilename","Name of the Millepede binary file",_binaryFilename, std::string{"mille.bin"});
@@ -100,12 +100,12 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelAlignGBL") {
                               "\n\t\tXYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis"
                               "\n\t\tXYZShiftsRotXYZ - all shifts and rotations allowed",
                               _alignModeString, std::string{ "XYShiftsRotZ" });
-  registerOptionalParameter("fixedXShift","List of planes which should be fixed in X direction (only for alignMode XYZShiftsRotXYZ)",_FixedXShift ,std::vector<int>());
-  registerOptionalParameter("fixedYShift","List of planes which should be fixed in Y direction (only for alignMode XYZShiftsRotXYZ)",_FixedYShift ,std::vector<int>());
-  registerOptionalParameter("fixedZShift","List of planes which should be fixed in Z direction (only for alignMode XYZShiftsRotXYZ)",_FixedZShift ,std::vector<int>{0,1,2,3,4,5});
-  registerOptionalParameter("fixedZRot","List of planes which should have a fixed Z rotation (only for alignMode XYZShiftsRotXYZ)",_FixedZRot ,std::vector<int>());
-  registerOptionalParameter("fixedYRot","List of planes which should have a fixed Y rotation (only for alignMode XYZShiftsRotXYZ)",_FixedYRot ,std::vector<int>{0,1,2,3,4,5});
-  registerOptionalParameter("fixedXRot","List of planes which should have a fixed X rotation (only for alignMode XYZShiftsRotXYZ)",_FixedXRot ,std::vector<int>{0,1,2,3,4,5});
+  registerOptionalParameter("fixedXShift","List of planes which should be fixed in X direction",_FixedXShift ,std::vector<int>());
+  registerOptionalParameter("fixedYShift","List of planes which should be fixed in Y direction",_FixedYShift ,std::vector<int>());
+  registerOptionalParameter("fixedZShift","List of planes which should be fixed in Z direction",_FixedZShift ,std::vector<int>());
+  registerOptionalParameter("fixedZRot","List of planes which should have a fixed Z rotation",_FixedZRot ,std::vector<int>());
+  registerOptionalParameter("fixedYRot","List of planes which should have a fixed Y rotation",_FixedYRot ,std::vector<int>{0,1,2,3,4,5});
+  registerOptionalParameter("fixedXRot","List of planes which should have a fixed X rotation",_FixedXRot ,std::vector<int>{0,1,2,3,4,5});
   registerOptionalParameter("upstreamTripletResidualCut", "Upstream triplet residual cut [mm]", _upTriResCut, 0.30);
   registerOptionalParameter("downstreamTripletResidualCut", "Downstream triplet residual cut [mm]", _downTriResCut, 0.40);
   registerOptionalParameter("upstreamTripletSlopeCut", "Upstream triplet slope cut [mrad]", _upSlopeCut, 3.);
@@ -799,7 +799,8 @@ void EUTelAlignGBL::end() {
       }
 
       // if fixed planes
-
+      // all the steer writing can be cleaner
+      
       if( fixed || (_FixedPlanes.size() == 0 && (ipl == firstnotexcl || ipl == lastnotexcl) ) ) {
         nfix++;
         if( _alignMode == Utility::alignMode::XYShifts ) {
@@ -815,6 +816,7 @@ void EUTelAlignGBL::end() {
           steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0 -1.0" << endl;
           steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0 -1.0" << endl;
           steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0 -1.0" << endl;
+          steerFile << (_sensorIDVec[ipl] * 10 + 4) << "  0.0 -1.0" << endl;
         }
         if( _alignMode == Utility::alignMode::XYZShiftsRotXYZ ) {
           steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0 -1.0" << endl;
@@ -829,20 +831,57 @@ void EUTelAlignGBL::end() {
       else {
 
         if( _alignMode == Utility::alignMode::XYShifts ) {
-          steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  0.0" << endl;
-          steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  0.0" << endl;
+          if(std::find(_FixedXShift.begin(), _FixedXShift.end(), _sensorIDVec[ipl]) == _FixedXShift.end()) {
+            steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  0.0" << endl;
+	      } else {
+			steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  -1.0" << endl; 
+		  }
+          if(std::find(_FixedYShift.begin(), _FixedYShift.end(), _sensorIDVec[ipl]) == _FixedYShift.end()) {
+            steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  0.0" << endl;
+	      } else {
+			steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  -1.0" << endl; 
+		  }
         }
 
         if( _alignMode == Utility::alignMode::XYShiftsRotZ ) {
-          steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  0.0" << endl;
-          steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  0.0" << endl;
-          steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0  0.0" << endl;
+          if(std::find(_FixedXShift.begin(), _FixedXShift.end(), _sensorIDVec[ipl]) == _FixedXShift.end()) {
+            steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  0.0" << endl;
+	      } else {
+			steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  -1.0" << endl; 
+		  }
+          if(std::find(_FixedYShift.begin(), _FixedYShift.end(), _sensorIDVec[ipl]) == _FixedYShift.end()) {
+            steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  0.0" << endl;
+	      } else {
+			steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  -1.0" << endl; 
+		  }
+          if(std::find(_FixedZRot.begin(), _FixedZRot.end(), _sensorIDVec[ipl]) == _FixedZRot.end()) {
+            steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0  0.0" << endl;
+	      } else {
+			steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0  -1.0" << endl; 
+		  }
         }
 
         if( _alignMode == Utility::alignMode::XYZShiftsRotZ ) {
-          steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  0.0" << endl;
-          steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  0.0" << endl;
-          steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0  0.0" << endl;
+		  if(std::find(_FixedXShift.begin(), _FixedXShift.end(), _sensorIDVec[ipl]) == _FixedXShift.end()) {
+            steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  0.0" << endl;
+	      } else {
+			steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  -1.0" << endl; 
+		  }
+		  if(std::find(_FixedYShift.begin(), _FixedYShift.end(), _sensorIDVec[ipl]) == _FixedYShift.end()) {
+            steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  0.0" << endl;
+	      } else {
+			steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  -1.0" << endl; 
+		  }
+		  if(std::find(_FixedZShift.begin(), _FixedZShift.end(), _sensorIDVec[ipl]) == _FixedZShift.end()) { //Z rotation in 3 and Z shift in 4??
+            steerFile << (_sensorIDVec[ipl] * 10 + 4) << "  0.0  0.0" << endl;
+	      } else {
+			steerFile << (_sensorIDVec[ipl] * 10 + 4) << "  0.0  -1.0" << endl; 
+		  }
+          if(std::find(_FixedZRot.begin(), _FixedZRot.end(), _sensorIDVec[ipl]) == _FixedZRot.end()) {
+            steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0  0.0" << endl;
+	      } else {
+			steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0  -1.0" << endl; 
+		  }
         }
         if( _alignMode == Utility::alignMode::XYZShiftsRotXYZ ) {
 		  if(std::find(_FixedXShift.begin(), _FixedXShift.end(), _sensorIDVec[ipl]) == _FixedXShift.end()) {
