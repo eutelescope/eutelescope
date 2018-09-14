@@ -815,7 +815,7 @@ void EUTelAlignGBL::end() {
           steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0 -1.0" << endl;
           steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0 -1.0" << endl;
           steerFile << (_sensorIDVec[ipl] * 10 + 4) << "  0.0 -1.0" << endl;
-          steerFile << (_sensorIDVec[ipl] * 10 + 4) << "  0.0 -1.0" << endl;
+          steerFile << (_sensorIDVec[ipl] * 10 + 5) << "  0.0 -1.0" << endl;
           steerFile << (_sensorIDVec[ipl] * 10 + 6) << "  0.0 -1.0" << endl;
         }
       }
