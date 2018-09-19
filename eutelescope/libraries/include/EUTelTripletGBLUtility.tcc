@@ -37,6 +37,7 @@ void EUTelTripletGBLUtility::FindTriplets(std::vector<EUTelTripletGBLUtility::hi
 	if( fabs(new_triplet.getdx(plane1)) > trip_res_cut) continue;
 	if( fabs(new_triplet.getdy(plane1)) > trip_res_cut) continue;
 
+    // Edo: This (best triplets) is hardcoded as false in EUTelAlignGBL. Is this really useful?
     if(only_best_triplet) {
 		// For low threshold (high noise) and/or high occupancy, use only the triplet with the smallest sum of residuals on plane1
 		double sum_res = sqrt(new_triplet.getdx(plane1)*new_triplet.getdx(plane1) + new_triplet.getdy(plane1)*new_triplet.getdy(plane1));

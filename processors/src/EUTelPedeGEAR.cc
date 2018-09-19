@@ -350,15 +350,15 @@ void EUTelPedeGEAR::end() {
         double xOff = 0;
         double yOff = 0;
         double zOff = 0;
-        /*	double xOffErr = 0;
-                double yOffErr = 0;
-                double zOffErr = 0;  */
+        double xOffErr = 0;
+        double yOffErr = 0;
+        double zOffErr = 0; 
         double alpha = 0;
         double beta = 0;
         double gamma = 0;
-        /*	double alphaErr = 0;
-                double betaErr = 0;
-                double gammaErr = 0; */
+        double alphaErr = 0;
+        double betaErr = 0;
+        double gammaErr = 0;
 
         for (unsigned int iParam = 0; iParam < numpars; ++iParam) {
           std::getline(millepede, line);
@@ -384,63 +384,57 @@ void EUTelPedeGEAR::end() {
             goodLine = false;
           }
 
-          // Remove comments to read in uncertainty
-          //	bool isFixed = (tokens.size() == 3);
-
           if (_alignMode != Utility::alignMode::XYShiftsAllRot) {
             if (iParam == 0) {
 			  sensorID = (tokens[0] - 1) / 10; // should be done better
               xOff = tokens[1];
-              //			if(!isFixed) xOffErr	=
-              //tokens[4]/1000.;
+              if(tokens[2] == 0) xOffErr = tokens[4];
             }
             if (iParam == 1) {
               yOff = tokens[1];
-              //			if(!isFixed) yOffErr	=
-              //tokens[4]/1000.;
+              if(tokens[2] == 0) yOffErr = tokens[4];
             }
             if (iParam == 2) {
               gamma = -tokens[1];
-              //			if(!isFixed) gammaErr	= tokens[4];
+              if(tokens[2] == 0) gammaErr = tokens[4];
             }
           } else {
             if (iParam == 0) {
 			  sensorID = (tokens[0] - 1) / 10; // should be done better
               xOff = tokens[1];
-              //			if(!isFixed) xOffErr	=
-              //tokens[4]/1000.;
+              if(tokens[2] == 0) xOffErr = tokens[4];
             }
             if (iParam == 1) {
               yOff = tokens[1];
-              //			if(!isFixed) yOffErr	=
-              //tokens[4]/1000.;
+              if(tokens[2] == 0) yOffErr = tokens[4];
             }
             if (iParam == 2) {
               zOff = tokens[1];
-              //			if(!isFixed) zOffErr	=
-              //tokens[4]/1000.;
+              if(tokens[2] == 0) zOffErr = tokens[4];
             }
             if (iParam == 3) {
               alpha = -tokens[1];
-              //			if(!isFixed) alphaErr	= tokens[4];
+              if(tokens[2] == 0) alphaErr = tokens[4];
             }
             if (iParam == 4) {
               beta = -tokens[1];
-              //			if(!isFixed) betaErr	= tokens[4];
+              if(tokens[2] == 0) betaErr = tokens[4];
             }
             if (iParam == 5) {
               gamma = -tokens[1];
-              //			if(!isFixed) gammaErr	= tokens[4];
+              if(tokens[2] == 0) gammaErr = tokens[4];
             }
           }
         }
 
         // right place to add the constant to the collection
+        // Errors added to the output. Format should be improved, though
         if (goodLine) {
           std::cout << "Alignment on sensor " << sensorID
-                    << " determined to be: xOff: " << xOff << ", yOff: " << yOff
-                    << ", zOff: " << zOff << ", alpha: " << alpha
-                    << ", beta: " << beta << ", gamma: " << gamma << std::endl;
+                    << " determined to be: xOff: " << xOff << " +- " << xOffErr << ", yOff: " << yOff
+                    << " +- " << yOffErr << ", zOff: " << zOff << " +- " << zOffErr << ", alpha: " << alpha
+                    << "+- " << alphaErr << ", beta: " << beta << " +- " << betaErr << ", gamma: " << gamma 
+                    << " +- " << gammaErr << std::endl;
 
           // The old rotation matrix is well defined by GEAR file
           Eigen::Matrix3d rotOld = geo::gGeometry().rotationMatrixFromAngles(sensorID);
@@ -466,6 +460,7 @@ void EUTelPedeGEAR::end() {
               geo::gGeometry().getPlaneYPosition(sensorID),
               geo::gGeometry().getPlaneZPosition(sensorID);
 		
+		// Edo: is this useful somehow or just a residual of old alignment collection?
 		if(_rotateOldOffsetVec) {
 			oldOffset = rotAlign*oldOffset;          
 		}
