@@ -340,8 +340,8 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
   auto tripletVec = std::vector<EUTelTripletGBLUtility::triplet>();
   auto dripletVec = std::vector<EUTelTripletGBLUtility::triplet>();
 
-  gblutil.FindTriplets(_hitsVec, _upstream_triplet_ids, _upTriResCut, _upSlopeCut/1000., tripletVec, false);
-  gblutil.FindTriplets(_hitsVec, _downstream_triplet_ids, _downTriResCut, _downSlopeCut/1000., dripletVec, false);
+  gblutil.FindTriplets(_hitsVec, _upstream_triplet_ids, _upTriResCut, _upSlopeCut/1000., tripletVec, false, true);
+  gblutil.FindTriplets(_hitsVec, _downstream_triplet_ids, _downTriResCut, _downSlopeCut/1000., dripletVec, false, false);
 
   if(_printEventCounter < NO_PRINT_EVENT_COUNTER){
     streamlog_out(DEBUG2)  << "Triplets:\n";
