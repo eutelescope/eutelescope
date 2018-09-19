@@ -185,11 +185,11 @@ void EUTelTripletGBLUtility::bookHistos(){
   
   DUTMatchingResidualX = AIDAProcessor::histogramFactory(parent)->
     createHistogram1D( "Cuts/DUTMatchingResidualCutX", 100, -3, 3 ); //binning to be reviewed
-  DUTMatchingResidualX->setTitle( ";DUT Matching Residual X [mm];Counts" );
+  DUTMatchingResidualX->setTitle( ";DUT Matching Residual local X [mm];Counts" );
   
   DUTMatchingResidualY = AIDAProcessor::histogramFactory(parent)->
     createHistogram1D( "Cuts/DUTMatchingResidualCutY", 100, -3, 3 ); //binning to be reviewed
-  DUTMatchingResidualY->setTitle( ";DUT Matching Residual Y [mm];Counts" );
+  DUTMatchingResidualY->setTitle( ";DUT Matching Residual local Y [mm];Counts" );
   
   DUTHitNumber = AIDAProcessor::histogramFactory(parent)->
     createHistogram1D( "Cuts/DUTHitNumber", 21, -0.5, 20.5 ); //binning to be reviewed
@@ -313,19 +313,25 @@ bool EUTelTripletGBLUtility::AttachDUT(EUTelTripletGBLUtility::triplet & triplet
 
 	auto trX = triplet.getx_at(zPos);
 	auto trY = triplet.gety_at(zPos);
-
-//	std::cout << "Triplet x/y: " << trX << "|" << trY << '\n'; 
-
+	double trglpos[3] = {trX,trY,zPos};
+	double trlocpos[3];
+    geo::gGeometry().master2Local(dutID,trglpos,trlocpos);
+    
 	size_t ix = 0;	
 	for(auto& hit: hits) {
 		if(hit.plane == dutID) {
 			auto hitX = hit.x;
 			auto hitY = hit.y;
-			auto distX = fabs(trX-hitX);
-			auto distY = fabs(trY-hitY);
-			DUTMatchingResidualX->fill(trX-hitX);
-			DUTMatchingResidualY->fill(trY-hitY);
-//			std::cout << "Hit x/y: " << hitX << "|" << hitY << " dist: " << dist << '\n'; 
+			//track and DUT hit positions are transformed in the local coordinate frame of the DUT, where the cuts are applied
+			//it is horrible to convert the hits from global to local, where the latter is actually basically the input of the hitmaker
+			//this is a first step toward a more general refactoring to work mainly in local coordinate systems 
+			double hitglpos[3] = {hitX,hitY,zPos};
+	        double hitlocpos[3];
+            geo::gGeometry().master2Local(dutID,hitglpos,hitlocpos);
+			auto distX = fabs(trlocpos[0]-hitlocpos[0]);
+			auto distY = fabs(trlocpos[1]-hitlocpos[1]);
+			DUTMatchingResidualX->fill(trlocpos[0]-hitlocpos[0]);
+			DUTMatchingResidualY->fill(trlocpos[1]-hitlocpos[1]);
 			if(distX <= dist_cuts.at(0) && distY <= dist_cuts.at(1) && distX < minDist && distY < minDist ){
 				minHitIx = static_cast<int>(ix);
 				DUTHitNumber->fill(dutID);
