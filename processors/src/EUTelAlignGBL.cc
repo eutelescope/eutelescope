@@ -483,7 +483,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
 
         if(_printEventCounter < NO_PRINT_EVENT_COUNTER) streamlog_out(DEBUG2) << "xs = " << xs << "   ys = " << ys << std::endl;
 
-        rx[ipl] = (hit->x - xs); // resid hit-triplet, in micrometer ...
+        rx[ipl] = (hit->x - xs); // resid hit-triplet
         ry[ipl] = (hit->y - ys); // resid
     
         Eigen::Vector2d meas;
@@ -521,8 +521,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
 		  double deltaz = hit->z - _planePosition[ipl];
           // deltaz cannot be zero, otherwise this mode doesn't work
           // 1e-6 in um is quite small
-          if ( deltaz < 1E-6 )
-          {
+          if ( deltaz < 1E-6 ) {
 		     deltaz = 1E-6;
           }
 		  std::vector<int> globalLabels(6);
@@ -800,6 +799,9 @@ void EUTelAlignGBL::end() {
 
       // if fixed planes
       // all the steer writing can be cleaner
+      // Label corresponds to plane ID*10 + X, where X (last digit) is between 1 and 6
+      // 1 = X shift, 2 = Y shift, 3 = Z shift, 4 = ZX rot, 5 = ZY rot, 6 = XY rot
+      // For example, the Z shift of plane 55 will be labelled as 55 * 10 + 3 = 553
       
       if( fixed || (_FixedPlanes.size() == 0 && (ipl == firstnotexcl || ipl == lastnotexcl) ) ) {
         nfix++;
@@ -808,9 +810,9 @@ void EUTelAlignGBL::end() {
           steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0 -1.0" << endl;
         }
         if( _alignMode == Utility::alignMode::XYShiftsRotZ ) {
-          steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0 -1.0" << endl; // fix x
-          steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0 -1.0" << endl; // fix y
-          steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0 -1.0" << endl; // fix rot
+          steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0 -1.0" << endl; 
+          steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0 -1.0" << endl; 
+          steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0 -1.0" << endl; 
         }
         if( _alignMode == Utility::alignMode::XYZShiftsRotZ ) {
           steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0 -1.0" << endl;
