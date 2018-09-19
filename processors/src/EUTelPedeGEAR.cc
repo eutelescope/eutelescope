@@ -70,13 +70,9 @@ EUTelPedeGEAR::EUTelPedeGEAR() : Processor("EUTelPedeGEAR") {
                             "(this is not default!) to overwrite old GEAR file",
                             _GEARFileSuffix, std::string("_aligned"));
 
-  registerOptionalParameter("OffsetScaleFactor",
-                            "Offset scale factor.",
-                            _offsetScaleFactor, 1000);
-
   registerOptionalParameter("RotateOffsetVec",
                             "Apply the obtained rotation to the preexisting offset vector or not..",
-                            _rotateOldOffsetVec, false);
+                            _rotateOldOffsetVec, false); //I don't understand what this is
 
 
 }
@@ -394,12 +390,12 @@ void EUTelPedeGEAR::end() {
           if (_alignMode != Utility::alignMode::XYShiftsAllRot) {
             if (iParam == 0) {
 			  sensorID = (tokens[0] - 1) / 10; // should be done better
-              xOff = tokens[1] / _offsetScaleFactor;
+              xOff = tokens[1];
               //			if(!isFixed) xOffErr	=
               //tokens[4]/1000.;
             }
             if (iParam == 1) {
-              yOff = tokens[1] / _offsetScaleFactor;
+              yOff = tokens[1];
               //			if(!isFixed) yOffErr	=
               //tokens[4]/1000.;
             }
@@ -410,17 +406,17 @@ void EUTelPedeGEAR::end() {
           } else {
             if (iParam == 0) {
 			  sensorID = (tokens[0] - 1) / 10; // should be done better
-              xOff = tokens[1] / _offsetScaleFactor;
+              xOff = tokens[1];
               //			if(!isFixed) xOffErr	=
               //tokens[4]/1000.;
             }
             if (iParam == 1) {
-              yOff = tokens[1] / _offsetScaleFactor;
+              yOff = tokens[1];
               //			if(!isFixed) yOffErr	=
               //tokens[4]/1000.;
             }
             if (iParam == 2) {
-              zOff = tokens[1] / _offsetScaleFactor;
+              zOff = tokens[1];
               //			if(!isFixed) zOffErr	=
               //tokens[4]/1000.;
             }

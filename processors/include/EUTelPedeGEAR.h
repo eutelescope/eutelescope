@@ -111,7 +111,6 @@ namespace eutelescope {
     // set by the user.
     std::string _pedeSteerfileName;
 
-	int _offsetScaleFactor;
 	bool _rotateOldOffsetVec;
 
   private:
