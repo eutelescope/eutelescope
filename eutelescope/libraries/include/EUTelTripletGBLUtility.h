@@ -350,7 +350,7 @@ namespace eutelescope {
       AIDA::IHistogram1D * tripletMatchingResidualY;
       AIDA::IHistogram1D * DUTMatchingResidualX;
       AIDA::IHistogram1D * DUTMatchingResidualY;
-
+      AIDA::IHistogram1D * DUTHitNumber;
   };
 
 }

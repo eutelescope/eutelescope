@@ -190,6 +190,10 @@ void EUTelTripletGBLUtility::bookHistos(){
   DUTMatchingResidualY = AIDAProcessor::histogramFactory(parent)->
     createHistogram1D( "Cuts/DUTMatchingResidualCutY", 100, -3, 3 ); //binning to be reviewed
   DUTMatchingResidualY->setTitle( ";DUT Matching Residual Y [mm];Counts" );
+  
+  DUTHitNumber = AIDAProcessor::histogramFactory(parent)->
+    createHistogram1D( "Cuts/DUTHitNumber", 21, -0.5, 20.5 ); //binning to be reviewed
+  DUTHitNumber->setTitle( ";DUT ID;Number of Hits matched to a track" );
 
 }
 
@@ -324,6 +328,7 @@ bool EUTelTripletGBLUtility::AttachDUT(EUTelTripletGBLUtility::triplet & triplet
 //			std::cout << "Hit x/y: " << hitX << "|" << hitY << " dist: " << dist << '\n'; 
 			if(distX <= dist_cuts.at(0) && distY <= dist_cuts.at(1) && distX < minDist && distY < minDist ){
 				minHitIx = static_cast<int>(ix);
+				DUTHitNumber->fill(dutID);
 				//std::cout << "Dist: " << dist << std::endl;
 			}
 		}
