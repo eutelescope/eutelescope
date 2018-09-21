@@ -240,6 +240,21 @@ void EUTelAlignGBL::init() {
   unsigned int reserveSize = 8000;
   milleAlignGBL = std::make_unique<gbl::MilleBinary>( _binaryFilename, reserveSize );
 
+  streamlog_out( MESSAGE2 ) << "The filename for the binary file is: " << _binaryFilename.c_str() << endl;
+
+  if(_alignModeString.compare("XYShiftsRotZ") == 0 ) {
+    _alignMode = Utility::alignMode::XYShiftsRotZ;
+  } else if( _alignModeString.compare("XYShifts") == 0 ) {
+    _alignMode = Utility::alignMode::XYShifts;
+  } else if( _alignModeString.compare("XYZShiftsRotZ") == 0 ) {
+    _alignMode = Utility::alignMode::XYZShiftsRotZ;
+  } else if( _alignModeString.compare("XYZShiftsRotXYZ") == 0 ) {
+    _alignMode = Utility::alignMode::XYZShiftsRotXYZ;
+  } else {
+    streamlog_out(ERROR) << "The chosen AlignMode: '" << _alignModeString << "' is invalid. Please correct your steering template and retry!" << std::endl;
+    throw InvalidParameterException("AlignMode");
+  }
+  
   //Creating the steering file here in init, since doing it in the end section creates problem with opening it in EUTelPedeGEAR
   if( _generatePedeSteerfile ) {
 
@@ -454,20 +469,6 @@ void EUTelAlignGBL::init() {
 
   } // end if write the pede steering file
 
-  streamlog_out( MESSAGE2 ) << "The filename for the binary file is: " << _binaryFilename.c_str() << endl;
-
-  if(_alignModeString.compare("XYShiftsRotZ") == 0 ) {
-    _alignMode = Utility::alignMode::XYShiftsRotZ;
-  } else if( _alignModeString.compare("XYShifts") == 0 ) {
-    _alignMode = Utility::alignMode::XYShifts;
-  } else if( _alignModeString.compare("XYZShiftsRotZ") == 0 ) {
-    _alignMode = Utility::alignMode::XYZShiftsRotZ;
-  } else if( _alignModeString.compare("XYZShiftsRotXYZ") == 0 ) {
-    _alignMode = Utility::alignMode::XYZShiftsRotXYZ;
-  } else {
-    streamlog_out(ERROR) << "The chosen AlignMode: '" << _alignModeString << "' is invalid. Please correct your steering template and retry!" << std::endl;
-    throw InvalidParameterException("AlignMode");
-  }
   streamlog_out( MESSAGE2 ) << "end of init" << endl;
 }
 
