@@ -430,11 +430,13 @@ void EUTelPedeGEAR::end() {
         // right place to add the constant to the collection
         // Errors added to the output. Format should be improved, though
         if (goodLine) {
-          std::cout << "Alignment on sensor " << sensorID
-                    << " determined to be: xOff: " << xOff << " +- " << xOffErr << ", yOff: " << yOff
-                    << " +- " << yOffErr << ", zOff: " << zOff << " +- " << zOffErr << ", alpha: " << alpha
-                    << "+- " << alphaErr << ", beta: " << beta << " +- " << betaErr << ", gamma: " << gamma 
-                    << " +- " << gammaErr << std::endl;
+          std::cout << "Alignment on sensor " << sensorID << " determined to be: " << std::endl
+                    << "xOff: " << xOff << " +- " << xOffErr << std::endl
+                    << "yOff: " << yOff << " +- " << yOffErr << std::endl
+                    << "zOff: " << zOff << " +- " << zOffErr << std::endl
+                    << "alpha: " << alpha << "+- " << alphaErr << std::endl
+                    << "beta: " << beta << " +- " << betaErr << std::endl
+                    << "gamma: " << gamma  << " +- " << gammaErr << std::endl;
 
           // The old rotation matrix is well defined by GEAR file
           Eigen::Matrix3d rotOld = geo::gGeometry().rotationMatrixFromAngles(sensorID);
