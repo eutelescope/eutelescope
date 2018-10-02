@@ -151,7 +151,7 @@ namespace eutelescope {
 
       std::vector<int> _FixParameter;
 
-      int _generatePedeSteerfile;
+      int _performAlignment;
       std::string _pedeSteerfileName;
 
       EUTelTripletGBLUtility gblutil;

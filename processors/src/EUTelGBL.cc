@@ -100,6 +100,7 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelGBL") {
                               "\n\t\tXYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis"
                               "\n\t\tXYZShiftsRotXYZ - all shifts and rotations allowed",
                               _alignModeString, std::string{ "XYShiftsRotZ" });
+  registerOptionalParameter("performAlignment","Set to 0 if you do not want to perform the alignment",_performAlignment, 1);
   registerOptionalParameter("fixedXShift","List of planes which should be fixed in X direction",_FixedXShift ,std::vector<int>());
   registerOptionalParameter("fixedYShift","List of planes which should be fixed in Y direction",_FixedYShift ,std::vector<int>());
   registerOptionalParameter("fixedZShift","List of planes which should be fixed in Z direction",_FixedZShift ,std::vector<int>());
@@ -114,7 +115,6 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelGBL") {
   registerOptionalParameter("DUTCuts", "Cuts in x and y for matching DUT hits [mm]", _DUTCuts, std::vector<float>{1.,1.});
   registerOptionalParameter("zMid", "Z Position used for triplet matching (default to center between end of first triplet and start of second triplet)", _zMid, -1.0);
   registerOptionalParameter("chi2Cut", "Cut on the chi2 for the tracks to be passed to Millepede", _chi2cut, 0.001);
-  registerOptionalParameter("generatePedeSteerfile","Generate a steering file for the pede program",_generatePedeSteerfile, 0);
   registerOptionalParameter("pedeSteerfileName","Name of the steering file for the pede program",_pedeSteerfileName, std::string{"steer_mille.txt"});
   registerProcessorParameter("kappa","Global factor to Highland formula, 1.0 means HL as is, 1.2 means 20/% additional scattering", _kappa, 1.0);
 }
@@ -249,29 +249,29 @@ void EUTelAlignGBL::init() {
   gblutil.setParent(this);
   gblutil.bookHistos();
   
-  streamlog_out( MESSAGE2 ) << "Initialising Mille..." << endl;
+  // to be used only during alignment
+  if(_performAlignment){ 
+    streamlog_out( MESSAGE2 ) << "Initialising Mille..." << endl;
 
-  unsigned int reserveSize = 8000;
-  milleAlignGBL = std::make_unique<gbl::MilleBinary>( _binaryFilename, reserveSize );
+    unsigned int reserveSize = 8000;
+    milleAlignGBL = std::make_unique<gbl::MilleBinary>( _binaryFilename, reserveSize );
 
-  streamlog_out( MESSAGE2 ) << "The filename for the binary file is: " << _binaryFilename.c_str() << endl;
+    streamlog_out( MESSAGE2 ) << "The filename for the binary file is: " << _binaryFilename.c_str() << endl;
 
-  if(_alignModeString.compare("XYShiftsRotZ") == 0 ) {
-    _alignMode = Utility::alignMode::XYShiftsRotZ;
-  } else if( _alignModeString.compare("XYShifts") == 0 ) {
-    _alignMode = Utility::alignMode::XYShifts;
-  } else if( _alignModeString.compare("XYZShiftsRotZ") == 0 ) {
-    _alignMode = Utility::alignMode::XYZShiftsRotZ;
-  } else if( _alignModeString.compare("XYZShiftsRotXYZ") == 0 ) {
-    _alignMode = Utility::alignMode::XYZShiftsRotXYZ;
-  } else {
-    streamlog_out(ERROR) << "The chosen AlignMode: '" << _alignModeString << "' is invalid. Please correct your steering template and retry!" << std::endl;
-    throw InvalidParameterException("AlignMode");
-  }
+    if(_alignModeString.compare("XYShiftsRotZ") == 0 ) {
+      _alignMode = Utility::alignMode::XYShiftsRotZ;
+    } else if( _alignModeString.compare("XYShifts") == 0 ) {
+      _alignMode = Utility::alignMode::XYShifts;
+    } else if( _alignModeString.compare("XYZShiftsRotZ") == 0 ) {
+      _alignMode = Utility::alignMode::XYZShiftsRotZ;
+    } else if( _alignModeString.compare("XYZShiftsRotXYZ") == 0 ) {
+      _alignMode = Utility::alignMode::XYZShiftsRotXYZ;
+    } else {
+      streamlog_out(ERROR) << "The chosen AlignMode: '" << _alignModeString << "' is invalid. Please correct your steering template and retry!" << std::endl;
+      throw InvalidParameterException("AlignMode");
+    }
   
-  //Creating the steering file here in init, since doing it in the end section creates problem with opening it in EUTelPedeGEAR
-  if( _generatePedeSteerfile ) {
-
+    //Creating the steering file here in init, since doing it in the end section creates problem with opening it in EUTelPedeGEAR
     streamlog_out( MESSAGE4 ) << "Generating the steering file for the pede program..." << endl;
 
     ofstream steerFile;
@@ -480,9 +480,10 @@ void EUTelAlignGBL::init() {
     else {
       streamlog_out( ERROR2 ) << "Could not open steering file." << endl;
     }
-
-  } // end if write the pede steering file
-
+  
+  // end writing the pede steering file
+  }
+  
   streamlog_out( MESSAGE2 ) << "end of init" << endl;
 }
 
@@ -634,39 +635,43 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
 
     if(_printEventCounter < NO_PRINT_EVENT_COUNTER) streamlog_out(DEBUG2) << "Track has " << DUThits.size() << " DUT hits\n";
 
+  // to be used only during alignment. Matrix defined outside if clause to avoid complaints from compiler. Could be done better
     Eigen::Matrix2d alDer2; // alignment derivatives
-    alDer2(0,0) = 1.0; // dx/dx GBL sign convetion
-    alDer2(1,0) = 0.0; // dy/dx
-    alDer2(0,1) = 0.0; // dx/dy
-    alDer2(1,1) = 1.0; // dy/dy
-
     Eigen::Matrix<double,2,3> alDer3; // alignment derivatives
-    alDer3(0,0) = 1.0; // dx/dx
-    alDer3(1,0) = 0.0; // dy/dx
-    alDer3(0,1) = 0.0; // dx/dy
-    alDer3(1,1) = 1.0; // dy/dy
-
     Eigen::Matrix<double, 2,4> alDer4; // alignment derivatives
-    alDer4(0,0) = 1.0; // dx/dx
-    alDer4(1,0) = 0.0; // dy/dx
-    alDer4(0,1) = 0.0; // dx/dy
-    alDer4(1,1) = 1.0; // dy/dy
-    alDer4(0,3) = triSlope.x; // dx/dz
-    alDer4(1,3) = triSlope.y; // dx/dz
-    
     Eigen::Matrix<double, 3,6> alDer6; // alignment derivatives
-    alDer6 ( 0, 0 ) = 1.0; // dx/dx
-	alDer6 ( 0, 1 ) = 0.0; // dx/dy
-	alDer6 ( 0, 2 ) = triSlope.x; // dx/dz
-	alDer6 ( 0, 3 ) = 0.0; // dx/da
-	alDer6 ( 1, 0 ) = 0.0; // dy/dx
-	alDer6 ( 1, 1 ) = 1.0; // dy/dy
-    alDer6 ( 1, 2 ) = triSlope.y; // dy/dz
-	alDer6 ( 1, 4 ) = 0.0; // dy/db
-    alDer6 ( 2, 0 ) = 0.0; // dz/dx
-	alDer6 ( 2, 1 ) = 0.0; // dz/dy
-	alDer6 ( 2, 2 ) = 1.0; // dz/dz
-	alDer6 ( 2, 5 ) = 0.0; // dz/dg
+    
+    if(_performAlignment){ 
+      alDer2(0,0) = 1.0; // dx/dx GBL sign convetion
+      alDer2(1,0) = 0.0; // dy/dx
+      alDer2(0,1) = 0.0; // dx/dy
+      alDer2(1,1) = 1.0; // dy/dy
+
+      alDer3(0,0) = 1.0; // dx/dx
+      alDer3(1,0) = 0.0; // dy/dx
+      alDer3(0,1) = 0.0; // dx/dy
+      alDer3(1,1) = 1.0; // dy/dy
+
+      alDer4(0,0) = 1.0; // dx/dx
+      alDer4(1,0) = 0.0; // dy/dx
+      alDer4(0,1) = 0.0; // dx/dy
+      alDer4(1,1) = 1.0; // dy/dy
+      alDer4(0,3) = triSlope.x; // dx/dz
+      alDer4(1,3) = triSlope.y; // dx/dz
+    
+      alDer6 ( 0, 0 ) = 1.0; // dx/dx
+	  alDer6 ( 0, 1 ) = 0.0; // dx/dy
+	  alDer6 ( 0, 2 ) = triSlope.x; // dx/dz
+	  alDer6 ( 0, 3 ) = 0.0; // dx/da
+	  alDer6 ( 1, 0 ) = 0.0; // dy/dx
+	  alDer6 ( 1, 1 ) = 1.0; // dy/dy
+      alDer6 ( 1, 2 ) = triSlope.y; // dy/dz
+	  alDer6 ( 1, 4 ) = 0.0; // dy/db
+      alDer6 ( 2, 0 ) = 0.0; // dz/dx
+	  alDer6 ( 2, 1 ) = 0.0; // dz/dy
+	  alDer6 ( 2, 2 ) = 1.0; // dz/dz
+	  alDer6 ( 2, 5 ) = 0.0; // dz/dg
+    }
 	
     std::vector<double> rx (_nPlanes, -1.0);
     std::vector<double> ry (_nPlanes, -1.0);
@@ -711,55 +716,58 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
         meas[0] = rx[ipl]; // fill meas vector for GBL
         meas[1] = ry[ipl];
         point.addMeasurement( proL2m, meas, _planeMeasPrec[ipl] );
-
-        if( _alignMode == Utility::alignMode::XYShifts ) { // only x and y shifts
-          // global labels for MP:
-          std::vector<int> globalLabels(2);
-          globalLabels[0] = _sensorIDVec[ipl] * 10 + 1;
-          globalLabels[1] = _sensorIDVec[ipl] * 10 + 2;
-          point.addGlobals( globalLabels, alDer2 ); // for MillePede alignment
-        }
-        else if( _alignMode == Utility::alignMode::XYShiftsRotZ ) { // with rot
-          std::vector<int> globalLabels(3);
-          globalLabels[0] = _sensorIDVec[ipl] * 10 + 1; // x
-          globalLabels[1] = _sensorIDVec[ipl] * 10 + 2; // y
-          globalLabels[2] = _sensorIDVec[ipl] * 10 + 3; // rot
-          alDer3(0,2) = -ys; // dx/dphi
-          alDer3(1,2) =  xs; // dy/dphi
-          point.addGlobals( globalLabels, alDer3 ); // for MillePede alignment
-        }
-        else if( _alignMode == Utility::alignMode::XYZShiftsRotZ ) { // with rot and z shift
-          std::vector<int> globalLabels(4);
-          globalLabels[0] = _sensorIDVec[ipl] * 10 + 1;
-          globalLabels[1] = _sensorIDVec[ipl] * 10 + 2;
-          globalLabels[2] = _sensorIDVec[ipl] * 10 + 3;
-          globalLabels[3] = _sensorIDVec[ipl] * 10 + 4; // z
-          alDer4(0,2) = -ys; // dx/dphi
-          alDer4(1,2) =  xs; // dy/dphi
-          point.addGlobals( globalLabels, alDer4 ); // for MillePede alignment
-        }
-        else if( _alignMode == Utility::alignMode::XYZShiftsRotXYZ ) { // everything
-		  double deltaz = hit->z - _planePosition[ipl];
-          // deltaz cannot be zero, otherwise this mode doesn't work
-          // 1e-6 in um is quite small
-          if ( deltaz < 1E-6 ) {
-		     deltaz = 1E-6;
+        
+        // to be used only during alignment
+        if(_performAlignment){ 
+          if( _alignMode == Utility::alignMode::XYShifts ) { // only x and y shifts
+            // global labels for MP:
+            std::vector<int> globalLabels(2);
+            globalLabels[0] = _sensorIDVec[ipl] * 10 + 1;
+            globalLabels[1] = _sensorIDVec[ipl] * 10 + 2;
+            point.addGlobals( globalLabels, alDer2 ); // for MillePede alignment
           }
-		  std::vector<int> globalLabels(6);
-          globalLabels[0] = _sensorIDVec[ipl] * 10 + 1;
-          globalLabels[1] = _sensorIDVec[ipl] * 10 + 2;
-          globalLabels[2] = _sensorIDVec[ipl] * 10 + 3;
-          globalLabels[3] = _sensorIDVec[ipl] * 10 + 4;
-          globalLabels[4] = _sensorIDVec[ipl] * 10 + 5;
-          globalLabels[5] = _sensorIDVec[ipl] * 10 + 6;
-          alDer6 ( 0, 4 ) = deltaz; // dx/db
-          alDer6 ( 0, 5 ) = -ys; // dx/dg
-          alDer6 ( 1, 3 ) = -deltaz; // dy/da
-          alDer6 ( 1, 5 ) = xs; // dy/dg
-          alDer6 ( 2, 3 ) = ys; // dz/da
-          alDer6 ( 2, 4 ) = -xs; // dz/db
-          point.addGlobals( globalLabels, alDer6 ); // for MillePede alignment
-		}
+          else if( _alignMode == Utility::alignMode::XYShiftsRotZ ) { // with rot
+            std::vector<int> globalLabels(3);
+            globalLabels[0] = _sensorIDVec[ipl] * 10 + 1; // x
+            globalLabels[1] = _sensorIDVec[ipl] * 10 + 2; // y
+            globalLabels[2] = _sensorIDVec[ipl] * 10 + 3; // rot
+            alDer3(0,2) = -ys; // dx/dphi
+            alDer3(1,2) =  xs; // dy/dphi
+            point.addGlobals( globalLabels, alDer3 ); // for MillePede alignment
+          }
+          else if( _alignMode == Utility::alignMode::XYZShiftsRotZ ) { // with rot and z shift
+            std::vector<int> globalLabels(4);
+            globalLabels[0] = _sensorIDVec[ipl] * 10 + 1;
+            globalLabels[1] = _sensorIDVec[ipl] * 10 + 2;
+            globalLabels[2] = _sensorIDVec[ipl] * 10 + 3;
+            globalLabels[3] = _sensorIDVec[ipl] * 10 + 4; // z
+            alDer4(0,2) = -ys; // dx/dphi
+            alDer4(1,2) =  xs; // dy/dphi
+            point.addGlobals( globalLabels, alDer4 ); // for MillePede alignment
+          }
+          else if( _alignMode == Utility::alignMode::XYZShiftsRotXYZ ) { // everything
+		    double deltaz = hit->z - _planePosition[ipl];
+            // deltaz cannot be zero, otherwise this mode doesn't work
+            // 1e-9 in mm is quite small
+            if ( deltaz < 1E-9 ) {
+		       deltaz = 1E-9;
+            }
+		    std::vector<int> globalLabels(6);
+            globalLabels[0] = _sensorIDVec[ipl] * 10 + 1;
+            globalLabels[1] = _sensorIDVec[ipl] * 10 + 2;
+            globalLabels[2] = _sensorIDVec[ipl] * 10 + 3;
+            globalLabels[3] = _sensorIDVec[ipl] * 10 + 4;
+            globalLabels[4] = _sensorIDVec[ipl] * 10 + 5;
+            globalLabels[5] = _sensorIDVec[ipl] * 10 + 6;
+            alDer6 ( 0, 4 ) = deltaz; // dx/db
+            alDer6 ( 0, 5 ) = -ys; // dx/dg
+            alDer6 ( 1, 3 ) = -deltaz; // dy/da
+            alDer6 ( 1, 5 ) = xs; // dy/dg
+            alDer6 ( 2, 3 ) = ys; // dz/da
+            alDer6 ( 2, 4 ) = -xs; // dz/db
+            point.addGlobals( globalLabels, alDer6 ); // for MillePede alignment
+		  }
+	    }
       }
 
       point.addScatterer( scat, _planeWscatSi[ipl] );
@@ -936,13 +944,16 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
       gblKinkYHist[ix]->fill( (ay[ix+1] - ay[ix])*1E3 ); // kink at planes [mrad]
     }
 
-    // do not pass very bad tracks to mille
-    if(probchi > _chi2cut) {
-        traj.milleOut( *milleAlignGBL );
-           nm++;
+    // do not pass very bad tracks to mille. Only if the alignment is performed
+    if(_performAlignment){
+      if(probchi > _chi2cut) {
+          traj.milleOut( *milleAlignGBL );
+          nm++;
+      }
     }
+    
   }
-  nmHistGBLAlign->fill( nm );
+  nmHistGBLAlign->fill( nm ); // Edo: nm calculation should be fixed (and the name of the variable should be changed)
   _nMilleTracks += nm;
 
   // count events:
