@@ -20,7 +20,7 @@
       <processor name="HitLocalToGlobal"/>
       <processor name="PedeToGEAR"/>
       <!--processor name="MyEUTelMilleGBL"/-->
-      <processor name="EUTelAlignGBL"/>
+      <processor name="EUTelGBL"/>
    </execute>
 
    <global>
@@ -79,7 +79,7 @@
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
 </processor>
 
- <processor name="EUTelAlignGBL" type="EUTelAlignGBL">
+ <processor name="EUTelGBL" type="EUTelGBL">
  <!--EUTelAlignGBL uses the MILLE program to write data files for MILLEPEDE II.-->
   <!--Number of alignment constants used. Available mode are: 
 XYZShifts - shifts in X and Y
