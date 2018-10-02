@@ -128,6 +128,7 @@ namespace eutelescope {
       std::vector<int> _FixedYRot;
       std::vector<int> _FixedZRot;
       
+      double _zMid;
       double _eBeam;
 
       double _upTriResCut;

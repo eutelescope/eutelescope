@@ -112,6 +112,7 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelGBL") {
   registerOptionalParameter("downstreamTripletSlopeCut", "Downstream triplet slope cut [mrad]", _downSlopeCut, 5.);
   registerOptionalParameter("tripletsMatchingCut", "Upstream-downstream triplet matching cut [mm]", _upDownTripletMatchCut, 0.60);
   registerOptionalParameter("DUTCuts", "Cuts in x and y for matching DUT hits [mm]", _DUTCuts, std::vector<float>{1.,1.});
+  registerOptionalParameter("zMid", "Z Position used for triplet matching (default to center between end of first triplet and start of second triplet)", _zMid, -1.0);
   registerOptionalParameter("chi2Cut", "Cut on the chi2 for the tracks to be passed to Millepede", _chi2cut, 0.001);
   registerOptionalParameter("generatePedeSteerfile","Generate a steering file for the pede program",_generatePedeSteerfile, 0);
   registerOptionalParameter("pedeSteerfileName","Name of the steering file for the pede program",_pedeSteerfileName, std::string{"steer_mille.txt"});
@@ -213,6 +214,19 @@ void EUTelAlignGBL::init() {
     }
   }
 
+  // Center of triplets calculation
+  if(_zMid < 0 ){
+	double zEndUpstreamTriplet = 0;
+    double zStartDownstreamTriplet = 0;
+    for (size_t ipl = 0; ipl < _nPlanes; ipl++){
+	  if(_sensorIDVec[ipl] == _upstream_triplet_ids.at(2)) zEndUpstreamTriplet=_planePosition[ipl];
+      else if(_sensorIDVec[ipl] == _downstream_triplet_ids.at(0)) zStartDownstreamTriplet=_planePosition[ipl];
+    }
+    _zMid = 0.5*(zEndUpstreamTriplet + zStartDownstreamTriplet);
+  }
+  
+  streamlog_out( MESSAGE4 ) << "Extrapolated tracks from the triplets will be matched in z position = " << _zMid << endl;
+
   // this method is called only once even when the rewind is active
   // usually a good idea to
   printParameters ();
@@ -258,7 +272,7 @@ void EUTelAlignGBL::init() {
   //Creating the steering file here in init, since doing it in the end section creates problem with opening it in EUTelPedeGEAR
   if( _generatePedeSteerfile ) {
 
-    streamlog_out( MESSAGE4 ) << endl << "Generating the steering file for the pede program..." << endl;
+    streamlog_out( MESSAGE4 ) << "Generating the steering file for the pede program..." << endl;
 
     ofstream steerFile;
     steerFile.open(_pedeSteerfileName.c_str());
@@ -572,16 +586,8 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
   ntriHistGBLAlign->fill( tripletVec.size()  );
   ndriHistGBLAlign->fill( dripletVec.size() );
 
-  double zEndUpstreamTriplet = 0;
-  double zStartDownstreamTriplet = 0;
-  for (size_t ipl = 0; ipl < _nPlanes; ipl++){
-	if(_sensorIDVec[ipl] == _upstream_triplet_ids.at(2)) zEndUpstreamTriplet=_planePosition[ipl];
-    else if(_sensorIDVec[ipl] == _downstream_triplet_ids.at(0)) zStartDownstreamTriplet=_planePosition[ipl];
-  }
-
-  double zMid = 0.5*(zEndUpstreamTriplet + zStartDownstreamTriplet);
   auto matchedTripletVec = std::vector<EUTelTripletGBLUtility::track>();
-  gblutil.MatchTriplets(tripletVec, dripletVec, zMid, _upDownTripletMatchCut, matchedTripletVec);
+  gblutil.MatchTriplets(tripletVec, dripletVec, _zMid, _upDownTripletMatchCut, matchedTripletVec);
 
   if(_printEventCounter < NO_PRINT_EVENT_COUNTER) streamlog_out(DEBUG2) << "Matched to:\n"; 
 
@@ -781,10 +787,10 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
     } // loop over planes
 
     // monitor what we put into GBL:
-    double xA = triplet.getx_at(zMid);
-    double yA = triplet.gety_at(zMid);
-    double xB = driplet.getx_at(zMid);
-    double yB = driplet.gety_at(zMid);
+    double xA = triplet.getx_at(_zMid);
+    double yA = triplet.gety_at(_zMid);
+    double xB = driplet.getx_at(_zMid);
+    double yB = driplet.gety_at(_zMid);
 
     selxHistGBLAlign->fill( xA ); // triplet at mid
     selyHistGBLAlign->fill( yA );
