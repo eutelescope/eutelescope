@@ -134,13 +134,9 @@ void EUTelAlignGBL::init() {
     _planePosition.emplace_back( geo::gGeometry().getPlaneZPosition(sensorID) );
     auto z = geo::gGeometry().getPlaneZSize(sensorID);
     auto rad = geo::gGeometry().getPlaneRadiationLength(sensorID);
-    if(sensorID < 6) {
-        _planeRadLength.emplace_back(55e-3 / 93.66 + 0.050 / 286.6); // Si + Kapton
-    } else {
-        _planeRadLength.emplace_back(z/rad);
-    }
-    //Since we go along z-ordering, we can decide if a sensor still is associated to the up-
-    //or downstream triplet
+    _planeRadLength.emplace_back(z/rad);
+    
+    //Since we go along z-ordering, we can decide if a sensor still is associated to the up or downstream triplet
     _is_sensor_upstream[sensorID] = isStillUpstream;
     if(sensorID == _last_upstream_sensor) {
        isStillUpstream = false;
