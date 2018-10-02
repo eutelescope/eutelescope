@@ -216,7 +216,7 @@ void EUTelAlignGBL::init() {
 
   // Center of triplets calculation
   if(_zMid < 0 ){
-	double zEndUpstreamTriplet = 0;
+    double zEndUpstreamTriplet = 0;
     double zStartDownstreamTriplet = 0;
     for (size_t ipl = 0; ipl < _nPlanes; ipl++){
 	  if(_sensorIDVec[ipl] == _upstream_triplet_ids.at(2)) zEndUpstreamTriplet=_planePosition[ipl];
@@ -846,7 +846,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
     //cout << " chi2 " << Chi2 << ", ndf " << Ndf << endl;
 
     gblndfHistGBLAlign->fill( Ndf );
-    gblchi2HistGBLAlign->fill( Chi2 );
+    gblchi2HistGBLAlign->fill( Chi2 / Ndf );
     double probchi = TMath::Prob( Chi2, Ndf );
     gblprbHistGBLAlign->fill( probchi );
 
@@ -1030,7 +1030,7 @@ void EUTelAlignGBL::bookHistos(std::vector<int> const & sensorIDVec) {
 
     gblchi2HistGBLAlign = AIDAProcessor::histogramFactory(this)->
       createHistogram1D( "gblchi2", 100, 0, 100 );
-    gblchi2HistGBLAlign->setTitle( "GBL fit chi2;GBL chi2;tracks" );
+    gblchi2HistGBLAlign->setTitle( "GBL fit chi2 / degrees of freedom ;GBL chi2 / Ndf ;tracks" );
 
     gblprbHistGBLAlign = AIDAProcessor::histogramFactory(this)->
       createHistogram1D( "gblprb", 100, 0, 1 );

@@ -111,11 +111,6 @@ void EUTelTripletGBLUtility::bookHistos(){
     createHistogram2D( "GBLUtility/sixxyc", 240, -12, 12, 120, -6, 6 );
   sixxycHisto->setTitle( "six large kink;six x_{out} at DUT [mm];six y_{up} at DUT [mm];large kink tracks" );
 
-  /*sixxylkHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram2D( "GBLUtilityTracks/sixxylk", 240, -12, 12, 120, -6, 6 );
-  sixxylkHisto->setTitle( "six with REF link at DUT;six x_{out} at DUT [mm];six y_{up} at DUT [mm];six-plane tracks with REF link" );
-  */
-
   kinkxvsxy = AIDAProcessor::histogramFactory(parent)->
     createProfile2D( "GBLUtility/kinkxvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
   kinkxvsxy->setTitle( "kink x;six x_{out} at DUT [mm];six y_{up} at DUT [mm];sqrt(<kink^{2}>) [mrad]" );
