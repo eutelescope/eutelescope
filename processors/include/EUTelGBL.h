@@ -221,30 +221,6 @@ namespace eutelescope {
     AIDA::IHistogram1D * gblchi2HistGBLAlign;
     AIDA::IHistogram1D * gblprbHistGBLAlign;
 
-    //Bad Tracks
-    AIDA::IHistogram1D * badxHistGBLAlign;
-    AIDA::IHistogram1D * badyHistGBLAlign;
-    AIDA::IHistogram1D * badaxHistGBLAlign;
-    AIDA::IHistogram1D * badayHistGBLAlign;
-    AIDA::IHistogram1D * baddxHistGBLAlign;
-    AIDA::IHistogram1D * baddyHistGBLAlign;
-    AIDA::IHistogram1D * badkxHistGBLAlign;
-    AIDA::IHistogram1D * badkyHistGBLAlign;
-    std::vector<AIDA::IHistogram1D*> baddxSensorHistGBLAlign;
-    std::vector<AIDA::IHistogram1D*> baddySensorHistGBLAlign;
-
-    //Good Tracks
-    AIDA::IHistogram1D * goodxHistGBLAlign;
-    AIDA::IHistogram1D * goodyHistGBLAlign;
-    AIDA::IHistogram1D * goodaxHistGBLAlign;
-    AIDA::IHistogram1D * goodayHistGBLAlign;
-    AIDA::IHistogram1D * gooddxHistGBLAlign;
-    AIDA::IHistogram1D * gooddyHistGBLAlign;
-    AIDA::IHistogram1D * goodkxHistGBLAlign;
-    AIDA::IHistogram1D * goodkyHistGBLAlign;
-    std::vector<AIDA::IHistogram1D*> gooddxSensorHistGBLAlign;
-    std::vector<AIDA::IHistogram1D*> gooddySensorHistGBLAlign;
-
     std::vector<AIDA::IHistogram1D*> gblAxHist;
     std::vector<AIDA::IHistogram1D*> gblAyHist;
 
@@ -260,7 +236,7 @@ namespace eutelescope {
     std::vector<AIDA::IHistogram1D*> gblKinkXHist;
     std::vector<AIDA::IHistogram1D*> gblKinkYHist;
 
-    AIDA::IHistogram1D * nmHistGBLAlign;
+    AIDA::IHistogram1D * ntracksperevent;
 #endif
 
 

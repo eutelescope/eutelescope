@@ -566,7 +566,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
     } // end loop over all hits in given collection
   }//loop over all input hit collection
 
-  int nm = 0;
+  int numbertracks = 0;
   auto tripletVec = std::vector<EUTelTripletGBLUtility::triplet>();
   auto dripletVec = std::vector<EUTelTripletGBLUtility::triplet>();
 
@@ -858,47 +858,6 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
     double probchi = TMath::Prob( Chi2, Ndf );
     gblprbHistGBLAlign->fill( probchi );
 
-    // bad fits:
-    if( probchi < _chi2cut ) {
-      badxHistGBLAlign->fill( xA ); // triplet at DUT
-      badyHistGBLAlign->fill( yA );
-      badaxHistGBLAlign->fill( triSlope.x*1E3 );
-      badayHistGBLAlign->fill( triSlope.y*1E3 );
-      baddxHistGBLAlign->fill( (xB-xA)*1E3 ); // triplet-driplet match
-      baddyHistGBLAlign->fill( (yB-yA)*1E3 );
-      badkxHistGBLAlign->fill( track.kink_x()*1E3 ); // triplet-driplet kink
-      badkyHistGBLAlign->fill( track.kink_y()*1E3 );
-
-      //We need to fill the interpolation to plane 1 and extrapolation to 3, 4, 5 (6, 7, 8, ...)
-      baddxSensorHistGBLAlign.at(0)->fill( rx[1]*1E3 );
-      baddySensorHistGBLAlign.at(0)->fill( ry[1]*1E3 );
-      for(size_t ipl = 3; ipl < _nPlanes; ++ipl) {
-        if(hasHit[ipl]){
-          baddxSensorHistGBLAlign.at(ipl-2)->fill( rx[ipl]*1E3 );
-          baddySensorHistGBLAlign.at(ipl-2)->fill( ry[ipl]*1E3 );
-        }
-      }
-    } else {
-      goodxHistGBLAlign->fill( xA ); // triplet at DUT
-      goodyHistGBLAlign->fill( yA );
-      goodaxHistGBLAlign->fill( triSlope.x*1E3 );
-      goodayHistGBLAlign->fill( triSlope.y*1E3 );
-      gooddxHistGBLAlign->fill( (xB-xA)*1E3 ); // triplet-driplet match
-      gooddyHistGBLAlign->fill( (yB-yA)*1E3 );
-      goodkxHistGBLAlign->fill( track.kink_x()*1E3 ); // triplet-driplet kink
-      goodkyHistGBLAlign->fill( track.kink_y()*1E3 );
-
-      //We need to fill the interpolation to plane 1 and extrapolation to 3, 4, 5 (6, 7, 8, ...)
-      gooddxSensorHistGBLAlign.at(0)->fill( rx[1]*1E3 );
-      gooddySensorHistGBLAlign.at(0)->fill( ry[1]*1E3 );
-      for(size_t ipl = 3; ipl < _nPlanes; ++ipl) {
-        if(hasHit[ipl]){
-          gooddxSensorHistGBLAlign.at(ipl-2)->fill( rx[ipl]*1E3 );
-          gooddySensorHistGBLAlign.at(ipl-2)->fill( ry[ipl]*1E3 );
-        }
-      }
-    } // OK fit
-
     // look at fit:
     Eigen::VectorXd localPar;
     Eigen::MatrixXd localCov;
@@ -948,13 +907,13 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
     if(_performAlignment){
       if(probchi > _chi2cut) {
           traj.milleOut( *milleAlignGBL );
-          nm++;
+            _nMilleTracks ++;
       }
     }
+    numbertracks++;
     
   }
-  nmHistGBLAlign->fill( nm ); // Edo: nm calculation should be fixed (and the name of the variable should be changed)
-  _nMilleTracks += nm;
+  ntracksperevent->fill( numbertracks );
 
   // count events:
   ++_iEvt;
@@ -1047,110 +1006,6 @@ void EUTelAlignGBL::bookHistos(std::vector<int> const & sensorIDVec) {
       createHistogram1D( "gblprb", 100, 0, 1 );
     gblprbHistGBLAlign->setTitle( "GBL fit probability;GBL fit probability;tracks" );
 
-    // bad fits:
-    AIDAProcessor::tree(this)->mkdir("BadTracks");
-    badxHistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "BadTracks/badx", 150, -15, 15 );
-    badxHistGBLAlign->setTitle( "extrapolated triplet x at triplet matching point, bad GBL;x [mm];tracks" );
-
-    badyHistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "BadTracks/bady", 100, -10, 10 );
-    badyHistGBLAlign->setTitle( "extrapolated triplet y at triplet matching point, bad GBL;y [mm];tracks" );
-
-    badaxHistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "BadTracks/badax", 100, -25, 25 );
-    badaxHistGBLAlign->setTitle( "track angle x, bad GBL;x angle [mrad];tracks" );
-
-    badayHistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "BadTracks/baday", 100, -25, 25 );
-    badayHistGBLAlign->setTitle( "track angle y, bad GBL;y angle [mrad];tracks" );
-
-    baddxHistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "BadTracks/baddx", 100, -5000, 5000 );
-    baddxHistGBLAlign->setTitle( "driplet-triplet x residual at matching point, bad GBL;#Deltax [#mum];tracks" );
-
-    baddyHistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "BadTracks/baddy", 100, -5000, 5000 );
-    baddyHistGBLAlign->setTitle( "driplet-triplet y residual at matching point, bad GBL;#Deltay [#mum];tracks" );
-
-    badkxHistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "BadTracks/badkx", 100, -25, 25 );
-    badkxHistGBLAlign->setTitle( "triplet-driplet kink x, bad GBL;kink x [mrad];tracks" );
-
-    badkyHistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "BadTracks/badky", 100, -25, 25 );
-    badkyHistGBLAlign->setTitle( "triplet-driplet kink y, bad GBL;kink y [mrad];tracks" );
-
-
-    AIDAProcessor::tree(this)->mkdir("BadTracks/Residuals");
-    //Preparing the Triplet interpolation to plane 1 and extrapolation to all planes but 0 & 2 (which are)
-    //the ones the triplet was constructed from
-    for(size_t ix = 1; ix < sensorIDVec.size(); ++ix) {
-      if(ix == 2) continue;
-      auto sensorIdString = std::to_string(sensorIDVec[ix]);
-      std::string histNameSelX = "BadTracks/Residuals/baddx"+sensorIdString;
-      std::string histNameSelY = "BadTracks/Residuals/baddy"+sensorIdString;
-
-      baddxSensorHistGBLAlign.push_back(AIDAProcessor::histogramFactory(this)->
-        createHistogram1D( histNameSelX, 100, -1000, 1000 ));
-      baddxSensorHistGBLAlign.back()->setTitle( "triplet resid x at "+sensorIdString+", bad GBL;#Deltax [#mum];tracks" );
-
-      baddySensorHistGBLAlign.push_back(AIDAProcessor::histogramFactory(this)->
-        createHistogram1D( histNameSelY, 100, -1000, 1000 ));
-      baddySensorHistGBLAlign.back()->setTitle( "triplet resid y at "+sensorIdString+", bad GBL;#Deltay [#mum];tracks" );
-    }
-
-    // good fits:
-    AIDAProcessor::tree(this)->mkdir("GoodTracks");
-    goodxHistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "GoodTracks/goodx", 150, -15, 15 );
-    goodxHistGBLAlign->setTitle( "extrapolated triplet x at triplet matching point, good GBL;x [mm];tracks" );
-
-    goodyHistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "GoodTracks/goody", 100, -10, 10 );
-    goodyHistGBLAlign->setTitle( "extrapolated triplet y at triplet matching point, good GBL;y [mm];tracks" );
-
-    goodaxHistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "GoodTracks/goodax", 100, -25, 25 );
-    goodaxHistGBLAlign->setTitle( "track angle x, good GBL;x angle [mrad];tracks" );
-
-    goodayHistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "GoodTracks/gooday", 100, -25, 25 );
-    goodayHistGBLAlign->setTitle( "track angle y, good GBL;y angle [mrad];tracks" );
-
-    gooddxHistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "GoodTracks/gooddx", 100, -5000, 5000 );
-    gooddxHistGBLAlign->setTitle( "driplet-triplet x residual at matching point, good GBL;#Deltax [#mum];tracks" );
-
-    gooddyHistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "GoodTracks/gooddy", 100, -5000, 5000 );
-    gooddyHistGBLAlign->setTitle( "driplet-triplet y residual at matching point, good GBL;#Deltay [#mum];tracks" );
-
-    goodkxHistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "GoodTracks/goodkx", 100, -25, 25 );
-    goodkxHistGBLAlign->setTitle( "triplet-driplet kink x, good GBL;kink x [mrad];tracks" );
-
-    goodkyHistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "GoodTracks/goodky", 100, -25, 25 );
-    goodkyHistGBLAlign->setTitle( "triplet-driplet kink y, good GBL;kink y [mrad];tracks" );
-
-    AIDAProcessor::tree(this)->mkdir("GoodTracks/Residuals");
-    //Preparing the Triplet interpolation to plane 1 and extrapolation to all planes but 0 & 2 (which are)
-    //the ones the triplet was constructed from
-    for(size_t ix = 1; ix < sensorIDVec.size(); ++ix) {
-      if(ix == 2) continue;
-      auto sensorIdString = std::to_string(sensorIDVec[ix]);
-      std::string histNameSelX = "GoodTracks/Residuals/gooddx"+sensorIdString;
-      std::string histNameSelY = "GoodTracks/Residuals/gooddy"+sensorIdString;
-
-      gooddxSensorHistGBLAlign.push_back(AIDAProcessor::histogramFactory(this)->
-        createHistogram1D( histNameSelX, 100, -1000, 1000 ));
-      gooddxSensorHistGBLAlign.back()->setTitle( "triplet resid x at "+sensorIdString+", good GBL;#Deltax [#mum];tracks" );
-
-      gooddySensorHistGBLAlign.push_back(AIDAProcessor::histogramFactory(this)->
-        createHistogram1D( histNameSelY, 100, -1000, 1000 ));
-      gooddySensorHistGBLAlign.back()->setTitle( "triplet resid y at "+sensorIdString+", good GBL;#Deltay [#mum];tracks" );
-    }
     AIDAProcessor::tree(this)->mkdir("GBLFit");
     AIDAProcessor::tree(this)->mkdir("GBLFit/Angles");
     AIDAProcessor::tree(this)->mkdir("GBLFit/Residuals");
@@ -1220,9 +1075,8 @@ void EUTelAlignGBL::bookHistos(std::vector<int> const & sensorIDVec) {
       gblKinkYHist.back()->setTitle( "GBL kink angle at plane "+sensorIdString+";plane "+sensorIdString+" y kink [mrad];tracks" );
     }
 
-    nmHistGBLAlign = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "nm", 21, -0.5, 20.5 );
-    nmHistGBLAlign->setTitle( "track matches;track matches;events" );
+    ntracksperevent = AIDAProcessor::histogramFactory(this)->createHistogram1D( "ntracksperevent", 21, -0.5, 20.5 );
+    ntracksperevent->setTitle( "Matched Tracks;Track Matches in an Event;Events" );
 
   }//try
   catch( lcio::Exception& e ) {
