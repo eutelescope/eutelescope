@@ -145,55 +145,55 @@ void EUTelTripletGBLUtility::bookHistos(){
   
   upstreamTripletSlopeX = AIDAProcessor::histogramFactory(parent)->
     createHistogram1D( "Cuts/upstreamTripletSlopeCutX", 1000, -3, 3 ); //binning to be reviewed
-  upstreamTripletSlopeX->setTitle( ";Upstream Triplet Slope X [mrad];Counts" );
+  upstreamTripletSlopeX->setTitle( "Upstream Triplet Slope X;Upstream Triplet Slope X [mrad];Counts" );
   
   upstreamTripletSlopeY = AIDAProcessor::histogramFactory(parent)->
     createHistogram1D( "Cuts/upstreamTripletSlopeCutY", 1000, -3, 3 ); //binning to be reviewed
-  upstreamTripletSlopeY->setTitle( ";Upstream Triplet Slope Y [mrad];Counts" );
+  upstreamTripletSlopeY->setTitle( "Upstream Triplet Slope Y;Upstream Triplet Slope Y [mrad];Counts" );
   
   downstreamTripletSlopeX = AIDAProcessor::histogramFactory(parent)->
     createHistogram1D( "Cuts/downstreamTripletSlopeCutX", 1000, -3, 3 ); //binning to be reviewed
-  downstreamTripletSlopeX->setTitle( ";Downstream Triplet Slope X [mrad];Counts" );
+  downstreamTripletSlopeX->setTitle( "Downstream Triplet Slope X;Downstream Triplet Slope X [mrad];Counts" );
   
   downstreamTripletSlopeY = AIDAProcessor::histogramFactory(parent)->
     createHistogram1D( "Cuts/downstreamTripletSlopeCutY", 1000, -3, 3 ); //binning to be reviewed
-  downstreamTripletSlopeY->setTitle( ";Downstream Triplet Slope Y [mrad];Counts" );
+  downstreamTripletSlopeY->setTitle( "Downstream Triplet Slope Y;Downstream Triplet Slope Y [mrad];Counts" );
   
   upstreamTripletResidualX = AIDAProcessor::histogramFactory(parent)->
     createHistogram1D( "Cuts/upstreamTripletResidualCutX", 1000, -3, 3 ); //binning to be reviewed
-  upstreamTripletResidualX->setTitle( ";Upstream Triplet Residual X [mm];Counts" );
+  upstreamTripletResidualX->setTitle( "Upstream Triplet Residual X;Upstream Triplet Residual X [mm];Counts" );
   
   upstreamTripletResidualY = AIDAProcessor::histogramFactory(parent)->
     createHistogram1D( "Cuts/upstreamTripletResidualCutY", 1000, -3, 3 ); //binning to be reviewed
-  upstreamTripletResidualY->setTitle( ";Upstream Triplet Residual Y [mm];Counts" );
+  upstreamTripletResidualY->setTitle( "Upstream Triplet Residual Y;Upstream Triplet Residual Y [mm];Counts" );
   
   downstreamTripletResidualX = AIDAProcessor::histogramFactory(parent)->
     createHistogram1D( "Cuts/downstreamTripletResidualCutX", 1000, -3, 3 ); //binning to be reviewed
-  downstreamTripletResidualX->setTitle( ";Downstream Triplet Residual X [mm];Counts" );
+  downstreamTripletResidualX->setTitle( "Downstream Triplet Residual X;Downstream Triplet Residual X [mm];Counts" );
   
   downstreamTripletResidualY = AIDAProcessor::histogramFactory(parent)->
     createHistogram1D( "Cuts/downstreamTripletResidualCutY", 1000, -3, 3 ); //binning to be reviewed
-  downstreamTripletResidualY->setTitle( ";Downstream Triplet Residual Y [mm];Counts" );
+  downstreamTripletResidualY->setTitle( "Downstream Triplet Residual Y;Downstream Triplet Residual Y [mm];Counts" );
   
   tripletMatchingResidualX = AIDAProcessor::histogramFactory(parent)->
     createHistogram1D( "Cuts/tripletMatchingResidualCutX", 1000, -3, 3 ); //binning to be reviewed
-  tripletMatchingResidualX->setTitle( ";Triplet Matching Residual X [mm];Counts" );
+  tripletMatchingResidualX->setTitle( "Triplet Matching Residual X;Triplet Matching Residual X [mm];Counts" );
   
   tripletMatchingResidualY = AIDAProcessor::histogramFactory(parent)->
     createHistogram1D( "Cuts/tripletMatchingResidualCutY", 1000, -3, 3 ); //binning to be reviewed
-  tripletMatchingResidualY->setTitle( ";Triplet Matching Residual Y [mm];Counts" );
+  tripletMatchingResidualY->setTitle( "Triplet Matching Residual Y;Triplet Matching Residual Y [mm];Counts" );
   
   DUTMatchingResidualX = AIDAProcessor::histogramFactory(parent)->
     createHistogram1D( "Cuts/DUTMatchingResidualCutX", 1000, -3, 3 ); //binning to be reviewed
-  DUTMatchingResidualX->setTitle( ";DUT Matching Residual local X [mm];Counts" );
+  DUTMatchingResidualX->setTitle( "DUT Matching Residual local X;DUT Matching Residual local X [mm];Counts" );
   
   DUTMatchingResidualY = AIDAProcessor::histogramFactory(parent)->
     createHistogram1D( "Cuts/DUTMatchingResidualCutY", 1000, -3, 3 ); //binning to be reviewed
-  DUTMatchingResidualY->setTitle( ";DUT Matching Residual local Y [mm];Counts" );
+  DUTMatchingResidualY->setTitle( "DUT Matching Residual local Y;DUT Matching Residual local Y [mm];Counts" );
   
   DUTHitNumber = AIDAProcessor::histogramFactory(parent)->
     createHistogram1D( "Cuts/DUTHitNumber", 21, -0.5, 20.5 ); //binning to be reviewed
-  DUTHitNumber->setTitle( ";DUT ID;Number of Hits matched to a track" );
+  DUTHitNumber->setTitle( "Number of Hits matched to a track per DUT ID;DUT ID;Number of Hits matched to a track" );
 
 }
 
