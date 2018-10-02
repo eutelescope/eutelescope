@@ -200,9 +200,9 @@ namespace eutelescope {
     // definition of static members mainly used to name histograms
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-    AIDA::IHistogram1D * nAllHitHistoGBLAlign;
-    AIDA::IHistogram1D * ntriHistGBLAlign;
-    AIDA::IHistogram1D * ndriHistGBLAlign;
+    AIDA::IHistogram1D * nTelHits;
+    AIDA::IHistogram1D * nUpstreamTriplets;
+    AIDA::IHistogram1D * nDownstreamTriplets;
 
     //All Tracks
     AIDA::IHistogram1D * selxHistGBLAlign;

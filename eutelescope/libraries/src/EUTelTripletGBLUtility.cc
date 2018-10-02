@@ -63,131 +63,100 @@ void EUTelTripletGBLUtility::bookHistos(){
     
   marlin::AIDAProcessor::tree(parent)->mkdir("GBLUtility");
 
-  sixkxHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/sixkx", 100, -10, 10 );
+  sixkxHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixkx", 100, -10, 10 );
   sixkxHisto->setTitle( "kink x;kink x [mrad];triplet-driplet pairs" );
 
-  sixkyHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/sixky", 100, -10, 10 );
+  sixkyHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixky", 100, -10, 10 );
   sixkyHisto->setTitle( "kink y;kink y [mrad];triplet-driplet pairs" );
 
-  sixdxHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/sixdx", 100, -1, 1 );
+  sixdxHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixdx", 100, -1, 1 );
   sixdxHisto->setTitle( "six match x;match x [mm];triplet-driplet pairs" );
 
-  sixdyHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/sixdy", 100, -1, 1 );
+  sixdyHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixdy", 100, -1, 1 );
   sixdyHisto->setTitle( "six match y;match y [mm];triplet-driplet pairs" );
 
-  sixdxcHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/sixdxc", 100, -250, 250 );
+  sixdxcHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixdxc", 100, -250, 250 );
   sixdxcHisto->setTitle( "six match x;track #Deltax[#mum];triplet-driplet pairs" );
 
-  sixdycHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/sixdyc", 100, -250, 250 );
+  sixdycHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixdyc", 100, -250, 250 );
   sixdycHisto->setTitle( "six match y;track #Deltay[#mum];triplet-driplet pairs" );
 
-  sixkxcHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/sixkxc", 100, -10, 10 );
+  sixkxcHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixkxc", 100, -10, 10 );
   sixkxcHisto->setTitle( "kink x, x-y matched;kink x [mrad];triplet-driplet pairs" );
 
-  sixkycHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/sixkyc", 100, -10, 10 );
+  sixkycHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixkyc", 100, -10, 10 );
   sixkycHisto->setTitle( "kink y, x-y matched;kink y [mrad];triplet-driplet pairs" );
 
-  sixxHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/sixx", 240, -12, 12 );
+  sixxHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixx", 240, -12, 12 );
   sixxHisto->setTitle( "six x at DUT;six x_{out} at DUT [mm];six-plane tracks" );
 
-  sixyHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/sixy", 120, -6, 6 );
+  sixyHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixy", 120, -6, 6 );
   sixyHisto->setTitle( "six y at DUT;six y_{up} at DUT [mm];six-plane tracks" );
 
-  sixxyHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram2D( "GBLUtility/sixxy", 240, -12, 12, 120, -6, 6 );
+  sixxyHisto = AIDAProcessor::histogramFactory(parent)->createHistogram2D( "GBLUtility/sixxy", 240, -12, 12, 120, -6, 6 );
   sixxyHisto->setTitle( "six at DUT;six x_{out} at DUT [mm];six y_{up} at DUT [mm];six-plane tracks" );
 
-  sixxycHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram2D( "GBLUtility/sixxyc", 240, -12, 12, 120, -6, 6 );
+  sixxycHisto = AIDAProcessor::histogramFactory(parent)->createHistogram2D( "GBLUtility/sixxyc", 240, -12, 12, 120, -6, 6 );
   sixxycHisto->setTitle( "six large kink;six x_{out} at DUT [mm];six y_{up} at DUT [mm];large kink tracks" );
 
-  kinkxvsxy = AIDAProcessor::histogramFactory(parent)->
-    createProfile2D( "GBLUtility/kinkxvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
+  kinkxvsxy = AIDAProcessor::histogramFactory(parent)->createProfile2D( "GBLUtility/kinkxvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
   kinkxvsxy->setTitle( "kink x;six x_{out} at DUT [mm];six y_{up} at DUT [mm];sqrt(<kink^{2}>) [mrad]" );
 
-  kinkyvsxy = AIDAProcessor::histogramFactory(parent)->
-    createProfile2D( "GBLUtility/kinkyvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
+  kinkyvsxy = AIDAProcessor::histogramFactory(parent)->createProfile2D( "GBLUtility/kinkyvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
   kinkyvsxy->setTitle( "kink y;six x_{out} at DUT [mm];six y_{up} at DUT [mm];sqrt(<kink^{2}>) [mrad]" );
 
-  kinkxyvsxy = AIDAProcessor::histogramFactory(parent)->
-    createProfile2D( "GBLUtility/kinkxyvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
+  kinkxyvsxy = AIDAProcessor::histogramFactory(parent)->createProfile2D( "GBLUtility/kinkxyvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
   kinkxyvsxy->setTitle( "kink <|x|+|y|>;six x_{out} at DUT [mm];six y_{up} at DUT [mm]; (|x| + |y|)/2 [mrad]" );
 
-  kinkx = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/kinkx", 500, -5, 5 );
+  kinkx = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/kinkx", 500, -5, 5 );
   kinkx->setTitle( "triplet kink x angle at DUT;x angle at DUT [mrad];tracks" );
 
-  kinky = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/kinky", 500, -5, 5 );
+  kinky = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/kinky", 500, -5, 5 );
   kinky->setTitle( "triplet kink y angle at DUT;y angle at DUT [mrad];tracks" );
 
-  kinkxy = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/kinkxy", 500, -5, 5 );
+  kinkxy = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/kinkxy", 500, -5, 5 );
   kinkxy->setTitle( "triplet kink xy angle at DUT;xy angle at DUT [mrad];tracks" );
   
   //cut plots
   marlin::AIDAProcessor::tree(parent)->mkdir("Cuts");
   
-  upstreamTripletSlopeX = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "Cuts/upstreamTripletSlopeCutX", 1000, -3, 3 ); //binning to be reviewed
+  upstreamTripletSlopeX = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/upstreamTripletSlopeCutX", 1000, -3, 3 ); //binning to be reviewed
   upstreamTripletSlopeX->setTitle( "Upstream Triplet Slope X;Upstream Triplet Slope X [mrad];Counts" );
   
-  upstreamTripletSlopeY = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "Cuts/upstreamTripletSlopeCutY", 1000, -3, 3 ); //binning to be reviewed
+  upstreamTripletSlopeY = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/upstreamTripletSlopeCutY", 1000, -3, 3 ); //binning to be reviewed
   upstreamTripletSlopeY->setTitle( "Upstream Triplet Slope Y;Upstream Triplet Slope Y [mrad];Counts" );
   
-  downstreamTripletSlopeX = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "Cuts/downstreamTripletSlopeCutX", 1000, -3, 3 ); //binning to be reviewed
+  downstreamTripletSlopeX = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/downstreamTripletSlopeCutX", 1000, -3, 3 ); //binning to be reviewed
   downstreamTripletSlopeX->setTitle( "Downstream Triplet Slope X;Downstream Triplet Slope X [mrad];Counts" );
   
-  downstreamTripletSlopeY = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "Cuts/downstreamTripletSlopeCutY", 1000, -3, 3 ); //binning to be reviewed
+  downstreamTripletSlopeY = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/downstreamTripletSlopeCutY", 1000, -3, 3 ); //binning to be reviewed
   downstreamTripletSlopeY->setTitle( "Downstream Triplet Slope Y;Downstream Triplet Slope Y [mrad];Counts" );
   
-  upstreamTripletResidualX = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "Cuts/upstreamTripletResidualCutX", 1000, -3, 3 ); //binning to be reviewed
+  upstreamTripletResidualX = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/upstreamTripletResidualCutX", 1000, -3, 3 ); //binning to be reviewed
   upstreamTripletResidualX->setTitle( "Upstream Triplet Residual X;Upstream Triplet Residual X [mm];Counts" );
   
-  upstreamTripletResidualY = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "Cuts/upstreamTripletResidualCutY", 1000, -3, 3 ); //binning to be reviewed
+  upstreamTripletResidualY = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/upstreamTripletResidualCutY", 1000, -3, 3 ); //binning to be reviewed
   upstreamTripletResidualY->setTitle( "Upstream Triplet Residual Y;Upstream Triplet Residual Y [mm];Counts" );
   
-  downstreamTripletResidualX = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "Cuts/downstreamTripletResidualCutX", 1000, -3, 3 ); //binning to be reviewed
+  downstreamTripletResidualX = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/downstreamTripletResidualCutX", 1000, -3, 3 ); //binning to be reviewed
   downstreamTripletResidualX->setTitle( "Downstream Triplet Residual X;Downstream Triplet Residual X [mm];Counts" );
   
-  downstreamTripletResidualY = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "Cuts/downstreamTripletResidualCutY", 1000, -3, 3 ); //binning to be reviewed
+  downstreamTripletResidualY = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/downstreamTripletResidualCutY", 1000, -3, 3 ); //binning to be reviewed
   downstreamTripletResidualY->setTitle( "Downstream Triplet Residual Y;Downstream Triplet Residual Y [mm];Counts" );
   
-  tripletMatchingResidualX = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "Cuts/tripletMatchingResidualCutX", 1000, -3, 3 ); //binning to be reviewed
+  tripletMatchingResidualX = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/tripletMatchingResidualCutX", 1000, -3, 3 ); //binning to be reviewed
   tripletMatchingResidualX->setTitle( "Triplet Matching Residual X;Triplet Matching Residual X [mm];Counts" );
   
-  tripletMatchingResidualY = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "Cuts/tripletMatchingResidualCutY", 1000, -3, 3 ); //binning to be reviewed
+  tripletMatchingResidualY = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/tripletMatchingResidualCutY", 1000, -3, 3 ); //binning to be reviewed
   tripletMatchingResidualY->setTitle( "Triplet Matching Residual Y;Triplet Matching Residual Y [mm];Counts" );
   
-  DUTMatchingResidualX = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "Cuts/DUTMatchingResidualCutX", 1000, -3, 3 ); //binning to be reviewed
+  DUTMatchingResidualX = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/DUTMatchingResidualCutX", 1000, -3, 3 ); //binning to be reviewed
   DUTMatchingResidualX->setTitle( "DUT Matching Residual local X;DUT Matching Residual local X [mm];Counts" );
   
-  DUTMatchingResidualY = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "Cuts/DUTMatchingResidualCutY", 1000, -3, 3 ); //binning to be reviewed
+  DUTMatchingResidualY = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/DUTMatchingResidualCutY", 1000, -3, 3 ); //binning to be reviewed
   DUTMatchingResidualY->setTitle( "DUT Matching Residual local Y;DUT Matching Residual local Y [mm];Counts" );
   
-  DUTHitNumber = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "Cuts/DUTHitNumber", 21, -0.5, 20.5 ); //binning to be reviewed
+  DUTHitNumber = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/DUTHitNumber", 21, -0.5, 20.5 ); //binning to be reviewed
   DUTHitNumber->setTitle( "Number of Hits matched to a track per DUT ID;DUT ID;Number of Hits matched to a track" );
 
 }
