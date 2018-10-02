@@ -294,12 +294,13 @@ bool EUTelTripletGBLUtility::AttachDUT(EUTelTripletGBLUtility::triplet & triplet
             geo::gGeometry().master2Local(dutID,hitglpos,hitlocpos);
 			auto distX = fabs(trlocpos[0]-hitlocpos[0]);
 			auto distY = fabs(trlocpos[1]-hitlocpos[1]);
+                        double dist = distX*distX + distY*distY;
 			DUTMatchingResidualX->fill(trlocpos[0]-hitlocpos[0]);
 			DUTMatchingResidualY->fill(trlocpos[1]-hitlocpos[1]);
-			if(distX <= dist_cuts.at(0) && distY <= dist_cuts.at(1) && distX < minDist && distY < minDist ){
+			if(distX <= dist_cuts.at(0) && distY <= dist_cuts.at(1) && dist < minDist ){
 				minHitIx = static_cast<int>(ix);
 				DUTHitNumber->fill(dutID);
-				//std::cout << "Dist: " << dist << std::endl;
+				minDist = dist;
 			}
 		}
 		++ix;
