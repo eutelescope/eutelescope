@@ -165,9 +165,6 @@ namespace eutelescope {
       //! counter for printed events (for debugging)
       int _printEventCounter;
 
-      // n Tscope planes
-      size_t _nTelPlanes;
-
       // Excluded planes
       size_t _nExcludePlanes;
 
