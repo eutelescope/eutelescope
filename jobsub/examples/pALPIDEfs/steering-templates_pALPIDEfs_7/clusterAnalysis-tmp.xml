@@ -107,6 +107,22 @@
   <parameter name="Irradiation" type="stringVec" value="@IrradiationLevel@"/>
   <!--Data taking rate-->
   <parameter name="Rate" type="string" value="@Rate@"/>
+  <!--Bool to analyze the clusters with a smaller distance allowed between the pixels-->
+  <parameter name="IsDistanceSquareAnalysis" type="bool" value="true"/>
+  <!--Bool to analyze the clusters with empty middle-->
+  <parameter name="IsEmptyMiddleAnalysis" type="bool" value="true"/>
+  <!--Bool to create hit maps with a cut on the cluster size-->
+  <parameter name="IsPlotSizeCutHitmap" type="bool" value="true"/>
+  <!--This cluster size is the cut between the small and the big clusters for the previous bool-->
+  <parameter name="CuttingSize" type="int" value="5"/>
+  <!--Bool to plot the first 100 cluster examples-->
+  <parameter name="IsPlotExampleEvents" type="bool" value="false"/>
+  <!--Bool to do the analysis of clusters appearing in two consecutive events-->
+  <parameter name="IsDoubleFiringAnalysis" type="bool" value="true"/>
+  <!--Distance of the pixels in the clustering to which we compare the original version defined in the clustering step-->
+  <parameter name="SparseMinDistanceSquaredComparison" type="int" value="1"/>
+  <!--Chip version-->
+  <parameter name="ChipVersion" type="int" value="@whichChip@"/>
   <!--parameter name="Verbosity" type="string" value="DEBUG"/-->
 </processor>
 

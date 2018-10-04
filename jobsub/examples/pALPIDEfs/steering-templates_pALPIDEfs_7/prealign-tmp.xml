@@ -18,7 +18,7 @@
    <execute>
       <processor name="AIDA"/>
       <processor name="LoadHotPixelDBPALIPDEfs"/> 
-      <processor name="LoadRefHitDB"/>
+      <!--processor name="LoadRefHitDB"/-->
       <processor name="PreAligner"/> 
       <processor name="MyEUTelUtilityPrintEventNumber"/>
       <!--processor name="Save"/-->
@@ -98,7 +98,7 @@
   <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
   <parameter name="MinNumberOfCorrelatedHits" type="int" value="6"/>
   <!--reference hit collection name -->
-  <parameter name="ReferenceCollection" type="string" value="refhit"/>
+  <!--parameter name="ReferenceCollection" type="string" value="refhit"/-->
   <!--Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
   <parameter name="ResidualsXMax" type="FloatVec"> 5. 5. 5. 5. 5. 5. 5. </parameter>
   <!--Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->

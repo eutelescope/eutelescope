@@ -2325,14 +2325,14 @@ void EUTelProcessorAnalysisPALPIDEfs::_EulerRotationBack(double *_telPos,
   TVector3 _Yaxis(0.0, 1.0, 0.0);
   TVector3 _Zaxis(0.0, 0.0, 1.0);
   // rotation order: X,Y,Z; rotation back order: Z,Y,X
-  if (TMath::Abs(_gRotation[0]) > 1e-6) {
-    _RotatedSensorHit.Rotate(-1. * _gRotation[0], _Zaxis); // in XY
-  }
   if (TMath::Abs(_gRotation[1]) > 1e-6) {
     _RotatedSensorHit.Rotate(-1. * _gRotation[1], _Yaxis); // in ZX
   }
   if (TMath::Abs(_gRotation[2]) > 1e-6) {
     _RotatedSensorHit.Rotate(-1. * _gRotation[2], _Xaxis); // in ZY
+  }
+  if (TMath::Abs(_gRotation[0]) > 1e-6) {
+    _RotatedSensorHit.Rotate(-1. * _gRotation[0], _Zaxis); // in XY
   }
 
   _telPos[0] = _RotatedSensorHit.X();
@@ -2406,55 +2406,116 @@ int EUTelProcessorAnalysisPALPIDEfs::AddressToRow(int AAddress) {
 
 bool EUTelProcessorAnalysisPALPIDEfs::emptyMiddle(
     vector<vector<int>> pixVector) {
-  bool holeX = false;
-  bool holeY = false;
+
+  // In this step we use an invers clustering process:
+  // - First, we create a rectangle, which is bigger than the cluster in every
+  // direction.
+  // - Second, we fill the hitPixelVec with pixels in this rectangle, which did
+  // not fired.
+  // - Third, we run the clustering process with this hitPixelVec.
+  // - Fourth, when this process finds one whole cluster and hitPixelVec is
+  // still not empty, the original cluster has to have an empty middle, since at
+  // least two cluster could be made from the empty part (one on the outside and
+  // at least one in the middle of the cluster).
+
+  std::vector<EUTelGenericSparsePixel> hitPixelVec;
+
+  std::vector<EUTelGenericSparsePixel> newlyAdded;
+
+  int xMax = 0, yMax = 0, xMin = 1000000, yMin = 1000000;
+
   for (size_t i = 0; i < pixVector.size(); i++) {
-    bool touchingX = false;
-    bool lastX = true;
-    for (size_t j = 0; j < pixVector.size(); j++) {
-      if (i == j)
-        continue;
-      if (pixVector[i][1] != pixVector[j][1])
-        continue;
-      if (pixVector[i][0] + 1 ==
-          pixVector[j][0]) { /*cerr << "Touching in x" << endl;*/
-        touchingX = true;
-        break;
+    if (pixVector[i][0] > xMax)
+      xMax = pixVector[i][0];
+    if (pixVector[i][0] < xMin)
+      xMin = pixVector[i][0];
+    if (pixVector[i][1] > yMax)
+      yMax = pixVector[i][1];
+    if (pixVector[i][1] < yMin)
+      yMin = pixVector[i][1];
+  }
+  for (int n = xMin - 1; n <= xMax + 1; n++) {
+    for (int m = yMin - 1; m <= yMax + 1; m++) {
+      bool empty_pixel = true;
+      for (size_t i = 0; i < pixVector.size(); i++) {
+        if (n == pixVector[i][0] && m == pixVector[i][1]) {
+          empty_pixel = false;
+          break;
+        }
       }
-      if (pixVector[i][0] <
-          pixVector[j][0]) { /*cerr << "Smaller in x"  << endl;*/
-        lastX = false;
+      if (empty_pixel) {
+        EUTelGenericSparsePixel pixel;
+        pixel.setXCoord(n);
+        pixel.setYCoord(m);
+        hitPixelVec.push_back(pixel);
       }
-    }
-    if (!touchingX && !lastX) { /*cerr << "Hole in X" << endl;*/
-      holeX = true;
-      break;
     }
   }
-  for (size_t i = 0; i < pixVector.size(); i++) {
-    bool touchingY = false;
-    bool lastY = true;
-    for (size_t j = 0; j < pixVector.size(); j++) {
-      if (i == j)
-        continue;
-      if (pixVector[i][0] != pixVector[j][0])
-        continue;
-      if (pixVector[i][1] + 1 ==
-          pixVector[j][1]) { /*cerr << "Touching in y" << endl;*/
-        touchingY = true;
-        break;
+
+  // We now cluster those hits together
+  // while( !hitPixelVec.empty() )
+  {
+
+    std::vector<EUTelGenericSparsePixel> cluCandidate;
+
+    // First we need to take any pixel, so let's take the first one
+    // Add it to the cluster as well as the newly added pixels
+    newlyAdded.push_back(hitPixelVec.front());
+    // sparseCluster->push_back( &(hitPixelVec.front()) );
+    cluCandidate.push_back(hitPixelVec.front());
+    // And remove it from the original collection
+    hitPixelVec.erase(hitPixelVec.begin());
+
+    // Now process all newly added pixels, initially this is the just previously
+    // added one
+    // but in the process of neighbour finding we continue to add new pixels
+    while (!newlyAdded.empty()) {
+      bool newlyDone = true;
+      int x1, x2, y1, y2, dX, dY;
+
+      // check against all pixels in the hitPixelVec
+      for (std::vector<EUTelGenericSparsePixel>::iterator hitVec =
+               hitPixelVec.begin();
+           hitVec != hitPixelVec.end(); ++hitVec) {
+        // get the relevant infos from the newly added pixel
+        x1 = newlyAdded.front().getXCoord();
+        y1 = newlyAdded.front().getYCoord();
+
+        // and the pixel we test against
+        x2 = hitVec->getXCoord();
+        y2 = hitVec->getYCoord();
+
+        dX = x1 - x2;
+        dY = y1 - y2;
+        int distance = dX * dX + dY * dY;
+        // if they pass the spatial and temporal cuts, we add them
+
+        int _sparseMinDistanceSquaredComparison = 1;
+        if (distance <= _sparseMinDistanceSquaredComparison) {
+          // add them to the cluster as well as to the newly added ones
+          newlyAdded.push_back(*hitVec);
+          cluCandidate.push_back(*hitVec);
+          //	sparseCluster->push_back( &(*hitVec) );
+          hitPixelVec.erase(hitVec);
+          // for the pixel we test there might be other neighbours, we still
+          // have to check
+          newlyDone = false;
+          break;
+        }
       }
-      if (pixVector[i][1] <
-          pixVector[j][1]) { /*cerr << "Smaller in y"  << endl;*/
-        lastY = false;
+      // if no neighbours are found, we can delete the pixel from the newly
+      // added
+      // we tested against _ALL_ non cluster pixels, there are no other pixels
+      // which could be neighbours
+      if (newlyDone) {
+        newlyAdded.erase(newlyAdded.begin());
       }
-    }
-    if (!touchingY && !lastY) { /*cerr << "Hole in Y" << endl;*/
-      holeY = true;
-      break;
     }
   }
-  if (holeX && holeY)
+  // If the hitPixelVec is not empty there is a empty middle cluster, because
+  // there must be an area inside the cluster, which is not connected to the
+  // area outside the cluster.
+  if (!hitPixelVec.empty())
     return true;
   else
     return false;
