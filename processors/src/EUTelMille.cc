@@ -3245,6 +3245,7 @@ void EUTelMille::bookHistos() {
 #endif
 }
 
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 void EUTelMille::FillHistogram1DOrFail(string const& Name, double Value)
 {
   if (_histogramSwitch) {
@@ -3275,5 +3276,5 @@ void EUTelMille::FailFillingHistogram(string const& Name)
   streamlog_out(ERROR2) << "Disabling histogramming from now on" << endl;
   _histogramSwitch = false;
 }
-
+#endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #endif // USE_GEAR
