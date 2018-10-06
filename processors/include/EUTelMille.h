@@ -497,6 +497,10 @@ namespace eutelescope {
     static std::string _residualZvsXLocalname;
     static std::string _residualZvsYLocalname;
 
+    void FillHistogram1DOrFail(std::string const& HistogramName, double Value); 
+    void FillProfile1DOrFail(std::string const& HistogramName, double X, double Y); 
+    void FailFillingHistogram(std::string const& HistogramName);
+    
 #endif
 
     size_t _nPlanes;

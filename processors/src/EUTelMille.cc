@@ -2307,37 +2307,8 @@ void EUTelMille::processEvent(LCEvent *event) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-        string tempHistoName;
-
-        if (_histogramSwitch) {
-          if (AIDA::IHistogram1D *chi2x_histo =
-                  dynamic_cast<AIDA::IHistogram1D *>(
-                      _aidaHistoMap[_chi2XLocalname]))
-            chi2x_histo->fill(Chiquare[0]);
-          else {
-            streamlog_out(ERROR2)
-                << "Not able to retrieve histogram pointer for "
-                << _chi2XLocalname << endl;
-            streamlog_out(ERROR2) << "Disabling histogramming from now on"
-                                  << endl;
-            _histogramSwitch = false;
-          }
-        }
-
-        if (_histogramSwitch) {
-          if (AIDA::IHistogram1D *chi2y_histo =
-                  dynamic_cast<AIDA::IHistogram1D *>(
-                      _aidaHistoMap[_chi2YLocalname]))
-            chi2y_histo->fill(Chiquare[1]);
-          else {
-            streamlog_out(ERROR2)
-                << "Not able to retrieve histogram pointer for "
-                << _chi2YLocalname << endl;
-            streamlog_out(ERROR2) << "Disabling histogramming from now on"
-                                  << endl;
-            _histogramSwitch = false;
-          }
-        }
+        FillHistogram1DOrFail(_chi2XLocalname, Chiquare[0]); 
+        FillHistogram1DOrFail(_chi2YLocalname, Chiquare[1]); 
 
         // loop over all detector planes
         for (unsigned int iDetector = 0; iDetector < _nPlanes; iDetector++) {
@@ -2349,93 +2320,51 @@ void EUTelMille::processEvent(LCEvent *event) {
               abs(_waferResidZ[iDetector]) < 1e-06)
             continue;
 
-          if (_histogramSwitch) {
-            tempHistoName = _residualXLocalname + "_d" + to_string(sensorID);
-            if (AIDA::IHistogram1D *residx_histo =
-                    dynamic_cast<AIDA::IHistogram1D *>(
-                        _aidaHistoMap[tempHistoName.c_str()])) {
-              residx_histo->fill(_waferResidX[iDetector]);
+          if(_histogramSwitch)
+          {
+            FillHistogram1DOrFail(
+              _residualXLocalname + "_d" + to_string(sensorID), 
+              _waferResidX[iDetector]); 
 
-              tempHistoName =
-                  _residualXvsYLocalname + "_d" + to_string(sensorID);
-              AIDA::IProfile1D *residxvsY_histo =
-                      _aidaHistoMapProf1D[tempHistoName.c_str()];
-              residxvsY_histo->fill(_yPosHere[iDetector],
-                                    _waferResidX[iDetector]);
+            FillProfile1DOrFail(
+              _residualXvsYLocalname + "_d" + to_string(sensorID), 
+              _yPosHere[iDetector],
+              _waferResidX[iDetector]);
+              
+            FillProfile1DOrFail(
+              _residualXvsXLocalname + "_d" + to_string(sensorID),
+              _xPosHere[iDetector],
+              _waferResidX[iDetector]
+            ); 
 
-              tempHistoName =
-                  _residualXvsXLocalname + "_d" + to_string(sensorID);
-              AIDA::IProfile1D *residxvsX_histo =
-                      _aidaHistoMapProf1D[tempHistoName.c_str()];
-              residxvsX_histo->fill(_xPosHere[iDetector],
-                                    _waferResidX[iDetector]);
-            } else {
-              streamlog_out(ERROR2)
-                  << "Not able to retrieve histogram pointer for "
-                  << _residualXLocalname << endl;
-              streamlog_out(ERROR2) << "Disabling histogramming from now on"
-                                    << endl;
-              _histogramSwitch = false;
-            }
-          }
+            FillHistogram1DOrFail(
+              _residualYLocalname + "_d" + to_string(sensorID), 
+              _waferResidY[iDetector]);
 
-          if (_histogramSwitch) {
-            tempHistoName = _residualYLocalname + "_d" + to_string(sensorID);
-            if (AIDA::IHistogram1D *residy_histo =
-                    dynamic_cast<AIDA::IHistogram1D *>(
-                        _aidaHistoMap[tempHistoName.c_str()])) {
-              residy_histo->fill(_waferResidY[iDetector]);
+            FillProfile1DOrFail(
+              _residualYvsYLocalname + "_d" + to_string(sensorID), 
+              _yPosHere[iDetector],
+              _waferResidY[iDetector]);
+              
+            FillProfile1DOrFail(
+              _residualYvsXLocalname + "_d" + to_string(sensorID),
+              _xPosHere[iDetector],
+              _waferResidY[iDetector]
+            ); 
 
-              tempHistoName =
-                  _residualYvsYLocalname + "_d" + to_string(sensorID);
-              AIDA::IProfile1D *residyvsY_histo =
-                      _aidaHistoMapProf1D[tempHistoName.c_str()];
-              residyvsY_histo->fill(_yPosHere[iDetector],
-                                    _waferResidY[iDetector]);
+            FillHistogram1DOrFail(
+              _residualZLocalname + "_d" + to_string(sensorID), 
+              _waferResidZ[iDetector]); 
 
-              tempHistoName =
-                  _residualYvsXLocalname + "_d" + to_string(sensorID);
-              AIDA::IProfile1D *residyvsX_histo =
-                      _aidaHistoMapProf1D[tempHistoName.c_str()];
-              residyvsX_histo->fill(_xPosHere[iDetector],
-                                    _waferResidY[iDetector]);
-            } else {
-              streamlog_out(ERROR2)
-                  << "Not able to retrieve histogram pointer for "
-                  << _residualYLocalname << endl;
-              streamlog_out(ERROR2) << "Disabling histogramming from now on"
-                                    << endl;
-              _histogramSwitch = false;
-            }
-          }
-          if (_histogramSwitch) {
-            tempHistoName = _residualZLocalname + "_d" + to_string(sensorID);
-            if (AIDA::IHistogram1D *residz_histo =
-                    dynamic_cast<AIDA::IHistogram1D *>(
-                        _aidaHistoMap[tempHistoName.c_str()])) {
-              residz_histo->fill(_waferResidZ[iDetector]);
+            FillProfile1DOrFail(
+              _residualZvsYLocalname + "_d" + to_string(sensorID),
+              _yPosHere[iDetector],
+              _waferResidZ[iDetector]); 
 
-              tempHistoName =
-                  _residualZvsYLocalname + "_d" + to_string(sensorID);
-              AIDA::IProfile1D *residzvsY_histo =
-                      _aidaHistoMapProf1D[tempHistoName.c_str()];
-              residzvsY_histo->fill(_yPosHere[iDetector],
-                                    _waferResidZ[iDetector]);
-
-              tempHistoName =
-                  _residualZvsXLocalname + "_d" + to_string(sensorID);
-              AIDA::IProfile1D *residzvsX_histo =
-                      _aidaHistoMapProf1D[tempHistoName.c_str()];
-              residzvsX_histo->fill(_xPosHere[iDetector],
-                                    _waferResidZ[iDetector]);
-            } else {
-              streamlog_out(ERROR2)
-                  << "Not able to retrieve histogram pointer for "
-                  << _residualZLocalname << endl;
-              streamlog_out(ERROR2) << "Disabling histogramming from now on"
-                                    << endl;
-              _histogramSwitch = false;
-            }
+            FillProfile1DOrFail(
+              _residualZvsXLocalname + "_d" + to_string(sensorID),
+              _xPosHere[iDetector],
+              _waferResidZ[iDetector]);
           }
         } // end loop over all detector planes
 
@@ -2457,22 +2386,8 @@ void EUTelMille::processEvent(LCEvent *event) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-  string tempHistoName;
-
   if (_histogramSwitch) {
-    {
-      stringstream ss;
-      ss << _numberTracksLocalname << endl;
-    }
-    if (AIDA::IHistogram1D *number_histo = dynamic_cast<AIDA::IHistogram1D *>(
-            _aidaHistoMap[_numberTracksLocalname]))
-      number_histo->fill(_nGoodTracks);
-    else {
-      streamlog_out(ERROR2) << "Not able to retrieve histogram pointer for "
-                            << _numberTracksLocalname << endl;
-      streamlog_out(ERROR2) << "Disabling histogramming from now on" << endl;
-      _histogramSwitch = false;
-    }
+    FillHistogram1DOrFail(_numberTracksLocalname, _nGoodTracks); 
   }
 
 #endif
@@ -3205,6 +3120,7 @@ void EUTelMille::bookHistos() {
     const double Min = -1500.;
     const double Max = 1500.;
 
+    // Histogram booking is only called once, so I didn't bother creating a method
     auto FailBookingHistogram = [this](string const& FailingName)
     {
       streamlog_out(ERROR2) << "Problem booking the " << FailingName << endl;
@@ -3327,6 +3243,37 @@ void EUTelMille::bookHistos() {
 #endif
   }
 #endif
+}
+
+void EUTelMille::FillHistogram1DOrFail(string const& Name, double Value)
+{
+  if (_histogramSwitch) {
+    if (AIDA::IHistogram1D* Histogram = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[Name])) {
+      Histogram->fill(Value);
+    }
+    else {
+      FailFillingHistogram(Name); 
+    } 
+  }
+}
+
+void EUTelMille::FillProfile1DOrFail(string const& Name, double X, double Y)
+{
+  if(_histogramSwitch) {
+    if (AIDA::IProfile1D* Profile = _aidaHistoMapProf1D[Name]) {
+      Profile->fill(X, Y);
+    }
+    else {
+      FailFillingHistogram(Name); 
+    }
+  }
+}
+
+void EUTelMille::FailFillingHistogram(string const& Name)
+{
+  streamlog_out(ERROR2) << "Not able to retrieve histogram pointer for " << Name << endl;
+  streamlog_out(ERROR2) << "Disabling histogramming from now on" << endl;
+  _histogramSwitch = false;
 }
 
 #endif // USE_GEAR
