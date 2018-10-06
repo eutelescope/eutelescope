@@ -3205,220 +3205,102 @@ void EUTelMille::bookHistos() {
     const double Min = -1500.;
     const double Max = 1500.;
 
-    AIDA::IHistogram1D *numberTracksLocal =
-        AIDAProcessor::histogramFactory(this)->createHistogram1D(
-            _numberTracksLocalname, tracksNBin, tracksMin, tracksMax);
-    if (numberTracksLocal) {
-      numberTracksLocal->setTitle("Number of tracks after #chi^{2} cut");
-      _aidaHistoMap.insert(
-          make_pair(_numberTracksLocalname, numberTracksLocal));
-    } else {
-      streamlog_out(ERROR2) << "Problem booking the "
-                            << (_numberTracksLocalname) << endl;
+    auto FailBookingHistogram = [this](string const& FailingName)
+    {
+      streamlog_out(ERROR2) << "Problem booking the " << FailingName << endl;
       streamlog_out(ERROR2) << "Very likely a problem with path name. "
-                               "Switching off histogramming and continue w/o"
+                              "Switching off histogramming and continue w/o"
                             << endl;
       _histogramSwitch = false;
-    }
+    };
 
-    AIDA::IHistogram1D *chi2XLocal =
-        AIDAProcessor::histogramFactory(this)->createHistogram1D(
-            _chi2XLocalname, Chi2NBin, Chi2Min, Chi2Max);
-    if (chi2XLocal) {
-      chi2XLocal->setTitle("Chi2 X");
-      _aidaHistoMap.insert(make_pair(_chi2XLocalname, chi2XLocal));
-    } else {
-      streamlog_out(ERROR2) << "Problem booking the " << (_chi2XLocalname)
-                            << endl;
-      streamlog_out(ERROR2) << "Very likely a problem with path name. "
-                               "Switching off histogramming and continue w/o"
-                            << endl;
-      _histogramSwitch = false;
-    }
+    auto BookHistogram1DOrFail = [this, FailBookingHistogram](string const& Name, string const& Title, int nBins, double Lower, double Upper)
+    {
+      AIDA::IHistogram1D* Histogram = AIDAProcessor::histogramFactory(this)->createHistogram1D(Name, nBins, Lower, Upper);
+      if(Histogram) {
+        Histogram->setTitle(Title); 
+        _aidaHistoMap.insert(make_pair(Name, Histogram)); 
+      }
+      else
+      {
+        FailBookingHistogram(Name); 
+      }
+    };
 
-    AIDA::IHistogram1D *chi2YLocal =
-        AIDAProcessor::histogramFactory(this)->createHistogram1D(
-            _chi2YLocalname, Chi2NBin, Chi2Min, Chi2Max);
-    if (chi2YLocal) {
-      chi2YLocal->setTitle("Chi2 Y");
-      _aidaHistoMap.insert(make_pair(_chi2YLocalname, chi2YLocal));
-    } else {
-      streamlog_out(ERROR2) << "Problem booking the " << (_chi2YLocalname)
-                            << endl;
-      streamlog_out(ERROR2) << "Very likely a problem with path name. "
-                               "Switching off histogramming and continue w/o"
-                            << endl;
-      _histogramSwitch = false;
-    }
+    auto BookProfile1DOrFail = [this, FailBookingHistogram](string const& Name, string const& Title, int nBins, 
+      double LowerEdge, double UpperEdge, double LowerValue, double UpperValue)
+    {
+      AIDA::IProfile1D* Profile = AIDAProcessor::histogramFactory(this)->createProfile1D(Name, nBins, LowerEdge, UpperEdge, LowerValue, UpperValue);
+      if (Profile) {
+        Profile->setTitle(Title);
+        _aidaHistoMapProf1D.insert(make_pair(Name, Profile));
+      } else {
+        FailBookingHistogram(Name); 
+      }
+    };
 
-    string tempHistoName;
-    string histoTitleXResid;
-    string histoTitleYResid;
-    string histoTitleZResid;
+    BookHistogram1DOrFail(
+      _numberTracksLocalname, 
+      "Number of tracks after #chi^{2} cut", 
+      tracksNBin, tracksMin, tracksMax); 
+
+    BookHistogram1DOrFail(
+      _chi2XLocalname, 
+      "Chi2 X", 
+      Chi2NBin, Chi2Min, Chi2Max); 
+
+    BookHistogram1DOrFail(
+      _chi2YLocalname, 
+      "Chi2 Y", 
+      Chi2NBin, Chi2Min, Chi2Max); 
 
     for (unsigned int iDetector = 0; iDetector < _nPlanes; iDetector++) {
-
       // this is the sensorID corresponding to this plane
       int sensorID = _orderedSensorID.at(iDetector);
+      BookHistogram1DOrFail(
+        _residualXLocalname + "_d" + to_string(sensorID), 
+        "XResidual_d" + to_string(sensorID), 
+        NBin, Min, Max); 
 
-      tempHistoName = _residualXLocalname + "_d" + to_string(sensorID);
-      histoTitleXResid = "XResidual_d" + to_string(sensorID);
+      BookHistogram1DOrFail(
+        _residualYLocalname + "_d" + to_string(sensorID), 
+        "YResidual_d" + to_string(sensorID), 
+        NBin, Min, Max); 
+      
+      BookHistogram1DOrFail(
+        _residualZLocalname + "_d" + to_string(sensorID), 
+        "ZResidual_d" + to_string(sensorID), 
+        NBin, Min, Max); 
 
-      AIDA::IHistogram1D *tempXHisto =
-          AIDAProcessor::histogramFactory(this)->createHistogram1D(
-              tempHistoName, NBin, Min, Max);
-      if (tempXHisto) {
-        tempXHisto->setTitle(histoTitleXResid);
-        _aidaHistoMap.insert(make_pair(tempHistoName, tempXHisto));
-      } else {
-        streamlog_out(ERROR2) << "Problem booking the " << (tempHistoName)
-                              << endl;
-        streamlog_out(ERROR2) << "Very likely a problem with path name. "
-                                 "Switching off histogramming and continue w/o"
-                              << endl;
-        _histogramSwitch = false;
-      }
+      BookProfile1DOrFail(
+        _residualXvsXLocalname + "_d" + to_string(sensorID), 
+        "XvsXResidual_d" + to_string(sensorID), 
+        100, -10000., 10000., -10000., 10000.); 
 
-      tempHistoName = _residualXvsXLocalname + "_d" + to_string(sensorID);
-      histoTitleXResid = "XvsXResidual_d" + to_string(sensorID);
+      BookProfile1DOrFail(
+        _residualXvsYLocalname + "_d" + to_string(sensorID), 
+        "XvsYResidual_d" + to_string(sensorID), 
+        100, -10000., 10000., -10000., 10000.); 
 
-      AIDA::IProfile1D *tempX2dHisto =
-          AIDAProcessor::histogramFactory(this)->createProfile1D(
-              tempHistoName, 100, -10000., 10000., -10000., 10000.);
-      if (tempX2dHisto) {
-        tempX2dHisto->setTitle(histoTitleXResid);
-        _aidaHistoMapProf1D.insert(make_pair(tempHistoName, tempX2dHisto));
-      } else {
-        streamlog_out(ERROR2) << "Problem booking the " << (tempHistoName)
-                              << endl;
-        streamlog_out(ERROR2) << "Very likely a problem with path name. "
-                                 "Switching off histogramming and continue w/o"
-                              << endl;
-        _histogramSwitch = false;
-      }
+      BookProfile1DOrFail(
+        _residualYvsXLocalname + "_d" + to_string(sensorID), 
+        "YvsXResidual_d" + to_string(sensorID), 
+        100, -10000., 10000., -10000., 10000.); 
+      
+      BookProfile1DOrFail(
+        _residualYvsYLocalname + "_d" + to_string(sensorID), 
+        "YvsYResidual_d" + to_string(sensorID), 
+        100, -10000., 10000., -10000., 10000.); 
 
-      tempHistoName = _residualXvsYLocalname + "_d" + to_string(sensorID);
-      histoTitleXResid = "XvsYResidual_d" + to_string(sensorID);
-
-      tempX2dHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(
-          tempHistoName, 100, -10000., 10000., -10000., 10000.);
-      if (tempX2dHisto) {
-        tempX2dHisto->setTitle(histoTitleXResid);
-        _aidaHistoMapProf1D.insert(make_pair(tempHistoName, tempX2dHisto));
-      } else {
-        streamlog_out(ERROR2) << "Problem booking the " << (tempHistoName)
-                              << endl;
-        streamlog_out(ERROR2) << "Very likely a problem with path name. "
-                                 "Switching off histogramming and continue w/o"
-                              << endl;
-        _histogramSwitch = false;
-      }
-
-      tempHistoName = _residualYLocalname + "_d" + to_string(sensorID);
-      histoTitleYResid = "YResidual_d" + to_string(sensorID);
-
-      AIDA::IHistogram1D *tempYHisto =
-          AIDAProcessor::histogramFactory(this)->createHistogram1D(
-              tempHistoName, NBin, Min, Max);
-      if (tempYHisto) {
-        tempYHisto->setTitle(histoTitleYResid);
-        _aidaHistoMap.insert(make_pair(tempHistoName, tempYHisto));
-      } else {
-        streamlog_out(ERROR2) << "Problem booking the " << (tempHistoName)
-                              << endl;
-        streamlog_out(ERROR2) << "Very likely a problem with path name. "
-                                 "Switching off histogramming and continue w/o"
-                              << endl;
-        _histogramSwitch = false;
-      }
-
-      tempHistoName = _residualYvsXLocalname + "_d" + to_string(sensorID);
-      histoTitleYResid = "YvsXResidual_d" + to_string(sensorID);
-
-      AIDA::IProfile1D *tempY2dHisto =
-          AIDAProcessor::histogramFactory(this)->createProfile1D(
-              tempHistoName, 100, -10000., 10000., -1000., 1000.);
-      if (tempY2dHisto) {
-        tempY2dHisto->setTitle(histoTitleYResid);
-        _aidaHistoMapProf1D.insert(make_pair(tempHistoName, tempY2dHisto));
-      } else {
-        streamlog_out(ERROR2) << "Problem booking the " << (tempHistoName)
-                              << endl;
-        streamlog_out(ERROR2) << "Very likely a problem with path name. "
-                                 "Switching off histogramming and continue w/o"
-                              << endl;
-        _histogramSwitch = false;
-      }
-
-      tempHistoName = _residualYvsYLocalname + "_d" + to_string(sensorID);
-      histoTitleYResid = "YvsYResidual_d" + to_string(sensorID);
-
-      tempY2dHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(
-          tempHistoName, 100, -10000., 10000., -10000., 10000.);
-      if (tempY2dHisto) {
-        tempY2dHisto->setTitle(histoTitleYResid);
-        _aidaHistoMapProf1D.insert(make_pair(tempHistoName, tempY2dHisto));
-      } else {
-        streamlog_out(ERROR2) << "Problem booking the " << (tempHistoName)
-                              << endl;
-        streamlog_out(ERROR2) << "Very likely a problem with path name. "
-                                 "Switching off histogramming and continue w/o"
-                              << endl;
-        _histogramSwitch = false;
-      }
-
-      tempHistoName = _residualZLocalname + "_d" + to_string(sensorID);
-      histoTitleZResid = "ZResidual_d" + to_string(sensorID);
-
-      AIDA::IHistogram1D *tempZHisto =
-          AIDAProcessor::histogramFactory(this)->createHistogram1D(
-              tempHistoName, NBin, Min, Max);
-      if (tempZHisto) {
-        tempZHisto->setTitle(histoTitleZResid);
-        _aidaHistoMap.insert(make_pair(tempHistoName, tempZHisto));
-      } else {
-        streamlog_out(ERROR2) << "Problem booking the " << (tempHistoName)
-                              << endl;
-        streamlog_out(ERROR2) << "Very likely a problem with path name. "
-                                 "Switching off histogramming and continue w/o"
-                              << endl;
-        _histogramSwitch = false;
-      }
-
-      tempHistoName = _residualZvsYLocalname + "_d" + to_string(sensorID);
-      histoTitleZResid = "ZvsYResidual_d" + to_string(sensorID);
-
-      AIDA::IProfile1D *tempZ2dHisto =
-          AIDAProcessor::histogramFactory(this)->createProfile1D(
-              tempHistoName, 100, -10000., 10000., -10000., 10000.);
-      if (tempZ2dHisto) {
-        tempZ2dHisto->setTitle(histoTitleZResid);
-        _aidaHistoMapProf1D.insert(make_pair(tempHistoName, tempZ2dHisto));
-      } else {
-        streamlog_out(ERROR2) << "Problem booking the " << (tempHistoName)
-                              << endl;
-        streamlog_out(ERROR2) << "Very likely a problem with path name. "
-                                 "Switching off histogramming and continue w/o"
-                              << endl;
-        _histogramSwitch = false;
-      }
-
-      tempHistoName = _residualZvsXLocalname + "_d" + to_string(sensorID);
-      histoTitleZResid = "ZvsXResidual_d" + to_string(sensorID);
-
-      tempZ2dHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(
-          tempHistoName, 100, -10000., 10000., -10000., 10000.);
-      if (tempZ2dHisto) {
-        tempZ2dHisto->setTitle(histoTitleZResid);
-        _aidaHistoMapProf1D.insert(make_pair(tempHistoName, tempZ2dHisto));
-      } else {
-        streamlog_out(ERROR2) << "Problem booking the " << (tempHistoName)
-                              << endl;
-        streamlog_out(ERROR2) << "Very likely a problem with path name. "
-                                 "Switching off histogramming and continue w/o"
-                              << endl;
-        _histogramSwitch = false;
-      }
+      BookProfile1DOrFail(
+        _residualZvsXLocalname + "_d" + to_string(sensorID), 
+        "ZvsXResidual_d" + to_string(sensorID), 
+        100, -10000., 10000., -10000., 10000.); 
+      
+      BookProfile1DOrFail(
+        _residualZvsYLocalname + "_d" + to_string(sensorID), 
+        "ZvsYResidual_d" + to_string(sensorID), 
+        100, -10000., 10000., -10000., 10000.); 
     }
   } catch (lcio::Exception &e) {
 
