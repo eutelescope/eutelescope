@@ -497,9 +497,14 @@ namespace eutelescope {
     static std::string _residualZvsXLocalname;
     static std::string _residualZvsYLocalname;
 
+    //! Attempts to find a 1d histogram by HistogramName and fill in a Value
+    /*! If the histogram cannot be found, FailFillingHistogram will be called */
     void FillHistogram1DOrFail(std::string const& HistogramName, double Value); 
-    void FillProfile1DOrFail(std::string const& HistogramName, double X, double Y); 
-    void FailFillingHistogram(std::string const& HistogramName);
+    //! Attempts to find a 1d profile by HistogramName and fill in a pair of values, X and Y 
+    /*! If the profile cannot be found, FailFillingHistogram will be called */
+    void FillProfile1DOrFail(std::string const& ProfileName, double X, double Y); 
+    //! Logs an error and unsets _histogramSwitch, blocking further histogram filling
+    void FailFillingHistogram(std::string const& Name);
     
 #endif
 

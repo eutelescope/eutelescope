@@ -3246,26 +3246,26 @@ void EUTelMille::bookHistos() {
 }
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-void EUTelMille::FillHistogram1DOrFail(string const& Name, double Value)
+void EUTelMille::FillHistogram1DOrFail(string const& HistogramName, double Value)
 {
   if (_histogramSwitch) {
-    if (AIDA::IHistogram1D* Histogram = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[Name])) {
+    if (AIDA::IHistogram1D* Histogram = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[HistogramName])) {
       Histogram->fill(Value);
     }
     else {
-      FailFillingHistogram(Name); 
+      FailFillingHistogram(HistogramName); 
     } 
   }
 }
 
-void EUTelMille::FillProfile1DOrFail(string const& Name, double X, double Y)
+void EUTelMille::FillProfile1DOrFail(string const& ProfileName, double X, double Y)
 {
   if(_histogramSwitch) {
-    if (AIDA::IProfile1D* Profile = _aidaHistoMapProf1D[Name]) {
+    if (AIDA::IProfile1D* Profile = _aidaHistoMapProf1D[ProfileName]) {
       Profile->fill(X, Y);
     }
     else {
-      FailFillingHistogram(Name); 
+      FailFillingHistogram(ProfileName); 
     }
   }
 }
