@@ -30,7 +30,7 @@
    <global>
       <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-clustering.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
-      <parameter name="MaxRecordNumber" value=30000/>
+      <parameter name="MaxRecordNumber" value= "@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
       <parameter name="SupressCheck" value="false"/>
       <parameter name="Verbosity" value="@Verbosity@"/>
