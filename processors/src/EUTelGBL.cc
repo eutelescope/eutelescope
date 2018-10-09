@@ -918,6 +918,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
 
 //------------------------------------------------------------------------------
 void EUTelAlignGBL::end() {
+  milleAlignGBL.reset(nullptr);	
 }//end
 
 //------------------------------------------------------------------------------

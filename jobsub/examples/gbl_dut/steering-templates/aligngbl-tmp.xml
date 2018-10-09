@@ -18,8 +18,8 @@
    <execute>
       <processor name="AIDA"/>
       <processor name="HitLocalToGlobal"/>
-      <processor name="MyEUTelGBL"/>
       <processor name="MyEUTelPedeGEAR"/>
+      <processor name="MyEUTelGBL"/>
       <processor name="EUTelUtilityPrintEventNumber"/>
    </execute>
 
