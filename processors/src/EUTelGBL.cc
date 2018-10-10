@@ -553,7 +553,8 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
       auto hit = static_cast<TrackerHitImpl*>( collection->getElementAt(iHit) );
       auto sensorID = hitCellDecoder(hit)["sensorID"];
       auto hitPosition = hit->getPosition();
-      if(sensorID <= 6) {
+      if(std::find(std::begin(_upstream_triplet_ids), std::end(_upstream_triplet_ids), sensorID) != _upstream_triplet_ids.end() || 
+         std::find(std::begin(_downstream_triplet_ids), std::end(_downstream_triplet_ids), sensorID) != _downstream_triplet_ids.end()) {
         _hitsVec.emplace_back(hitPosition, sensorID);
       } else {
         _DUThitsVec.emplace_back(hitPosition, sensorID);

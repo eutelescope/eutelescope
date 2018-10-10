@@ -103,7 +103,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
-<processor name="ClusteringStrip" type="EUTelProcessorGeometricClustering">
+<processor name="ClusteringStrip" type="EUTelProcessorSparseClustering">
  <!--EUTelProcessorGeometricClustering is looking for clusters into a calibrated pixel matrix.-->
   <!--Input of Zero Suppressed data-->
   <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_strip </parameter>
