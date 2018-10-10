@@ -72,7 +72,7 @@ EUTelPedeGEAR::EUTelPedeGEAR() : Processor("EUTelPedeGEAR") {
 
   registerOptionalParameter("RotateOffsetVec",
                             "Apply the obtained rotation to the preexisting offset vector or not..",
-                            _rotateOldOffsetVec, false); //I don't understand what this is
+                            _rotateOldOffsetVec, true); //I can't align if this is set to false. Should we keep this option?
 
 
 }
