@@ -640,8 +640,9 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
 	    for(auto& checkhits: DUThits){
           if(int(checkhits.plane) == _requiredPlane) rejectTrack = false;
 	    }
-	    if(rejectTrack) continue;
+        if(rejectTrack) continue;
 	}
+	
   // to be used only during alignment. Matrix defined outside if clause to avoid complaints from compiler. Could be done better
     Eigen::Matrix2d alDer2; // alignment derivatives
     Eigen::Matrix<double,2,3> alDer3; // alignment derivatives
