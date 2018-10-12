@@ -85,6 +85,7 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelGBL") {
   registerInputCollections(LCIO::TRACKERHIT,"hitCollectionName","Input hit collections name",_hitCollectionName, std::vector<std::string>{"corrhits"});
   registerProcessorParameter("eBeam","Beam energy [GeV]",_eBeam, 4.0);
   registerOptionalParameter("excludePlanes","Exclude planes from fit according to their sensor ids",_excludePlanes_sensorIDs ,std::vector<int>());
+  registerOptionalParameter("requiredPlane","Only tracks with a hit on selected plane are considered",_requiredPlane ,-1);
   registerOptionalParameter("upstreamTriplet","The three sensors used as the upstream triplet", _upstream_triplet_ids, std::vector<int>{0,1,2});
   registerOptionalParameter("downstreamTriplet","The three sensors used as the downstream triplet", _downstream_triplet_ids, std::vector<int>{3,4,5});
   registerOptionalParameter("lastUpstreamSensor","The last plane (z-ordered) which still should be attached to the upstream triplet", _last_upstream_sensor, 2);
@@ -631,7 +632,16 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
     }
 
     if(_printEventCounter < NO_PRINT_EVENT_COUNTER) streamlog_out(DEBUG2) << "Track has " << DUThits.size() << " DUT hits\n";
-
+    
+    // Selection of tracks with a hit on a selected plane
+    // I am sure there must be a better way to do this
+	if(_requiredPlane>-1){
+        bool rejectTrack = true;
+	    for(auto& checkhits: DUThits){
+          if(int(checkhits.plane) == _requiredPlane) rejectTrack = false;
+	    }
+	    if(rejectTrack) continue;
+	}
   // to be used only during alignment. Matrix defined outside if clause to avoid complaints from compiler. Could be done better
     Eigen::Matrix2d alDer2; // alignment derivatives
     Eigen::Matrix<double,2,3> alDer3; // alignment derivatives

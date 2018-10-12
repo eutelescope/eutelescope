@@ -117,6 +117,7 @@ namespace eutelescope {
       // parameters
       std::vector<size_t> _excludePlanes; //only for internal usage
       std::vector<int> _excludePlanes_sensorIDs; //this is going to be
+      int _requiredPlane;
       std::vector<size_t> _FixedPlanes; //only for internal usage
       std::vector<int> _FixedPlanes_sensorIDs; //this is going to be
 
