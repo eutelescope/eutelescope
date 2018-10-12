@@ -84,14 +84,14 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelGBL") {
 
   registerInputCollections(LCIO::TRACKERHIT,"hitCollectionName","Input hit collections name",_hitCollectionName, std::vector<std::string>{"corrhits"});
   registerProcessorParameter("eBeam","Beam energy [GeV]",_eBeam, 4.0);
-  registerOptionalParameter("excludePlanes","Exclude planes from fit according to their sensor ids",_excludePlanes_sensorIDs ,std::vector<int>());
+  registerOptionalParameter("excludePlanes","Exclude planes from fit (their scattering budget is considered)",_excludedPlanes ,std::vector<int>());
   registerOptionalParameter("requiredPlane","Only tracks with a hit on selected plane are considered",_requiredPlane ,-1);
   registerOptionalParameter("upstreamTriplet","The three sensors used as the upstream triplet", _upstream_triplet_ids, std::vector<int>{0,1,2});
   registerOptionalParameter("downstreamTriplet","The three sensors used as the downstream triplet", _downstream_triplet_ids, std::vector<int>{3,4,5});
   registerOptionalParameter("lastUpstreamSensor","The last plane (z-ordered) which still should be attached to the upstream triplet", _last_upstream_sensor, 2);
   registerOptionalParameter("resolutionX","x-resolution of sensors (z-ordered) [mm]", _x_resolution_vec ,std::vector<float>());
   registerOptionalParameter("resolutionY","y-resolution of sensors (z-ordered) [mm]", _y_resolution_vec ,std::vector<float>());
-  registerOptionalParameter("fixedPlanes","Fix sensor planes in the fit according to their sensor ids (it is recommended to fix two telescope planes)",_FixedPlanes_sensorIDs ,std::vector<int>{0,5});
+  registerOptionalParameter("fixedPlanes","Fix sensor planes in the fit according to their sensor ids (it is recommended to fix two telescope planes)",_FixedPlanes ,std::vector<int>{0,5});
   registerOptionalParameter("maxTrackCandidatesTotal","Maximal number of track candidates (Total)",_maxTrackCandidatesTotal, 10000000);
   registerOptionalParameter("maxTrackCandidates","Maximal number of track candidates",_maxTrackCandidates, 2000);
   registerOptionalParameter("milleBinaryFilename","Name of the Millepede binary file",_binaryFilename, std::string{"mille.bin"});
@@ -183,34 +183,6 @@ void EUTelAlignGBL::init() {
     
   }
 
-  // the user is giving sensor ids for the planes to be fixed.
-  // These sensor ids have to be converted to a local index
-  // according to the planes positions along the z axis, i.e. we
-  // need to fill _FixedPlanes with the z-position which corresponds
-  // to the postion in _sensorIDVec
-  cout << "FixedPlanes " << _FixedPlanes_sensorIDs.size() << endl;
-  for(auto& fixedPlaneID: _FixedPlanes_sensorIDs) {
-    auto planeIt = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), fixedPlaneID); 
-    _FixedPlanes.emplace_back( planeIt - _sensorIDVec.begin() );
-  }
-
-  // same for excluded planes
-  cout << "ExcludedPlanes " << _excludePlanes_sensorIDs.size() << endl;
-  for(auto& excludedPlaneID: _excludePlanes_sensorIDs) {
-    auto planeIt = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), excludedPlaneID);
-    _excludePlanes.emplace_back( planeIt - _sensorIDVec.begin() );
-  }
-
-  int counter = 0;
-  for(auto& sensorID: _sensorIDVec) { 
-    if(std::find(_excludePlanes_sensorIDs.begin(), _excludePlanes_sensorIDs.end(), sensorID) 
-    == _excludePlanes_sensorIDs.end()) {
-      indexconverter.emplace_back(counter++);
-    } else {
-      indexconverter.emplace_back(-1);
-    }
-  }
-
   // Center of triplets calculation
   if(_zMid < 0 ){
     double zEndUpstreamTriplet = 0;
@@ -232,11 +204,6 @@ void EUTelAlignGBL::init() {
   _iRun = 0;
   _iEvt = 0;
   _printEventCounter = 0;
-
-  // Initialize number of excluded planes
-  _nExcludePlanes = _excludePlanes.size();
-
-  streamlog_out( MESSAGE2 ) << "Number of planes excluded from the alignment fit: " << _nExcludePlanes << endl;
 
   // Initialise Mille statistics:
   _nMilleTracks = 0;
@@ -276,67 +243,19 @@ void EUTelAlignGBL::init() {
 
     if( steerFile.is_open()) {
 
-      // find first and last excluded plane
-      auto firstnotexcl = _nPlanes;
-      size_t lastnotexcl = 0;
-
-      // loop over all planes:
-
-      for( size_t ipl = 0; ipl < _nPlanes; ipl++) {
-
-    size_t excluded = 0;
-
-    // loop over excluded planes:
-
-    for( size_t jpl = 0; jpl < _nExcludePlanes; jpl++ ) {
-      if( ipl == _excludePlanes[jpl] ) excluded = 1;
-    }
-
-    if( excluded == 0 && firstnotexcl > ipl ) firstnotexcl = ipl;
-
-    if( excluded == 0 && lastnotexcl < ipl ) lastnotexcl = ipl;
-
-      } // end loop over all planes
-
       steerFile << "Cfiles" << endl;
       steerFile << _binaryFilename << endl;
       steerFile << endl;
 
       steerFile << "Parameter" << endl;
 
-      int nfix = 0;
-
       // loop over all planes:
 
       for( size_t ipl = 0; ipl < _nPlanes; ipl++) {
 
-    int excluded = 0; // flag for excluded planes
-
-    // check in list of excluded planes:
-
-    for( size_t iex = 0; iex < _nExcludePlanes; iex++) {
-      if( ipl == _excludePlanes[iex] )
-        excluded = 1;
-    }
-
-    cout << "Plane " << _sensorIDVec[ipl] << " exclude = " << excluded << endl;
-
-    if( excluded == 0 ) {
-
-      bool fixed = false;
-      for( size_t i = 0;i< _FixedPlanes.size(); i++ ) {
-        if( _FixedPlanes[i] == ipl )
-          fixed = true;
-      }
-
-      // if fixed planes
-      // all the steer writing can be cleaner
-      // Label corresponds to plane ID*10 + X, where X (last digit) is between 1 and 6
-      // 1 = X shift, 2 = Y shift, 3 = Z shift, 4 = ZX rot, 5 = ZY rot, 6 = XY rot
-      // For example, the Z shift of plane 55 will be labelled as 55 * 10 + 3 = 553
-      
-      if( fixed || (_FixedPlanes.size() == 0 && (ipl == firstnotexcl || ipl == lastnotexcl) ) ) {
-        nfix++;
+    if(std::find(std::begin(_excludedPlanes), std::end(_excludedPlanes), _sensorIDVec[ipl]) == _excludedPlanes.end()) {
+ 
+      if(std::find(std::begin(_FixedPlanes), std::end(_FixedPlanes), _sensorIDVec[ipl]) != _FixedPlanes.end()) {
         if( _alignMode == Utility::alignMode::XYShifts ) {
           steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0 -1.0" << endl;
           steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0 -1.0" << endl;
@@ -710,7 +629,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
       s += step;
 
       //of there is a hit we will add a measurement to the point
-      if(hit){
+      if(hit && std::find(std::begin(_excludedPlanes), std::end(_excludedPlanes), _sensorIDVec[ipl]) == _excludedPlanes.end()){
         hasHit[ipl] = true;
         double xs = triplet.getx_at(zz);
         double ys = triplet.gety_at(zz);

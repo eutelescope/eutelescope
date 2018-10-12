@@ -115,11 +115,9 @@ namespace eutelescope {
       std::vector<std::string> _hitCollectionName;
 
       // parameters
-      std::vector<size_t> _excludePlanes; //only for internal usage
-      std::vector<int> _excludePlanes_sensorIDs; //this is going to be
+      std::vector<int> _excludedPlanes;
+      std::vector<int> _FixedPlanes;
       int _requiredPlane;
-      std::vector<size_t> _FixedPlanes; //only for internal usage
-      std::vector<int> _FixedPlanes_sensorIDs; //this is going to be
 
 	  // Fixed directions for alignMode XYZShiftsXYZRot
       std::vector<int> _FixedXShift;
@@ -165,9 +163,6 @@ namespace eutelescope {
 
       //! counter for printed events (for debugging)
       int _printEventCounter;
-
-      // Excluded planes
-      size_t _nExcludePlanes;
 
       // Statistics
       size_t _nMilleDataPoints;
@@ -239,8 +234,6 @@ namespace eutelescope {
 
     AIDA::IHistogram1D * ntracksperevent;
 #endif
-
-
 
   };
 
