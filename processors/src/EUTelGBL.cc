@@ -628,73 +628,76 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
       auto point = gbl::GblPoint( jacPointToPoint );
       s += step;
 
+      if(hit){
+        hasHit[ipl] = true; 
       //of there is a hit we will add a measurement to the point
-      if(hit && std::find(std::begin(_excludedPlanes), std::end(_excludedPlanes), _sensorIDVec[ipl]) == _excludedPlanes.end()){
-        hasHit[ipl] = true;
-        double xs = triplet.getx_at(zz);
-        double ys = triplet.gety_at(zz);
+      //in case of excluded plane, we want to know if there is a hit, but we don't process it here
+        if(std::find(std::begin(_excludedPlanes), std::end(_excludedPlanes), _sensorIDVec[ipl]) == _excludedPlanes.end()){
+		  double xs = triplet.getx_at(zz);
+          double ys = triplet.gety_at(zz);
 
-        if(_printEventCounter < NO_PRINT_EVENT_COUNTER) streamlog_out(DEBUG2) << "xs = " << xs << "   ys = " << ys << std::endl;
+          if(_printEventCounter < NO_PRINT_EVENT_COUNTER) streamlog_out(DEBUG2) << "xs = " << xs << "   ys = " << ys << std::endl;
 
-        rx[ipl] = (hit->x - xs); // resid hit-triplet
-        ry[ipl] = (hit->y - ys); // resid
-    
-        Eigen::Vector2d meas;
-        meas[0] = rx[ipl]; // fill meas vector for GBL
-        meas[1] = ry[ipl];
-        point.addMeasurement( proL2m, meas, _planeMeasPrec[ipl] );
+          rx[ipl] = (hit->x - xs); // resid hit-triplet
+          ry[ipl] = (hit->y - ys); // resid
+     
+          Eigen::Vector2d meas;
+          meas[0] = rx[ipl]; // fill meas vector for GBL
+          meas[1] = ry[ipl];
+          point.addMeasurement( proL2m, meas, _planeMeasPrec[ipl] );
         
-        // to be used only during alignment
-        if(_performAlignment){ 
-          if( _alignMode == Utility::alignMode::XYShifts ) { // only x and y shifts
-            // global labels for MP:
-            std::vector<int> globalLabels(2);
-            globalLabels[0] = _sensorIDVec[ipl] * 10 + 1;
-            globalLabels[1] = _sensorIDVec[ipl] * 10 + 2;
-            point.addGlobals( globalLabels, alDer2 ); // for MillePede alignment
-          }
-          else if( _alignMode == Utility::alignMode::XYShiftsRotZ ) { // with rot
-            std::vector<int> globalLabels(3);
-            globalLabels[0] = _sensorIDVec[ipl] * 10 + 1; // x
-            globalLabels[1] = _sensorIDVec[ipl] * 10 + 2; // y
-            globalLabels[2] = _sensorIDVec[ipl] * 10 + 3; // rot
-            alDer3(0,2) = -ys; // dx/dphi
-            alDer3(1,2) =  xs; // dy/dphi
-            point.addGlobals( globalLabels, alDer3 ); // for MillePede alignment
-          }
-          else if( _alignMode == Utility::alignMode::XYZShiftsRotZ ) { // with rot and z shift
-            std::vector<int> globalLabels(4);
-            globalLabels[0] = _sensorIDVec[ipl] * 10 + 1;
-            globalLabels[1] = _sensorIDVec[ipl] * 10 + 2;
-            globalLabels[2] = _sensorIDVec[ipl] * 10 + 3;
-            globalLabels[3] = _sensorIDVec[ipl] * 10 + 4; // z
-            alDer4(0,2) = -ys; // dx/dphi
-            alDer4(1,2) =  xs; // dy/dphi
-            point.addGlobals( globalLabels, alDer4 ); // for MillePede alignment
-          }
-          else if( _alignMode == Utility::alignMode::XYZShiftsRotXYZ ) { // everything
-		    double deltaz = hit->z - _planePosition[ipl];
-            // deltaz cannot be zero, otherwise this mode doesn't work
-            // 1e-9 in mm is quite small
-            if ( deltaz < 1E-9 ) {
-		       deltaz = 1E-9;
+          // to be used only during alignment
+          if(_performAlignment){ 
+            if( _alignMode == Utility::alignMode::XYShifts ) { // only x and y shifts
+              // global labels for MP:
+              std::vector<int> globalLabels(2);
+              globalLabels[0] = _sensorIDVec[ipl] * 10 + 1;
+              globalLabels[1] = _sensorIDVec[ipl] * 10 + 2;
+              point.addGlobals( globalLabels, alDer2 ); // for MillePede alignment
             }
-		    std::vector<int> globalLabels(6);
-            globalLabels[0] = _sensorIDVec[ipl] * 10 + 1;
-            globalLabels[1] = _sensorIDVec[ipl] * 10 + 2;
-            globalLabels[2] = _sensorIDVec[ipl] * 10 + 3;
-            globalLabels[3] = _sensorIDVec[ipl] * 10 + 4;
-            globalLabels[4] = _sensorIDVec[ipl] * 10 + 5;
-            globalLabels[5] = _sensorIDVec[ipl] * 10 + 6;
-            alDer6 ( 0, 4 ) = deltaz; // dx/db
-            alDer6 ( 0, 5 ) = -ys; // dx/dg
-            alDer6 ( 1, 3 ) = -deltaz; // dy/da
-            alDer6 ( 1, 5 ) = xs; // dy/dg
-            alDer6 ( 2, 3 ) = ys; // dz/da
-            alDer6 ( 2, 4 ) = -xs; // dz/db
-            point.addGlobals( globalLabels, alDer6 ); // for MillePede alignment
-		  }
-	    }
+            else if( _alignMode == Utility::alignMode::XYShiftsRotZ ) { // with rot
+              std::vector<int> globalLabels(3);
+              globalLabels[0] = _sensorIDVec[ipl] * 10 + 1; // x
+              globalLabels[1] = _sensorIDVec[ipl] * 10 + 2; // y
+              globalLabels[2] = _sensorIDVec[ipl] * 10 + 3; // rot
+              alDer3(0,2) = -ys; // dx/dphi
+              alDer3(1,2) =  xs; // dy/dphi
+              point.addGlobals( globalLabels, alDer3 ); // for MillePede alignment
+            }
+            else if( _alignMode == Utility::alignMode::XYZShiftsRotZ ) { // with rot and z shift
+              std::vector<int> globalLabels(4);
+              globalLabels[0] = _sensorIDVec[ipl] * 10 + 1;
+              globalLabels[1] = _sensorIDVec[ipl] * 10 + 2;
+              globalLabels[2] = _sensorIDVec[ipl] * 10 + 3;
+              globalLabels[3] = _sensorIDVec[ipl] * 10 + 4; // z
+              alDer4(0,2) = -ys; // dx/dphi
+              alDer4(1,2) =  xs; // dy/dphi
+              point.addGlobals( globalLabels, alDer4 ); // for MillePede alignment
+            }
+            else if( _alignMode == Utility::alignMode::XYZShiftsRotXYZ ) { // everything
+		      double deltaz = hit->z - _planePosition[ipl];
+              // deltaz cannot be zero, otherwise this mode doesn't work
+              // 1e-9 in mm is quite small
+              if ( deltaz < 1E-9 ) {
+		         deltaz = 1E-9;
+              }
+		      std::vector<int> globalLabels(6);
+              globalLabels[0] = _sensorIDVec[ipl] * 10 + 1;
+              globalLabels[1] = _sensorIDVec[ipl] * 10 + 2;
+              globalLabels[2] = _sensorIDVec[ipl] * 10 + 3;
+              globalLabels[3] = _sensorIDVec[ipl] * 10 + 4;
+              globalLabels[4] = _sensorIDVec[ipl] * 10 + 5;
+              globalLabels[5] = _sensorIDVec[ipl] * 10 + 6;
+              alDer6 ( 0, 4 ) = deltaz; // dx/db
+              alDer6 ( 0, 5 ) = -ys; // dx/dg
+              alDer6 ( 1, 3 ) = -deltaz; // dy/da
+              alDer6 ( 1, 5 ) = xs; // dy/dg
+              alDer6 ( 2, 3 ) = ys; // dz/da
+              alDer6 ( 2, 4 ) = -xs; // dz/db
+              point.addGlobals( globalLabels, alDer6 ); // for MillePede alignment
+		    }
+	      }
+        }
       }
 
       point.addScatterer( scat, _planeWscatSi[ipl] );
@@ -751,7 +754,7 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
     double lostWeight;
 
     gbl::GblTrajectory traj(traj_points, false); // curvature = false
-    traj.fit( Chi2, Ndf, lostWeight );
+    traj.fit( Chi2, Ndf, lostWeight);
     //traj.getLabels(ilab); // instead pushback sPoint.size() when adding plane
 
     if(_printEventCounter < NO_PRINT_EVENT_COUNTER){
@@ -807,17 +810,31 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
 
       //track = q/p, x', y', x, y
       //        0,   1,  2,  3, 4
+      //EUTelTripletGBLUtility::hit const * hitref = &triplet.gethit(0);
       gblAxHist[ix]->fill( localPar[1]*1E3 );
-      gblAyHist[ix]->fill( localPar[2]*1E3 );
+      gblAyHist[ix]->fill( localPar[2]*1E3 ); 
       gblDxHist[ix]->fill( localPar[3]*1E3 );
       gblDyHist[ix]->fill( localPar[4]*1E3 );
       
       if(hasHit[ix]){
-        traj.getMeasResults( ipos, ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
-        gblRxHist[ix]->fill( (aResiduals[0])*1E3 );
-        gblRyHist[ix]->fill( (aResiduals[1])*1E3 );
-        gblPxHist[ix]->fill( aResiduals[0]/aResErrors[0] );
-        gblPyHist[ix]->fill( aResiduals[1]/aResErrors[1] );
+		if(std::find(std::begin(_excludedPlanes), std::end(_excludedPlanes), _sensorIDVec[ix]) == _excludedPlanes.end()){
+          traj.getMeasResults( ipos, ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+          gblRxHist[ix]->fill( (aResiduals[0])*1E3 );
+          gblRyHist[ix]->fill( (aResiduals[1])*1E3 );
+          gblPxHist[ix]->fill( aResiduals[0]/aResErrors[0] );
+          gblPyHist[ix]->fill( aResiduals[1]/aResErrors[1] );
+	    } else {
+		  EUTelTripletGBLUtility::hit const * hit = nullptr;
+	      if(std::find(_upstream_triplet_ids.begin(), _upstream_triplet_ids.end(), _sensorIDVec[ix]) != _upstream_triplet_ids.end()) {
+            hit = &triplet.gethit(_sensorIDVec[ix]);
+          } else if(std::find(_downstream_triplet_ids.begin(), _downstream_triplet_ids.end(), _sensorIDVec[ix]) != _downstream_triplet_ids.end()) {
+		    hit = &driplet.gethit(_sensorIDVec[ix]);
+          }
+          else if(triplet.has_DUT(_sensorIDVec[ix])) hit = &triplet.get_DUT_Hit(_sensorIDVec[ix]);
+          else if(driplet.has_DUT(_sensorIDVec[ix])) hit = &driplet.get_DUT_Hit(_sensorIDVec[ix]);
+          gblRxHist[ix]->fill( triplet.getx_at(_planePosition[ix]) *1E3+ localPar[3]*1E3 -hit->x*1E3);
+          gblRyHist[ix]->fill( triplet.gety_at(_planePosition[ix]) *1E3+ localPar[4]*1E3 -hit->y*1E3);
+	    }
       }
 
       ax[k] = localPar[1];
