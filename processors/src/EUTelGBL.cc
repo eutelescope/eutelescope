@@ -817,24 +817,24 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
       gblDyHist[ix]->fill( localPar[4]*1E3 );
       
       if(hasHit[ix]){
-		if(std::find(std::begin(_excludedPlanes), std::end(_excludedPlanes), _sensorIDVec[ix]) == _excludedPlanes.end()){
+        if(std::find(std::begin(_excludedPlanes), std::end(_excludedPlanes), _sensorIDVec[ix]) == _excludedPlanes.end()){
           traj.getMeasResults( ipos, ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
           gblRxHist[ix]->fill( (aResiduals[0])*1E3 );
           gblRyHist[ix]->fill( (aResiduals[1])*1E3 );
           gblPxHist[ix]->fill( aResiduals[0]/aResErrors[0] );
           gblPyHist[ix]->fill( aResiduals[1]/aResErrors[1] );
-	    } else {
+        } else {
 		  EUTelTripletGBLUtility::hit const * hit = nullptr;
-	      if(std::find(_upstream_triplet_ids.begin(), _upstream_triplet_ids.end(), _sensorIDVec[ix]) != _upstream_triplet_ids.end()) {
+		  if(std::find(_upstream_triplet_ids.begin(), _upstream_triplet_ids.end(), _sensorIDVec[ix]) != _upstream_triplet_ids.end()) {
             hit = &triplet.gethit(_sensorIDVec[ix]);
           } else if(std::find(_downstream_triplet_ids.begin(), _downstream_triplet_ids.end(), _sensorIDVec[ix]) != _downstream_triplet_ids.end()) {
 		    hit = &driplet.gethit(_sensorIDVec[ix]);
           }
           else if(triplet.has_DUT(_sensorIDVec[ix])) hit = &triplet.get_DUT_Hit(_sensorIDVec[ix]);
           else if(driplet.has_DUT(_sensorIDVec[ix])) hit = &driplet.get_DUT_Hit(_sensorIDVec[ix]);
-          gblRxHist[ix]->fill( triplet.getx_at(_planePosition[ix]) *1E3+ localPar[3]*1E3 -hit->x*1E3);
-          gblRyHist[ix]->fill( triplet.gety_at(_planePosition[ix]) *1E3+ localPar[4]*1E3 -hit->y*1E3);
-	    }
+          gblRxHist[ix]->fill( hit->x*1E3 - triplet.getx_at(_planePosition[ix]) *1E3 - localPar[3]*1E3);
+          gblRyHist[ix]->fill( hit->y*1E3 - triplet.gety_at(_planePosition[ix]) *1E3 - localPar[4]*1E3);
+        }
       }
 
       ax[k] = localPar[1];
