@@ -55,6 +55,7 @@
 #include <IMPL/TrackerDataImpl.h>
 #include <IMPL/TrackerPulseImpl.h>
 #include <IMPL/LCCollectionVec.h>
+#include "IMPL/LCGenericObjectImpl.h"
 
 // system includes <>
 #include <string>
@@ -77,12 +78,12 @@ using namespace eutelescope;
 
 
 //------------------------------------------------------------------------------
-EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelGBL") {
+EUTelGBL::EUTelGBL(): Processor("EUTelGBL") {
 
   // modify processor description
-  _description = "EUTelAlignGBL uses the MILLE program to write data files for MILLEPEDE II.";
+  _description = "EUTelGBL uses the MILLE program to write data files for MILLEPEDE II.";
 
-  registerInputCollections(LCIO::TRACKERHIT,"hitCollectionName","Input hit collections name",_hitCollectionName, std::vector<std::string>{"corrhits"});
+  registerInputCollections(LCIO::TRACKERHIT,"hitCollectionName","Input hit collections name",_hitCollectionName, std::vector<std::string>{"hit"});
   registerProcessorParameter("eBeam","Beam energy [GeV]",_eBeam, 4.0);
   registerOptionalParameter("excludePlanes","Exclude planes from fit (their scattering budget is considered)",_excludedPlanes ,std::vector<int>());
   registerOptionalParameter("requiredPlane","Only tracks with a hit on selected plane are considered",_requiredPlane ,-1);
@@ -102,6 +103,7 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelGBL") {
                               "\n\t\tXYZShiftsRotXYZ - all shifts and rotations allowed",
                               _alignModeString, std::string{ "XYShiftsRotZ" });
   registerOptionalParameter("performAlignment","Set to 0 if you do not want to perform the alignment",_performAlignment, 1);
+  registerOptionalParameter("dumpTracks","Set to 0 if you do not want to dump tracks in an lcio collection (necessary to dump in an NTuple)",_dumpTracks, 1);
   registerOptionalParameter("fixedXShift","List of planes which should be fixed in X direction",_FixedXShift ,std::vector<int>());
   registerOptionalParameter("fixedYShift","List of planes which should be fixed in Y direction",_FixedYShift ,std::vector<int>());
   registerOptionalParameter("fixedZShift","List of planes which should be fixed in Z direction",_FixedZShift ,std::vector<int>());
@@ -121,7 +123,7 @@ EUTelAlignGBL::EUTelAlignGBL(): Processor("EUTelGBL") {
 }
 
 //------------------------------------------------------------------------------
-void EUTelAlignGBL::init() {
+void EUTelGBL::init() {
   geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME,
                                              EUTELESCOPE::DUMPGEOROOT);
 
@@ -404,7 +406,7 @@ void EUTelAlignGBL::init() {
 }
 
 //------------------------------------------------------------------------------
-void EUTelAlignGBL::processRunHeader( LCRunHeader* rdr ) {
+void EUTelGBL::processRunHeader( LCRunHeader* rdr ) {
   auto header = std::make_unique<EUTelRunHeaderImpl>(rdr);
   header->addProcessor( type() ) ;
   // increment the run counter
@@ -426,7 +428,7 @@ inline Eigen::Matrix<double,5,5> Jac55new( double ds ) {
 }
 
 //------------------------------------------------------------------------------
-void EUTelAlignGBL::processEvent( LCEvent * event ) {
+void EUTelGBL::processEvent( LCEvent * event ) {
 
   if( _iEvt % 1000 == 0 ) {
     streamlog_out( MESSAGE2 ) << "Processing event "
@@ -438,7 +440,10 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
       << _nMilleTracks << " tracks "
       << endl;
   }
-
+  
+  //compiler doesn't like it inside an if clause
+  LCCollectionVec* _outputTracks = new LCCollectionVec(LCIO::LCGENERICOBJECT);
+  
   if( _nMilleTracks > static_cast<size_t>(_maxTrackCandidatesTotal) ) {
     throw StopProcessingException(this);
   }
@@ -630,8 +635,8 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
 
       if(hit){
         hasHit[ipl] = true; 
-      //of there is a hit we will add a measurement to the point
-      //in case of excluded plane, we want to know if there is a hit, but we don't process it here
+        //of there is a hit we will add a measurement to the point
+        //in case of excluded plane, we want to know if there is a hit, but we don't process it here
         if(std::find(std::begin(_excludedPlanes), std::end(_excludedPlanes), _sensorIDVec[ipl]) == _excludedPlanes.end()){
 		  double xs = triplet.getx_at(zz);
           double ys = triplet.gety_at(zz);
@@ -803,14 +808,15 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
     Eigen::VectorXd aMeasErrors(ndim);
     Eigen::VectorXd aResErrors(ndim);
     Eigen::VectorXd aDownWeights(ndim);
-
+    
     for(size_t ix = 0; ix < _nPlanes; ++ix) {
       int ipos = ilab[ix];
       traj.getResults( ipos, localPar, localCov );
 
+      //compiler doesn't like it outside an if clause
+      IMPL::LCGenericObjectImpl* thisTrack = new IMPL::LCGenericObjectImpl();
       //track = q/p, x', y', x, y
       //        0,   1,  2,  3, 4
-      //EUTelTripletGBLUtility::hit const * hitref = &triplet.gethit(0);
       gblAxHist[ix]->fill( localPar[1]*1E3 );
       gblAyHist[ix]->fill( localPar[2]*1E3 ); 
       gblDxHist[ix]->fill( localPar[3]*1E3 );
@@ -836,12 +842,28 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
           gblRyHist[ix]->fill( hit->y*1E3 - triplet.gety_at(_planePosition[ix]) *1E3 - localPar[4]*1E3);
         }
       }
-
+      
+      if(_dumpTracks){ //CHECK ME CAREFULLY
+        thisTrack->setIntVal(0, _sensorIDVec[ix]); //sensor ID is an int
+        thisTrack->setIntVal(1, Ndf); //Ndf is an int
+        thisTrack->setFloatVal(0, Chi2); //chi2 in position 0
+        thisTrack->setFloatVal(1, triplet.getx_at(_planePosition[ix]) + localPar[3]); // x track position (global system)
+        thisTrack->setFloatVal(2, triplet.gety_at(_planePosition[ix]) + localPar[4]); // y track position (global system)
+        thisTrack->setFloatVal(3, _planePosition[ix]); // z track position. FIX ME PLEASE
+        thisTrack->setFloatVal(4, localPar[1]*1E3); // hopefully some angle in mrad
+        thisTrack->setFloatVal(5, localPar[2]*1E3); // hopefully the other angle in mrad
+        if(k>0){
+          thisTrack->setFloatVal(6, (localPar[1] - ax[k-1])*1E3); // kink angle (for the previous plane, FIX IT) in x in mrad
+          thisTrack->setFloatVal(7, (localPar[2] - ay[k-1])*1E3); // kink angle (for the previous plane, FIX IT) in y in mrad
+	    }
+        _outputTracks->push_back(static_cast<EVENT::LCGenericObject*>(thisTrack));
+      }
+      
       ax[k] = localPar[1];
       ay[k] = localPar[2];
       ++k;
     }
-
+    
     for(size_t ix = 0; ix < _nPlanes-1; ++ix) {
       gblKinkXHist[ix]->fill( (ax[ix+1] - ax[ix])*1E3 ); // kink at planes [mrad]
       gblKinkYHist[ix]->fill( (ay[ix+1] - ay[ix])*1E3 ); // kink at planes [mrad]
@@ -857,6 +879,9 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
     numbertracks++;
     
   }
+  
+  if(_dumpTracks) event->addCollection(_outputTracks,"TracksCollection");
+  
   ntracksperevent->fill( numbertracks );
 
   // count events:
@@ -865,12 +890,12 @@ void EUTelAlignGBL::processEvent( LCEvent * event ) {
 }
 
 //------------------------------------------------------------------------------
-void EUTelAlignGBL::end() {
+void EUTelGBL::end() {
   milleAlignGBL.reset(nullptr);	
 }//end
 
 //------------------------------------------------------------------------------
-void EUTelAlignGBL::bookHistos(std::vector<int> const & sensorIDVec) {
+void EUTelGBL::bookHistos(std::vector<int> const & sensorIDVec) {
 
   try {
     streamlog_out( MESSAGE2 ) << "Booking histograms..." << endl;

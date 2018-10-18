@@ -40,22 +40,22 @@
 
 namespace eutelescope {
 
-  class EUTelAlignGBL : public marlin::Processor {
+  class EUTelGBL : public marlin::Processor {
 
     public:
-      //! Returns a new instance of EUTelAlignGBL
+      //! Returns a new instance of EUTelGBL
       /*! This method returns a new instance of this processor.  It is
        *  called by Marlin execution framework and it shouldn't be
        *  called/used by the final user.
        *
-       *  @return a new EUTelAlignGBL.
+       *  @return a new EUTelGBL.
        */
       virtual Processor * newProcessor() {
-	return new EUTelAlignGBL;
+	return new EUTelGBL;
       }
 
       //! Default constructor
-      EUTelAlignGBL ();
+      EUTelGBL ();
 
       //! Called at the job beginning.
       /*! This is executed only once in the whole execution. It prints
@@ -151,6 +151,7 @@ namespace eutelescope {
       std::vector<int> _FixParameter;
 
       int _performAlignment;
+      int _dumpTracks;
       std::string _pedeSteerfileName;
 
       EUTelTripletGBLUtility gblutil;
@@ -238,7 +239,7 @@ namespace eutelescope {
   };
 
   //! A global instance of the processor
-  EUTelAlignGBL gEUTelAlignGBL;
+  EUTelGBL gEUTelGBL;
 
 }
 #endif
