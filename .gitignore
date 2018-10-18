@@ -19,7 +19,8 @@ lib/*
 *.log
 
 # Ignore analysis files (if not added specifically with "git add [file]")
-#*.xml
+**/output/
+*.xml
 *.csv
 *.cfg
 *.sh

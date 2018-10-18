@@ -148,6 +148,8 @@ Available types of the data format:
   <parameter name="SparseClusterCut" type="float" value="0.0"/>
   <!--Minimum distance between sparsified pixel ( touching == sqrt(2)) -->
   <parameter name="SparseMinDistance" type="float" value="1"/>
+  <!--Squared minimum distance between sparsified pixel-->
+  <parameter name="SparseMinDistanceSquared" type="float" value="2"/>
   <!--Threshold in SNR for seed pixel contained in ZS data-->
   <parameter name="SparseSeedCut" type="float" value="0.0"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->

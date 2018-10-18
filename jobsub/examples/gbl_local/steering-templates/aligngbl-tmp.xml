@@ -19,7 +19,7 @@
       <processor name="MyAIDAProcessor"/>
       <processor name="HitLocalToGlobal"/>
       <processor name="PedeToGEAR"/>
-      <processor name="MyEUTelGBL"/>
+      <processor name="MyEUTelAlignGBL"/>
    </execute>
 
    <global>
@@ -78,7 +78,7 @@
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
 </processor>
 
- <processor name="MyEUTelGBL" type="EUTelGBL">
+ <processor name="MyEUTelAlignGBL" type="EUTelAlignGBL">
  <!--EUTelAlignGBL uses the MILLE program to write data files for MILLEPEDE II.-->
   <!--Input hit collections name-->
   <parameter name="hitCollectionName" type="StringVec" lcioInType="TrackerHit"> hit  </parameter>

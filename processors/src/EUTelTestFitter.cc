@@ -883,9 +883,9 @@ void EUTelTestFitter::processEvent(LCEvent *event) {
         gRotation[2] = gRotation[2] * 3.1415926 / 180.; //
 
         TRotation r;
+        r.RotateZ(gRotation[0]);
         r.RotateX(gRotation[2]);
         r.RotateY(gRotation[1]);
-        r.RotateZ(gRotation[0]);
 
         _normalTVec.Transform(r);
 
