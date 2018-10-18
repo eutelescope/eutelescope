@@ -48,7 +48,8 @@ EUTelPedeGEAR::EUTelPedeGEAR() : Processor("EUTelPedeGEAR") {
       "AlignMode",
       "Number of alignment constants used. Available mode are: "
       "\n\t\tXYShiftsRotZ - shifts in the X and Y directions and a rotation around the Z axis,"
-      "\n\t\tXYShifts - only shifts in the X and Y directions"
+      "\n\t\tXYShifts - only shifts in the X and Y directions,"
+      "\n\t\tXYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis"
       "\n\t\tXYZShiftsRotXYZ - all shifts and rotations allowed",
       _alignModeString, std::string("XYShiftsRotZ"));
 
@@ -85,10 +86,10 @@ void EUTelPedeGEAR::init() {
 	_alignMode = Utility::alignMode::XYShiftsRotZ;
   } else if( _alignModeString.compare("XYShifts") == 0 ) {
 	_alignMode = Utility::alignMode::XYShifts;
-  } else if( _alignModeString.compare("XYShiftsAllRot") == 0 ) {
-	_alignMode = Utility::alignMode::XYShiftsAllRot;
+  } else if( _alignModeString.compare("XYZShiftsRotZ") == 0 ) {
+	_alignMode = Utility::alignMode::XYZShiftsRotZ;
   } else if( _alignModeString.compare("XYZShiftsRotXYZ") == 0 ) {
-	_alignMode = Utility::alignMode::XYShiftsAllRot;
+	_alignMode = Utility::alignMode::XYZShiftsRotXYZ;
   } else {
 	streamlog_out(ERROR) << "The chosen AlignMode: '" << _alignModeString << "' is invalid. Please correct your steering template and retry!" << std::endl;
 	throw InvalidParameterException("AlignMode");
@@ -251,9 +252,13 @@ void EUTelPedeGEAR::end() {
         bool goodLine = true;
         unsigned int numpars = 0;
 
-        if (_alignMode != Utility::alignMode::XYShiftsAllRot) {
+        if (_alignMode == Utility::alignMode::XYShifts) {
+          numpars = 2;
+        } else if (_alignMode == Utility::alignMode::XYShiftsRotZ) {
           numpars = 3;
-        } else {
+        } else if (_alignMode == Utility::alignMode::XYZShiftsRotZ) {
+          numpars = 4;
+        } else if  (_alignMode == Utility::alignMode::XYZShiftsRotXYZ){
           numpars = 6;
         }
         
@@ -288,14 +293,24 @@ void EUTelPedeGEAR::end() {
           while (tokenizer >> buffer) {
             tokens.push_back(buffer);
           }
-          if ((tokens.size() == 3) || (tokens.size() == 6) ||
-              (tokens.size() == 5)) {
+          if ((tokens.size() == 3) || (tokens.size() == 6) || (tokens.size() == 5)) {
             goodLine = true;
           } else {
             goodLine = false;
           }
 
-          if (_alignMode != Utility::alignMode::XYShiftsAllRot) {
+          if (_alignMode == Utility::alignMode::XYShifts) {
+            if (iParam == 0) {
+			  sensorID = (tokens[0] - 1) / 10; // should be done better
+              xOff = tokens[1];
+              if(tokens[2] == 0) xOffErr = tokens[4];
+            }
+            if (iParam == 1) {
+              yOff = tokens[1];
+              if(tokens[2] == 0) yOffErr = tokens[4];
+            }
+          }
+          else if (_alignMode == Utility::alignMode::XYShiftsRotZ) {
             if (iParam == 0) {
 			  sensorID = (tokens[0] - 1) / 10; // should be done better
               xOff = tokens[1];
@@ -309,7 +324,25 @@ void EUTelPedeGEAR::end() {
               gamma = -tokens[1];
               if(tokens[2] == 0) gammaErr = tokens[4];
             }
-          } else {
+          } else if (_alignMode == Utility::alignMode::XYZShiftsRotZ){
+            if (iParam == 0) {
+			  sensorID = (tokens[0] - 1) / 10; // should be done better
+              xOff = tokens[1];
+              if(tokens[2] == 0) xOffErr = tokens[4];
+            }
+            if (iParam == 1) {
+              yOff = tokens[1];
+              if(tokens[2] == 0) yOffErr = tokens[4];
+            }
+            if (iParam == 2) {
+              gamma = -tokens[1];
+              if(tokens[2] == 0) gammaErr = tokens[4];
+            }
+            if (iParam == 3) {
+              zOff = tokens[1];
+              if(tokens[2] == 0) zOffErr = tokens[4];
+            }
+          } else if (_alignMode == Utility::alignMode::XYZShiftsRotXYZ){
             if (iParam == 0) {
 			  sensorID = (tokens[0] - 1) / 10; // should be done better
               xOff = tokens[1];

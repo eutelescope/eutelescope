@@ -97,7 +97,7 @@ EUTelGBL::EUTelGBL(): Processor("EUTelGBL") {
   registerOptionalParameter("maxTrackCandidates","Maximal number of track candidates",_maxTrackCandidates, 2000);
   registerOptionalParameter("milleBinaryFilename","Name of the Millepede binary file",_binaryFilename, std::string{"mille.bin"});
   registerOptionalParameter("alignMode","Number of alignment constants used. Available mode are:"
-                              "\n\t\tXYZShifts - shifts in X and Y"
+                              "\n\t\tXYShifts - shifts in X and Y"
                               "\n\t\tXYShiftsRotZ - shifts in X and Y and rotation around the Z axis,"
                               "\n\t\tXYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis"
                               "\n\t\tXYZShiftsRotXYZ - all shifts and rotations allowed",
