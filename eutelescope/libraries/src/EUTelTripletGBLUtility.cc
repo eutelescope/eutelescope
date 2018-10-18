@@ -63,94 +63,107 @@ void EUTelTripletGBLUtility::bookHistos(){
     
   marlin::AIDAProcessor::tree(parent)->mkdir("GBLUtility");
 
-  sixkxHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/sixkx", 100, -10, 10 );
+  sixkxHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixkx", 100, -10, 10 );
   sixkxHisto->setTitle( "kink x;kink x [mrad];triplet-driplet pairs" );
 
-  sixkyHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/sixky", 100, -10, 10 );
+  sixkyHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixky", 100, -10, 10 );
   sixkyHisto->setTitle( "kink y;kink y [mrad];triplet-driplet pairs" );
 
-  sixdxHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/sixdx", 100, -1, 1 );
+  sixdxHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixdx", 100, -1, 1 );
   sixdxHisto->setTitle( "six match x;match x [mm];triplet-driplet pairs" );
 
-  sixdyHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/sixdy", 100, -1, 1 );
+  sixdyHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixdy", 100, -1, 1 );
   sixdyHisto->setTitle( "six match y;match y [mm];triplet-driplet pairs" );
 
-  sixdxcHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/sixdxc", 100, -250, 250 );
+  sixdxcHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixdxc", 100, -250, 250 );
   sixdxcHisto->setTitle( "six match x;track #Deltax[#mum];triplet-driplet pairs" );
 
-  sixdycHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/sixdyc", 100, -250, 250 );
+  sixdycHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixdyc", 100, -250, 250 );
   sixdycHisto->setTitle( "six match y;track #Deltay[#mum];triplet-driplet pairs" );
 
-  sixkxcHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/sixkxc", 100, -10, 10 );
+  sixkxcHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixkxc", 100, -10, 10 );
   sixkxcHisto->setTitle( "kink x, x-y matched;kink x [mrad];triplet-driplet pairs" );
 
-  sixkycHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/sixkyc", 100, -10, 10 );
+  sixkycHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixkyc", 100, -10, 10 );
   sixkycHisto->setTitle( "kink y, x-y matched;kink y [mrad];triplet-driplet pairs" );
 
-  sixxHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/sixx", 240, -12, 12 );
+  sixxHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixx", 240, -12, 12 );
   sixxHisto->setTitle( "six x at DUT;six x_{out} at DUT [mm];six-plane tracks" );
 
-  sixyHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/sixy", 120, -6, 6 );
+  sixyHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixy", 120, -6, 6 );
   sixyHisto->setTitle( "six y at DUT;six y_{up} at DUT [mm];six-plane tracks" );
 
-  sixxyHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram2D( "GBLUtility/sixxy", 240, -12, 12, 120, -6, 6 );
+  sixxyHisto = AIDAProcessor::histogramFactory(parent)->createHistogram2D( "GBLUtility/sixxy", 240, -12, 12, 120, -6, 6 );
   sixxyHisto->setTitle( "six at DUT;six x_{out} at DUT [mm];six y_{up} at DUT [mm];six-plane tracks" );
 
-  sixxycHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram2D( "GBLUtility/sixxyc", 240, -12, 12, 120, -6, 6 );
+  sixxycHisto = AIDAProcessor::histogramFactory(parent)->createHistogram2D( "GBLUtility/sixxyc", 240, -12, 12, 120, -6, 6 );
   sixxycHisto->setTitle( "six large kink;six x_{out} at DUT [mm];six y_{up} at DUT [mm];large kink tracks" );
 
-  /*sixxylkHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram2D( "GBLUtilityTracks/sixxylk", 240, -12, 12, 120, -6, 6 );
-  sixxylkHisto->setTitle( "six with REF link at DUT;six x_{out} at DUT [mm];six y_{up} at DUT [mm];six-plane tracks with REF link" );
-  */
-
-  kinkxvsxy = AIDAProcessor::histogramFactory(parent)->
-    createProfile2D( "GBLUtility/kinkxvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
+  kinkxvsxy = AIDAProcessor::histogramFactory(parent)->createProfile2D( "GBLUtility/kinkxvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
   kinkxvsxy->setTitle( "kink x;six x_{out} at DUT [mm];six y_{up} at DUT [mm];sqrt(<kink^{2}>) [mrad]" );
 
-  kinkyvsxy = AIDAProcessor::histogramFactory(parent)->
-    createProfile2D( "GBLUtility/kinkyvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
+  kinkyvsxy = AIDAProcessor::histogramFactory(parent)->createProfile2D( "GBLUtility/kinkyvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
   kinkyvsxy->setTitle( "kink y;six x_{out} at DUT [mm];six y_{up} at DUT [mm];sqrt(<kink^{2}>) [mrad]" );
 
-  kinkxyvsxy = AIDAProcessor::histogramFactory(parent)->
-    createProfile2D( "GBLUtility/kinkxyvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
+  kinkxyvsxy = AIDAProcessor::histogramFactory(parent)->createProfile2D( "GBLUtility/kinkxyvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
   kinkxyvsxy->setTitle( "kink <|x|+|y|>;six x_{out} at DUT [mm];six y_{up} at DUT [mm]; (|x| + |y|)/2 [mrad]" );
 
-  kinkx = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/kinkx", 500, -5, 5 );
+  kinkx = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/kinkx", 500, -5, 5 );
   kinkx->setTitle( "triplet kink x angle at DUT;x angle at DUT [mrad];tracks" );
 
-  kinky = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/kinky", 500, -5, 5 );
+  kinky = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/kinky", 500, -5, 5 );
   kinky->setTitle( "triplet kink y angle at DUT;y angle at DUT [mrad];tracks" );
 
-  kinkxy = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "GBLUtility/kinkxy", 500, -5, 5 );
+  kinkxy = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/kinkxy", 500, -5, 5 );
   kinkxy->setTitle( "triplet kink xy angle at DUT;xy angle at DUT [mrad];tracks" );
-
-  // for both triplet and driplet
-  triddaMindutHisto = AIDAProcessor::histogramFactory(parent)->
-    createHistogram1D( "triddaMindut", 1400, -2, 5 );
-  triddaMindutHisto->setTitle( "minimal triplet distance at DUT;triplet distance at DUT [mm];telescope triplets" );
+  
+  //cut plots
+  marlin::AIDAProcessor::tree(parent)->mkdir("Cuts");
+  
+  upstreamTripletSlopeX = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/upstreamTripletSlopeCutX", 1000, -3, 3 ); //binning to be reviewed
+  upstreamTripletSlopeX->setTitle( "Upstream Triplet Slope X;Upstream Triplet Slope X [mrad];Counts" );
+  
+  upstreamTripletSlopeY = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/upstreamTripletSlopeCutY", 1000, -3, 3 ); //binning to be reviewed
+  upstreamTripletSlopeY->setTitle( "Upstream Triplet Slope Y;Upstream Triplet Slope Y [mrad];Counts" );
+  
+  downstreamTripletSlopeX = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/downstreamTripletSlopeCutX", 1000, -3, 3 ); //binning to be reviewed
+  downstreamTripletSlopeX->setTitle( "Downstream Triplet Slope X;Downstream Triplet Slope X [mrad];Counts" );
+  
+  downstreamTripletSlopeY = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/downstreamTripletSlopeCutY", 1000, -3, 3 ); //binning to be reviewed
+  downstreamTripletSlopeY->setTitle( "Downstream Triplet Slope Y;Downstream Triplet Slope Y [mrad];Counts" );
+  
+  upstreamTripletResidualX = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/upstreamTripletResidualCutX", 1000, -3, 3 ); //binning to be reviewed
+  upstreamTripletResidualX->setTitle( "Upstream Triplet Residual X;Upstream Triplet Residual X [mm];Counts" );
+  
+  upstreamTripletResidualY = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/upstreamTripletResidualCutY", 1000, -3, 3 ); //binning to be reviewed
+  upstreamTripletResidualY->setTitle( "Upstream Triplet Residual Y;Upstream Triplet Residual Y [mm];Counts" );
+  
+  downstreamTripletResidualX = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/downstreamTripletResidualCutX", 1000, -3, 3 ); //binning to be reviewed
+  downstreamTripletResidualX->setTitle( "Downstream Triplet Residual X;Downstream Triplet Residual X [mm];Counts" );
+  
+  downstreamTripletResidualY = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/downstreamTripletResidualCutY", 1000, -3, 3 ); //binning to be reviewed
+  downstreamTripletResidualY->setTitle( "Downstream Triplet Residual Y;Downstream Triplet Residual Y [mm];Counts" );
+  
+  tripletMatchingResidualX = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/tripletMatchingResidualCutX", 1000, -3, 3 ); //binning to be reviewed
+  tripletMatchingResidualX->setTitle( "Triplet Matching Residual X;Triplet Matching Residual X [mm];Counts" );
+  
+  tripletMatchingResidualY = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/tripletMatchingResidualCutY", 1000, -3, 3 ); //binning to be reviewed
+  tripletMatchingResidualY->setTitle( "Triplet Matching Residual Y;Triplet Matching Residual Y [mm];Counts" );
+  
+  DUTMatchingResidualX = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/DUTMatchingResidualCutX", 1000, -3, 3 ); //binning to be reviewed
+  DUTMatchingResidualX->setTitle( "DUT Matching Residual local X;DUT Matching Residual local X [mm];Counts" );
+  
+  DUTMatchingResidualY = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/DUTMatchingResidualCutY", 1000, -3, 3 ); //binning to be reviewed
+  DUTMatchingResidualY->setTitle( "DUT Matching Residual local Y;DUT Matching Residual local Y [mm];Counts" );
+  
+  DUTHitNumber = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "Cuts/DUTHitNumber", 21, -0.5, 20.5 ); //binning to be reviewed
+  DUTHitNumber->setTitle( "Number of Hits matched to a track per DUT ID;DUT ID;Number of Hits matched to a track" );
 
 }
 
 void EUTelTripletGBLUtility::MatchTriplets(std::vector<triplet> const & up, std::vector<EUTelTripletGBLUtility::triplet> const & down, double z_match, double trip_matching_cut, std::vector<EUTelTripletGBLUtility::track> &tracks) {
 
   // Cut on the matching of two triplets [mm]
-  //double intersect_residual_cut = 0.1;
 
   for( auto& trip: up ){
 
@@ -192,7 +205,9 @@ void EUTelTripletGBLUtility::MatchTriplets(std::vector<triplet> const & up, std:
       if( abs(dy) < 0.5 ) sixdxcHisto->fill( dx*1E3 );
       if( abs(dx) < 0.5 ) sixdycHisto->fill( dy*1E3 );
       
-
+      //cut plots
+      tripletMatchingResidualX->fill(dx);
+      tripletMatchingResidualY->fill(dy);
       // match driplet and triplet:
       streamlog_out(DEBUG4) << "  Distance for matching x: " << fabs(dx)<< std::endl;
       streamlog_out(DEBUG4) << "  Distance for matching y: " << fabs(dy)<< std::endl;
@@ -202,13 +217,9 @@ void EUTelTripletGBLUtility::MatchTriplets(std::vector<triplet> const & up, std:
 
       // check isolation
       if( !IsolatedTrip || !IsolatedDrip ) {
-	//hIso->fill(0);
-	//std::cout << " me so non-isolated" << std::endl;
 	continue;
       }
-      streamlog_out(DEBUG4) << "  Trip and Drip isolated " << std::endl;
-      //else hIso->fill(1);
-      
+      streamlog_out(DEBUG4) << "  Trip and Drip isolated " << std::endl;      
 
       sixkxcHisto->fill( kx*1E3 );
       sixkycHisto->fill( ky*1E3 );
@@ -218,9 +229,6 @@ void EUTelTripletGBLUtility::MatchTriplets(std::vector<triplet> const & up, std:
       // Fill kink map histogram:
       if( abs( kx ) > 0.002 || abs( ky ) > 0.002 ) sixxycHisto->fill( -xA, -yA );      
 
-      // apply fiducial cut
-      if ( fabs(xA) >  9.0) continue;
-      if (     -yA  < -4.0) continue;
       kinkx->fill( kx*1E3 ); //sqrt(<kink^2>) [mrad]
       kinky->fill( ky*1E3 ); //sqrt(<kink^2>) [mrad]
       kinkxy->fill( (fabs(kx)+fabs(ky))/2*1E3 ); // [mrad]
@@ -256,109 +264,58 @@ bool EUTelTripletGBLUtility::IsTripletIsolated(EUTelTripletGBLUtility::triplet c
 	}
   }
 
-  triddaMindutHisto->fill(ddAMin);
   if(ddAMin < isolation_cut && ddAMin > -0.5) IsolatedTrip = false; // if there is only one triplet, ddAmin is still -1.
 
   return IsolatedTrip;
 }
 
-bool EUTelTripletGBLUtility::AttachDUT(EUTelTripletGBLUtility::triplet & triplet, std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int dutID,  double dist_cut){
+bool EUTelTripletGBLUtility::AttachDUT(EUTelTripletGBLUtility::triplet & triplet, std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int dutID,  std::vector<float> dist_cuts){
 
 	auto zPos = geo::gGeometry().getPlaneZPosition(dutID);
 	int minHitIx = -1;
-	double minDist = std::numeric_limits<double>::max();
-	double cut_squared = dist_cut*dist_cut;	
+	double minDist = std::numeric_limits<float>::max();
 
 	auto trX = triplet.getx_at(zPos);
 	auto trY = triplet.gety_at(zPos);
-
-//	std::cout << "Triplet x/y: " << trX << "|" << trY << '\n'; 
-
+	double trglpos[3] = {trX,trY,zPos};
+	double trlocpos[3];
+    geo::gGeometry().master2Local(dutID,trglpos,trlocpos);
+    
 	size_t ix = 0;	
 	for(auto& hit: hits) {
 		if(hit.plane == dutID) {
 			auto hitX = hit.x;
 			auto hitY = hit.y;
-			auto dist = (trX-hitX)*(trX-hitX)+(trY-hitY)*(trY-hitY);
-//			std::cout << "Hit x/y: " << hitX << "|" << hitY << " dist: " << dist << '\n'; 
-			if(dist <= cut_squared && dist < minDist ){
+			//track and DUT hit positions are transformed in the local coordinate frame of the DUT, where the cuts are applied
+			//it is horrible to convert the hits from global to local, where the latter is actually basically the input of the hitmaker
+			//this is a first step toward a more general refactoring to work mainly in local coordinate systems 
+			double hitglpos[3] = {hitX,hitY,zPos};
+	        double hitlocpos[3];
+            geo::gGeometry().master2Local(dutID,hitglpos,hitlocpos);
+			auto distX = fabs(trlocpos[0]-hitlocpos[0]);
+			auto distY = fabs(trlocpos[1]-hitlocpos[1]);
+                        double dist = distX*distX + distY*distY;
+			DUTMatchingResidualX->fill(trlocpos[0]-hitlocpos[0]);
+			DUTMatchingResidualY->fill(trlocpos[1]-hitlocpos[1]);
+			if(distX <= dist_cuts.at(0) && distY <= dist_cuts.at(1) && dist < minDist ){
 				minHitIx = static_cast<int>(ix);
-				//std::cout << "Dist: " << dist << std::endl;
+				DUTHitNumber->fill(dutID);
+				minDist = dist;
 			}
 		}
 		++ix;
 	}
 
 	if(minHitIx != -1) {
-		/*
-    auto hitX = hits[minHitIx].x;
-    auto hitY = hits[minHitIx].y;
-		auto dist = (trX-hitX)*(trX-hitX)+(trY-hitY)*(trY-hitY);
-		std::cout << "Added hit with: " << dist << " on plane: " << hits[minHitIx].plane << '\n';
-    */
 		triplet.push_back_DUT(hits[minHitIx].plane, hits[minHitIx]);
 		return true;
 	}
 return false;
 }
-/*
-bool EUTelTripletGBLUtility::AttachDUT(std::vector<EUTelTripletGBLUtility::triplet> & triplets, std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int dutID, double trip_res_cut, double trip_slope_cut){
 
-	auto zPos = geo::gGeometry().getPlaneZPosition(dutID);
-
-	struct distance {
-		EUTelTripletGBLUtility::triplet * triplet;
-		EUTelTripletGBLUtility::hit const * hit;		
-		double dist;
-		distance(EUTelTripletGBLUtility::triplet & triplet, EUTelTripletGBLUtility::hit const & hit, double const & dist): triplet(&triplet), hit(&hit), dist(dist){};
-		distance(distance const & other): triplet(other.triplet), hit(other.hit), dist(other.dist){};
-		distance & operator= (distance const & other){ triplet = other.triplet; hit=other.hit; dist=other.dist;};
-	};
-
-	std::vector<distance> distances;
-	for(auto& triplet: triplets){
-		auto trX = triplet.getx_at(zPos);
-		auto trY = triplet.gety_at(zPos);
-		for(auto& hit: hits){
-			if(hit.plane == dutID) {
-				auto hitX = hit.x;
-				auto hitY = hit.x;
-				auto dist = (trX-hitX)*(trX-hitX)+(trY-hitY)*(trY-hitY);
-				distances.emplace_back(triplet, hit, dist);
-				std::cout << "Distance: " << dist << '\n';
-			}
-		}
-	}
-
-	std::sort(distances.begin(), distances.end(), [](distance const & a, distance const & b) -> bool {return a.dist > b.dist;});
-
-	while(!distances.empty()) {
-		auto curTriplet = distances.front().triplet;
-		auto curHit = distances.front().hit;
-		//curTriplet->addDUTHit(curHit);
-
-		for(auto it = distances.begin(); it != distances.end(); ) { 
-			auto otherTriplet = it->triplet; 
-			auto otherHit  = it->hit;
-			if( ( curTriplet == otherTriplet ) || ( curHit == otherHit) ) {
-				it = distances.erase(it);
-			}  else {
-				++it;
-			}
-		}
-	}
-}
-*/
 double EUTelTripletGBLUtility::PlaneEfficiency(std::vector<EUTelTripletGBLUtility::triplet> &eff_triplets_UP, std::vector<EUTelTripletGBLUtility::triplet> &eff_triplets_DOWN, std::vector<EUTelTripletGBLUtility::hit> &hits, unsigned int PUT, double track_match_z, double DUTz, double track_match_cut, double eff_radius, std::vector<AIDA::IProfile1D*> &profile) {
 
   std::vector<EUTelTripletGBLUtility::triplet> eff_triplets;
-
-  // Iterate over all found eff-triplets to match them to the DUT (plane3):
-  //int n_matched_trips = 0;
-  //int n_unmatched_trips = 0;
-
-  //std::cout << " n eff triplets UP   = " << eff_triplets_UP->size() << std::endl;
-  //std::cout << " n eff triplets DOWN = " << eff_triplets_DOWN->size() << std::endl;
 
   for( auto& trip: eff_triplets_UP ) {
 
@@ -391,12 +348,6 @@ double EUTelTripletGBLUtility::PlaneEfficiency(std::vector<EUTelTripletGBLUtilit
       // check isolation
       if( !IsolatedTrip || !IsolatedDrip ) continue;
       //std::cout << " , isolated ";
-
-      // apply fiducial cut
-      if ( fabs(xA) >  9.0) continue;
-      if (     -yA  < -4.0) continue;
-
-      //std::cout << " , fiducial " << std::endl;
 
       eff_triplets.emplace_back(trip);
 

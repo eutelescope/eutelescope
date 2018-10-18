@@ -257,12 +257,12 @@ namespace eutelescope {
        * @return a vector of found triplets among the given set of hits.
        */
       template<typename T>
-      void FindTriplets(std::vector<EUTelTripletGBLUtility::hit> const & hits, T const & triplet_sensor_ids, double trip_res_cut, double trip_slope_cut, std::vector<EUTelTripletGBLUtility::triplet> & found_trip, bool only_best_triplet = true);
+      void FindTriplets(std::vector<EUTelTripletGBLUtility::hit> const & hits, T const & triplet_sensor_ids, double trip_res_cut, double trip_slope_cut, std::vector<EUTelTripletGBLUtility::triplet> & found_trip, bool only_best_triplet = true, bool upstream = true);
 
       //! Match the upstream and downstream triplets to tracks
       void MatchTriplets(std::vector<EUTelTripletGBLUtility::triplet> const & up, std::vector<EUTelTripletGBLUtility::triplet> const & down, double z_match, double trip_matching_cut, std::vector<EUTelTripletGBLUtility::track> &track);
 
-	  bool AttachDUT(EUTelTripletGBLUtility::triplet & triplet, std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int dutID,  double trip_res_cut);
+	  bool AttachDUT(EUTelTripletGBLUtility::triplet & triplet, std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int dutID,  std::vector<float> dist_cuts);
 
 	  //bool AttachDUT(std::vector<EUTelTripletGBLUtility::triplet> & triplets, std::vector<EUTelTripletGBLUtility::hit> const & hits, unsigned int dutIDs, double trip_res_cut, double trip_slope_cut);
 
@@ -337,9 +337,20 @@ namespace eutelescope {
       AIDA::IProfile2D * kinkyvsxy;
       AIDA::IProfile2D * kinkxyvsxy;
 
-      AIDA::IHistogram1D * triddaMindutHisto;
-
-
+      //cut plots
+      AIDA::IHistogram1D * upstreamTripletSlopeX;
+      AIDA::IHistogram1D * upstreamTripletSlopeY;
+      AIDA::IHistogram1D * downstreamTripletSlopeX;
+      AIDA::IHistogram1D * downstreamTripletSlopeY;
+      AIDA::IHistogram1D * upstreamTripletResidualX;
+      AIDA::IHistogram1D * upstreamTripletResidualY;
+      AIDA::IHistogram1D * downstreamTripletResidualX;
+      AIDA::IHistogram1D * downstreamTripletResidualY;
+      AIDA::IHistogram1D * tripletMatchingResidualX;
+      AIDA::IHistogram1D * tripletMatchingResidualY;
+      AIDA::IHistogram1D * DUTMatchingResidualX;
+      AIDA::IHistogram1D * DUTMatchingResidualY;
+      AIDA::IHistogram1D * DUTHitNumber;
   };
 
 }
