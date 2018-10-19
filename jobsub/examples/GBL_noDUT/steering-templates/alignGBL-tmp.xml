@@ -19,7 +19,7 @@
       <processor name="MyAIDAProcessor"/>
       <processor name="HitLocalToGlobal"/>
       <processor name="PedeToGEAR"/>
-      <processor name="MyEUTelAlignGBL"/>
+      <processor name="MyEUTelGBL"/>
    </execute>
 
    <global>
@@ -61,15 +61,9 @@
 		XYShiftsRotZ - shifts in the X and Y directions and a rotation around the Z axis,
 		XYShifts - only shifts in the X and Y directions
 		XYShiftsAllRot - shifts in the X,Y and Z directions and rotations around all three axis-->
-  <parameter name="AlignMode" type="string"> XYShiftsRotZ </parameter>
-  <!--Exclude planes from fit according to their sensor ids.-->
-  <parameter name="ExcludePlanes" type="IntVec"> @ExcludePlanes@ </parameter>
-  <!--Fix sensor planes in the fit according to their sensor ids.-->
-  <parameter name="FixedPlanes" type="IntVec"> @FixedPlanes@ </parameter>
+  <parameter name="AlignMode" type="string"> @AlignMode@ </parameter>
   <!--Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file-->
   <parameter name="NewGEARSuffix" type="string"> @GEARSuffix@ </parameter>
-  <!--Offset scale factor.-->
-  <parameter name="OffsetScaleFactor" type="int"> 1 </parameter>
   <!--Name of the steering file for the pede program.-->
   <parameter name="PedeSteerfileName" type="string"> @PedeSteerFile@ </parameter>
   <!--Apply the obtained rotation to the preexisting offset vector or not..-->
@@ -78,7 +72,7 @@
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
 </processor>
 
- <processor name="MyEUTelAlignGBL" type="EUTelAlignGBL">
+ <processor name="MyEUTelGBL" type="EUTelGBL">
  <!--EUTelAlignGBL uses the MILLE program to write data files for MILLEPEDE II.-->
   <!--Input hit collections name-->
   <parameter name="hitCollectionName" type="StringVec" lcioInType="TrackerHit"> hit  </parameter>
@@ -88,13 +82,15 @@
     XYZShifts - shifts in X and Y
     XYShiftsRotZ - shifts in X and Y and rotation around the Z axis,
     XYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis-->
-  <parameter name="alignMode" type="string"> XYShiftsRotZ </parameter>
+  <parameter name="alignMode" type="string"> @AlignMode@ </parameter>
   <!--The three sensors used as the downstream triplet-->
   <parameter name="downstreamTriplet" type="IntVec"> 3 4 5 </parameter>
   <!--Downstream triplet residual cut [mm]-->
   <parameter name="downstreamTripletResidualCut" type="double"> @DownstreamTripletCut@ </parameter>
   <!--Downstream triplet slope cut [mrad]-->
   <parameter name="downstreamTripletSlopeCut" type="double"> @DownstreamSlopeCut@ </parameter>
+  <!--Set to 0 if you do not want to dump tracks in an lcio collection (necessary to dump in an NTuple)-->
+  <parameter name="dumpTracks" type="int"> 0 </parameter>
   <!--Beam energy [GeV]-->
   <parameter name="eBeam" type="double"> @BeamEnergy@ </parameter>
   <!--Exclude planes from fit according to their sensor ids-->
@@ -115,6 +111,8 @@
   <parameter name="milleBinaryFilename" type="string"> @MilleBinaryFile@ </parameter>
   <!--Name of the steering file for the pede program-->
   <parameter name="pedeSteerfileName" type="string"> @PedeSteerFile@ </parameter>
+  <!--Set to 0 if you do not want to perform the alignment-->
+  <parameter name="performAlignment" type="int"> 1 </parameter>
   <!--x-resolution of sensors (z-ordered) [mm]-->
   <parameter name="resolutionX" type="FloatVec"> @XResidualVec@ </parameter>
   <!--y-resolution of sensors (z-ordered) [mm]-->
