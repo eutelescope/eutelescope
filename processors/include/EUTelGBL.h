@@ -154,6 +154,8 @@ namespace eutelescope {
       int _dumpTracks;
       std::string _pedeSteerfileName;
 
+      int _SUTID;
+      
       EUTelTripletGBLUtility gblutil;
 
       //! Run number
