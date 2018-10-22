@@ -18,10 +18,8 @@
    <execute>
       <processor name="AIDA"/>
       <processor name="HitLocalToGlobal"/>
-      <processor name="MyEUTelPedeGEAR"/>
       <processor name="MyEUTelGBL"/>
       <processor name="MyEUTelGBLOutput"/>
-      <xprocessor name="Save"/>
       <processor name="EUTelUtilityPrintEventNumber"/>
    </execute>
 
@@ -69,7 +67,7 @@
 		XYShiftsRotZ - shifts in X and Y and rotation around the Z axis,
 		XYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis
 		XYZShiftsRotXYZ - all shifts and rotations allowed-->
-  <parameter name="alignMode" type="string"> @AlignMode@ </parameter>
+  <!--parameter name="alignMode" type="string">XYShiftsRotZ </parameter-->
   <!--Cut on the chi2 for the tracks to be passed to Millepede-->
   <parameter name="chi2Cut" type="double"> -1 </parameter>
   <!--The three sensors used as the downstream triplet-->
@@ -78,24 +76,26 @@
   <parameter name="downstreamTripletResidualCut" type="double"> @DownstreamTripletCut@  </parameter>
   <!--Downstream triplet slope cut [mrad]-->
   <parameter name="downstreamTripletSlopeCut" type="double"> @DownstreamSlopeCut@ </parameter>
+  <!--Set to 0 if you do not want to dump tracks in an lcio collection (necessary to dump in an NTuple)-->
+  <parameter name="dumpTracks" type="int"> @dumpTracks@ </parameter>
   <!--Beam energy [GeV]-->
   <parameter name="eBeam" type="double"> @BeamEnergy@ </parameter>
   <!--Exclude planes from fit according to their sensor ids-->
   <parameter name="excludePlanes" type="IntVec"> @Excluded@ </parameter>
   <!--Fix sensor planes in the fit according to their sensor ids (it is recommended to fix two telescope planes)-->
-  <parameter name="fixedPlanes" type="IntVec"> @FixedPlanes@ </parameter>
+  <!--parameter name="fixedPlanes" type="IntVec">0 5  </parameter-->
   <!--List of planes which should have a fixed X rotation-->
-  <parameter name="fixedXRot" type="IntVec"> @FixedXRot@ </parameter>
+  <!--parameter name="fixedXRot" type="IntVec">0 1 2 3 4 5  </parameter-->
   <!--List of planes which should be fixed in X direction-->
-  <parameter name="fixedXShift" type="IntVec"> @FixedXShift@ </parameter>
+  <!--parameter name="fixedXShift" type="IntVec"> </parameter-->
   <!--List of planes which should have a fixed Y rotation-->
-  <parameter name="fixedYRot" type="IntVec"> @FixedYRot@ </parameter>
+  <!--parameter name="fixedYRot" type="IntVec">0 1 2 3 4 5  </parameter-->
   <!--List of planes which should be fixed in Y direction-->
-  <parameter name="fixedYShift" type="IntVec"> @FixedYShift@ </parameter>
+  <!--parameter name="fixedYShift" type="IntVec"> </parameter-->
   <!--List of planes which should have a fixed Z rotation-->
-  <parameter name="fixedZRot" type="IntVec"> @FixedZRot@ </parameter>
+  <!--parameter name="fixedZRot" type="IntVec"> </parameter-->
   <!--List of planes which should be fixed in Z direction-->
-  <parameter name="fixedZShift" type="IntVec"> @FixedZShift@ </parameter>
+  <!--parameter name="fixedZShift" type="IntVec"> </parameter-->
   <!--Set to 0 if you do not want to perform the alignment-->
   <parameter name="performAlignment" type="int"> @performAlignment@ </parameter>
   <!--Input hit collections name-->
@@ -129,54 +129,25 @@
   <!--parameter name="zMid" type="double">-1 </parameter-->
 </processor>
 
-<processor name="MyEUTelPedeGEAR" type="EUTelPedeGEAR">
- <!--EUTelPedeGEAR calls PEDE to process a MILLE binary file and create an updated GEAR file with the updated MILLEPEDE II alignment constants.-->
-  <!--Number of alignment constants used. Available mode are: 
-		XYShiftsRotZ - shifts in the X and Y directions and a rotation around the Z axis,
-		XYShifts - only shifts in the X and Y directions
-		XYZShiftsRotXYZ - all shifts and rotations allowed-->
-  <parameter name="AlignMode" type="string"> @AlignMode@ </parameter>
-  <!--Exclude planes from fit according to their sensor ids.-->
-  <!--parameter name="ExcludePlanes" type="IntVec"> </parameter-->
-  <!--Fix sensor planes in the fit according to their sensor ids.-->
-  <!--parameter name="FixedPlanes" type="IntVec"> </parameter-->
-  <!--Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file-->
-  <parameter name="NewGEARSuffix" type="string">_aligned </parameter>
-  <!--Name of the steering file for the pede program.-->
-  <!--parameter name="PedeSteerfileName" type="string">steer_mille.txt </parameter-->
-  <!--Apply the obtained rotation to the preexisting offset vector or not..-->
-  <parameter name="RotateOffsetVec" type="bool">true</parameter>
+ <processor name="MyEUTelGBLOutput" type="EUTelGBLOutput">
+ <!--Generate NTuple containing hits, zero suppressed data and track position from GBL processor-->
+  <!--Name of the hit collection (use the right coordinate system)-->
+  <parameter name="InputHitCollection" type="string" lcioInType="TrackerHit"> @HitCollection@ </parameter>
+  <!--Vector with the names of the zs collections-->
+  <parameter name="InputZsCollections" type="StringVec" lcioInType="TrackerHit"> @ZSCollections@ </parameter>
+  <!--Path/File where root-file should be stored-->
+  <parameter name="OutputPath" type="string">@OutputName@</parameter>
+  <!--IDs for which the information should be dumped (leave empty for all the planes)-->
+  <parameter name="OutputPlanes" type="IntVec"> @OutputPlane@ </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Decide whether to dump the event header information-->
+  <parameter name="dumpHeader" type="bool">false </parameter>
+  <!--Decide whether to dump hits and zs data only for events with a track-->
+  <parameter name="onlyEventsWithTracks" type="bool">true </parameter>
+  <!--Decide whether to dump track positions in local coordinate system-->
+  <parameter name="tracksLocalSystem" type="bool">true </parameter>
 </processor>
-
- <processor name="Save" type="EUTelOutputProcessor">
- <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
-  <!--drops the named collections from the event-->
-  <parameter name="DropCollectionNames" type="StringVec"> </parameter>
-  <!--drops all collections of the given type from the event-->
-  <!--parameter name="DropCollectionTypes" type="StringVec"> SimTrackerHit SimCalorimeterHit </parameter-->
-  <!-- write complete objects in subset collections to the file (i.e. ignore subset flag)-->
-  <!--parameter name="FullSubsetCollections" type="StringVec" value="MCParticlesSkimmed"/-->
-  <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
-  <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
-  <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@FilePrefix@-aligngbl.slcio"/>
-  <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
-  <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
-  <!--Set it to true to remove intermediate EORE in merged runs-->
-  <parameter name="SkipIntermediateEORE" type="bool" value="true"/>
-  <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
-  <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
-</processor>
-
- <processor name="MyEUTelGBLOutput" type="EUTelGBLOutput">
-   <parameter name="OutputPlanes" type="IntVec"> 11 </parameter>
-   <parameter name="InputHitCollection" type="string" lcioInType="TrackerHit"> local_hit </parameter>
-   <parameter name="InputZsCollections" type="string" lcioInType="TrackerHit"> zsdata zsdata_apix zsdata_strip </parameter>
- </processor>
  
  <processor name="EUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
  <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
