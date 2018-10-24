@@ -73,7 +73,7 @@
   <!--The three sensors used as the downstream triplet-->
   <!--parameter name="downstreamTriplet" type="IntVec">3 4 5  </parameter-->
   <!--Downstream triplet residual cut [mm]-->
-  <parameter name="downstreamTripletResidualCut" type="double"> @DownstreamTripletCut@  </parameter>
+  <parameter name="downstreamTripletResidualCut" type="double"> @DownstreamTripletResidualCut@  </parameter>
   <!--Downstream triplet slope cut [mrad]-->
   <parameter name="downstreamTripletSlopeCut" type="double"> @DownstreamSlopeCut@ </parameter>
   <!--Set to 0 if you do not want to dump tracks in an lcio collection (necessary to dump in an NTuple)-->
@@ -81,7 +81,7 @@
   <!--Beam energy [GeV]-->
   <parameter name="eBeam" type="double"> @BeamEnergy@ </parameter>
   <!--Exclude planes from fit according to their sensor ids-->
-  <parameter name="excludePlanes" type="IntVec"> @Excluded@ </parameter>
+  <parameter name="excludePlanes" type="IntVec"> @ExcludedPlanes@ </parameter>
   <!--Fix sensor planes in the fit according to their sensor ids (it is recommended to fix two telescope planes)-->
   <!--parameter name="fixedPlanes" type="IntVec">0 5  </parameter-->
   <!--List of planes which should have a fixed X rotation-->
@@ -121,10 +121,10 @@
   <!--The three sensors used as the upstream triplet-->
   <!--parameter name="upstreamTriplet" type="IntVec">0 1 2  </parameter-->
   <!--Upstream triplet residual cut [mm]-->
-  <parameter name="upstreamTripletResidualCut" type="double"> @UpstreamTripletCut@ </parameter>
+  <parameter name="upstreamTripletResidualCut" type="double"> @UpstreamTripletResidualCut@ </parameter>
   <!--Upstream triplet slope cut [mrad]-->
   <parameter name="upstreamTripletSlopeCut" type="double"> @UpstreamSlopeCut@ </parameter>
-  <parameter name="requiredPlane" type="int"> @Required@ </parameter>
+  <parameter name="requiredPlane" type="int"> @RequiredPlane@ </parameter>
   <!--Z Position used for triplet matching (default to center between end of first triplet and start of second triplet)-->
   <!--parameter name="zMid" type="double">-1 </parameter-->
 </processor>
@@ -136,9 +136,9 @@
   <!--Vector with the names of the zs collections-->
   <parameter name="InputZsCollections" type="StringVec" lcioInType="TrackerHit"> @ZSCollections@ </parameter>
   <!--Path/File where root-file should be stored-->
-  <parameter name="OutputPath" type="string">@OutputName@</parameter>
+  <parameter name="OutputPath" type="string">@OutputPath@</parameter>
   <!--IDs for which the information should be dumped (leave empty for all the planes)-->
-  <parameter name="OutputPlanes" type="IntVec"> @OutputPlane@ </parameter>
+  <parameter name="OutputPlanes" type="IntVec"> @OutputPlanes@ </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
   <!--Decide whether to dump the event header information-->
