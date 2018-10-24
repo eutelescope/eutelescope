@@ -39,7 +39,7 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@@FileSuffix@_histo"/>
+  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-@FileSuffix@-histo"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -75,7 +75,7 @@
   <!--The three sensors used as the downstream triplet-->
   <!--parameter name="downstreamTriplet" type="IntVec">3 4 5  </parameter-->
   <!--Downstream triplet residual cut [mm]-->
-  <parameter name="downstreamTripletResidualCut" type="double"> @DownstreamTripletCut@  </parameter>
+  <parameter name="downstreamTripletResidualCut" type="double"> @DownstreamTripletResidualCut@  </parameter>
   <!--Downstream triplet slope cut [mrad]-->
   <parameter name="downstreamTripletSlopeCut" type="double"> @DownstreamSlopeCut@ </parameter>
   <!--Beam energy [GeV]-->
@@ -121,7 +121,7 @@
   <!--The three sensors used as the upstream triplet-->
   <!--parameter name="upstreamTriplet" type="IntVec">0 1 2  </parameter-->
   <!--Upstream triplet residual cut [mm]-->
-  <parameter name="upstreamTripletResidualCut" type="double"> @UpstreamTripletCut@ </parameter>
+  <parameter name="upstreamTripletResidualCut" type="double"> @UpstreamTripletResidualCut@ </parameter>
   <!--Upstream triplet slope cut [mrad]-->
   <parameter name="upstreamTripletSlopeCut" type="double"> @UpstreamSlopeCut@ </parameter>
   <!--Z Position used for triplet matching (default to center between end of first triplet and start of second triplet)-->
