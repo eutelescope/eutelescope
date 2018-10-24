@@ -1,4 +1,5 @@
-RunNumber,BeamEnergy,Threshold,GearGeoFile,Comment
-497,5.0,7.0,gear_mimosa_fei4-ref,mixed-multipleDC
-498,6.0,7.0,gear_mimosa_fei4-ref,mixed-multipleDC
-499,2.0,7.0,gear_mimosa_fei4-ref,mixed-multipleDC
+RunNumber,BeamEnergy,Threshold,GearGeoFile
+501,2.0,7.0,gear
+502,2.0,7.0,gear
+503,2.0,7.0,gear
+504,2.0,7.0,gear

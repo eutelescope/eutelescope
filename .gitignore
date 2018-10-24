@@ -31,6 +31,9 @@ lib/*
 *.pede2lcio
 *.his
 *.bin
+millepede.end
+steer_mille.txt
+
 
 # Ignore emacs backup and autosaves:
 \#*#

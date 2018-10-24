@@ -20,9 +20,6 @@
       <processor name="ClusteringMimosa"/>  
       <processor name="NoisyClusterMaskerM26"/>  
       <processor name="NoisyClusterRemoverM26"/>
-      <processor name="ClusteringAPIX"/>  
-      <processor name="NoisyClusterMaskerAPIX"/>  
-      <processor name="NoisyClusterRemoverAPIX"/>    
       <xprocessor name="SaveAsRoot"/>
       <processor name="Save"/>
       <processor name="EUTelUtilityPrintEventNumber"/>
@@ -61,7 +58,6 @@
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
   <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26 @DatabasePath@/@FilePrefix@-hotpixel-m26-db.slcio hotpixel_m26 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_apix   @DatabasePath@/@FilePrefix@-hotpixel-apix-db.slcio hotpixel_apix  </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -85,24 +81,6 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="ClusteringAPIX" type="EUTelProcessorGeometricClustering">
- <!--EUTelProcessorGeometricClustering is looking for clusters into a calibrated pixel matrix.-->
-  <!--Input of Zero Suppressed data-->
-  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_apix </parameter>
-  <!--Cluster (output) collection name-->
-  <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_apix </parameter>
-  <!--The list of sensor ids that have to be excluded from the clustering.-->
-  <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
-  <!--This is the name of the histogram information file-->
-  <parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
-  <!--Switch on or off the histogram filling-->
-  <parameter name="HistogramFilling" type="bool" value="true"/>
-  <!--Time cut in time units of your sensor-->
-  <!--parameter name="TCut" type="float" value="3.40282e+38"/-->
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
-</processor>
-
  <processor name="NoisyClusterMaskerM26" type="EUTelProcessorNoisyClusterMasker">
  <!--EUTelProcessorNoisyClusterMasker masks pulses which contain hot pixels. For this, the quality field of pulses is used to encode the kNoisyCluster enum provided by EUTelescope.-->
   <!--Input of zero suppressed data, still containing hot pixels-->
@@ -113,32 +91,12 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="NoisyClusterMaskerAPIX" type="EUTelProcessorNoisyClusterMasker">
- <!--EUTelProcessorNoisyClusterMasker masks pulses which contain hot pixels. For this, the quality field of pulses is used to encode the kNoisyCluster enum provided by EUTelescope.-->
-  <!--Input of zero suppressed data, still containing hot pixels-->
-  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData"> cluster_apix </parameter>
-  <!--Name of the hot pixel collection.-->
-  <parameter name="HotPixelCollectionName" type="string" value="hotpixel_apix"/>
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
-</processor>
-
  <processor name="NoisyClusterRemoverM26" type="EUTelProcessorNoisyClusterRemover">
  <!--EUTelProcessorNoisyClusterRemover removes masked noisy clusters (TrackerPulses) from a collection, please note that the clusters have to be masked previously. This processor does not read in a hot pixel collection, it simply removes previusly masked TrackerPulses.-->
   <!--Input collection containing noise masked tracker pulse objects-->
   <parameter name="InputCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26 </parameter>
   <!--Output collection where noisy clusters have been removed-->
   <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_m26_free </parameter>
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
-</processor>
-
- <processor name="NoisyClusterRemoverAPIX" type="EUTelProcessorNoisyClusterRemover">
- <!--EUTelProcessorNoisyClusterRemover removes masked noisy clusters (TrackerPulses) from a collection, please note that the clusters have to be masked previously. This processor does not read in a hot pixel collection, it simply removes previusly masked TrackerPulses.-->
-  <!--Input collection containing noise masked tracker pulse objects-->
-  <parameter name="InputCollectionName" type="string" lcioInType="TrackerPulse"> cluster_apix </parameter>
-  <!--Output collection where noisy clusters have been removed-->
-  <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_apix_free </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
