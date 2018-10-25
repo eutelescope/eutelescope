@@ -80,7 +80,6 @@ void EUTelGBLOutput::init() {
   _eutracks->Branch("kinky", &_kinky);
   _eutracks->Branch("chi2", &_chi2);
   _eutracks->Branch("ndof", &_ndof);
-  _eutracks->Branch("ciao", &_ciao2);
   
   if(_inputHitCollection != ""){ //this if doesn't work properly. Find a way to do it
     // Tree for storing hit information
