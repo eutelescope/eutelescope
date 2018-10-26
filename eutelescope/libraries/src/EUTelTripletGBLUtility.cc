@@ -526,6 +526,18 @@ std::pair<double,double> EUTelTripletGBLUtility::doIterativeGaussianFit(AIDA::IH
         min_bin = current.FindFirstBinAbove(startForMaxFraction*max);
         max_bin = current.FindLastBinAbove(startForMaxFraction*max);
     }
+    if(min_bin == 1) {
+        startForMaxFraction = 0.5;
+        min_bin = current.FindFirstBinAbove(startForMaxFraction*max);
+        max_bin = current.FindLastBinAbove(startForMaxFraction*max);
+    }
+    for(int id = min_bin ; id < max_bin-1 ; id++) {
+        if( (current.GetBinContent(id) > 0.7*current.GetBinContent(id+1))&&(current.GetBinContent(id+2) > 0.7*current.GetBinContent(id+1)) ) {
+            current.Smooth(2);
+            min_bin = current.FindFirstBinAbove(startForMaxFraction*max);
+            max_bin = current.FindLastBinAbove(startForMaxFraction*max);
+        }
+    }
     
     double bound_low = current.GetBinCenter( min_bin );
     double bound_hi = current.GetBinCenter( max_bin );
@@ -544,7 +556,7 @@ std::pair<double,double> EUTelTripletGBLUtility::doIterativeGaussianFit(AIDA::IH
     gausfit.SetParLimits(0, 0.1*max, 2*max);
     gausfit.SetParLimits(1, bound_low, bound_hi);
     gausfit.SetParLimits(2, 0.1*(bound_hi-bound_low), 1.5*(bound_hi-bound_low));
-    gausfit.SetParLimits(3, 0, 0.1*max);
+    gausfit.SetParLimits(3, 0, 0.2*max);
              
     TFitResultPtr fitresult = current.Fit(&gausfit,"S","",bound_low,bound_hi);
         
