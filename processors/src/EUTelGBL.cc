@@ -849,8 +849,13 @@ void EUTelGBL::processEvent( LCEvent * event ) {
         thisTrack->setFloatVal(4, localPar[1]*1E3); // FIXME this is not the incidence angle, just the angle correction to the seed
         thisTrack->setFloatVal(5, localPar[2]*1E3); // FIXME this is not the incidence angle, just the angle correction to the seed
         if(k>0){
-          thisTrack->setFloatVal(6, (localPar[1] - ax[k-1])*1E3); // kink angle (for the previous plane, FIX IT) in x in mrad
-          thisTrack->setFloatVal(7, (localPar[2] - ay[k-1])*1E3); // kink angle (for the previous plane, FIX IT) in y in mrad
+          if(_sensorIDVec[ix]!=_SUTID){
+            thisTrack->setFloatVal(6, (localPar[1] - ax[k-1])*1E3); // kink angle (for the previous plane, FIX IT) in x in mrad
+            thisTrack->setFloatVal(7, (localPar[2] - ay[k-1])*1E3); // kink angle (for the previous plane, FIX IT) in y in mrad
+          } else {
+            thisTrack->setFloatVal(6, (localPar[5]+localPar[7])*1E3); 
+            thisTrack->setFloatVal(7, (localPar[5]+localPar[7])*1E3);  
+          }
 	    }
         _outputTracks->push_back(static_cast<EVENT::LCGenericObject*>(thisTrack));
       }
@@ -859,7 +864,7 @@ void EUTelGBL::processEvent( LCEvent * event ) {
         ax[k] = localPar[1];
         ay[k] = localPar[2];
 	  } else {
-		ax[k] = localPar[5]+localPar[7];
+        ax[k] = localPar[5]+localPar[7];
         ay[k] = localPar[6]+localPar[8];
 	  }
       ++k;
