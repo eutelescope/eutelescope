@@ -19,7 +19,7 @@
       <processor name="AIDA"/>
       <processor name="HitLocalToGlobal"/>
       <processor name="MyEUTelGBL"/>
-      <xprocessor name="MyEUTelGBLOutput"/>
+      <processor name="MyEUTelGBLOutput"/>
       <processor name="EUTelUtilityPrintEventNumber"/>
    </execute>
 
@@ -129,7 +129,7 @@
  <processor name="MyEUTelGBLOutput" type="EUTelGBLOutput">
  <!--Generate NTuple containing hits, zero suppressed data and track position from GBL processor-->
   <!--Name of the hit collection (use the right coordinate system)-->
-  <parameter name="InputHitCollection" type="string" lcioInType="TrackerHit"> @HitCollection@ </parameter>
+  <parameter name="InputHitCollections" type="string" lcioInType="TrackerHit"> @HitCollections@ </parameter>
   <!--Vector with the names of the zs collections-->
   <parameter name="InputZsCollections" type="StringVec" lcioInType="TrackerHit"> @ZSCollections@ </parameter>
   <!--Path/File where root-file should be stored-->
