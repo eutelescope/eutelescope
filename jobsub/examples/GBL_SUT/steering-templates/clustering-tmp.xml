@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<!-- ?xml-stylesheet type="text/xsl" href="http://ilcsoft.desy.de/marlin/marlin.xsl"? -->
+<!-- ?xml-stylesheet type="text/xsl" href="marlin.xsl"? -->
+
+<marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
+
+   <execute>
+      <processor name="AIDA"/>
+      <processor name="LoadHotPixelDB"/>
+      <processor name="ClusteringMimosa"/>
+      <processor name="NoisyClusterMasker"/>
+      <processor name="NoisyClusterRemover"/>
+      <processor name="Save"/>
+      <processor name="EUTelUtilityPrintEventNumber"/>
+   </execute>
+
+   <global>
+      <parameter name="LCIOInputFiles"> @LcioPath@/run@RunNumber@-converter.slcio </parameter>
+      <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
+      <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
+      <parameter name="SkipNEvents" value="@SkipNEvents@"/>
+      <parameter name="SupressCheck" value="false"/>
+      <parameter name="Verbosity" value="@Verbosity@"/>
+   </global>
+
+ <processor name="AIDA" type="AIDAProcessor">
+ <!--Processor that handles AIDA files. Creates on directory per processor.  Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
+  <!-- compression of output file 0: false >0: true (default) -->
+  <parameter name="Compress" type="int">1 </parameter>
+  <!-- filename without extension-->
+  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-clustering"/>
+  <!-- type of output file root (default) or xml )-->
+  <parameter name="FileType" type="string">root </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+ </processor>
+ 
+ <processor name="LoadHotPixelDB" type="ConditionsProcessor">
+ <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
+  <!--Initialization of a conditions database handler-->
+  <!--parameter name="DBCondHandler" type="StringVec">conditionsName /lccd/myfolder HEAD  </parameter-->
+  <!--Initialization of a conditions db file handler-->
+  <!--parameter name="DBFileHandler" type="StringVec">conditionsName conditions.slcio collectionName  </parameter-->
+  <!--Initialization string for conditions database-->
+  <parameter name="DBInit" type="string">localhost:lccd_test:calvin:hobbes </parameter>
+  <!--Initialization of a data file handler-->
+  <!--parameter name="DataFileHandler" type="StringVec">conditionsName  </parameter-->
+  <!--Initialization of a simple conditions file handler-->
+  <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26   @DatabasePath@/run@RunNumber@-hotpixel-m26-db.slcio hotpixel_m26  </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+ </processor>
+ 
+ <processor name="ClusteringMimosa" type="EUTelProcessorSparseClustering">
+ <!--EUTelProcessorGeometricClustering is looking for clusters into a calibrated pixel matrix.-->
+  <!--The list of sensor ids that have to be excluded from the clustering.-->
+  <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
+  <!--This is the name of the histogram information file-->
+  <parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
+  <!--Switch on or off the histogram filling-->
+  <parameter name="HistogramFilling" type="bool">true </parameter>
+  <!--Cluster (output) collection name-->
+  <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse">cluster_m26 </parameter>
+  <!--Time cut in time units of your sensor-->
+  <!--parameter name="TCut" type="float">3.40282e+38 </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Input of Zero Suppressed data-->
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData">zsdata_m26 </parameter>
+ </processor>
+
+ <processor name="NoisyClusterMasker" type="EUTelProcessorNoisyClusterMasker">
+ <!--EUTelProcessorNoisyClusterMasker masks pulses which contain hot pixels. For this, the quality field of pulses is used to encode the kNoisyCluster enum provided by EUTelescope.-->
+  <!--Name of the hot pixel collection.-->
+  <parameter name="HotPixelCollectionName" type="string">hotpixel_m26 </parameter>
+  <!--Input of zero suppressed data, still containing hot pixels-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">cluster_m26 </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+ </processor>
+
+ <processor name="NoisyClusterRemover" type="EUTelProcessorNoisyClusterRemover">
+ <!--EUTelProcessorNoisyClusterRemover removes masked noisy clusters (TrackerPulses) from a collection, please note that the clusters have to be masked previously. This processor does not read in a hot pixel collection, it simply removes previusly masked TrackerPulses.-->
+  <!--Input collection containing noise masked tracker pulse objects-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerPulse">cluster_m26 </parameter>
+  <!--Output collection where noisy clusters have been removed-->
+  <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_m26_free </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+ </processor>
+
+ <processor name="Save" type="EUTelOutputProcessor">
+ <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
+  <!--drops the named collections from the event-->
+  <!--parameter name="DropCollectionNames" type="StringVec">TPCHits HCalHits  </parameter-->
+  <!--drops all collections of the given type from the event-->
+  <!--parameter name="DropCollectionTypes" type="StringVec">SimTrackerHit SimCalorimeterHit  </parameter-->
+  <!-- write complete objects in subset collections to the file (i.e. ignore subset flag)-->
+  <!--parameter name="FullSubsetCollections" type="StringVec">MCParticlesSkimmed  </parameter-->
+  <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
+  <!--parameter name="KeepCollectionNames" type="StringVec">MyPreciousSimTrackerHits  </parameter-->
+  <!-- name of output file -->
+  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/run@RunNumber@-clustering.slcio"/>
+  <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
+  <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
+  <!--Set it to true to remove intermediate EORE in merged runs-->
+  <parameter name="SkipIntermediateEORE" type="bool">true </parameter>
+  <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
+  <!--parameter name="SplitFileSizekB" type="int">1992294 </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+ </processor>
+
+ <processor name="EUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+ <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+  <!--Print event number for every n-th event-->
+  <parameter name="EveryNEvents" type="int">2500 </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--print the event timestamp as read from LCIO-->
+  <!--parameter name="printTimestamp" type="bool">false </parameter-->
+ </processor>
+
+</marlin>

@@ -27,7 +27,7 @@ namespace eutelescope {
   protected:
     void clear();
 
-    std::string _inputHitCollection;
+    std::vector<std::string> _inputHitCollections;
     std::vector<std::string> _inputZsCollections;
     std::string _path2file;
 
@@ -58,8 +58,6 @@ namespace eutelescope {
     std::vector<double> *_kinky;
     std::vector<double> *_chi2;
     std::vector<int> *_ndof;
-   std::vector<std::string> _ciao;
-    std::vector<std::string>* _ciao2=&_ciao;
     TTree *_euhits;
     std::vector<int> *_hitSensorId;
     std::vector<double> *_hitXPos;
