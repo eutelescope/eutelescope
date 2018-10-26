@@ -582,17 +582,17 @@ void EUTelGBL::processEvent( LCEvent * event ) {
       alDer4(1,3) = triSlope.y; // dx/dz
     
       alDer6 ( 0, 0 ) = 1.0; // dx/dx
-	  alDer6 ( 0, 1 ) = 0.0; // dx/dy
-	  alDer6 ( 0, 2 ) = triSlope.x; // dx/dz
-	  alDer6 ( 0, 3 ) = 0.0; // dx/da
-	  alDer6 ( 1, 0 ) = 0.0; // dy/dx
-	  alDer6 ( 1, 1 ) = 1.0; // dy/dy
+      alDer6 ( 0, 1 ) = 0.0; // dx/dy
+      alDer6 ( 0, 2 ) = triSlope.x; // dx/dz
+      alDer6 ( 0, 3 ) = 0.0; // dx/da
+      alDer6 ( 1, 0 ) = 0.0; // dy/dx
+      alDer6 ( 1, 1 ) = 1.0; // dy/dy
       alDer6 ( 1, 2 ) = triSlope.y; // dy/dz
-	  alDer6 ( 1, 4 ) = 0.0; // dy/db
+      alDer6 ( 1, 4 ) = 0.0; // dy/db
       alDer6 ( 2, 0 ) = 0.0; // dz/dx
-	  alDer6 ( 2, 1 ) = 0.0; // dz/dyCuts
-	  alDer6 ( 2, 2 ) = 1.0; // dz/dz
-	  alDer6 ( 2, 5 ) = 0.0; // dz/dg
+      alDer6 ( 2, 1 ) = 0.0; // dz/dy
+      alDer6 ( 2, 2 ) = 1.0; // dz/dz
+      alDer6 ( 2, 5 ) = 0.0; // dz/dg
     }
 	
     std::vector<double> rx (_nPlanes, -1.0);
@@ -666,7 +666,7 @@ void EUTelGBL::processEvent( LCEvent * event ) {
             } else if( _alignMode == Utility::alignMode::XYShiftsRotZ ) { // with rot
               std::vector<int> globalLabels(3);
               globalLabels[0] = _sensorIDVec[ipl] * 10 + 1; // x
-              globalLabels[1] = _sensorIDVec[ipl] * 10 + 2; // yCuts
+              globalLabels[1] = _sensorIDVec[ipl] * 10 + 2; // y
               globalLabels[2] = _sensorIDVec[ipl] * 10 + 3; // rot
               alDer3(0,2) = -ys; // dx/dphi
               alDer3(1,2) =  xs; // dy/dphi
