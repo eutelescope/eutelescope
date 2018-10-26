@@ -521,12 +521,12 @@ std::pair<double,double> EUTelTripletGBLUtility::doIterativeGaussianFit(AIDA::IH
     double startForMaxFraction = 0.2;
     double max = current.GetMaximum();
     int min_bin = current.FindFirstBinAbove(startForMaxFraction*max), max_bin = current.FindLastBinAbove(startForMaxFraction*max);
-    if(min_bin == 1) {
+    if(min_bin < 0.2*current.GetNbinsX()) {
         startForMaxFraction = 0.35;
         min_bin = current.FindFirstBinAbove(startForMaxFraction*max);
         max_bin = current.FindLastBinAbove(startForMaxFraction*max);
     }
-    if(min_bin == 1) {
+    if(min_bin < 0.2*current.GetNbinsX()) {
         startForMaxFraction = 0.5;
         min_bin = current.FindFirstBinAbove(startForMaxFraction*max);
         max_bin = current.FindLastBinAbove(startForMaxFraction*max);
@@ -558,7 +558,8 @@ std::pair<double,double> EUTelTripletGBLUtility::doIterativeGaussianFit(AIDA::IH
     gausfit.SetParLimits(2, 0.1*(bound_hi-bound_low), 1.5*(bound_hi-bound_low));
     gausfit.SetParLimits(3, 0, 0.2*max);
              
-    TFitResultPtr fitresult = current.Fit(&gausfit,"S","",bound_low,bound_hi);
+    TFitResultPtr fitresult = current.Fit(&gausfit,"SV","",bound_low,bound_hi);
+    if(!fitresult->IsValid()) fitresult = current.Fit(&gausfit,"SV","",bound_low,bound_hi);
         
     mean = fitresult->GetParams()[1];
     sigma = fitresult->GetParams()[2];
@@ -572,9 +573,9 @@ std::pair<double,double> EUTelTripletGBLUtility::doIterativeGaussianFit(AIDA::IH
 
 void EUTelTripletGBLUtility::determineBestCuts() const {
     
+    std::pair<double, double> res_upstreamTripletSlopeY      = doIterativeGaussianFit(upstreamTripletSlopeY, 10);    
     std::pair<double, double> res_upstreamTripletResidualX   = doIterativeGaussianFit(upstreamTripletResidualX, 5);
     std::pair<double, double> res_upstreamTripletSlopeX      = doIterativeGaussianFit(upstreamTripletSlopeX, 10);
-    std::pair<double, double> res_upstreamTripletSlopeY      = doIterativeGaussianFit(upstreamTripletSlopeY, 10);
     std::pair<double, double> res_downstreamTripletSlopeX    = doIterativeGaussianFit(downstreamTripletSlopeX, 10);
     std::pair<double, double> res_downstreamTripletSlopeY    = doIterativeGaussianFit(downstreamTripletSlopeY, 10);
     std::pair<double, double> res_upstreamTripletResidualY   = doIterativeGaussianFit(upstreamTripletResidualY, 5);
