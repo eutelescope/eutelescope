@@ -590,7 +590,7 @@ void EUTelGBL::processEvent( LCEvent * event ) {
       alDer6 ( 1, 2 ) = triSlope.y; // dy/dz
 	  alDer6 ( 1, 4 ) = 0.0; // dy/db
       alDer6 ( 2, 0 ) = 0.0; // dz/dx
-	  alDer6 ( 2, 1 ) = 0.0; // dz/dy
+	  alDer6 ( 2, 1 ) = 0.0; // dz/dyCuts
 	  alDer6 ( 2, 2 ) = 1.0; // dz/dz
 	  alDer6 ( 2, 5 ) = 0.0; // dz/dg
     }
@@ -666,7 +666,7 @@ void EUTelGBL::processEvent( LCEvent * event ) {
             } else if( _alignMode == Utility::alignMode::XYShiftsRotZ ) { // with rot
               std::vector<int> globalLabels(3);
               globalLabels[0] = _sensorIDVec[ipl] * 10 + 1; // x
-              globalLabels[1] = _sensorIDVec[ipl] * 10 + 2; // y
+              globalLabels[1] = _sensorIDVec[ipl] * 10 + 2; // yCuts
               globalLabels[2] = _sensorIDVec[ipl] * 10 + 3; // rot
               alDer3(0,2) = -ys; // dx/dphi
               alDer3(1,2) =  xs; // dy/dphi
@@ -853,7 +853,7 @@ void EUTelGBL::processEvent( LCEvent * event ) {
           thisTrack->setFloatVal(7, (localPar[2] - prevAngleY)*1E3); // kink angle in y in mrad
         } else {
           thisTrack->setFloatVal(6, (localPar[5]+localPar[7])*1E3); 
-          thisTrack->setFloatVal(7, (localPar[5]+localPar[7])*1E3);  
+          thisTrack->setFloatVal(7, (localPar[6]+localPar[8])*1E3);  
         }
         _outputTracks->push_back(static_cast<EVENT::LCGenericObject*>(thisTrack));
       }
