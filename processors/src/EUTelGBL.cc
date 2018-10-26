@@ -847,28 +847,26 @@ void EUTelGBL::processEvent( LCEvent * event ) {
         thisTrack->setFloatVal(3, _planePosition[ix]); // z of the plane. FIX ME we should use z hit position if possible
         thisTrack->setFloatVal(4, localPar[1]*1E3); // FIXME this is not the incidence angle, just the angle correction to the seed
         thisTrack->setFloatVal(5, localPar[2]*1E3); // FIXME this is not the incidence angle, just the angle correction to the seed
-        if(ix != 0){
-          if(_sensorIDVec[ix]!=_SUTID){
-            thisTrack->setFloatVal(6, (localPar[1] - prevAngleX)*1E3); // kink angle in x in mrad
-            thisTrack->setFloatVal(7, (localPar[2] - prevAngleY)*1E3); // kink angle in y in mrad
-          } else {
-            thisTrack->setFloatVal(6, (localPar[5]+localPar[7])*1E3); 
-            thisTrack->setFloatVal(7, (localPar[5]+localPar[7])*1E3);  
-          }
-	    }
+
+        if(_sensorIDVec[ix]!=_SUTID){
+          thisTrack->setFloatVal(6, (localPar[1] - prevAngleX)*1E3); // kink angle in x in mrad
+          thisTrack->setFloatVal(7, (localPar[2] - prevAngleY)*1E3); // kink angle in y in mrad
+        } else {
+          thisTrack->setFloatVal(6, (localPar[5]+localPar[7])*1E3); 
+          thisTrack->setFloatVal(7, (localPar[5]+localPar[7])*1E3);  
+        }
         _outputTracks->push_back(static_cast<EVENT::LCGenericObject*>(thisTrack));
       }
     
-      // Fill kink angle histograms. FIXME order is a mess
-      if(ix != 0){
-        if(_sensorIDVec[ix]!=_SUTID){
-          gblKinkXHist[ix-1]->fill( (localPar[1] - prevAngleX)*1E3 ); // kink at planes [mrad]
-          gblKinkYHist[ix-1]->fill( (localPar[2] - prevAngleY)*1E3 ); // kink at planes [mrad]
-        } else {
-          gblKinkXHist[ix-1]->fill( (localPar[5]+localPar[7])*1E3 ); // kink at planes [mrad]
-          gblKinkYHist[ix-1]->fill( (localPar[6]+localPar[8])*1E3 ); // kink at planes [mrad]
-        }
+      // Fill kink angle histograms
+      if(_sensorIDVec[ix]!=_SUTID){
+        gblKinkXHist[ix]->fill( (localPar[1] - prevAngleX)*1E3 ); // kink at planes [mrad]
+        gblKinkYHist[ix]->fill( (localPar[2] - prevAngleY)*1E3 ); // kink at planes [mrad]
+      } else {
+        gblKinkXHist[ix]->fill( (localPar[5]+localPar[7])*1E3 ); // kink at planes [mrad]
+        gblKinkYHist[ix]->fill( (localPar[6]+localPar[8])*1E3 ); // kink at planes [mrad]
       }
+      
       prevAngleX = localPar[1];
       prevAngleY = localPar[2];
     }
@@ -1007,16 +1005,14 @@ void EUTelGBL::bookHistos(std::vector<int> const & sensorIDVec) {
       gblDyHist.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNameShiftY, 500, -250, 250));
       gblDyHist.back()->setTitle( "GBL shift at plane "+sensorIdString+";y shift at plane "+sensorIdString+" [#mum];tracks" );
       
-      if (ix > 0){//there is no kink angle for the first plane
-        std::string histNameKinkX = "GBLFit/Kinks/kx"+sensorIdString;
-        std::string histNameKinkY = "GBLFit/Kinks/ky"+sensorIdString;
+      std::string histNameKinkX = "GBLFit/Kinks/kx"+sensorIdString;
+      std::string histNameKinkY = "GBLFit/Kinks/ky"+sensorIdString;
 
-        gblKinkXHist.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNameKinkX, 100, -5, 5));
-        gblKinkXHist.back()->setTitle( "GBL kink angle at plane "+sensorIdString+";plane "+sensorIdString+" x kink [mrad];tracks" );
+      gblKinkXHist.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNameKinkX, 100, -5, 5));
+      gblKinkXHist.back()->setTitle( "GBL kink angle at plane "+sensorIdString+";plane "+sensorIdString+" x kink [mrad];tracks" );
 
-        gblKinkYHist.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNameKinkY, 100, -5, 5));
-        gblKinkYHist.back()->setTitle( "GBL kink angle at plane "+sensorIdString+";plane "+sensorIdString+" y kink [mrad];tracks" );
-      }
+      gblKinkYHist.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNameKinkY, 100, -5, 5));
+      gblKinkYHist.back()->setTitle( "GBL kink angle at plane "+sensorIdString+";plane "+sensorIdString+" y kink [mrad];tracks" );
     }
 
     ntracksperevent = AIDAProcessor::histogramFactory(this)->createHistogram1D( "ntracksperevent", 21, -0.5, 20.5 );
