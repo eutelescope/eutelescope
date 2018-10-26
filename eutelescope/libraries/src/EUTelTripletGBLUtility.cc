@@ -525,17 +525,14 @@ std::pair<double,double> EUTelTripletGBLUtility::doIterativeGaussianFit(AIDA::IH
         startForMaxFraction = 0.35;
         min_bin = current.FindFirstBinAbove(startForMaxFraction*max);
         max_bin = current.FindLastBinAbove(startForMaxFraction*max);
-        //current.Smooth(10);
     }
     
     double bound_low = current.GetBinCenter( min_bin );
     double bound_hi = current.GetBinCenter( max_bin );
     double mean = (bound_hi-bound_low)/2.;
     double sigma = bound_hi-bound_low;
-    //double mean_prev, sigma_prev;
-    int nb_iter = 0;
+    //int nb_iter = 0;
     
-    //TF1 gausfit("gausfit", "[0]*exp(-0.5*( ((x-[1])/[2])*((x-[1])/[2]) ) )", bound_low, bound_hi);
     TF1 gausfit("gausfit", "([3]+[0]*exp(-0.5*( ((x-[1])/[2])*((x-[1])/[2]) ) ))", bound_low, bound_hi);
     streamlog_out (MESSAGE4) << "First fit between " << bound_low << " " << bound_hi << std::endl;
     
@@ -543,34 +540,21 @@ std::pair<double,double> EUTelTripletGBLUtility::doIterativeGaussianFit(AIDA::IH
     gausfit.SetParameter(1, mean);
     gausfit.SetParameter(2, sigma);
     gausfit.SetParameter(3, current.GetBinContent(1));
-    //gausfit.SetParameter(3, 0.2*nb_entries);
     
-    gausfit.SetParLimits(0, 0, 5*max);
+    gausfit.SetParLimits(0, 0.1*max, 2*max);
     gausfit.SetParLimits(1, bound_low, bound_hi);
     gausfit.SetParLimits(2, 0.1*(bound_hi-bound_low), 1.5*(bound_hi-bound_low));
-    gausfit.SetParLimits(3, 0, 10*current.GetBinContent(1));
-    
-    //bool again=false;
-    do 
-    {           
-        TFitResultPtr fitresult = current.Fit(&gausfit,"S","",bound_low,bound_hi);
+    gausfit.SetParLimits(3, 0, 0.1*max);
+             
+    TFitResultPtr fitresult = current.Fit(&gausfit,"S","",bound_low,bound_hi);
         
-        mean = fitresult->GetParams()[1];
-        sigma = fitresult->GetParams()[2];
-        //gausfit.SetRange(mean-0.5*sigma, mean+0.5*sigma);
-        
-        nb_iter++;
-        //again=true;
-        bound_low = mean-sigma;
-        bound_hi = mean+sigma;
-     } while( (sigma > (bound_hi-bound_low))&&(nb_iter < 5) );
-    //} while( ((fabs(mean-mean_prev) > 0.01*mean_prev) || (fabs(sigma-sigma_prev) > 0.01*sigma_prev))&&(nb_iter < 1) );
+    mean = fitresult->GetParams()[1];
+    sigma = fitresult->GetParams()[2];
     
     TCanvas can; can.cd();
     current.Draw();
     can.SaveAs(TString(in_hist->title())+".pdf");
     
-    streamlog_out (MESSAGE4) << "Iterated " << nb_iter << " times" << std::endl;
     return std::pair<double,double> (mean, sigma);
 }
 
