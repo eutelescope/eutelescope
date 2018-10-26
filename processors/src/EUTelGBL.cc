@@ -793,9 +793,8 @@ void EUTelGBL::processEvent( LCEvent * event ) {
     Eigen::VectorXd localPar;
     Eigen::MatrixXd localCov;
 
-    std::array<double,8> ax;
-    std::array<double,8> ay;
-    size_t k = 0;
+    double prevAngleX = 0;
+    double prevAngleY = 0;
 
     // at plane 0:
     unsigned int ndata = 2;
@@ -848,10 +847,10 @@ void EUTelGBL::processEvent( LCEvent * event ) {
         thisTrack->setFloatVal(3, _planePosition[ix]); // z of the plane. FIX ME we should use z hit position if possible
         thisTrack->setFloatVal(4, localPar[1]*1E3); // FIXME this is not the incidence angle, just the angle correction to the seed
         thisTrack->setFloatVal(5, localPar[2]*1E3); // FIXME this is not the incidence angle, just the angle correction to the seed
-        if(k>0){
+        if(ix != 0){
           if(_sensorIDVec[ix]!=_SUTID){
-            thisTrack->setFloatVal(6, (localPar[1] - ax[k-1])*1E3); // kink angle (for the previous plane, FIX IT) in x in mrad
-            thisTrack->setFloatVal(7, (localPar[2] - ay[k-1])*1E3); // kink angle (for the previous plane, FIX IT) in y in mrad
+            thisTrack->setFloatVal(6, (localPar[1] - prevAngleX)*1E3); // kink angle in x in mrad
+            thisTrack->setFloatVal(7, (localPar[2] - prevAngleY)*1E3); // kink angle in y in mrad
           } else {
             thisTrack->setFloatVal(6, (localPar[5]+localPar[7])*1E3); 
             thisTrack->setFloatVal(7, (localPar[5]+localPar[7])*1E3);  
@@ -859,27 +858,21 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 	    }
         _outputTracks->push_back(static_cast<EVENT::LCGenericObject*>(thisTrack));
       }
-      
-      if(_sensorIDVec[ix]!=_SUTID){
-        ax[k] = localPar[1];
-        ay[k] = localPar[2];
-	  } else {
-        ax[k] = localPar[5]+localPar[7];
-        ay[k] = localPar[6]+localPar[8];
-	  }
-      ++k;
-    }
     
-    for(size_t ix = 0; ix < _nPlanes-1; ++ix) {
-      if(_sensorIDVec[ix]!=_SUTID){
-        gblKinkXHist[ix]->fill( (ax[ix+1] - ax[ix])*1E3 ); // kink at planes [mrad]
-        gblKinkYHist[ix]->fill( (ay[ix+1] - ay[ix])*1E3 ); // kink at planes [mrad]
-      } else {
-        gblKinkXHist[ix]->fill( ax[k]*1E3 ); // kink at planes [mrad]
-        gblKinkYHist[ix]->fill( ay[k]*1E3 ); // kink at planes [mrad]
+      // Fill kink angle histograms. FIXME order is a mess
+      if(ix != 0){
+        if(_sensorIDVec[ix]!=_SUTID){
+          gblKinkXHist[ix-1]->fill( (localPar[1] - prevAngleX)*1E3 ); // kink at planes [mrad]
+          gblKinkYHist[ix-1]->fill( (localPar[2] - prevAngleY)*1E3 ); // kink at planes [mrad]
+        } else {
+          gblKinkXHist[ix-1]->fill( (localPar[5]+localPar[7])*1E3 ); // kink at planes [mrad]
+          gblKinkYHist[ix-1]->fill( (localPar[6]+localPar[8])*1E3 ); // kink at planes [mrad]
+        }
       }
+      prevAngleX = localPar[1];
+      prevAngleY = localPar[2];
     }
-
+  
     // do not pass very bad tracks to mille. Only if the alignment is performed
     if(_performAlignment){
       if(probchi > _chi2cut) { // FIXME should it be a cut on the chi2 or on the probability
@@ -888,13 +881,11 @@ void EUTelGBL::processEvent( LCEvent * event ) {
       }
     }
     numbertracks++;
-    
   }
   
   if(_dumpTracks) event->addCollection(_outputTracks,"TracksCollection");
-  
   ntracksperevent->fill( numbertracks );
-
+  
   // count events:
   ++_iEvt;
   if( isFirstEvent() ) _isFirstEvent = false;
@@ -976,6 +967,7 @@ void EUTelGBL::bookHistos(std::vector<int> const & sensorIDVec) {
     AIDAProcessor::tree(this)->mkdir("GBLFit/Residuals");
     AIDAProcessor::tree(this)->mkdir("GBLFit/Pulls");
     AIDAProcessor::tree(this)->mkdir("GBLFit/Shifts");
+    AIDAProcessor::tree(this)->mkdir("GBLFit/Kinks");
     for(size_t ix = 0; ix < sensorIDVec.size(); ++ix) {
       auto sensorIdString = std::to_string(sensorIDVec[ix]);
 
@@ -1014,20 +1006,17 @@ void EUTelGBL::bookHistos(std::vector<int> const & sensorIDVec) {
 
       gblDyHist.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNameShiftY, 500, -250, 250));
       gblDyHist.back()->setTitle( "GBL shift at plane "+sensorIdString+";y shift at plane "+sensorIdString+" [#mum];tracks" );
-    }
-    
-    AIDAProcessor::tree(this)->mkdir("GBLFit/Kinks");
-    for(size_t ix = 1; ix < sensorIDVec.size(); ++ix) {
-      auto sensorIdString = std::to_string(sensorIDVec[ix]);
+      
+      if (ix > 0){//there is no kink angle for the first plane
+        std::string histNameKinkX = "GBLFit/Kinks/kx"+sensorIdString;
+        std::string histNameKinkY = "GBLFit/Kinks/ky"+sensorIdString;
 
-      std::string histNameKinkX = "GBLFit/Kinks/kx"+sensorIdString;
-      std::string histNameKinkY = "GBLFit/Kinks/ky"+sensorIdString;
+        gblKinkXHist.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNameKinkX, 100, -5, 5));
+        gblKinkXHist.back()->setTitle( "GBL kink angle at plane "+sensorIdString+";plane "+sensorIdString+" x kink [mrad];tracks" );
 
-      gblKinkXHist.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNameKinkX, 100, -5, 5));
-      gblKinkXHist.back()->setTitle( "GBL kink angle at plane "+sensorIdString+";plane "+sensorIdString+" x kink [mrad];tracks" );
-
-      gblKinkYHist.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNameKinkY, 100, -5, 5));
-      gblKinkYHist.back()->setTitle( "GBL kink angle at plane "+sensorIdString+";plane "+sensorIdString+" y kink [mrad];tracks" );
+        gblKinkYHist.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNameKinkY, 100, -5, 5));
+        gblKinkYHist.back()->setTitle( "GBL kink angle at plane "+sensorIdString+";plane "+sensorIdString+" y kink [mrad];tracks" );
+      }
     }
 
     ntracksperevent = AIDAProcessor::histogramFactory(this)->createHistogram1D( "ntracksperevent", 21, -0.5, 20.5 );
