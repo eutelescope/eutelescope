@@ -25,8 +25,8 @@ using namespace eutelescope;
 EUTelGBLOutput::EUTelGBLOutput() : Processor("EUTelGBLOutput") {
   // processor description
   _description = "Generate NTuple containing hits, zero suppressed data and track position from GBL processor";
-  registerInputCollection(LCIO::TRACKERHIT, "InputHitCollection","Name of the hit collection (use the right coordinate system)",_inputHitCollection, std::string("local_hit"));
-  registerInputCollections(LCIO::TRACKERHIT,"InputZsCollections","Vector with the names of the zs collections",_inputZsCollections, std::vector<std::string>{"zsdata"});
+  registerInputCollections(LCIO::TRACKERHIT, "InputHitCollections","Vector with the names of the hit collections (use the right coordinate system)",_inputHitCollections, std::vector<std::string>{});
+  registerInputCollections(LCIO::TRACKERHIT,"InputZsCollections","Vector with the names of the zs collections",_inputZsCollections, std::vector<std::string>{});
   registerProcessorParameter("onlyEventsWithTracks","Decide whether to dump hits and zs data only for events with a track",_onlyWithTracks, true);
   registerProcessorParameter("tracksLocalSystem","Decide whether to dump track positions in local coordinate system",_tracksLocalSystem, true);
   registerProcessorParameter("dumpHeader","Decide whether to dump the event header information",_dumpHeader, false);
@@ -81,7 +81,7 @@ void EUTelGBLOutput::init() {
   _eutracks->Branch("chi2", &_chi2);
   _eutracks->Branch("ndof", &_ndof);
   
-  if(_inputHitCollection != ""){ //this if doesn't work properly. Find a way to do it
+  if(_inputHitCollections.size() != 0){
     // Tree for storing hit information
     _euhits = new TTree("Hits", "Hits");
     _euhits->SetAutoSave(1000000000);
@@ -91,15 +91,17 @@ void EUTelGBLOutput::init() {
     _euhits->Branch("zPos", &_hitZPos);
   }
   
+  if(_inputZsCollections.size() != 0){
   // TTree for zero suppressed data 
-  _zstree = new TTree("ZeroSuppressed", "ZeroSuppressed5");
-  _zstree->SetAutoSave(1000000000);
-  _zstree->Branch("ID", &zs_id);
-  _zstree->Branch("xPos", &zs_x);
-  _zstree->Branch("yPos", &zs_y);
-  _zstree->Branch("Signal", &zs_signal);
-  _zstree->Branch("Time", &zs_time);
-
+    _zstree = new TTree("ZeroSuppressed", "ZeroSuppressed");
+    _zstree->SetAutoSave(1000000000);
+    _zstree->Branch("ID", &zs_id);
+    _zstree->Branch("xPos", &zs_x);
+    _zstree->Branch("yPos", &zs_y);
+    _zstree->Branch("Signal", &zs_signal);
+    _zstree->Branch("Time", &zs_time);
+  }
+  
   geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME,
                                              EUTELESCOPE::DUMPGEOROOT);
 }
@@ -122,7 +124,7 @@ void EUTelGBLOutput::processEvent(LCEvent *event) {
 
   // Clear all event info containers
   clear();
-  
+
   // Fill track TTree. Hardcoded name for the track collection
   LCCollection* TrackCollection = event->getCollection("TracksCollection");
 
@@ -157,31 +159,33 @@ void EUTelGBLOutput::processEvent(LCEvent *event) {
   
   if(!(_onlyWithTracks) || TrackCollection->getNumberOfElements()!=0){
     // Fill hit TTree
-    LCCollection *hitCollection = event->getCollection(_inputHitCollection);
+    for(auto hitName : _inputHitCollections){
+      LCCollection *hitCollection = event->getCollection(hitName);
   
-    for (int ihit = 0; ihit < hitCollection->getNumberOfElements(); ihit++) {
-      TrackerHitImpl *meshit = dynamic_cast<TrackerHitImpl *>(hitCollection->getElementAt(ihit));
-      const double *pos = meshit->getPosition();
-      UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder(EUTELESCOPE::HITENCODING);
-      int thisID = hitDecoder(meshit)["sensorID"];
-      if(_SelectedPlanes.size() == 0 || std::find(std::begin(_SelectedPlanes), std::end(_SelectedPlanes), thisID) != _SelectedPlanes.end()){
-        _hitSensorId->push_back(thisID);   
-        double x = pos[0];
-        double y = pos[1]; 
-        double z = pos[2];
-        _hitXPos->push_back(x);
-        _hitYPos->push_back(y);
-        _hitZPos->push_back(z);
+      for (int ihit = 0; ihit < hitCollection->getNumberOfElements(); ihit++) {
+        TrackerHitImpl *meshit = dynamic_cast<TrackerHitImpl *>(hitCollection->getElementAt(ihit));
+        const double *pos = meshit->getPosition();
+        UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder(EUTELESCOPE::HITENCODING);
+        int thisID = hitDecoder(meshit)["sensorID"];
+        if(_SelectedPlanes.size() == 0 || std::find(std::begin(_SelectedPlanes), std::end(_SelectedPlanes), thisID) != _SelectedPlanes.end()){
+          _hitSensorId->push_back(thisID);   
+          double x = pos[0];
+          double y = pos[1]; 
+          double z = pos[2];
+          _hitXPos->push_back(x);
+          _hitYPos->push_back(y);
+          _hitZPos->push_back(z);
+        } 
       }
     }
 
     //Fill zs data
-    for(auto colName : _inputZsCollections){
+    for(auto zsName : _inputZsCollections){
       LCCollectionVec *zsInputCollectionVec = nullptr;
       try {
-        zsInputCollectionVec = dynamic_cast<LCCollectionVec *>(event->getCollection(colName));
+        zsInputCollectionVec = dynamic_cast<LCCollectionVec *>(event->getCollection(zsName));
       } catch (DataNotAvailableException &e) {
-        streamlog_out(DEBUG2) << "Raw ZS data collection " << colName
+        streamlog_out(DEBUG2) << "Raw ZS data collection " << zsName
                               << " not found in event " << event->getEventNumber()
                               << "!" << std::endl;
       }
@@ -218,8 +222,8 @@ void EUTelGBLOutput::processEvent(LCEvent *event) {
   // fill the TTrees
   //the event number would make it fill this TTree even for events with no tracks
   if(TrackCollection->getNumberOfElements()!=0) _eutracks->Fill();
-  _euhits->Fill();
-  _zstree->Fill();
+  if(_inputHitCollections.size() != 0) _euhits->Fill();
+  if(_inputZsCollections.size() != 0) _zstree->Fill();
 
   _isFirstEvent = false;
 }

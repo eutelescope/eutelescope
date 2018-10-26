@@ -27,7 +27,7 @@ namespace eutelescope {
   protected:
     void clear();
 
-    std::string _inputHitCollection;
+    std::vector<std::string> _inputHitCollections;
     std::vector<std::string> _inputZsCollections;
     std::string _path2file;
 
