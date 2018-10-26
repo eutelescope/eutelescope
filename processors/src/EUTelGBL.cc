@@ -892,6 +892,7 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 //------------------------------------------------------------------------------
 void EUTelGBL::end() {
   milleAlignGBL.reset(nullptr);	
+  gblutil.determineBestCuts();
 }//end
 
 //------------------------------------------------------------------------------

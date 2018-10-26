@@ -508,4 +508,108 @@ EUTelTripletGBLUtility::hit EUTelTripletGBLUtility::triplet::slope() const {
   sl.y = (hits.rbegin()->second.y - hits.begin()->second.y) / dz;
   return sl;
 }
+
+std::pair<double,double> EUTelTripletGBLUtility::doIterativeGaussianFit(AIDA::IHistogram1D* in_hist, int need_rebin) const {
+    //--- First convert from IHistogram to TH1 so that we could use ROOT's fitters
+    int nb_bins = in_hist->axis().bins(); //, nb_entries = in_hist->allEntries();
+    streamlog_out (MESSAGE4) << in_hist->title() << " has " << in_hist->allEntries() << " entries" << std::endl;
+    
+    TH1D current(in_hist->title().data(), in_hist->title().data(), nb_bins, in_hist->axis().lowerEdge(), in_hist->axis().upperEdge());
+    for(int id = 0 ; id < nb_bins ; id++) current.SetBinContent(id+1, in_hist->binEntries(id));
+    current.Rebin(need_rebin);
+    
+    double startForMaxFraction = 0.2;
+    double max = current.GetMaximum();
+    int min_bin = current.FindFirstBinAbove(startForMaxFraction*max), max_bin = current.FindLastBinAbove(startForMaxFraction*max);
+    if(min_bin < 0.2*current.GetNbinsX()) {
+        startForMaxFraction = 0.35;
+        min_bin = current.FindFirstBinAbove(startForMaxFraction*max);
+        max_bin = current.FindLastBinAbove(startForMaxFraction*max);
+    }
+    if(min_bin < 0.2*current.GetNbinsX()) {
+        startForMaxFraction = 0.5;
+        min_bin = current.FindFirstBinAbove(startForMaxFraction*max);
+        max_bin = current.FindLastBinAbove(startForMaxFraction*max);
+    }
+    for(int id = min_bin ; id < max_bin-1 ; id++) {
+        if( (current.GetBinContent(id) > 0.7*current.GetBinContent(id+1))&&(current.GetBinContent(id+2) > 0.7*current.GetBinContent(id+1)) ) {
+            current.Smooth(2);
+            min_bin = current.FindFirstBinAbove(startForMaxFraction*max);
+            max_bin = current.FindLastBinAbove(startForMaxFraction*max);
+        }
+    }
+    
+    double bound_low = current.GetBinCenter( min_bin );
+    double bound_hi = current.GetBinCenter( max_bin );
+    double mean = (bound_hi-bound_low)/2.;
+    double sigma = bound_hi-bound_low;
+    //int nb_iter = 0;
+    
+    TF1 gausfit("gausfit", "([3]+[0]*exp(-0.5*( ((x-[1])/[2])*((x-[1])/[2]) ) ))", bound_low, bound_hi);
+    streamlog_out (MESSAGE4) << "First fit between " << bound_low << " " << bound_hi << std::endl;
+    
+    gausfit.SetParameter(0, max); //-current.GetBinContent(1));
+    gausfit.SetParameter(1, mean);
+    gausfit.SetParameter(2, sigma);
+    gausfit.SetParameter(3, current.GetBinContent(1));
+    
+    gausfit.SetParLimits(0, 0.1*max, 2*max);
+    gausfit.SetParLimits(1, bound_low, bound_hi);
+    gausfit.SetParLimits(2, 0.1*(bound_hi-bound_low), 1.5*(bound_hi-bound_low));
+    gausfit.SetParLimits(3, 0, 0.2*max);
+             
+    TFitResultPtr fitresult = current.Fit(&gausfit,"SQ","",bound_low,bound_hi);
+    if(!fitresult->IsValid()) fitresult = current.Fit(&gausfit,"SQ","",bound_low,bound_hi);
+        
+    mean = fitresult->GetParams()[1];
+    sigma = fitresult->GetParams()[2];
+    
+    TCanvas can; can.cd();
+    current.Draw();
+    can.SaveAs(TString(in_hist->title())+".pdf");
+    
+    return std::pair<double,double> (mean, sigma);
+}
+
+void EUTelTripletGBLUtility::determineBestCuts() const {
+    
+    std::pair<double, double> res_upstreamTripletSlopeX      = doIterativeGaussianFit(upstreamTripletSlopeX, 10);
+    std::pair<double, double> res_upstreamTripletSlopeY      = doIterativeGaussianFit(upstreamTripletSlopeY, 10);    
+    std::pair<double, double> res_downstreamTripletSlopeX    = doIterativeGaussianFit(downstreamTripletSlopeX, 10);
+    std::pair<double, double> res_downstreamTripletSlopeY    = doIterativeGaussianFit(downstreamTripletSlopeY, 10);
+    std::pair<double, double> res_upstreamTripletResidualX   = doIterativeGaussianFit(upstreamTripletResidualX, 1);
+    std::pair<double, double> res_upstreamTripletResidualY   = doIterativeGaussianFit(upstreamTripletResidualY, 1);
+    std::pair<double, double> res_downstreamTripletResidualX = doIterativeGaussianFit(downstreamTripletResidualX, 1);
+    std::pair<double, double> res_downstreamTripletResidualY = doIterativeGaussianFit(downstreamTripletResidualY, 1);
+    std::pair<double, double> res_tripletMatchingResidualX   = doIterativeGaussianFit(tripletMatchingResidualX, 1);
+    std::pair<double, double> res_tripletMatchingResidualY   = doIterativeGaussianFit(tripletMatchingResidualY, 1);
+    std::pair<double, double> res_DUTMatchingResidualX       = doIterativeGaussianFit(DUTMatchingResidualX, 1);
+    std::pair<double, double> res_DUTMatchingResidualY       = doIterativeGaussianFit(DUTMatchingResidualY, 1);
+    
+    for(int id = 0 ; id < 10 ; id++) streamlog_out (MESSAGE4) << std::endl;
+    double nb_sigma = 4.;
+    streamlog_out (MESSAGE4) << "__________ *** An iterative gaussian fit determined the following parameters for the distributions we will cut on : __________" << std::endl;
+    streamlog_out (MESSAGE4) << "upstreamTripletResidualX --- Mean = " << res_upstreamTripletResidualX.first << " ; Sigma = " << res_upstreamTripletResidualX.second << std::endl;
+    streamlog_out (MESSAGE4) << "upstreamTripletSlopeX --- Mean = " << res_upstreamTripletSlopeX.first << " ; Sigma = " << res_upstreamTripletSlopeX.second << std::endl;
+    streamlog_out (MESSAGE4) << "upstreamTripletSlopeY --- Mean = " << res_upstreamTripletSlopeY.first << " ; Sigma = " << res_upstreamTripletSlopeY.second << std::endl;
+    streamlog_out (MESSAGE4) << "downstreamTripletSlopeX --- Mean = " << res_downstreamTripletSlopeX.first << " ; Sigma = " << res_downstreamTripletSlopeX.second << std::endl;
+    streamlog_out (MESSAGE4) << "downstreamTripletSlopeY --- Mean = " << res_downstreamTripletSlopeY.first << " ; Sigma = " << res_downstreamTripletSlopeY.second << std::endl;
+    streamlog_out (MESSAGE4) << "upstreamTripletResidualY --- Mean = " << res_upstreamTripletResidualY.first << " ; Sigma = " << res_upstreamTripletResidualY.second << std::endl;
+    streamlog_out (MESSAGE4) << "downstreamTripletResidualX --- Mean = " << res_downstreamTripletResidualX.first << " ; Sigma = " << res_downstreamTripletResidualX.second << std::endl;
+    streamlog_out (MESSAGE4) << "downstreamTripletResidualY --- Mean = " << res_downstreamTripletResidualY.first << " ; Sigma = " << res_downstreamTripletResidualY.second << std::endl;
+    streamlog_out (MESSAGE4) << "tripletMatchingResidualX --- Mean = " << res_tripletMatchingResidualX.first << " ; Sigma = " << res_tripletMatchingResidualX.second << std::endl;
+    streamlog_out (MESSAGE4) << "tripletMatchingResidualY --- Mean = " << res_tripletMatchingResidualY.first << " ; Sigma = " << res_tripletMatchingResidualY.second << std::endl;
+    streamlog_out (MESSAGE4) << "DUTMatchingResidualX --- Mean = " << res_DUTMatchingResidualX.first << " ; Sigma = " << res_DUTMatchingResidualX.second << std::endl;
+    streamlog_out (MESSAGE4) << "DUTMatchingResidualY --- Mean = " << res_DUTMatchingResidualY.first << " ; Sigma = " << res_DUTMatchingResidualY.second << std::endl;
+    for(int id = 0 ; id < 10 ; id++) streamlog_out (MESSAGE4) << std::endl;
+    streamlog_out (MESSAGE4) << "__________ *** We then recommend the following cuts, although they should be checked ! : __________" << std::endl;
+    streamlog_out (MESSAGE4) << "UpstreamTripletCut 	= " << std::max( fabs(res_upstreamTripletResidualX.first)+nb_sigma*res_upstreamTripletResidualX.second, fabs(res_upstreamTripletResidualY.first)+nb_sigma*res_upstreamTripletResidualY.second) << std::endl;
+    streamlog_out (MESSAGE4) << "DownstreamTripletCut 	= " << std::max( fabs(res_downstreamTripletResidualX.first)+nb_sigma*res_downstreamTripletResidualX.second, fabs(res_downstreamTripletResidualY.first)+nb_sigma*res_downstreamTripletResidualY.second) << std::endl;
+    streamlog_out (MESSAGE4) << "UpstreamSlopeCut   	= " << std::max( fabs(res_upstreamTripletSlopeX.first)+nb_sigma*res_upstreamTripletSlopeX.second, fabs(res_upstreamTripletSlopeY.first)+nb_sigma*res_upstreamTripletSlopeY.second) << std::endl;
+    streamlog_out (MESSAGE4) << "DownstreamSlopeCut 	= " << std::max( fabs(res_downstreamTripletSlopeX.first)+nb_sigma*res_downstreamTripletSlopeX.second, fabs(res_downstreamTripletSlopeY.first)+nb_sigma*res_downstreamTripletSlopeY.second) << std::endl;
+    streamlog_out (MESSAGE4) << "TripletMatchingCut 	= " << std::max( fabs(res_tripletMatchingResidualX.first)+nb_sigma*res_tripletMatchingResidualX.second, fabs(res_tripletMatchingResidualY.first)+nb_sigma*res_tripletMatchingResidualY.second) << std::endl;
+    streamlog_out (MESSAGE4) << "DUTCuts 		= " << fabs(res_DUTMatchingResidualX.first)+nb_sigma*res_DUTMatchingResidualX.second << " " <<  fabs(res_DUTMatchingResidualY.first)+nb_sigma*res_DUTMatchingResidualY.second << std::endl;
+    for(int id = 0 ; id < 10 ; id++) streamlog_out (MESSAGE4) << std::endl;
+}
+
 #endif
