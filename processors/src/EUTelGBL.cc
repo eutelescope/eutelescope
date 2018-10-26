@@ -859,8 +859,8 @@ void EUTelGBL::processEvent( LCEvent * event ) {
         ax[k] = localPar[1];
         ay[k] = localPar[2];
 	  } else {
-		ax[k] = localPar[5];
-        ay[k] = localPar[6];
+		ax[k] = localPar[5]+localPar[7];
+        ay[k] = localPar[6]+localPar[8];
 	  }
       ++k;
     }

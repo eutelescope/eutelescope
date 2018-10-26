@@ -17,7 +17,8 @@
 
    <execute>
       <processor name="AIDA"/>
-      <xprocessor name="UniversalNativeReader"/>
+      <!-- The raw data has been converter with EUDAQ2 to lcio, thus we don't need to convert it here -->
+      <!--processor name="UniversalNativeReader"/-->
       <processor name="NoisyPixelMaskerM26"/>
       <processor name="NoisyPixelMaskerAPIX"/>
       <processor name="Save"/>
