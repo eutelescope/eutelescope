@@ -151,6 +151,7 @@ namespace eutelescope {
       std::vector<int> _FixParameter;
 
       int _performAlignment;
+      int _suggestAlignmentCuts;
       int _dumpTracks;
       std::string _pedeSteerfileName;
 
