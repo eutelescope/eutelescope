@@ -592,34 +592,33 @@ void EUTelTripletGBLUtility::determineBestCuts() const {
     std::pair<double, double> res_DUTMatchingResidualX       = doIterativeGaussianFit(DUTMatchingResidualX, 1);
     std::pair<double, double> res_DUTMatchingResidualY       = doIterativeGaussianFit(DUTMatchingResidualY, 1);
     
-    for(int id = 0 ; id < 10 ; id++) streamlog_out (MESSAGE4) << std::endl;
     double nb_sigma = 4.;
-    streamlog_out (MESSAGE4) << "__________ *** An iterative gaussian fit determined the following parameters for the distributions we will cut on : __________" << std::endl;
-    streamlog_out (MESSAGE4) << "upstreamTripletResidualX --- Mean = " << res_upstreamTripletResidualX.first << " ; Sigma = " << res_upstreamTripletResidualX.second << std::endl;
-    streamlog_out (MESSAGE4) << "upstreamTripletSlopeX --- Mean = " << res_upstreamTripletSlopeX.first << " ; Sigma = " << res_upstreamTripletSlopeX.second << std::endl;
-    streamlog_out (MESSAGE4) << "upstreamTripletSlopeY --- Mean = " << res_upstreamTripletSlopeY.first << " ; Sigma = " << res_upstreamTripletSlopeY.second << std::endl;
-    streamlog_out (MESSAGE4) << "downstreamTripletSlopeX --- Mean = " << res_downstreamTripletSlopeX.first << " ; Sigma = " << res_downstreamTripletSlopeX.second << std::endl;
-    streamlog_out (MESSAGE4) << "downstreamTripletSlopeY --- Mean = " << res_downstreamTripletSlopeY.first << " ; Sigma = " << res_downstreamTripletSlopeY.second << std::endl;
-    streamlog_out (MESSAGE4) << "upstreamTripletResidualY --- Mean = " << res_upstreamTripletResidualY.first << " ; Sigma = " << res_upstreamTripletResidualY.second << std::endl;
-    streamlog_out (MESSAGE4) << "downstreamTripletResidualX --- Mean = " << res_downstreamTripletResidualX.first << " ; Sigma = " << res_downstreamTripletResidualX.second << std::endl;
-    streamlog_out (MESSAGE4) << "downstreamTripletResidualY --- Mean = " << res_downstreamTripletResidualY.first << " ; Sigma = " << res_downstreamTripletResidualY.second << std::endl;
-    streamlog_out (MESSAGE4) << "tripletMatchingResidualX --- Mean = " << res_tripletMatchingResidualX.first << " ; Sigma = " << res_tripletMatchingResidualX.second << std::endl;
-    streamlog_out (MESSAGE4) << "tripletMatchingResidualY --- Mean = " << res_tripletMatchingResidualY.first << " ; Sigma = " << res_tripletMatchingResidualY.second << std::endl;
+    streamlog_out (DEBUG5) << "__________ *** An iterative gaussian fit determined the following parameters for the distributions we will cut on : __________" << std::endl;
+    streamlog_out (DEBUG5) << "upstreamTripletResidualX --- Mean = " << res_upstreamTripletResidualX.first << " ; Sigma = " << res_upstreamTripletResidualX.second << std::endl;
+    streamlog_out (DEBUG5) << "upstreamTripletSlopeX --- Mean = " << res_upstreamTripletSlopeX.first << " ; Sigma = " << res_upstreamTripletSlopeX.second << std::endl;
+    streamlog_out (DEBUG5) << "upstreamTripletSlopeY --- Mean = " << res_upstreamTripletSlopeY.first << " ; Sigma = " << res_upstreamTripletSlopeY.second << std::endl;
+    streamlog_out (DEBUG5) << "downstreamTripletSlopeX --- Mean = " << res_downstreamTripletSlopeX.first << " ; Sigma = " << res_downstreamTripletSlopeX.second << std::endl;
+    streamlog_out (DEBUG5) << "downstreamTripletSlopeY --- Mean = " << res_downstreamTripletSlopeY.first << " ; Sigma = " << res_downstreamTripletSlopeY.second << std::endl;
+    streamlog_out (DEBUG5) << "upstreamTripletResidualY --- Mean = " << res_upstreamTripletResidualY.first << " ; Sigma = " << res_upstreamTripletResidualY.second << std::endl;
+    streamlog_out (DEBUG5) << "downstreamTripletResidualX --- Mean = " << res_downstreamTripletResidualX.first << " ; Sigma = " << res_downstreamTripletResidualX.second << std::endl;
+    streamlog_out (DEBUG5) << "downstreamTripletResidualY --- Mean = " << res_downstreamTripletResidualY.first << " ; Sigma = " << res_downstreamTripletResidualY.second << std::endl;
+    streamlog_out (DEBUG5) << "tripletMatchingResidualX --- Mean = " << res_tripletMatchingResidualX.first << " ; Sigma = " << res_tripletMatchingResidualX.second << std::endl;
+    streamlog_out (DEBUG5) << "tripletMatchingResidualY --- Mean = " << res_tripletMatchingResidualY.first << " ; Sigma = " << res_tripletMatchingResidualY.second << std::endl;
     if(res_DUTMatchingResidualX.second < -1) {
         streamlog_out (MESSAGE4) << "The DUT is propably not an active device - no hits detected" << std::endl;
     } else {
-        streamlog_out (MESSAGE4) << "DUTMatchingResidualX --- Mean = " << res_DUTMatchingResidualX.first << " ; Sigma = " << res_DUTMatchingResidualX.second << std::endl;
-        streamlog_out (MESSAGE4) << "DUTMatchingResidualY --- Mean = " << res_DUTMatchingResidualY.first << " ; Sigma = " << res_DUTMatchingResidualY.second << std::endl;
+        streamlog_out (DEBUG5) << "DUTMatchingResidualX --- Mean = " << res_DUTMatchingResidualX.first << " ; Sigma = " << res_DUTMatchingResidualX.second << std::endl;
+        streamlog_out (DEBUG5) << "DUTMatchingResidualY --- Mean = " << res_DUTMatchingResidualY.first << " ; Sigma = " << res_DUTMatchingResidualY.second << std::endl;
     }
     for(int id = 0 ; id < 10 ; id++) streamlog_out (MESSAGE4) << std::endl;
-    streamlog_out (MESSAGE4) << "__________ *** We then recommend the following cuts, although they should be checked ! : __________" << std::endl;
-    streamlog_out (MESSAGE4) << "UpstreamTripletCut 	= " << std::max( fabs(res_upstreamTripletResidualX.first)+nb_sigma*res_upstreamTripletResidualX.second, fabs(res_upstreamTripletResidualY.first)+nb_sigma*res_upstreamTripletResidualY.second) << std::endl;
-    streamlog_out (MESSAGE4) << "DownstreamTripletCut 	= " << std::max( fabs(res_downstreamTripletResidualX.first)+nb_sigma*res_downstreamTripletResidualX.second, fabs(res_downstreamTripletResidualY.first)+nb_sigma*res_downstreamTripletResidualY.second) << std::endl;
-    streamlog_out (MESSAGE4) << "UpstreamSlopeCut   	= " << std::max( fabs(res_upstreamTripletSlopeX.first)+nb_sigma*res_upstreamTripletSlopeX.second, fabs(res_upstreamTripletSlopeY.first)+nb_sigma*res_upstreamTripletSlopeY.second) << std::endl;
-    streamlog_out (MESSAGE4) << "DownstreamSlopeCut 	= " << std::max( fabs(res_downstreamTripletSlopeX.first)+nb_sigma*res_downstreamTripletSlopeX.second, fabs(res_downstreamTripletSlopeY.first)+nb_sigma*res_downstreamTripletSlopeY.second) << std::endl;
-    streamlog_out (MESSAGE4) << "TripletMatchingCut 	= " << std::max( fabs(res_tripletMatchingResidualX.first)+nb_sigma*res_tripletMatchingResidualX.second, fabs(res_tripletMatchingResidualY.first)+nb_sigma*res_tripletMatchingResidualY.second) << std::endl;
-    if(res_DUTMatchingResidualX.second > -1) streamlog_out (MESSAGE4) << "DUTCuts 		= " << fabs(res_DUTMatchingResidualX.first)+nb_sigma*res_DUTMatchingResidualX.second << " " <<  fabs(res_DUTMatchingResidualY.first)+nb_sigma*res_DUTMatchingResidualY.second << std::endl;
-    for(int id = 0 ; id < 10 ; id++) streamlog_out (MESSAGE4) << std::endl;
+    streamlog_out (MESSAGE5) << "__________ *** We then recommend the following cuts, although they should be checked ! : __________" << std::endl;
+    streamlog_out (MESSAGE5) << "UpstreamTripletCut 	= " << std::max( fabs(res_upstreamTripletResidualX.first)+nb_sigma*res_upstreamTripletResidualX.second, fabs(res_upstreamTripletResidualY.first)+nb_sigma*res_upstreamTripletResidualY.second) << std::endl;
+    streamlog_out (MESSAGE5) << "DownstreamTripletCut 	= " << std::max( fabs(res_downstreamTripletResidualX.first)+nb_sigma*res_downstreamTripletResidualX.second, fabs(res_downstreamTripletResidualY.first)+nb_sigma*res_downstreamTripletResidualY.second) << std::endl;
+    streamlog_out (MESSAGE5) << "UpstreamSlopeCut   	= " << std::max( fabs(res_upstreamTripletSlopeX.first)+nb_sigma*res_upstreamTripletSlopeX.second, fabs(res_upstreamTripletSlopeY.first)+nb_sigma*res_upstreamTripletSlopeY.second) << std::endl;
+    streamlog_out (MESSAGE5) << "DownstreamSlopeCut 	= " << std::max( fabs(res_downstreamTripletSlopeX.first)+nb_sigma*res_downstreamTripletSlopeX.second, fabs(res_downstreamTripletSlopeY.first)+nb_sigma*res_downstreamTripletSlopeY.second) << std::endl;
+    streamlog_out (MESSAGE5) << "TripletMatchingCut 	= " << std::max( fabs(res_tripletMatchingResidualX.first)+nb_sigma*res_tripletMatchingResidualX.second, fabs(res_tripletMatchingResidualY.first)+nb_sigma*res_tripletMatchingResidualY.second) << std::endl;
+    if(res_DUTMatchingResidualX.second > -1) streamlog_out (MESSAGE5) << "DUTCuts 		= " << fabs(res_DUTMatchingResidualX.first)+nb_sigma*res_DUTMatchingResidualX.second << " " <<  fabs(res_DUTMatchingResidualY.first)+nb_sigma*res_DUTMatchingResidualY.second << std::endl;
+    for(int id = 0 ; id < 10 ; id++) streamlog_out (MESSAGE5) << std::endl;
 }
 
 #endif
