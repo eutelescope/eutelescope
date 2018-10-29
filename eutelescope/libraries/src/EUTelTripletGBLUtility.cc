@@ -510,6 +510,10 @@ EUTelTripletGBLUtility::hit EUTelTripletGBLUtility::triplet::slope() const {
 }
 
 std::pair<double,double> EUTelTripletGBLUtility::doIterativeGaussianFit(AIDA::IHistogram1D* in_hist, int need_rebin) const {
+    //--- Safety : avoid empty fit results
+    if(in_hist->allEntries() == 0) return std::pair<double, double> (-99999, -99999);
+    
+    
     //--- First convert from IHistogram to TH1 so that we could use ROOT's fitters
     int nb_bins = in_hist->axis().bins(); //, nb_entries = in_hist->allEntries();
     streamlog_out (MESSAGE4) << in_hist->title() << " has " << in_hist->allEntries() << " entries" << std::endl;
@@ -601,8 +605,12 @@ void EUTelTripletGBLUtility::determineBestCuts() const {
     streamlog_out (MESSAGE4) << "downstreamTripletResidualY --- Mean = " << res_downstreamTripletResidualY.first << " ; Sigma = " << res_downstreamTripletResidualY.second << std::endl;
     streamlog_out (MESSAGE4) << "tripletMatchingResidualX --- Mean = " << res_tripletMatchingResidualX.first << " ; Sigma = " << res_tripletMatchingResidualX.second << std::endl;
     streamlog_out (MESSAGE4) << "tripletMatchingResidualY --- Mean = " << res_tripletMatchingResidualY.first << " ; Sigma = " << res_tripletMatchingResidualY.second << std::endl;
-    streamlog_out (MESSAGE4) << "DUTMatchingResidualX --- Mean = " << res_DUTMatchingResidualX.first << " ; Sigma = " << res_DUTMatchingResidualX.second << std::endl;
-    streamlog_out (MESSAGE4) << "DUTMatchingResidualY --- Mean = " << res_DUTMatchingResidualY.first << " ; Sigma = " << res_DUTMatchingResidualY.second << std::endl;
+    if(res_DUTMatchingResidualX.second < -1) {
+        streamlog_out (MESSAGE4) << "The DUT is propably not an active device - no hits detected" << std::endl;
+    } else {
+        streamlog_out (MESSAGE4) << "DUTMatchingResidualX --- Mean = " << res_DUTMatchingResidualX.first << " ; Sigma = " << res_DUTMatchingResidualX.second << std::endl;
+        streamlog_out (MESSAGE4) << "DUTMatchingResidualY --- Mean = " << res_DUTMatchingResidualY.first << " ; Sigma = " << res_DUTMatchingResidualY.second << std::endl;
+    }
     for(int id = 0 ; id < 10 ; id++) streamlog_out (MESSAGE4) << std::endl;
     streamlog_out (MESSAGE4) << "__________ *** We then recommend the following cuts, although they should be checked ! : __________" << std::endl;
     streamlog_out (MESSAGE4) << "UpstreamTripletCut 	= " << std::max( fabs(res_upstreamTripletResidualX.first)+nb_sigma*res_upstreamTripletResidualX.second, fabs(res_upstreamTripletResidualY.first)+nb_sigma*res_upstreamTripletResidualY.second) << std::endl;
@@ -610,7 +618,7 @@ void EUTelTripletGBLUtility::determineBestCuts() const {
     streamlog_out (MESSAGE4) << "UpstreamSlopeCut   	= " << std::max( fabs(res_upstreamTripletSlopeX.first)+nb_sigma*res_upstreamTripletSlopeX.second, fabs(res_upstreamTripletSlopeY.first)+nb_sigma*res_upstreamTripletSlopeY.second) << std::endl;
     streamlog_out (MESSAGE4) << "DownstreamSlopeCut 	= " << std::max( fabs(res_downstreamTripletSlopeX.first)+nb_sigma*res_downstreamTripletSlopeX.second, fabs(res_downstreamTripletSlopeY.first)+nb_sigma*res_downstreamTripletSlopeY.second) << std::endl;
     streamlog_out (MESSAGE4) << "TripletMatchingCut 	= " << std::max( fabs(res_tripletMatchingResidualX.first)+nb_sigma*res_tripletMatchingResidualX.second, fabs(res_tripletMatchingResidualY.first)+nb_sigma*res_tripletMatchingResidualY.second) << std::endl;
-    streamlog_out (MESSAGE4) << "DUTCuts 		= " << fabs(res_DUTMatchingResidualX.first)+nb_sigma*res_DUTMatchingResidualX.second << " " <<  fabs(res_DUTMatchingResidualY.first)+nb_sigma*res_DUTMatchingResidualY.second << std::endl;
+    if(res_DUTMatchingResidualX.second > -1) streamlog_out (MESSAGE4) << "DUTCuts 		= " << fabs(res_DUTMatchingResidualX.first)+nb_sigma*res_DUTMatchingResidualX.second << " " <<  fabs(res_DUTMatchingResidualY.first)+nb_sigma*res_DUTMatchingResidualY.second << std::endl;
     for(int id = 0 ; id < 10 ; id++) streamlog_out (MESSAGE4) << std::endl;
 }
 
