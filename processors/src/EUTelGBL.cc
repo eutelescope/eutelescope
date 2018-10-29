@@ -104,6 +104,7 @@ EUTelGBL::EUTelGBL(): Processor("EUTelGBL") {
                               "\n\t\tXYZShiftsRotXYZ - all shifts and rotations allowed",
                               _alignModeString, std::string{ "XYShiftsRotZ" });
   registerOptionalParameter("performAlignment","Set to 0 if you do not want to perform the alignment",_performAlignment, 1);
+  registerOptionalParameter("suggestAlignmentCuts","Set to 1 if you want suggestions of which cuts to use on the tracks slope/residual to be print out during the alignment",_suggestAlignmentCuts, 0);
   registerOptionalParameter("dumpTracks","Set to 0 if you do not want to dump tracks in an lcio collection (necessary to dump in an NTuple)",_dumpTracks, 1);
   registerOptionalParameter("fixedXShift","List of planes which should be fixed in X direction",_FixedXShift ,std::vector<int>());
   registerOptionalParameter("fixedYShift","List of planes which should be fixed in Y direction",_FixedYShift ,std::vector<int>());
@@ -892,7 +893,7 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 //------------------------------------------------------------------------------
 void EUTelGBL::end() {
   milleAlignGBL.reset(nullptr);	
-  gblutil.determineBestCuts();
+  if(_suggestAlignmentCuts) gblutil.determineBestCuts();
 }//end
 
 //------------------------------------------------------------------------------
