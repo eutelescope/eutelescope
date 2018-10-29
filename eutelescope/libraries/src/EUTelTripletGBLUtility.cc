@@ -541,7 +541,7 @@ std::pair<double,double> EUTelTripletGBLUtility::doIterativeGaussianFit(AIDA::IH
     
     double bound_low = current.GetBinCenter( min_bin );
     double bound_hi = current.GetBinCenter( max_bin );
-    double mean = (bound_hi-bound_low)/2.;
+    double mean = (bound_hi+bound_low)/2.;
     double sigma = bound_hi-bound_low;
     //int nb_iter = 0;
     
@@ -564,9 +564,11 @@ std::pair<double,double> EUTelTripletGBLUtility::doIterativeGaussianFit(AIDA::IH
     mean = fitresult->GetParams()[1];
     sigma = fitresult->GetParams()[2];
     
-    TCanvas can; can.cd();
-    current.Draw();
-    can.SaveAs(TString(in_hist->title())+".pdf");
+    /*--- This is for DEBUGGING ONLY !!!
+
+      TCanvas can; can.cd();
+      current.Draw();
+      can.SaveAs(TString(in_hist->title())+".pdf");*/
     
     return std::pair<double,double> (mean, sigma);
 }
