@@ -37,6 +37,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <limits>
 
 namespace eutelescope {
 
