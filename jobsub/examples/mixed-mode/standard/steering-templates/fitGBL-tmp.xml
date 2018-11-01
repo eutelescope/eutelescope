@@ -144,9 +144,9 @@
   <!--Decide whether to dump the event header information-->
   <parameter name="dumpHeader" type="bool">false </parameter>
   <!--Decide whether to dump hits and zs data only for events with a track-->
-  <parameter name="onlyEventsWithTracks" type="bool">true </parameter>
+  <parameter name="onlyEventsWithTracks" type="bool">@onlyEventsWithTracks@ </parameter>
   <!--Decide whether to dump track positions in local coordinate system-->
-  <parameter name="tracksLocalSystem" type="bool">true </parameter>
+  <parameter name="tracksLocalSystem" type="bool">@tracksLocalSystem@ </parameter>
 </processor>
  
  <processor name="EUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
