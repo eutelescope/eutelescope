@@ -50,6 +50,7 @@ namespace eutelescope {
     TTree *_eutracks;
     int _nTrackParams;
     std::vector<int> *_IDtrack;
+    std::vector<int> *_trackID;
     std::vector<double> *_xPos;
     std::vector<double> *_yPos;
     std::vector<double> *_omega;

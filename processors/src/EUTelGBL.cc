@@ -842,6 +842,7 @@ void EUTelGBL::processEvent( LCEvent * event ) {
       if(_dumpTracks){ //CHECK ME CAREFULLY
         thisTrack->setIntVal(0, _sensorIDVec[ix]); //sensor ID is an int
         thisTrack->setIntVal(1, Ndf); //Ndf is an int
+        thisTrack->setIntVal(2, numbertracks);
         thisTrack->setFloatVal(0, Chi2); //chi2 in position 0
         thisTrack->setFloatVal(1, triplet.getx_at(_planePosition[ix]) + localPar[3]); // x track position (global system)
         thisTrack->setFloatVal(2, triplet.gety_at(_planePosition[ix]) + localPar[4]); // y track position (global system)
@@ -856,6 +857,7 @@ void EUTelGBL::processEvent( LCEvent * event ) {
           thisTrack->setFloatVal(6, (localPar[5]+localPar[7])*1E3); 
           thisTrack->setFloatVal(7, (localPar[6]+localPar[8])*1E3);  
         }
+        
         _outputTracks->push_back(static_cast<EVENT::LCGenericObject*>(thisTrack));
       }
     

@@ -47,6 +47,7 @@ void EUTelGBLOutput::init() {
   _file = new TFile(_path2file.c_str(), "RECREATE");
 
   _IDtrack = new std::vector<int>();
+  _trackID = new std::vector<int>();
   _xPos = new std::vector<double>();
   _yPos = new std::vector<double>();
   _omega = new std::vector<double>();
@@ -72,6 +73,7 @@ void EUTelGBLOutput::init() {
   _eutracks->SetAutoSave(1000000000);
   _eutracks->Branch("eventNumber", &_nEvt);
   _eutracks->Branch("ID", &_IDtrack);
+  _eutracks->Branch("trackID", &_trackID);
   _eutracks->Branch("xPos", &_xPos);
   _eutracks->Branch("yPos", &_yPos);
   _eutracks->Branch("omega", &_omega);
@@ -133,6 +135,7 @@ void EUTelGBLOutput::processEvent(LCEvent *event) {
 	int thisID = trackposition->getIntVal(0);
 	if(_SelectedPlanes.size() == 0 || std::find(std::begin(_SelectedPlanes), std::end(_SelectedPlanes), thisID) != _SelectedPlanes.end()){
       _IDtrack->push_back(thisID);
+      _trackID->push_back(trackposition->getIntVal(2));
       _ndof->push_back(trackposition->getIntVal(1));
       //I am inserting float numbers into a double, since root doesn't want vector of floats. FIX ME
       _chi2->push_back(trackposition->getFloatVal(0));
@@ -235,6 +238,7 @@ void EUTelGBLOutput::end() {
 void EUTelGBLOutput::clear() {
   /* Clear hittrack */
   _IDtrack->clear();
+  _trackID->clear();
   _xPos->clear();
   _yPos->clear();
   _omega->clear();
