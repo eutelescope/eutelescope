@@ -116,6 +116,8 @@
   <parameter name="resolutionX" type="FloatVec"> @ResolutionX@  </parameter>
   <!--y-resolution of sensors (z-ordered) [mm]-->
   <parameter name="resolutionY" type="FloatVec"> @ResolutionY@  </parameter>
+  <!--Set to 1 if you want suggestions of which cuts to use on the tracks slope/residual to be print out during the alignment-->
+  <parameter name="suggestAlignmentCuts" type="int"> @suggestAlignmentCuts@ </parameter>
   <!--Upstream-downstream triplet matching cut [mm]-->
   <parameter name="tripletsMatchingCut" type="double"> @TripletMatchingCut@ </parameter>
   <!--The three sensors used as the upstream triplet-->
