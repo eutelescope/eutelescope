@@ -729,31 +729,6 @@ void EUTelGBL::processEvent( LCEvent * event ) {
       }
     } // loop over planes
 
-    // monitor what we put into GBL:
-    double xA = triplet.getx_at(_zMid);
-    double yA = triplet.gety_at(_zMid);
-    double xB = driplet.getx_at(_zMid);
-    double yB = driplet.gety_at(_zMid);
-
-    selxHistGBLAlign->fill( xA ); // triplet at mid
-    selyHistGBLAlign->fill( yA );
-    selaxHistGBLAlign->fill( triSlope.x*1E3 );//track slope
-    selayHistGBLAlign->fill( triSlope.y*1E3 );
-    seldxHistGBLAlign->fill( (xB-xA)*1E3 ); // triplet-driplet match
-    seldyHistGBLAlign->fill( (yB-yA)*1E3 );
-    selkxHistGBLAlign->fill( track.kink_x()*1E3 ); // triplet-driplet kink
-    selkyHistGBLAlign->fill( track.kink_y()*1E3 );
-
-    //We need to fill the interpolation to plane 1 and extrapolation to 3, 4, 5 (6, 7, 8, ...)
-    seldxSensorHistGBLAlign.at(0)->fill( rx[1]*1E3 );
-    seldySensorHistGBLAlign.at(0)->fill( ry[1]*1E3 );
-    for(size_t ipl = 3; ipl < _nPlanes; ++ipl) {//should be done for all the planes
-      if(hasHit[ipl]){
-        seldxSensorHistGBLAlign.at(ipl-2)->fill( rx[ipl]*1E3 );
-        seldySensorHistGBLAlign.at(ipl-2)->fill( ry[ipl]*1E3 );
-      }
-    }
-
     double Chi2;
     int Ndf;
     double lostWeight;
@@ -912,47 +887,6 @@ void EUTelGBL::bookHistos(std::vector<int> const & sensorIDVec) {
     nDownstreamTriplets->setTitle( "Number of Downstream Triplets per Event; Number of Downstream Triplets;Events" );
 
     // GBL:
-    AIDAProcessor::tree(this)->mkdir("AllTracks");
-    selxHistGBLAlign = AIDAProcessor::histogramFactory(this)->createHistogram1D( "AllTracks/selx", 150, -15, 15 );
-    selxHistGBLAlign->setTitle( "extrapolated triplet x at triplet matching point, sel GBL;x [mm];tracks" );
-
-    selyHistGBLAlign = AIDAProcessor::histogramFactory(this)->createHistogram1D( "AllTracks/sely", 100, -10, 10 );
-    selyHistGBLAlign->setTitle( "extrapolated triplet y at triplet matching point, sel GBL;y [mm];tracks" );
-
-    selaxHistGBLAlign = AIDAProcessor::histogramFactory(this)->createHistogram1D( "AllTracks/selax", 100, -25, 25 );
-    selaxHistGBLAlign->setTitle( "track angle x, sel GBL;x angle [mrad];tracks" );
-
-    selayHistGBLAlign = AIDAProcessor::histogramFactory(this)->createHistogram1D( "AllTracks/selay", 100, -25, 25 );
-    selayHistGBLAlign->setTitle( "track angle y, sel GBL;y angle [mrad];tracks" );
-
-    seldxHistGBLAlign = AIDAProcessor::histogramFactory(this)->createHistogram1D( "AllTracks/seldx", 100, -5000, 5000 );
-    seldxHistGBLAlign->setTitle( "driplet-triplet x residual at matching point, sel GBL;#Deltax [#mum];tracks" );
-
-    seldyHistGBLAlign = AIDAProcessor::histogramFactory(this)->createHistogram1D( "AllTracks/seldy", 100, -5000, 5000 );
-    seldyHistGBLAlign->setTitle( "driplet-triplet y residual at matching point, sel GBL;#Deltay [#mum];tracks" );
-
-    selkxHistGBLAlign = AIDAProcessor::histogramFactory(this)->createHistogram1D( "AllTracks/selkx", 100, -25, 25 );
-    selkxHistGBLAlign->setTitle( "triplet-driplet kink x, sel GBL;kink x [mrad];tracks" );
-
-    selkyHistGBLAlign = AIDAProcessor::histogramFactory(this)->createHistogram1D( "AllTracks/selky", 100, -25, 25 );
-    selkyHistGBLAlign->setTitle( "triplet-driplet kink y, sel GBL;kink y [mrad];tracks" );
-
-    AIDAProcessor::tree(this)->mkdir("AllTracks/Residuals");
-    //Preparing the Triplet interpolation to plane 1 and extrapolation to all planes but 0 & 2 (which are)
-    //the ones the triplet was constructed from
-    for(size_t ix = 1; ix < sensorIDVec.size(); ++ix) {
-      if(ix == 2) continue;
-      auto sensorIdString = std::to_string(sensorIDVec[ix]);
-      std::string histNameSelX = "AllTracks/Residuals/seldx"+sensorIdString;
-      std::string histNameSelY = "AllTracks/Residuals/seldy"+sensorIdString;
-
-      seldxSensorHistGBLAlign.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNameSelX, 100, -1000, 1000 ));
-      seldxSensorHistGBLAlign.back()->setTitle( "triplet resid x at "+sensorIdString+", sel GBL;#Deltax [#mum];tracks" );
-
-      seldySensorHistGBLAlign.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNameSelY, 100, -1000, 1000 ));
-      seldySensorHistGBLAlign.back()->setTitle( "triplet resid y at "+sensorIdString+", sel GBL;#Deltay [#mum];tracks" );
-    }
-
     gblndfHistGBLAlign = AIDAProcessor::histogramFactory(this)->createHistogram1D( "gblndf", 16, -0.5, 15.5 );
     gblndfHistGBLAlign->setTitle( "GBL fit NDF;GBL NDF;tracks" );
 

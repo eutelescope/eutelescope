@@ -204,18 +204,6 @@ namespace eutelescope {
     AIDA::IHistogram1D * nUpstreamTriplets;
     AIDA::IHistogram1D * nDownstreamTriplets;
 
-    //All Tracks
-    AIDA::IHistogram1D * selxHistGBLAlign;
-    AIDA::IHistogram1D * selyHistGBLAlign;
-    AIDA::IHistogram1D * selaxHistGBLAlign;
-    AIDA::IHistogram1D * selayHistGBLAlign;
-    AIDA::IHistogram1D * seldxHistGBLAlign;
-    AIDA::IHistogram1D * seldyHistGBLAlign;
-    AIDA::IHistogram1D * selkxHistGBLAlign;
-    AIDA::IHistogram1D * selkyHistGBLAlign;
-    std::vector<AIDA::IHistogram1D*> seldxSensorHistGBLAlign;
-    std::vector<AIDA::IHistogram1D*> seldySensorHistGBLAlign;
-
     //Track Fit
     AIDA::IHistogram1D * gblndfHistGBLAlign;
     AIDA::IHistogram1D * gblchi2HistGBLAlign;
