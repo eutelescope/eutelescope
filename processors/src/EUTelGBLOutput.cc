@@ -49,6 +49,7 @@ void EUTelGBLOutput::init() {
   _IDtrack = new std::vector<int>();
   _trackID = new std::vector<int>();
   _triggerID = new std::vector<int>();
+  _timestamp = new std::vector<int>();
   _xPos = new std::vector<double>();
   _yPos = new std::vector<double>();
   _omega = new std::vector<double>();
@@ -76,6 +77,7 @@ void EUTelGBLOutput::init() {
   _eutracks->Branch("ID", &_IDtrack);
   _eutracks->Branch("trackID", &_trackID);
   _eutracks->Branch("triggerID",&_triggerID);
+  _eutracks->Branch("timestamp",&_timestamp);
   _eutracks->Branch("xPos", &_xPos);
   _eutracks->Branch("yPos", &_yPos);
   _eutracks->Branch("omega", &_omega);
@@ -139,6 +141,7 @@ void EUTelGBLOutput::processEvent(LCEvent *event) {
       _IDtrack->push_back(thisID);
       _trackID->push_back(trackposition->getIntVal(2));
       _triggerID->push_back(trackposition->getIntVal(3));
+      _timestamp->push_back(trackposition->getIntVal(4));
       _ndof->push_back(trackposition->getIntVal(1));
       //I am inserting float numbers into a double, since root doesn't want vector of floats. FIX ME
       _chi2->push_back(trackposition->getFloatVal(0));
@@ -243,6 +246,7 @@ void EUTelGBLOutput::clear() {
   _IDtrack->clear();
   _trackID->clear();
   _triggerID->clear();
+  _timestamp->clear();
   _xPos->clear();
   _yPos->clear();
   _omega->clear();

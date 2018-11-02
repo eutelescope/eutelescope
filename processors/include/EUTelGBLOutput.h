@@ -52,6 +52,7 @@ namespace eutelescope {
     std::vector<int> *_IDtrack;
     std::vector<int> *_trackID;
     std::vector<int> *_triggerID;
+    std::vector<int> *_timestamp;
     std::vector<double> *_xPos;
     std::vector<double> *_yPos;
     std::vector<double> *_omega;
