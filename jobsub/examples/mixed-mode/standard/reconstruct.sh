@@ -4,7 +4,7 @@ jobsub -c config.cfg -csv runlist.csv -g hitmaker 497 #--condor condorparameters
 jobsub -c config.cfg -csv runlist.csv -g alignGBL1 497 #--condor condorparameters.cfg
 jobsub -c config.cfg -csv runlist.csv -g alignGBL2 497 #--condor condorparameters.cfg
 jobsub -c config.cfg -csv runlist.csv -g alignGBL3 497 #--condor condorparameters.cfg
-jobsub -c config.cfg -csv runlist.csv -g fitGBL 497 #--condor condorparameters.cfg
+jobsub -c config.cfg -csv runlist.csv -g fitGBL 497 --condor condorparameters.cfg
 
 #jobsub -c config.cfg -csv runlist.csv -g noisypixelmasker 498
 #jobsub -c config.cfg -csv runlist.csv -g clustering 498
