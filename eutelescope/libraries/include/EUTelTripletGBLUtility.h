@@ -335,28 +335,6 @@ private:
 protected:
     std::string _inputCollectionTelescope;
 
-    // Histos
-
-    AIDA::IHistogram1D * sixkxHisto; //driplet-triplet
-    AIDA::IHistogram1D * sixkyHisto;
-    AIDA::IHistogram1D * sixdxHisto;
-    AIDA::IHistogram1D * sixdyHisto;
-    AIDA::IHistogram1D * sixdxcHisto;
-    AIDA::IHistogram1D * sixdycHisto;
-
-    AIDA::IHistogram1D * sixkxcHisto;
-    AIDA::IHistogram1D * sixkycHisto;
-    AIDA::IHistogram1D * sixxHisto;
-    AIDA::IHistogram1D * sixyHisto;
-    AIDA::IHistogram2D * sixxyHisto;
-    AIDA::IHistogram2D * sixxycHisto;
-
-    AIDA::IHistogram1D * kinkx;
-    AIDA::IHistogram1D * kinky;
-    AIDA::IHistogram1D * kinkxy;
-    AIDA::IProfile2D * kinkxvsxy;
-    AIDA::IProfile2D * kinkyvsxy;
-    AIDA::IProfile2D * kinkxyvsxy;
 
     //cut plots
     AIDA::IHistogram1D * upstreamTripletSlopeX;

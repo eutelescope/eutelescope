@@ -60,63 +60,7 @@ Eigen::Matrix<double, 5,5> EUTelTripletGBLUtility::JacobianPointToPoint( double 
 }
 
 void EUTelTripletGBLUtility::bookHistos(){
-    
-  marlin::AIDAProcessor::tree(parent)->mkdir("GBLUtility");
-
-  sixkxHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixkx", 100, -10, 10 );
-  sixkxHisto->setTitle( "kink x;kink x [mrad];triplet-driplet pairs" );
-
-  sixkyHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixky", 100, -10, 10 );
-  sixkyHisto->setTitle( "kink y;kink y [mrad];triplet-driplet pairs" );
-
-  sixdxHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixdx", 100, -1, 1 );
-  sixdxHisto->setTitle( "six match x;match x [mm];triplet-driplet pairs" );
-
-  sixdyHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixdy", 100, -1, 1 );
-  sixdyHisto->setTitle( "six match y;match y [mm];triplet-driplet pairs" );
-
-  sixdxcHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixdxc", 100, -250, 250 );
-  sixdxcHisto->setTitle( "six match x;track #Deltax[#mum];triplet-driplet pairs" );
-
-  sixdycHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixdyc", 100, -250, 250 );
-  sixdycHisto->setTitle( "six match y;track #Deltay[#mum];triplet-driplet pairs" );
-
-  sixkxcHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixkxc", 100, -10, 10 );
-  sixkxcHisto->setTitle( "kink x, x-y matched;kink x [mrad];triplet-driplet pairs" );
-
-  sixkycHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixkyc", 100, -10, 10 );
-  sixkycHisto->setTitle( "kink y, x-y matched;kink y [mrad];triplet-driplet pairs" );
-
-  sixxHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixx", 240, -12, 12 );
-  sixxHisto->setTitle( "six x at DUT;six x_{out} at DUT [mm];six-plane tracks" );
-
-  sixyHisto = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/sixy", 120, -6, 6 );
-  sixyHisto->setTitle( "six y at DUT;six y_{up} at DUT [mm];six-plane tracks" );
-
-  sixxyHisto = AIDAProcessor::histogramFactory(parent)->createHistogram2D( "GBLUtility/sixxy", 240, -12, 12, 120, -6, 6 );
-  sixxyHisto->setTitle( "six at DUT;six x_{out} at DUT [mm];six y_{up} at DUT [mm];six-plane tracks" );
-
-  sixxycHisto = AIDAProcessor::histogramFactory(parent)->createHistogram2D( "GBLUtility/sixxyc", 240, -12, 12, 120, -6, 6 );
-  sixxycHisto->setTitle( "six large kink;six x_{out} at DUT [mm];six y_{up} at DUT [mm];large kink tracks" );
-
-  kinkxvsxy = AIDAProcessor::histogramFactory(parent)->createProfile2D( "GBLUtility/kinkxvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
-  kinkxvsxy->setTitle( "kink x;six x_{out} at DUT [mm];six y_{up} at DUT [mm];sqrt(<kink^{2}>) [mrad]" );
-
-  kinkyvsxy = AIDAProcessor::histogramFactory(parent)->createProfile2D( "GBLUtility/kinkyvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
-  kinkyvsxy->setTitle( "kink y;six x_{out} at DUT [mm];six y_{up} at DUT [mm];sqrt(<kink^{2}>) [mrad]" );
-
-  kinkxyvsxy = AIDAProcessor::histogramFactory(parent)->createProfile2D( "GBLUtility/kinkxyvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
-  kinkxyvsxy->setTitle( "kink <|x|+|y|>;six x_{out} at DUT [mm];six y_{up} at DUT [mm]; (|x| + |y|)/2 [mrad]" );
-
-  kinkx = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/kinkx", 500, -5, 5 );
-  kinkx->setTitle( "triplet kink x angle at DUT;x angle at DUT [mrad];tracks" );
-
-  kinky = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/kinky", 500, -5, 5 );
-  kinky->setTitle( "triplet kink y angle at DUT;y angle at DUT [mrad];tracks" );
-
-  kinkxy = AIDAProcessor::histogramFactory(parent)->createHistogram1D( "GBLUtility/kinkxy", 500, -5, 5 );
-  kinkxy->setTitle( "triplet kink xy angle at DUT;xy angle at DUT [mrad];tracks" );
-  
+     
   //cut plots
   marlin::AIDAProcessor::tree(parent)->mkdir("Cuts");
   
@@ -189,21 +133,10 @@ void EUTelTripletGBLUtility::MatchTriplets(std::vector<triplet> const & up, std:
       // Build a track candidate from one upstream and one downstream triplet:
       EUTelTripletGBLUtility::track newtrack(trip,drip);
 
-      // Track kinks as difference in triplet slopes:
-      double kx = newtrack.kink_x();
-      double ky = newtrack.kink_y();
-
       // driplet - triplet
       double dx = xB - xA; 
       double dy = yB - yA;
 
-      sixkxHisto->fill( kx*1E3 );
-      sixkyHisto->fill( ky*1E3 );
-      sixdxHisto->fill( dx );
-      sixdyHisto->fill( dy );
-
-      if( abs(dy) < 0.5 ) sixdxcHisto->fill( dx*1E3 );
-      if( abs(dx) < 0.5 ) sixdycHisto->fill( dy*1E3 );
       
       //cut plots
       tripletMatchingResidualX->fill(dx);
@@ -220,21 +153,6 @@ void EUTelTripletGBLUtility::MatchTriplets(std::vector<triplet> const & up, std:
 	continue;
       }
       streamlog_out(DEBUG4) << "  Trip and Drip isolated " << std::endl;      
-
-      sixkxcHisto->fill( kx*1E3 );
-      sixkycHisto->fill( ky*1E3 );
-      sixxHisto->fill( -xA ); // -xA = x_DP = out
-      sixyHisto->fill( -yA ); // -yA = y_DP = up
-      sixxyHisto->fill( -xA, -yA ); // DP: x_out, y_up
-      // Fill kink map histogram:
-      if( abs( kx ) > 0.002 || abs( ky ) > 0.002 ) sixxycHisto->fill( -xA, -yA );      
-
-      kinkx->fill( kx*1E3 ); //sqrt(<kink^2>) [mrad]
-      kinky->fill( ky*1E3 ); //sqrt(<kink^2>) [mrad]
-      kinkxy->fill( (fabs(kx)+fabs(ky))/2*1E3 ); // [mrad]
-      kinkxvsxy->fill( -xA, -yA, fabs(kx)*1E3 ); //sqrt(<kink^2>) [mrad]
-      kinkyvsxy->fill( -xA, -yA, fabs(ky)*1E3 ); //sqrt(<kink^2>) [mrad]
-      kinkxyvsxy->fill( -xA, -yA, (fabs(kx) + fabs(ky))/2*1E3 ); // [mrad]
 
       // Add the track to the vector if trip/drip are isolated, the triplets are matched, and all other cuts are passed
       tracks.push_back(newtrack);
@@ -294,7 +212,7 @@ bool EUTelTripletGBLUtility::AttachDUT(EUTelTripletGBLUtility::triplet & triplet
             geo::gGeometry().master2Local(dutID,hitglpos,hitlocpos);
 			auto distX = fabs(trlocpos[0]-hitlocpos[0]);
 			auto distY = fabs(trlocpos[1]-hitlocpos[1]);
-                        double dist = distX*distX + distY*distY;
+            double dist = distX*distX + distY*distY;
 			DUTMatchingResidualX->fill(trlocpos[0]-hitlocpos[0]);
 			DUTMatchingResidualY->fill(trlocpos[1]-hitlocpos[1]);
 			if(distX <= dist_cuts.at(0) && distY <= dist_cuts.at(1) && dist < minDist ){
