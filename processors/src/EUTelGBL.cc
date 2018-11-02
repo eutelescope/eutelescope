@@ -843,8 +843,6 @@ void EUTelGBL::processEvent( LCEvent * event ) {
         thisTrack->setIntVal(0, _sensorIDVec[ix]); //sensor ID is an int
         thisTrack->setIntVal(1, Ndf); //Ndf is an int
         thisTrack->setIntVal(2, numbertracks);
-	//thisTrack->setIntVal(3, event->getTimeStamp()%((long64)INT_MAX)); //FIXME: This is disgusting
-        thisTrack->setIntVal(3, event->getParameters().getIntVal("TriggerNumber")); // Trigger ID from TLU
         thisTrack->setFloatVal(0, Chi2); //chi2 in position 0
         thisTrack->setFloatVal(1, triplet.getx_at(_planePosition[ix]) + localPar[3]); // x track position (global system)
         thisTrack->setFloatVal(2, triplet.gety_at(_planePosition[ix]) + localPar[4]); // y track position (global system)

@@ -48,8 +48,6 @@ void EUTelGBLOutput::init() {
 
   _planeID = new std::vector<int>();
   _trackID = new std::vector<int>();
-  _triggerID = new std::vector<int>();
-  _timestamp = new std::vector<int>();
   _xPos = new std::vector<double>();
   _yPos = new std::vector<double>();
   _omega = new std::vector<double>();
@@ -134,14 +132,14 @@ void EUTelGBLOutput::processEvent(LCEvent *event) {
   // Fill track TTree. Hardcoded name for the track collection
   LCCollection* TrackCollection = event->getCollection("TracksCollection");
 
+  _triggerID = event->getParameters().getIntVal("TriggerNumber"); //we will have another TTree for extra parameters like these
+  _timestamp = event->getTimeStamp()%((long64)INT_MAX); //FIXME: This is disgusting
   for(int itrack = 0; itrack < TrackCollection->getNumberOfElements(); itrack++){
 	EVENT::LCGenericObject* trackposition = static_cast<EVENT::LCGenericObject*>(TrackCollection->getElementAt(itrack));
 	int thisID = trackposition->getIntVal(0);
 	if(_SelectedPlanes.size() == 0 || std::find(std::begin(_SelectedPlanes), std::end(_SelectedPlanes), thisID) != _SelectedPlanes.end()){
       _planeID->push_back(thisID);
       _trackID->push_back(trackposition->getIntVal(2));
-      _triggerID->push_back(trackposition->getIntVal(3));
-      _timestamp->push_back(trackposition->getIntVal(4));
       _ndof->push_back(trackposition->getIntVal(1));
       //I am inserting float numbers into a double, since root doesn't want vector of floats. FIX ME
       _chi2->push_back(trackposition->getFloatVal(0));
@@ -245,8 +243,6 @@ void EUTelGBLOutput::clear() {
   /* Clear hittrack */
   _planeID->clear();
   _trackID->clear();
-  _triggerID->clear();
-  _timestamp->clear();
   _xPos->clear();
   _yPos->clear();
   _omega->clear();
