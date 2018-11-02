@@ -815,8 +815,6 @@ void EUTelGBL::processEvent( LCEvent * event ) {
       //        0,   1,  2,  3, 4
       gblAxHist[ix]->fill( localPar[1]*1E3 );
       gblAyHist[ix]->fill( localPar[2]*1E3 ); 
-      gblDxHist[ix]->fill( localPar[3]*1E3 );
-      gblDyHist[ix]->fill( localPar[4]*1E3 );
       
       if(hasHit[ix]){
         if(std::find(std::begin(_excludedPlanes), std::end(_excludedPlanes), _sensorIDVec[ix]) == _excludedPlanes.end()){
@@ -968,7 +966,6 @@ void EUTelGBL::bookHistos(std::vector<int> const & sensorIDVec) {
     AIDAProcessor::tree(this)->mkdir("GBLFit/Angles");
     AIDAProcessor::tree(this)->mkdir("GBLFit/Residuals");
     AIDAProcessor::tree(this)->mkdir("GBLFit/Pulls");
-    AIDAProcessor::tree(this)->mkdir("GBLFit/Shifts");
     AIDAProcessor::tree(this)->mkdir("GBLFit/Kinks");
     for(size_t ix = 0; ix < sensorIDVec.size(); ++ix) {
       auto sensorIdString = std::to_string(sensorIDVec[ix]);
@@ -999,15 +996,6 @@ void EUTelGBL::bookHistos(std::vector<int> const & sensorIDVec) {
 
       gblPyHist.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNamePullY, 100, -5, 5));
       gblPyHist.back()->setTitle( "GBL pull at plane "+sensorIdString+";y pull at plane "+sensorIdString+";tracks" ); 
-
-      std::string histNameShiftX = "GBLFit/Shifts/dx"+sensorIdString;
-      std::string histNameShiftY = "GBLFit/Shifts/dy"+sensorIdString;
-
-      gblDxHist.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNameShiftX, 500, -250, 250));
-      gblDxHist.back()->setTitle( "GBL shift at plane "+sensorIdString+";x shift at plane "+sensorIdString+" [#mum];tracks" );
-
-      gblDyHist.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNameShiftY, 500, -250, 250));
-      gblDyHist.back()->setTitle( "GBL shift at plane "+sensorIdString+";y shift at plane "+sensorIdString+" [#mum];tracks" );
       
       std::string histNameKinkX = "GBLFit/Kinks/kx"+sensorIdString;
       std::string histNameKinkY = "GBLFit/Kinks/ky"+sensorIdString;
