@@ -132,7 +132,7 @@
  <processor name="MyEUTelGBLOutput" type="EUTelGBLOutput">
  <!--Generate NTuple containing hits, zero suppressed data and track position from GBL processor-->
   <!--Name of the hit collection (use the right coordinate system)-->
-  <parameter name="InputHitCollection" type="string" lcioInType="TrackerHit"> @HitCollection@ </parameter>
+  <parameter name="InputHitCollections" type="string" lcioInType="TrackerHit"> @HitCollections@ </parameter>
   <!--Vector with the names of the zs collections-->
   <parameter name="InputZsCollections" type="StringVec" lcioInType="TrackerHit"> @ZSCollections@ </parameter>
   <!--Path/File where root-file should be stored-->
@@ -144,9 +144,9 @@
   <!--Decide whether to dump the event header information-->
   <parameter name="dumpHeader" type="bool">false </parameter>
   <!--Decide whether to dump hits and zs data only for events with a track-->
-  <parameter name="onlyEventsWithTracks" type="bool">false </parameter>
+  <parameter name="onlyEventsWithTracks" type="bool">@onlyEventsWithTracks@ </parameter>
   <!--Decide whether to dump track positions in local coordinate system-->
-  <parameter name="tracksLocalSystem" type="bool">true </parameter>
+  <parameter name="tracksLocalSystem" type="bool">@tracksLocalSystem@ </parameter>
 </processor>
  
  <processor name="EUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
