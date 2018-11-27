@@ -75,6 +75,7 @@ void EUTelGBLOutput::init() {
   _eutracks->Branch("planeID", &_planeID);
   _eutracks->Branch("trackID", &_trackID);
   _eutracks->Branch("triggerID",&_triggerID);
+  _eutracks->Branch("nb_tracks",&_nb_tracks);
   _eutracks->Branch("timestamp",&_timestamp);
   _eutracks->Branch("xPos", &_xPos);
   _eutracks->Branch("yPos", &_yPos);
@@ -125,7 +126,7 @@ void EUTelGBLOutput::processEvent(LCEvent *event) {
     streamlog_out(DEBUG5) << "EORE found: nothing else to do." << std::endl;
     return;
   }
-
+// 
   // Clear all event info containers
   clear();
 
@@ -139,7 +140,8 @@ void EUTelGBLOutput::processEvent(LCEvent *event) {
 	int thisID = trackposition->getIntVal(0);
 	if(_SelectedPlanes.size() == 0 || std::find(std::begin(_SelectedPlanes), std::end(_SelectedPlanes), thisID) != _SelectedPlanes.end()){
       _planeID->push_back(thisID);
-      _trackID->push_back(trackposition->getIntVal(2));
+      _trackID->push_back(trackposition->getIntVal(2));  
+      _nb_tracks = std::max(_nb_tracks, _trackID->back());
       _ndof->push_back(trackposition->getIntVal(1));
       //I am inserting float numbers into a double, since root doesn't want vector of floats. FIX ME
       _chi2->push_back(trackposition->getFloatVal(0));
