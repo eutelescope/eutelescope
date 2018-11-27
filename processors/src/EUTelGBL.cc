@@ -155,6 +155,10 @@ void EUTelGBL::init() {
       _dut_ids.emplace_back(sensorID);
     }
   }
+  
+  streamlog_out(MESSAGE4)   << "DUTs are sensors with following ID : ";
+  for(int id : _dut_ids) streamlog_out(MESSAGE4) << id << " ";
+  streamlog_out(MESSAGE4)   << '\n';
 
   //to compute the total radiation length we will loop over all planes and add radiation
   //length for air from the first to the last plane
