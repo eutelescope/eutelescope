@@ -489,7 +489,7 @@ def main(argv=None):
 
     # set up submission log file if requested on command line
     if args.log_file:
-        handler_file = logging.FileHandler([args.log_file])
+        handler_file = logging.FileHandler(args.log_file)
         handler_file.setFormatter(formatter)
         handler_file.setLevel(numeric_level)
         log.addHandler(handler_file) 
