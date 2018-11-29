@@ -39,7 +39,7 @@ namespace eutelescope {
 
   namespace Utility {
 
-	enum class alignMode : int { XYShiftsRotZ, XYShifts, XYShiftsAllRot, XYZShiftsRotZ, XYZShiftsRotXYZ};
+	enum class alignMode { XYShiftsRotZ, XYShifts, XYShiftsAllRot, XYZShiftsRotZ, XYZShiftsRotXYZ};
 
     const long double PI = 3.141592653589793238L;
 
