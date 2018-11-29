@@ -283,6 +283,7 @@ void EUTelGBL::init() {
               }
           } else {
             std::vector< std::vector<int> > alignModeArray =  {_FixedXShift, _FixedYShift};
+            
             if(_alignMode == Utility::alignMode::XYZShiftsRotZ || _alignMode == Utility::alignMode::XYZShiftsRotXYZ) alignModeArray.push_back(_FixedZShift);
             if(_alignMode == Utility::alignMode::XYZShiftsRotXYZ) {
                 alignModeArray.push_back(_FixedXRot);
