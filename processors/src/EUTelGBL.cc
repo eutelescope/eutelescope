@@ -284,12 +284,17 @@ void EUTelGBL::init() {
           } else {
             std::vector< std::vector<int> > alignModeArray =  {_FixedXShift, _FixedYShift};
             
-            if(_alignMode == Utility::alignMode::XYZShiftsRotZ || _alignMode == Utility::alignMode::XYZShiftsRotXYZ) alignModeArray.push_back(_FixedZShift);
+            if(_alignMode == Utility::alignMode::XYZShiftsRotZ) 
+                alignModeArray.push_back(_FixedZRot)
+            if(_alignMode == Utility::alignMode::XYZShiftsRotXYZ || _alignMode == Utility::alignMode::XYZShiftsRotZ) 
+                alignModeArray.push_back(_FixedZShift);
             if(_alignMode == Utility::alignMode::XYZShiftsRotXYZ) {
                 alignModeArray.push_back(_FixedXRot);
                 alignModeArray.push_back(_FixedYRot);
             }
-            if(_alignMode == Utility::alignMode::XYShiftsRotZ || _alignMode == Utility::alignMode::XYZShiftsRotZ || _alignMode == Utility::alignMode::XYZShiftsRotXYZ) alignModeArray.push_back(_FixedZRot);
+            if(_alignMode == Utility::alignMode::XYShiftsRotZ || _alignMode == Utility::alignMode::XYZShiftsRotXYZ) 
+                alignModeArray.push_back(_FixedZRot);
+            
             if(alignModeArray.size() == 2 && _alignMode != Utility::alignMode::XYShifts ) continue;
             
             int id = 1;
@@ -528,7 +533,7 @@ void EUTelGBL::processEvent( LCEvent * event ) {
       alDer6 ( 2, 2 ) = 1.0; // dz/dz
       alDer6 ( 2, 5 ) = 0.0; // dz/dg
     }
-	
+
     std::vector<double> rx (_nPlanes, -1.0);
     std::vector<double> ry (_nPlanes, -1.0);
     std::vector<bool> hasHit (_nPlanes, false);
