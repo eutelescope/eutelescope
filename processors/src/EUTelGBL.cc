@@ -297,14 +297,14 @@ void EUTelGBL::init() {
             
             if(alignModeArray.size() == 2 && _alignMode != Utility::alignMode::XYShifts ) continue;
             
-            int id = 1;
+            int counter = 1;
             for(auto current : alignModeArray) {
                 if(std::find(current.begin(), current.end(), _sensorIDVec[ipl]) == current.end()) {
-                    steerFile << (_sensorIDVec[ipl] * 10 + id) << "  0.0  0.0" << endl;
+                    steerFile << (_sensorIDVec[ipl] * 10 + counter) << "  0.0  0.0" << endl;
                 } else {
-                    steerFile << (_sensorIDVec[ipl] * 10 + id) << "  0.0  -1.0" << endl; 
+                    steerFile << (_sensorIDVec[ipl] * 10 + counter) << "  0.0  -1.0" << endl; 
                 }
-                id++;
+                counter++;
             }
           }// not fixed
         } // end if plane not excluded
