@@ -158,6 +158,11 @@ void EUTelGBL::init() {
   
   streamlog_out(MESSAGE4)   << "DUTs are sensors with following ID : ";
   for(int id : _dut_ids) streamlog_out(MESSAGE4) << id << " ";
+  streamlog_out(MESSAGE4)   << "\n and other sensors are : ";
+  for(int id : _sensorIDVec) {
+      if( find(_dut_ids.begin(), _dut_ids.end(), id) != _dut_ids.end() ) continue;
+      streamlog_out(MESSAGE4) << id << " ";
+  }
   streamlog_out(MESSAGE4)   << '\n';
 
   //to compute the total radiation length we will loop over all planes and add radiation
@@ -265,112 +270,41 @@ void EUTelGBL::init() {
         if(std::find(std::begin(_excludedPlanes), std::end(_excludedPlanes), _sensorIDVec[ipl]) == _excludedPlanes.end()){
  
           if(std::find(std::begin(_FixedPlanes), std::end(_FixedPlanes), _sensorIDVec[ipl]) != _FixedPlanes.end()) {
-            if( _alignMode == Utility::alignMode::XYShifts ) {
-              steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0 -1.0" << endl;
-              steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0 -1.0" << endl;
-            }
-            if( _alignMode == Utility::alignMode::XYShiftsRotZ ) {
-              steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0 -1.0" << endl; 
-              steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0 -1.0" << endl; 
-              steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0 -1.0" << endl; 
-            }
-            if( _alignMode == Utility::alignMode::XYZShiftsRotZ ) {
-              steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0 -1.0" << endl;
-              steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0 -1.0" << endl;
-              steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0 -1.0" << endl;
-              steerFile << (_sensorIDVec[ipl] * 10 + 4) << "  0.0 -1.0" << endl;
-            }
-            if( _alignMode == Utility::alignMode::XYZShiftsRotXYZ ) {
-              steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0 -1.0" << endl;
-              steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0 -1.0" << endl;
-              steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0 -1.0" << endl;
-              steerFile << (_sensorIDVec[ipl] * 10 + 4) << "  0.0 -1.0" << endl;
-              steerFile << (_sensorIDVec[ipl] * 10 + 5) << "  0.0 -1.0" << endl;
-              steerFile << (_sensorIDVec[ipl] * 10 + 6) << "  0.0 -1.0" << endl;
-            }
+              std::map<Utility::alignMode, int> map_alignModes;
+              map_alignModes[Utility::alignMode::XYShifts] = 3;
+              map_alignModes[Utility::alignMode::XYShiftsRotZ] = 4;
+              map_alignModes[Utility::alignMode::XYZShiftsRotZ] = 5;
+              map_alignModes[Utility::alignMode::XYZShiftsRotXYZ] = 7;
+              
+              for(auto current : map_alignModes) {
+                if( _alignMode != current.first ) continue;
+                
+                for(int id = 1 ; id < current.second ; id++) steerFile << (_sensorIDVec[ipl] * 10 + id) << "  0.0 -1.0" << endl;
+              }
           } else {
-            if( _alignMode == Utility::alignMode::XYShifts ) {
-              if(std::find(_FixedXShift.begin(), _FixedXShift.end(), _sensorIDVec[ipl]) == _FixedXShift.end()) {
-                steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  0.0" << endl;
-	          } else {
-			    steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  -1.0" << endl; 
-		      }
-              if(std::find(_FixedYShift.begin(), _FixedYShift.end(), _sensorIDVec[ipl]) == _FixedYShift.end()) {
-                steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  0.0" << endl;
-	          } else {
-			    steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  -1.0" << endl; 
-		      }
+            std::vector< std::vector<int> > alignModeArray =  {_FixedXShift, _FixedYShift};
+            
+            if(_alignMode == Utility::alignMode::XYZShiftsRotZ) 
+                alignModeArray.push_back(_FixedZRot);
+            if(_alignMode == Utility::alignMode::XYZShiftsRotXYZ || _alignMode == Utility::alignMode::XYZShiftsRotZ) 
+                alignModeArray.push_back(_FixedZShift);
+            if(_alignMode == Utility::alignMode::XYZShiftsRotXYZ) {
+                alignModeArray.push_back(_FixedXRot);
+                alignModeArray.push_back(_FixedYRot);
             }
-            if( _alignMode == Utility::alignMode::XYShiftsRotZ ) {
-              if(std::find(_FixedXShift.begin(), _FixedXShift.end(), _sensorIDVec[ipl]) == _FixedXShift.end()) {
-                steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  0.0" << endl;
-	          } else {
-			    steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  -1.0" << endl; 
-		      }
-              if(std::find(_FixedYShift.begin(), _FixedYShift.end(), _sensorIDVec[ipl]) == _FixedYShift.end()) {
-                steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  0.0" << endl;
-	          } else {
-			    steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  -1.0" << endl; 
-		      }
-              if(std::find(_FixedZRot.begin(), _FixedZRot.end(), _sensorIDVec[ipl]) == _FixedZRot.end()) {
-                steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0  0.0" << endl;
-	          } else {
-			    steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0  -1.0" << endl; 
-		      }
-            }
-            if( _alignMode == Utility::alignMode::XYZShiftsRotZ ) {
-		      if(std::find(_FixedXShift.begin(), _FixedXShift.end(), _sensorIDVec[ipl]) == _FixedXShift.end()) {
-                steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  0.0" << endl;
-	          } else {
-			    steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  -1.0" << endl; 
-		      }
-		      if(std::find(_FixedYShift.begin(), _FixedYShift.end(), _sensorIDVec[ipl]) == _FixedYShift.end()) {
-                steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  0.0" << endl;
-	          } else {
-			    steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  -1.0" << endl; 
-		      }
-		      if(std::find(_FixedZShift.begin(), _FixedZShift.end(), _sensorIDVec[ipl]) == _FixedZShift.end()) { //Z rotation in 3 and Z shift in 4??
-                steerFile << (_sensorIDVec[ipl] * 10 + 4) << "  0.0  0.0" << endl;
-	          } else {
-                steerFile << (_sensorIDVec[ipl] * 10 + 4) << "  0.0  -1.0" << endl; 
-		      }
-              if(std::find(_FixedZRot.begin(), _FixedZRot.end(), _sensorIDVec[ipl]) == _FixedZRot.end()) {
-                steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0  0.0" << endl;
-	          } else {
-			    steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0  -1.0" << endl; 
-		      }
-            }
-            if( _alignMode == Utility::alignMode::XYZShiftsRotXYZ ) {
-		      if(std::find(_FixedXShift.begin(), _FixedXShift.end(), _sensorIDVec[ipl]) == _FixedXShift.end()) {
-                steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  0.0" << endl;
-	          } else {
-			    steerFile << (_sensorIDVec[ipl] * 10 + 1) << "  0.0  -1.0" << endl; 
-		      }
-		      if(std::find(_FixedYShift.begin(), _FixedYShift.end(), _sensorIDVec[ipl]) == _FixedYShift.end()) {
-                steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  0.0" << endl;
-	          } else {
-			    steerFile << (_sensorIDVec[ipl] * 10 + 2) << "  0.0  -1.0" << endl; 
-		      }
-		      if(std::find(_FixedZShift.begin(), _FixedZShift.end(), _sensorIDVec[ipl]) == _FixedZShift.end()) {
-                steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0  0.0" << endl;
-	          } else {
-			    steerFile << (_sensorIDVec[ipl] * 10 + 3) << "  0.0  -1.0" << endl; 
-		      }
-		      if(std::find(_FixedXRot.begin(), _FixedXRot.end(), _sensorIDVec[ipl]) == _FixedXRot.end()) {
-                steerFile << (_sensorIDVec[ipl] * 10 + 4) << "  0.0  0.0" << endl; // LABELLING TO BE CHECKED
-	          } else {
-			    steerFile << (_sensorIDVec[ipl] * 10 + 4) << "  0.0  -1.0" << endl; 
-		      }
-		      if(std::find(_FixedYRot.begin(), _FixedYRot.end(), _sensorIDVec[ipl]) == _FixedYRot.end()) {
-                steerFile << (_sensorIDVec[ipl] * 10 + 5) << "  0.0  0.0" << endl; // LABELLING TO BE CHECKED
-	          } else {
-			    steerFile << (_sensorIDVec[ipl] * 10 + 5) << "  0.0  -1.0" << endl; 
-		      }
-		      if(std::find(_FixedZRot.begin(), _FixedZRot.end(), _sensorIDVec[ipl]) == _FixedZRot.end()) {
-                steerFile << (_sensorIDVec[ipl] * 10 + 6) << "  0.0  0.0" << endl; // LABELLING TO BE CHECKED
-	          } else {
-                steerFile << (_sensorIDVec[ipl] * 10 + 6) << "  0.0  -1.0" << endl; 
-		      }
+            if(_alignMode == Utility::alignMode::XYShiftsRotZ || _alignMode == Utility::alignMode::XYZShiftsRotXYZ) 
+                alignModeArray.push_back(_FixedZRot);
+            
+            if(alignModeArray.size() == 2 && _alignMode != Utility::alignMode::XYShifts ) continue;
+            
+            int counter = 1;
+            for(auto current : alignModeArray) {
+                if(std::find(current.begin(), current.end(), _sensorIDVec[ipl]) == current.end()) {
+                    steerFile << (_sensorIDVec[ipl] * 10 + counter) << "  0.0  0.0" << endl;
+                } else {
+                    steerFile << (_sensorIDVec[ipl] * 10 + counter) << "  0.0  -1.0" << endl; 
+                }
+                counter++;
             }
           }// not fixed
         } // end if plane not excluded
@@ -599,7 +533,7 @@ void EUTelGBL::processEvent( LCEvent * event ) {
       alDer6 ( 2, 2 ) = 1.0; // dz/dz
       alDer6 ( 2, 5 ) = 0.0; // dz/dg
     }
-	
+
     std::vector<double> rx (_nPlanes, -1.0);
     std::vector<double> ry (_nPlanes, -1.0);
     std::vector<bool> hasHit (_nPlanes, false);
