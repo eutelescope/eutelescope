@@ -463,6 +463,7 @@ def main(argv=None):
     parser.add_argument("-l", "--log", default="info", help="Sets the verbosity of log messages during job submission where LEVEL is either debug, info, warning or error", metavar="LEVEL")
     parser.add_argument("-s", "--silent", action="store_true", default=False, help="Suppress non-error (stdout) Marlin output to console")
     parser.add_argument("--dry-run", action="store_true", default=False, help="Write steering files but skip actual Marlin execution")
+    parser.add_argument("--subdir", action="store_true", default=False, help="Execute every job in its own subdirectory instead of all in the base path")
     parser.add_argument("--plain", action="store_true", default=False, help="Output written to stdout/stderr and log file in prefix-less format i.e. without time stamping")
     parser.add_argument("jobtask", help="Which task to submit (e.g. convert, hitmaker, align); task names are arbitrary and can be set up by the user; they determine e.g. the config section and default steering file names.")
     parser.add_argument("runs", help="The runs to be analyzed; can be a list of single runs and/or a range, e.g. 1056-1060.", nargs='*')
@@ -514,7 +515,7 @@ def main(argv=None):
         return 2
 
     # dictionary keeping parameters; set some minimal default config values that will (possibly) be overwritten by the config file
-    parameters = {"templatepath":".", "templatefile":args.jobtask+"-tmp.xml", "logpath":"./output/logs", "histogrampath":"./output/histograms", "lciopath":"./output/lcio",
+    parameters = {"basepath":".", "templatepath":".", "templatefile":args.jobtask+"-tmp.xml", "logpath":"./output/logs", "histogrampath":"./output/histograms", "lciopath":"./output/lcio",
                   "databasepath":"./output/database", "steeringpath":"./output/steering"}
 
     # read in config file if specified on command line
@@ -561,14 +562,14 @@ def main(argv=None):
     log.debug( "Our final config:")
     for key, value in parameters.items():
         log.debug ( "     "+key+" = "+value)
-
     
     #create substructure of output folder
     for ipath in ("logpath","histogrampath","lciopath","databasepath","steeringpath"):
-        pathToCreate = os.path.abspath(parameters[ipath])
-        if not os.path.isdir(pathToCreate):
-            os.makedirs(pathToCreate)
-            log.debug("Create path for " + ipath + " to " + pathToCreate)
+        if not os.path.isabs(ipath):
+            parameters[ipath]=os.path.normpath(os.path.join(parameters["basepath"],parameters[ipath]))
+        if not os.path.isdir(parameters[ipath]):
+            os.makedirs(parameters[ipath])
+            log.debug("Create path for " + ipath + " to " + parameters[ipath])
 
 
     steeringTmpFileName = os.path.join(parameters["templatepath"], parameters["templatefile"])
@@ -683,6 +684,15 @@ def main(argv=None):
                 log.critical("LXPLUS submission parameters file '"+args.lxplus_file+"' not found!")
                 return 1
 
+        basedirectory = os.getcwd()
+        # When  running in subdirectories for every job, create it:
+        if args.subdir or args.condor_file:
+            subdirectory = "run"+runnr
+            if not os.path.exists(subdirectory):
+                os.makedirs(subdirectory)
+            # Decend into subdirectory:
+            os.chdir(subdirectory)
+
         # Write the steering file:
         log.debug ("Writing steering file for run number "+runnr)
         basefilename = parameters["steeringpath"] + "/" + args.jobtask + "-" + runnr
@@ -714,6 +724,10 @@ def main(argv=None):
                 log.info("Marlin execution done")
             else:
                 log.error("Marlin returned with error code "+str(rcode))
+
+        # Return to old directory:
+        if args.subdir:
+            os.chdir(basedirectory)
 
     # return to the previous signal handler
     signal.signal(signal.SIGINT, prevINTHandler)
