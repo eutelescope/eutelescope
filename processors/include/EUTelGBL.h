@@ -203,6 +203,9 @@ namespace eutelescope {
     std::vector<AIDA::IHistogram1D*> hist1D_gblKinkX;
     std::vector<AIDA::IHistogram1D*> hist1D_gblKinkY;
 
+    std::vector<AIDA::IProfile2D*> profile2D_gblKinkXvsXY;
+    std::vector<AIDA::IProfile2D*> profile2D_gblKinkYvsXY;
+
 #endif
 
   };

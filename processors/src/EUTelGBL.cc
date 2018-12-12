@@ -836,6 +836,10 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 	} else {
 	  hist1D_gblKinkX[ix]->fill( (localPar[5]+localPar[7])*1E3 );
 	  hist1D_gblKinkY[ix]->fill( (localPar[6]+localPar[8])*1E3 );
+
+	  //FIXME: newly added kink maps
+	  profile2D_gblKinkXvsXY[ix]->fill( uptriplet.getx_at(_planePosition[ix])+localPar[3], uptriplet.gety_at(_planePosition[ix])+localPar[4], fabs(localPar[5]+localPar[7])*1E3 );
+	  profile2D_gblKinkXvsXY[ix]->fill( uptriplet.getx_at(_planePosition[ix])+localPar[3], uptriplet.gety_at(_planePosition[ix])+localPar[4], fabs(localPar[6]+localPar[8])*1E3 );
 	}
 	
 	prevAngleX = localPar[1];
@@ -936,6 +940,18 @@ void EUTelGBL::bookHistos(std::vector<int> const & sensorIDVec) {
 	
 	hist1D_gblKinkY.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNameKinkY, 100, -5, 5));
 	hist1D_gblKinkY.back()->setTitle( "GBL kink angle at plane "+sensorIdString+";plane "+sensorIdString+" y kink [mrad];tracks" );
+
+	if(sensorIDVec[ix]==_SUT_ID) {
+	  std::string histNameKinkXvsXY = "GBLFit/Kinks/kinkx_vs_xy"+sensorIdString;
+	  std::string histNameKinkYvsXY = "GBLFit/Kinks/kinky_vs_xy"+sensorIdString;
+
+	  profile2D_gblKinkXvsXY.push_back(AIDAProcessor::histogramFactory(this)->createProfile2D( histNameKinkXvsXY, 120, -12, 12, 60, -6, 6, 0, 100));
+	  profile2D_gblKinkXvsXY.back()->setTitle( "GBL kink angle at plane "+sensorIdString+"; x pos [mm]; y pos [mm]; sqrt(<kinkX^{2}>) [mrad]" );
+
+	  profile2D_gblKinkYvsXY.push_back(AIDAProcessor::histogramFactory(this)->createProfile2D( histNameKinkYvsXY, 120, -12, 12, 60, -6, 6, 0, 100));
+	  profile2D_gblKinkYvsXY.back()->setTitle( "GBL kink angle at plane "+sensorIdString+"; x pos [mm]; y pos [mm]; sqrt(<kinkY^{2}>) [mrad]" );
+	}
+
       }//[END] loop over sensor IDs
     
     hist1D_nTracksPerEvent = AIDAProcessor::histogramFactory(this)->createHistogram1D( "ntracksperevent", 21, -0.5, 20.5 );
