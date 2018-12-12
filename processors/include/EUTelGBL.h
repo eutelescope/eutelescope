@@ -37,6 +37,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <limits>
 
 namespace eutelescope {
 
@@ -103,6 +104,7 @@ namespace eutelescope {
 
     protected:
       static int const NO_PRINT_EVENT_COUNTER = 3;
+    
       //! Ordered sensor ID
       /*! Within the processor all the loops are done up to _nPlanes and
        *  according to their position along the Z axis (beam axis).
@@ -114,12 +116,30 @@ namespace eutelescope {
       */
       std::vector<std::string> _hitCollectionName;
 
-      // parameters
-      std::vector<int> _excludedPlanes;
-      std::vector<int> _FixedPlanes;
-      int _requiredPlane;
+      //general parameters
+      EUTelTripletGBLUtility gblutil;
+      double _zMid;
+      double _eBeam;
+      double _kappa;
 
-	  // Fixed directions for alignMode XYZShiftsXYZRot
+      //plane parameters
+      std::vector<double> _planePosition;
+      std::vector<double> _planeRadLength;
+      std::vector<Eigen::Vector2d> _planeWscatSi;
+      std::vector<Eigen::Vector2d> _planeWscatAir;
+      std::vector<Eigen::Vector2d> _planeMeasPrec;
+      std::vector<float> _xResolutionVec;
+      std::vector<float> _yResolutionVec;
+      int _SUT_ID;
+      std::vector<int>_DUT_IDs;
+      std::vector<float> _dutCuts;
+      std::vector<int> _excludedPlanes;
+      std::vector<int> _fixedPlanes;
+      int _requiredPlane;
+        
+      //alignment: alignModes and fixed settings
+      Utility::alignMode _alignMode;
+      std::string _alignModeString;
       std::vector<int> _FixedXShift;
       std::vector<int> _FixedYShift;
       std::vector<int> _FixedZShift;
@@ -127,101 +147,62 @@ namespace eutelescope {
       std::vector<int> _FixedYRot;
       std::vector<int> _FixedZRot;
       
-      double _zMid;
-      double _eBeam;
-
-      double _upTriResCut;
-      double _downTriResCut;
+      //triplet parameters
+      double _upstreamTriplet_ResCut;
+      double _downstreamTriplet_ResCut;
       double _upDownTripletMatchCut;
-      double _upSlopeCut;
-      double _downSlopeCut;
-      std::vector<float> _DUTCuts;
-      double _chi2cut;
-      
-      double _kappa;
+      double _upstreamTriplet_SlopeCut;
+      double _downstreamTriplet_SlopeCut;
+      std::vector<int> _upstreamTriplet_IDs;
+      std::vector<int> _downstreamTriplet_IDs;
+      int _lastUpstreamSensorID;
+      std::map<int, bool> _isSensorUpstream;
 
+      //track parameters
+      double _chi2Cut;   
       int _maxTrackCandidates;
       int _maxTrackCandidatesTotal;
 
+      //MILLEPEDE
       std::string _binaryFilename;
-
-      Utility::alignMode _alignMode;
-      std::string _alignModeString;
-
-      std::vector<int> _FixParameter;
-
-      int _performAlignment;
-      int _suggestAlignmentCuts;
-      int _dumpTracks;
       std::string _pedeSteerfileName;
+      std::unique_ptr<gbl::MilleBinary>  milleAlignGBL; // for producing MillePede-II binary file
 
-      int _SUTID;
-      
-      EUTelTripletGBLUtility gblutil;
-
-      //! Run number
+      //statistics
       int _iRun;
-
-      //! Event number
       int _iEvt;
-
-      //! counter for printed events (for debugging)
       int _printEventCounter;
-
-      // Statistics
       size_t _nMilleDataPoints;
       size_t _nMilleTracks;
       size_t _nPlanes;
 
-
-      //UpstreamTriplet
-      std::vector<int> _upstream_triplet_ids;
-      //DownstreamTriplet
-      std::vector<int> _downstream_triplet_ids;
-      //LastUpstreamSensor
-      int _last_upstream_sensor;
-      //ResolutionX
-      std::vector<float> _x_resolution_vec;
-      //ResolutionY
-      std::vector<float> _y_resolution_vec;
-
-      std::map<int, bool> _is_sensor_upstream;
-
-      std::vector<int>_dut_ids;
-
-      std::vector<double> _planePosition;
-      std::vector<double> _planeRadLength;
-      std::vector<Eigen::Vector2d> _planeWscatSi;
-      std::vector<Eigen::Vector2d> _planeWscatAir;
-      std::vector<Eigen::Vector2d> _planeMeasPrec;
-      std::vector<int> indexconverter;
-      std::unique_ptr<gbl::MilleBinary>  milleAlignGBL; // for producing MillePede-II binary file
+      //flags
+      int _performAlignment;
+      int _suggestAlignmentCuts;
+      int _dumpTracks;
 
     // definition of static members mainly used to name histograms
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-    AIDA::IHistogram1D * nTelHits;
-    AIDA::IHistogram1D * nUpstreamTriplets;
-    AIDA::IHistogram1D * nDownstreamTriplets;
+    //histograms: hits, triplets and tracks
+    AIDA::IHistogram1D * hist1D_nTelescopeHits;
+    AIDA::IHistogram1D * hist1D_nUpstreamTriplets;
+    AIDA::IHistogram1D * hist1D_nDownstreamTriplets;
+    AIDA::IHistogram1D * hist1D_nTracksPerEvent;
 
-    //Track Fit
-    AIDA::IHistogram1D * gblndfHistGBLAlign;
-    AIDA::IHistogram1D * gblchi2HistGBLAlign;
-    AIDA::IHistogram1D * gblprbHistGBLAlign;
+    //histograms: GBLFit
+    AIDA::IHistogram1D * hist1D_gblNdfAlign;
+    AIDA::IHistogram1D * hist1D_gblChi2Align;
+    AIDA::IHistogram1D * hist1D_gblProbAlign;
+    std::vector<AIDA::IHistogram1D*> hist1D_gblAngleX;
+    std::vector<AIDA::IHistogram1D*> hist1D_gblAngleY;
+    std::vector<AIDA::IHistogram1D*> hist1D_gblResidX;
+    std::vector<AIDA::IHistogram1D*> hist1D_gblResidY;
+    std::vector<AIDA::IHistogram1D*> hist1D_gblPullX;
+    std::vector<AIDA::IHistogram1D*> hist1D_gblPullY;
+    std::vector<AIDA::IHistogram1D*> hist1D_gblKinkX;
+    std::vector<AIDA::IHistogram1D*> hist1D_gblKinkY;
 
-    std::vector<AIDA::IHistogram1D*> gblAxHist;
-    std::vector<AIDA::IHistogram1D*> gblAyHist;
-
-    std::vector<AIDA::IHistogram1D*> gblRxHist;
-    std::vector<AIDA::IHistogram1D*> gblRyHist;
-
-    std::vector<AIDA::IHistogram1D*> gblPxHist;
-    std::vector<AIDA::IHistogram1D*> gblPyHist;
-
-    std::vector<AIDA::IHistogram1D*> gblKinkXHist;
-    std::vector<AIDA::IHistogram1D*> gblKinkYHist;
-
-    AIDA::IHistogram1D * ntracksperevent;
 #endif
 
   };
