@@ -164,6 +164,9 @@ void EUTelGBL::init() {
   for(int id : _DUT_IDs) streamlog_out(MESSAGE4) << id << " ";
   streamlog_out(MESSAGE4) << std::endl;
 
+  for(int id : _sensorIDVec) streamlog_out(MESSAGE4) << "SUT: " << geo::gGeometry().getPlaneRadiationLength(id) << " " << geo::gGeometry().getPlaneZSize(id) << std::endl;
+  streamlog_out(MESSAGE4) << std::endl;
+
   //compute the total radiation length
   double totalRadLength = 0;
   //add air from the first to the last plane
@@ -276,17 +279,8 @@ void EUTelGBL::init() {
 	  map_alignModes[Utility::alignMode::XYZShiftsRotZ] = 5;
 	  map_alignModes[Utility::alignMode::XYZShiftsRotXYZ] = 7;
 
-	  /*
-	  for(auto current : map_alignModes) {
-	    if( _alignMode != current.first ) continue;
-	    for(int id = 1 ; id < current.second ; id++) steerFile << (_sensorIDVec[ipl] * 10 + id) << "  0.0 -1.0" << endl;
-	    }*/
-	  
-	  //TO BE TESTED (replaces the upper for-loop)
 	  int stopid = map_alignModes[_alignMode];
-	  for(int id = 1 ; id < stopid ; id++) {
-	    streamlog_out( MESSAGE4 ) << (_sensorIDVec[ipl] * 10 + id) << "  0.0 -1.0" << endl;
-	  }
+	  for(int id = 1 ; id < stopid ; id++) steerFile << (_sensorIDVec[ipl] * 10 + id) << "  0.0 -1.0" << endl;
 	} 
 	//check if fixed: current plane is fixed
 	else {
@@ -838,8 +832,8 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 	  hist1D_gblKinkY[ix]->fill( (localPar[6]+localPar[8])*1E3 );
 
 	  //FIXME: newly added kink maps
-	  profile2D_gblKinkXvsXY[ix]->fill( uptriplet.getx_at(_planePosition[ix])+localPar[3], uptriplet.gety_at(_planePosition[ix])+localPar[4], fabs(localPar[5]+localPar[7])*1E3 );
-	  profile2D_gblKinkXvsXY[ix]->fill( uptriplet.getx_at(_planePosition[ix])+localPar[3], uptriplet.gety_at(_planePosition[ix])+localPar[4], fabs(localPar[6]+localPar[8])*1E3 );
+	  profile2D_gblSUTKinkXvsXY->fill( uptriplet.getx_at(_planePosition[ix])+localPar[3], uptriplet.gety_at(_planePosition[ix])+localPar[4], fabs(localPar[5]+localPar[7])*1E3 );
+	  profile2D_gblSUTKinkYvsXY->fill( uptriplet.getx_at(_planePosition[ix])+localPar[3], uptriplet.gety_at(_planePosition[ix])+localPar[4], fabs(localPar[6]+localPar[8])*1E3 );
 	}
 	
 	prevAngleX = localPar[1];
@@ -851,7 +845,7 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 	traj.milleOut( *milleAlignGBL );
 	_nMilleTracks++;
       }
-      
+
       numbertracks++;
     }//[END] loop over matched tracks
   
@@ -945,11 +939,11 @@ void EUTelGBL::bookHistos(std::vector<int> const & sensorIDVec) {
 	  std::string histNameKinkXvsXY = "GBLFit/Kinks/kinkx_vs_xy"+sensorIdString;
 	  std::string histNameKinkYvsXY = "GBLFit/Kinks/kinky_vs_xy"+sensorIdString;
 
-	  profile2D_gblKinkXvsXY.push_back(AIDAProcessor::histogramFactory(this)->createProfile2D( histNameKinkXvsXY, 120, -12, 12, 60, -6, 6, 0, 100));
-	  profile2D_gblKinkXvsXY.back()->setTitle( "GBL kink angle at plane "+sensorIdString+"; x pos [mm]; y pos [mm]; sqrt(<kinkX^{2}>) [mrad]" );
+	  profile2D_gblSUTKinkXvsXY = AIDAProcessor::histogramFactory(this)->createProfile2D( histNameKinkXvsXY, 120, -12, 12, 60, -6, 6, 0, 100);
+	  profile2D_gblSUTKinkXvsXY->setTitle( "GBL kink angle at plane "+sensorIdString+"; x pos [mm]; y pos [mm]; sqrt(<kinkX^{2}>) [mrad]" );
 
-	  profile2D_gblKinkYvsXY.push_back(AIDAProcessor::histogramFactory(this)->createProfile2D( histNameKinkYvsXY, 120, -12, 12, 60, -6, 6, 0, 100));
-	  profile2D_gblKinkYvsXY.back()->setTitle( "GBL kink angle at plane "+sensorIdString+"; x pos [mm]; y pos [mm]; sqrt(<kinkY^{2}>) [mrad]" );
+	  profile2D_gblSUTKinkYvsXY = AIDAProcessor::histogramFactory(this)->createProfile2D( histNameKinkYvsXY, 120, -12, 12, 60, -6, 6, 0, 100);
+	  profile2D_gblSUTKinkYvsXY->setTitle( "GBL kink angle at plane "+sensorIdString+"; x pos [mm]; y pos [mm]; sqrt(<kinkY^{2}>) [mrad]" );
 	}
 
       }//[END] loop over sensor IDs
