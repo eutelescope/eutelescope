@@ -333,9 +333,9 @@ def submitHTCondor(jobtask, runnr, filenamebase, logbase, condorsubfile):
     # option file
     option_file = open(subbase + submit_name + '.submit', 'w')
     option_file.write('executable\t= '+ subbase + submit_name + '.sh \n')
-    option_file.write('output\t= ' + logbase + jobtask + '-' + runnr + '.log\n')
-    option_file.write('error\t= ' + subbase + jobtask + '-' + runnr + '.error\n')
-    option_file.write('log\t= ' + subbase + jobtask + '-' + runnr + '.condor\n')
+    option_file.write('output\t= ' + logbase + 'run' + runnr + '-' + jobtask + '.log\n')
+    option_file.write('error\t= ' + subbase + 'run' + runnr + '-' + jobtask + '.error\n')
+    option_file.write('log\t= ' + subbase + 'run' + runnr + '-' + jobtask + '.condor\n')
     # Add condorsub parameters:
     for line in open(condorsubfile):
         li=line.strip()
