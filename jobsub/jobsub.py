@@ -242,7 +242,7 @@ def runMarlin(jobtask, runnr, filenamebase, logbase, silent):
         tout.start()
         terr.start()
         # open log file
-        log_file = open(logbase + '/' + jobtask + '-' + runnr + ".log", "w")
+        log_file = open(logbase + '/' + "run" + runnr + '-' + jobtask + ".log", "w")
         # print timestamp to log file
         log_file.write("---=== Analysis started on " + datetime.datetime.now().strftime("%A, %d. %B %Y %I:%M%p") + " ===---\n\n")
         try:
@@ -695,7 +695,7 @@ def main(argv=None):
 
         # Write the steering file:
         log.debug ("Writing steering file for run number "+runnr)
-        basefilename = parameters["steeringpath"] + "/" + args.jobtask + "-" + runnr
+        basefilename = parameters["steeringpath"] + "/" + "run" + runnr + "-" + args.jobtask
         steeringFile = open(basefilename + ".xml", "w")
 
         try:
