@@ -6,8 +6,8 @@
  *   header with author names in all development based on this file.
  *
  */
-#ifndef EUTELPROCESSORNOISYPIXELFINDER_H
-#define EUTELPROCESSORNOISYPIXELFINDER_H
+#ifndef EUTELNOISYPIXELFINDER_H
+#define EUTELNOISYPIXELFINDER_H
 
 // eutelescope includes ".h"
 #include "EUTelEventImpl.h"
@@ -57,37 +57,36 @@ namespace eutelescope {
    *  planes which are processed
    *
    *  @param MaxAllowedFiringFreq The firing frequency cut which shall be
-   * applied
+   *  applied
    *
    *  @param HotPixelDBFile Name of the output file, currently appending to a
-   * file
-   *  does not work, use differnt files if multiple hot pixel collections are
-   * created
+   *  file does not work, use different files if multiple hot pixel collections 
+   *  are created
    *
    *  @param ExcludedPlanes Planes to be excluded from processing
    *
    *  @param HotPixelCollectionName The name of the collection in the output
-   * file
+   *  file
    */
-  class EUTelProcessorNoisyPixelFinder : public marlin::Processor {
+  class EUTelNoisyPixelFinder : public marlin::Processor {
 
   public:
-    //! Returns a new instance of EUTelProcessorNoisyPixelFinder
-    /*! This method returns an new instance of the this processor.  It
+    //! Returns a new instance of EUTelNoisyPixelFinder
+    /*! This method returns a new instance of the this processor. It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
      *
-     *  @return a new EUTelProcessorNoisyPixelFinder.
+     *  @return a new EUTelNoisyPixelFinder.
      */
     virtual Processor *newProcessor() {
-      return new EUTelProcessorNoisyPixelFinder;
+      return new EUTelNoisyPixelFinder;
     }
 
     //! Default constructor
-    EUTelProcessorNoisyPixelFinder();
+    EUTelNoisyPixelFinder();
 
     //! Default destructor
-    ~EUTelProcessorNoisyPixelFinder() = default;
+    ~EUTelNoisyPixelFinder() = default;
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -121,8 +120,6 @@ namespace eutelescope {
 
     //! Initialize geometry
     /*! Set the number of detectors in the setup and their boundaries.
-     *
-     *  @param evt The LCIO event
      */
     void initializeHitMaps();
 
@@ -147,12 +144,6 @@ namespace eutelescope {
 
   protected:
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-    //! Histogram with the firing frequency 2D distribution
-    static std::string _firing2DHistoName;
-
-    //! Histogram with the firing cumulative 1D distribution
-    static std::string _firing1DHistoName;
-
     //! book histogram method
     void bookAndFillHistos();
 #endif
@@ -165,14 +156,13 @@ namespace eutelescope {
     std::string _zsDataCollectionName;
 
     //! Hot pixel collection name.
-    /*!
-     * this collection is saved in a db file to be used at the clustering level
+    /*! This collection is saved in a db file to be used at the clustering level
      */
     std::string _noisyPixelCollectionName;
 
     //! The excluded planes list
     /*! This is a list of sensor ids for planes that have to be
-     *   excluded from the clustering.
+     *  excluded from the clustering.
      */
     std::vector<int> _excludedPlanes;
 
@@ -243,12 +233,9 @@ namespace eutelescope {
 
     //! Flag which will be set once we're done finding noisy pixels
     bool _finished;
-
-    double _noisyPixelVsCutHistUpperLimit;
-    int _noisyPixelVsCutHistBins;
   };
 
   //! A global instance of the processor
-  EUTelProcessorNoisyPixelFinder gEUTelProcessorNoisyPixelFinder;
+  EUTelNoisyPixelFinder gEUTelNoisyPixelFinder;
 }
 #endif
