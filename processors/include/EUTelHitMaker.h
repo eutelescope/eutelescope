@@ -6,10 +6,9 @@
  *   header with author names in all development based on this file.
  *
  */
-#ifndef EUTELPROCESSORHITMAKER_H
-#define EUTELPROCESSORHITMAKER_H
+#ifndef EUTELHITMAKER_H
+#define EUTELHITMAKER_H
 
-// built only if GEAR is available
 #ifdef USE_GEAR
 // eutelescope includes ".h"
 #include "EUTelUtility.h"
@@ -73,8 +72,8 @@ namespace eutelescope {
    *  that the last pixel will be the one on the bottom right
    *  corner. Generally speaking this local frame of reference has to
    *  be converted in the telescope frame of reference that is
-   *  right-handed with the z axis parallel to the beam directions,
-   *  the y axis going from the bottom to the top side and the x axis
+   *  right-handed with the z-axis parallel to the beam directions,
+   *  the y-axis going from the bottom to the top side and the x-axis
    *  from the right to the left hand side.
    *
    *  \image html frameOfReference.png "Frame of references: the detector on the
@@ -224,28 +223,25 @@ namespace eutelescope {
    *  amount of memory and consequently slowing down the full
    *  processing.
    *
-   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id$
-   *
    */
 
-  class EUTelProcessorHitMaker : public marlin::Processor {
+  class EUTelHitMaker : public marlin::Processor {
 
   private:
-    DISALLOW_COPY_AND_ASSIGN(EUTelProcessorHitMaker)
+    DISALLOW_COPY_AND_ASSIGN(EUTelHitMaker)
 
   public:
-    //! Returns a new instance of EUTelProcessorHitMaker
+    //! Returns a new instance of EUTelHitMaker
     /*! This method returns a new instance of this processor.  It is
      *  called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
      *
-     *  @return a new EUTelProcessorHitMaker.
+     *  @return a new EUTelHitMaker.
      */
-    virtual Processor *newProcessor() { return new EUTelProcessorHitMaker; }
+    virtual Processor *newProcessor() { return new EUTelHitMaker; }
 
     //! Default constructor
-    EUTelProcessorHitMaker();
+    EUTelHitMaker();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -261,7 +257,7 @@ namespace eutelescope {
      *  two are different, the user is asked to decide to quit or to
      *  continue with a description that might be wrong.
      *
-     *  @param run the LCRunHeader of the this current run
+     *  @param run the LCRunHeader of the current run
      */
     virtual void processRunHeader(LCRunHeader *run);
 
@@ -271,10 +267,10 @@ namespace eutelescope {
      *  translated into the external frame of reference thanks to the
      *  GEAR geometry description.
      *
-     *  The cluster center might be calculate using a standard linear
-     *  charge center of gravity algortihm or applying a more
-     *  sophisticated non linear eta function. This behaviour is
-     *  regulated by the user from the steering file.
+     *  The cluster center might be calculated using a standard linear
+     *  charge center of gravity algorithm or applying a more
+     *  sophisticated non-linear eta function. This behaviour is
+     *  steered by the user from the steering file.
      *
      *  @throw UnknownDataTypeException if the cluster type is unknown
      *
@@ -297,7 +293,7 @@ namespace eutelescope {
      *  effectively doing something only in the case MARLIN_USE_AIDA.
      *
      *  @since v00-00-09 the histogram booking is done on-the-fly,
-     *  in the meaning the each time a new sensorID is encoutered
+     *  in the meaning the each time a new sensorID is encountered
      *  all the corresponding histograms are booked.
      */
     void bookHistos(int sensorID);
@@ -318,7 +314,10 @@ namespace eutelescope {
     std::string _hitCollectionName;
 
     //! Coordinates reference frame switch
-    bool _wantLocalCoordinates;
+    bool _switchLocalCoordinates;
+    
+    //! Fill histogram switch
+    bool _histogramSwitch;
 
   private:
     //! Run number
@@ -327,96 +326,21 @@ namespace eutelescope {
     //! Event number
     int _iEvt;
 
-    //! Conversion ID map.
-    /*! In the data file, each cluster is tagged with a detector ID
-     *  identify the sensor it belongs to. In the geometry
-     *  description, there are along with the sensors also "passive"
-     *  layers and other stuff. Those are identify by a layerindex. So
-     *  we need a conversion table to go from the detectorID to the
-     *  layerindex.
-     */
-    std::map<int, int> _conversionIdMap;
-
     //! Set of booked histogram
-    /*  This helper set is used
-     *  by the on-the-fly histogram booking
+    /*  This helper set is used by the on-the-fly histogram booking
      *  procedure.
      */
     std::set<int> _alreadyBookedSensorID;
 
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-    //! AIDA histogram map
-    /*! Instead of putting several pointers to AIDA histograms as
-     *  class members, histograms are booked in the init() method and
-     *  their pointers are inserted into this map keyed by their
-     *  names.
-     *  The histogram filling can proceed recalling an object through
-     *  its name
-     */
-    std::map<std::string, AIDA::IBaseHistogram *> _aidaHistoMap;
-
-    //! Name of the local hit map histo
-    /*! The histogram pointed by this name is a 2D histo. The x and y
-     *  axes correspond to the pixel detector axes in its own local
-     *  frame of reference already converted in millimeter. There is
-     *  a histo like this for each detector in the geometry.
-     */
-    static std::string _hitHistoLocalName;
-
-    //! Name of the hit map histo
-    /*! The histogram pointed by this name is a 2D histo. The x and y
-     *  axes correspond to the pixel detector axes already in the
-     *  telescope frame of reference. There is a histo like this for
-     *  each detector in the geometry.
-     */
-    static std::string _hitHistoTelescopeName;
-
-    //! Name of the density plot
-    /*! This is a very nice plot showing in a 3D frame where all hits
-     *  have been found. If the run is sufficiently long and the hits
-     *  are uniformly distributed on the sensor surface, this plot
-     *  should recall the shape of the telescope itself.
-     */
-    static std::string _densityPlotName;
-
-    //! Cluster center
-    /*! This 2D histogram contains the center of all the clusters
-     *  corrected using the provided Eta functions. The binning is
-     *  fixed and corresponds to the Eta function granularity.
-     */
-    static std::string _clusterCenterHistoName;
-
-    //! Cluster center projection along X
-    /*! This is the projection along the X axis of the previous plot.
-     */
-    static std::string _clusterCenterXHistoName;
-
-    //! Cluster center projection along Y
-    /*! This is the projection along the Y axis of the previous plot.
-     */
-    static std::string _clusterCenterYHistoName;
-
-#endif
-
-    //! Fill histogram switch
-    /*! This boolean switch was initially introduced for debug reason
-     *  but then we realized that it could stay there and protect
-     *  against missing AIDA::Processor.
-     *
-     */
-    bool _histogramSwitch;
-
-    //! The ordered sensor ID vector
-    /*! This vector contains the sensorID of all the detectors in the
-     *  input collection in the same order as they appear. This vector
-     *  has to be used to number the histogram booking and filling.
-     */
-    std::vector<int> _orderedSensorIDVec;
-
+	//! Histogram maps 
+    #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+    std::map<int, AIDA::IBaseHistogram *> _hitLocalHistos;
+    std::map<int, AIDA::IBaseHistogram *> _hitTelescopeHistos;
+    #endif
   };
 
   //! A global instance of the processor
-  EUTelProcessorHitMaker gEUTelProcessorHitMaker;
+  EUTelHitMaker gEUTelHitMaker;
 }
 #endif
 #endif
