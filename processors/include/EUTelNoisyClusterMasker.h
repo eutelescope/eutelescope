@@ -20,11 +20,6 @@
 #include <IMPL/LCCollectionVec.h>
 #include <LCIOTypes.h>
 
-// AIDA includes <.h>
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-#include <AIDA/IBaseHistogram.h>
-#endif
-
 // system includes <>
 #include <map>
 #include <string>
