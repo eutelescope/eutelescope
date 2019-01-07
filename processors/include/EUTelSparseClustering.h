@@ -6,9 +6,8 @@
  *   header with author names in all development based on this file.
  *
  */
-
-#ifndef EUTelProcessorSparseClustering_H
-#define EUTelProcessorSparseClustering_H 1
+#ifndef EUTELSPARSECLUSTERING_H
+#define EUTELSPARSECLUSTERING_H
 
 // eutelescope includes ".h"
 #include "EUTELESCOPE.h"
@@ -24,7 +23,9 @@
 #include <gear/SiPlanesParameters.h>
 
 // aida includes <.h>
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
+#endif
 
 // lcio includes <.h>
 #include <IMPL/LCCollectionVec.h>
@@ -38,14 +39,14 @@
 
 namespace eutelescope {
 
-  //! Geoemtric clustering processor for EUTelescope
-  /*! This procssor used the Extended Geometry Framework (EGF) for a
+  //! Geometric clustering processor for EUTelescope
+  /*! This processor use the Extended Geometry Framework (EGF) for a
    *  correct spatial clustering. This means that via the EGF the
-   *  geoemtrical positions as well as dimensions of the pixels are
+   *  geometrical positions as well as dimensions of the pixels are
    *  read in and used.
    *
    *  The dimensions of the pixel are given by the surrounding rectangle.
-   *  For simple rectengular pixels this is a correct description,
+   *  For simple rectangular pixels this is a correct description,
    *  deviations of that pixel shape have to either adapt this processor
    *  or use it as an approximation.
    *
@@ -56,58 +57,49 @@ namespace eutelescope {
    *
    *  Given that the proximity is well defined, no additional arguments
    *  must be provided. If wanted, a time cut can be set. This will also
-   *  require hits to be temporally in promximity. If not set not cut will
+   *  require hits to be temporally in proximity. If not set, no cut will
    *  be applied.
    *
    *  This clustering processor uses the @class EUTelGenericSparseClusterImpl
-   *  which derives from the new @class EUTelSimpleVirtualCluster base
-   *  class.
+   *  which derives from the @class EUTelSimpleVirtualCluster base class.
    *
-   *  The TrackerPulse cell id encoding is very similar to the
+   *  The TrackerPulse cell ID encoding is very similar to the
    *  EUTELESCOPE::CLUSTERDEFAULTENCODING but instead of having the
    *  quality, it has another field named ClusterType used to identify
    *  the class used to store the cluster information.
    *
-   *  <h4>Input and Output collections</h4>
-   *
-   *  <b>Data Collection</b>: the input data TrackerData collection
+   *  Data Collection: the input data TrackerData collection
    *  name. This collection is containing the zero-suppressed hits from
    *  previous analysis steps.
    *
-   *  <b>Pulse Collection</b>: this is the TrackerPulse collection
+   *  Pulse Collection: this is the TrackerPulse collection
    *  containing all clusters found in the event.
    *
    *  @param ZSDataCollectionName The name of the input data collection.
    *
    *  @param PulseCollectionName The name of the output TrackerPulse collection.
    *
-   *  @param TCut This is the time cut value used to determine if hits are in
-   *  temporal proximity. Values are in your detector specific time unit
-   *
-   *  @param HistoInfoFileName This is the name of the XML file
-   *  containing the histogram booking information.
-   *
    */
 
-  class EUTelProcessorSparseClustering : public marlin::Processor,
-                                         public marlin::EventModifier {
+  class EUTelSparseClustering : public marlin::Processor,
+                                public marlin::EventModifier {
 
   public:
-    //! Returns a new instance of EUTelProcessorSparseClustering
+    //! Returns a new instance of EUTelSparseClustering
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
      *
-     *  @return a new EUTelProcessorSparseClustering.
+     *  @return a new EUTelSparseClustering.
      */
     virtual Processor *newProcessor() {
-      return new EUTelProcessorSparseClustering;
+      return new EUTelSparseClustering;
     }
 
     virtual const std::string &name() const { return Processor::name(); }
 
     //! Default constructor
-    EUTelProcessorSparseClustering();
+    EUTelSparseClustering();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -131,7 +123,7 @@ namespace eutelescope {
     /*! It looks for clusters in the current event using the selected
      *  algorithm.
      *
-     *  @see EUTelProcessorSparseClustering::fixedFrameClustering(LCEvent *)
+     *  @see EUTelSparseClustering::fixedFrameClustering(LCEvent *)
      *
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
@@ -160,27 +152,6 @@ namespace eutelescope {
      *  prints only a goodbye message
      */
     virtual void end();
-
-    // TODO: Tobias
-    //! Reset the status map
-    /*! This method is called at the beginning of the clustering
-     *  procedure because it is possibly containing the position of
-     *  the previous identified clusters. Hit pixels are identified by
-     *  the value EUTELESCOPE::HITPIXEL; during the reset all of them
-     *  are set to EUTELESCOPE::GOODPIXEL. This is not touching the
-     *  bad pixels since them are marked with EUTELESCOPE::BADPIXEL.
-     *
-     *  @param status A pointer to the TrackerRawData with the status
-     *  to be reset
-     *
-     *  //todo Consider the possibility to use instead of
-     *  EUTELESCOPE::HITPIXEL, the clusterID to flag hit pixel. This
-     *  is offering a very easy way to show on a 2D histograms where
-     *  clusters have been found. It might be of any usefulness if we
-     *  will try to write a piece of code to deconvolve merging
-     *  clusters.
-     */
-    void resetStatus(IMPL::TrackerRawDataImpl *status);
 
     //! Book histograms
     /*! This method is used to prepare the needed directory structure
@@ -256,20 +227,8 @@ namespace eutelescope {
      */
     bool _fillHistos;
 
-    //! The histogram information file
-    /*! This string contain the name of the histogram information
-     *  file. This is selected by the user in the steering file.
-     *
-     *  @see eutelescope::EUTelHistogramManager
-     *  @see eutelescope::EUTelHistogramInfo
-     */
-    std::string _histoInfoFileName;
-
-    //! The time cut value as provided by the user.
-    float _cutT;
-
   private:
-    DISALLOW_COPY_AND_ASSIGN(EUTelProcessorSparseClustering)
+    DISALLOW_COPY_AND_ASSIGN(EUTelSparseClustering)
 
     //! read secondary collections
     void readCollections(LCEvent *evt);
@@ -279,7 +238,7 @@ namespace eutelescope {
      *  total number of clusters found on that sensor.
      *  The content of this map is show during end().
      */
-    std::map<int, int> _totClusterMap;
+    std::map<int, int> _totalClusterMap;
 
     //! The number of detectors
     /*! The number of sensors in the telescope. This is retrieve from
@@ -291,37 +250,17 @@ namespace eutelescope {
     /*! This vector contains a list of sensor ids for planes that have
      *   to be excluded from the clustering.
      */
-    std::vector<int> _ExcludedPlanes;
+    std::vector<int> _excludedPlanes;
 
-    //! Map for pointer to cluster signal histograms.
+    //! Histogram maps 
+    #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+    std::map<int, AIDA::IBaseHistogram *> _clusterSizeTotalHistos;
     std::map<int, AIDA::IBaseHistogram *> _clusterSignalHistos;
-
-    //! Map for pointer to Cluster signal histogram (size along X).
     std::map<int, AIDA::IBaseHistogram *> _clusterSizeXHistos;
-
-    //! Map for pointer to Cluster signal histogram (size along Y).
     std::map<int, AIDA::IBaseHistogram *> _clusterSizeYHistos;
-
-    //! Map for pointer to Seed pixel signal histo
-    std::map<int, AIDA::IBaseHistogram *> _seedSignalHistos;
-
-    //! Map for pointer to Hit map histogram
     std::map<int, AIDA::IBaseHistogram *> _hitMapHistos;
-
-    //! Map for pointer to Hit map histogram
-    std::map<int, AIDA::IBaseHistogram *> _hitMapGeomHistos;
-
-    //! Map for pointer to Cluster noise histogram
-    std::map<int, AIDA::IBaseHistogram *> _clusterNoiseHistos;
-
-    //! Map for pointer to Event multiplicity histogram
     std::map<int, AIDA::IBaseHistogram *> _eventMultiplicityHistos;
-
-    //! Map for pointer to Event multiplicity histogram
-    std::map<int,AIDA::IBaseHistogram*> _hitpixelHistos;
-
-    //! Map for pointer to total cluster size histogram 
-    std::map<int,AIDA::IBaseHistogram*>_clusterSizeTotalHistos;
+	#endif
 
     //! Geometry ready switch
     /*! This boolean reveals if the geometry has been properly
@@ -345,6 +284,6 @@ namespace eutelescope {
   };
 
   //! A global instance of the processor
-  EUTelProcessorSparseClustering gEUTelProcessorSparseClustering;
+  EUTelSparseClustering gEUTelSparseClustering;
 }
 #endif
