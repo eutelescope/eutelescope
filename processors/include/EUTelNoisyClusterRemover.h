@@ -6,8 +6,8 @@
  *   header with author names in all development based on this file.
  *
  */
-#ifndef EUTELPROCESSORNOISYCLUSTERREMOVER_H
-#define EUTELPROCESSORNOISYCLUSTERREMOVER_H
+#ifndef EUTELNOISYCLUSTERREMOVER_H
+#define EUTELNOISYCLUSTERREMOVER_H
 
 // eutelescope includes ".h"
 #include "EUTelEventImpl.h"
@@ -19,12 +19,9 @@
 #include <IMPL/LCCollectionVec.h>
 #include <LCIOTypes.h>
 
-// AIDA includes <.h>
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-#include <AIDA/IBaseHistogram.h>
-#endif
-
-// system includes
+// system includes <>
+#include <string>
+#include <map>
 
 namespace eutelescope {
 
@@ -34,22 +31,22 @@ namespace eutelescope {
    *  If so, they are removed from the output collection.
    */
 
-  class EUTelProcessorNoisyClusterRemover : public marlin::Processor {
+  class EUTelNoisyClusterRemover : public marlin::Processor {
 
   public:
-    //! Returns a new instance of EUTelProcessorNoisyClusterRemover
+    //! Returns a new instance of EUTelNoisyClusterRemover
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
      *
-     *  @return a new EUTelProcessorNoisyClusterRemover.
+     *  @return a new EUTelNoisyClusterRemover.
      */
     virtual Processor *newProcessor() {
-      return new EUTelProcessorNoisyClusterRemover;
+      return new EUTelNoisyClusterRemover;
     }
 
     //! Default constructor
-    EUTelProcessorNoisyClusterRemover();
+    EUTelNoisyClusterRemover();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -62,9 +59,9 @@ namespace eutelescope {
     /*! It is called for every run, and consequently the run counter
      *  is incremented.
      *
-     *  @param run LCRunHeader of the this current run
+     *  @param run LCRunHeader of the current run
      *
-     *  @throw InvalidParameterException if a paramter is wrongly set
+     *  @throw InvalidParameterException if a parameter is wrongly set
      */
     virtual void processRunHeader(LCRunHeader *run);
 
@@ -120,8 +117,8 @@ namespace eutelescope {
   };
 
   //! A global instance of the processor
-  EUTelProcessorNoisyClusterRemover gEUTelProcessorNoisyClusterRemover;
+  EUTelNoisyClusterRemover gEUTelNoisyClusterRemover;
 
-} // namespace eutelescope
+}
 
-#endif // EUTelProcessorNoisyClusterRemover_H
+#endif
