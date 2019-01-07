@@ -67,45 +67,50 @@ EUTelSparseClustering::EUTelSparseClustering()
   _description = "EUTelSparseClustering is looking for clusters into "
                  "a calibrated pixel matrix.";
 
-  registerInputCollection(LCIO::TRACKERDATA, "ZSDataCollectionName",
+  registerInputCollection(LCIO::TRACKERDATA,
+			  "ZSDataCollectionName",
                           "Input of Zero Suppressed data",
-                          _zsDataCollectionName, std::string("zsdata"));
+                          _zsDataCollectionName,
+			  std::string("zsdata"));
 
-  registerOutputCollection(LCIO::TRACKERPULSE, "PulseCollectionName",
+  registerOutputCollection(LCIO::TRACKERPULSE,
+			   "PulseCollectionName",
                            "Cluster (output) collection name",
-                           _pulseCollectionName, std::string("cluster"));
+                           _pulseCollectionName,
+			   std::string("cluster"));
 
   registerProcessorParameter("HistogramFilling",
                              "Switch on or off the histogram filling",
-                             _fillHistos, true);
+                             _fillHistos,
+			     true);
 
-  registerOptionalParameter(
-      "ExcludedPlanes",
-      "The list of sensor ids that have to be excluded from the clustering.",
-      _excludedPlanes, std::vector<int>());
+  registerOptionalParameter("ExcludedPlanes",
+			    "The list of sensor ids that have to be excluded from the clustering.",
+			    _excludedPlanes,
+			    std::vector<int>());
 
-  registerProcessorParameter(
-      "SparseMinDistanceSquared",
-      "Minimum distance squared between sparsified pixel ( touching == 2) [integer]",
-      _sparseMinDistanceSquared, 2);
+  registerProcessorParameter("SparseMinDistanceSquared",
+			     "Minimum distance squared between sparsified pixel ( touching == 2) [integer]",
+			     _sparseMinDistanceSquared,
+			     2);
 
   _isFirstEvent = true;
 }
 
 void EUTelSparseClustering::init() {
 
-  // usually a good idea to do
+  //usually a good idea to do
   printParameters();
 
-  // init new geometry
+  //init new geometry
   geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME,
                                              EUTELESCOPE::DUMPGEOROOT);
 
-  // reset the run and event counters
+  //reset the run and event counters
   _iRun = 0;
   _iEvt = 0;
 
-  // the geometry is not yet initialized, set switch to false
+  //the geometry is not yet initialized, set switch to false
   _isGeometryReady = false;
 }
 
@@ -117,9 +122,9 @@ void EUTelSparseClustering::processRunHeader(LCRunHeader *rdr) {
 
 void EUTelSparseClustering::initializeGeometry(LCEvent *event){
 
-  // set the total number of detector to zero. This number can be different from
-  // the one written in the gear description because
-  // the input collection can contain only a fraction of all the sensors
+  //set the total number of detector to zero. This number can be different from
+  //the one written in the gear description because
+  //the input collection can contain only a fraction of all the sensors
   _noOfDetector = 0;
   _sensorIDVec.clear();
 
@@ -473,19 +478,19 @@ void EUTelSparseClustering::bookHistos() {
   streamlog_out(DEBUG5) << "Booking histograms " << std::endl;
   
   for(size_t iDetector = 0; iDetector < _sensorIDVec.size(); iDetector++) {
-	//get detector information
+    //get detector information
     int sensorID = _sensorIDVec.at(iDetector);
     geo::EUTelGenericPixGeoDescr *geoDescr = (geo::gGeometry().getPixGeoDescr(sensorID));
   	
-  	//with sensorID, find out specific values of detector
-  	int minX, minY, maxX, maxY;	
+    //with sensorID, find out specific values of detector
+    int minX, minY, maxX, maxY;	
     minX = minY = maxX = maxY = 0;
     double sizeX, sizeY, sizeZ;
     sizeX = sizeY = sizeZ = 0;
     geoDescr->getPixelIndexRange(minX, maxX, minY, maxY);
     geoDescr->getSensitiveSize(sizeX, sizeY, sizeZ);
 
-	//create folder for current detector
+    //create folder for current detector
     std::string basePath = "detector_" + std::to_string(sensorID);
     AIDAProcessor::tree(this)->mkdir(basePath.c_str());
     
@@ -503,22 +508,22 @@ void EUTelSparseClustering::bookHistos() {
     hist1D_clusterSignal->setTitle("Total signal per cluster (in detector specific charge unit); charge; count");
     _clusterSignalHistos.insert(std::make_pair(sensorID, hist1D_clusterSignal));
     
-   	//create 1D histogram: cluster size along X
-   	std::string histName_clusterSizeX = basePath+"/clusterSizeX_det"+ std::to_string(sensorID);
+    //create 1D histogram: cluster size along X
+    std::string histName_clusterSizeX = basePath+"/clusterSizeX_det"+ std::to_string(sensorID);
     AIDA::IHistogram1D *hist1D_clusterSizeX = AIDAProcessor::histogramFactory(this)->
     	createHistogram1D(histName_clusterSizeX, 21, -0.5, 20.5);
     hist1D_clusterSizeX->setTitle("Cluster size in x-direction (in pixels); size [# of pixels]; count");
     _clusterSizeXHistos.insert(std::make_pair(sensorID, hist1D_clusterSizeX));
    	
-   	//create 1D histogram: cluster size along Y
-   	std::string histName_clusterSizeY = basePath+"/clusterSizeY_det"+ std::to_string(sensorID);
+    //create 1D histogram: cluster size along Y
+    std::string histName_clusterSizeY = basePath+"/clusterSizeY_det"+ std::to_string(sensorID);
     AIDA::IHistogram1D *hist1D_clusterSizeY = AIDAProcessor::histogramFactory(this)->
     	createHistogram1D(histName_clusterSizeY, 21, -0.5, 20.5);
     hist1D_clusterSizeY->setTitle("Cluster size in y-direction (in pixels); size [# of pixels]; count");
     _clusterSizeYHistos.insert(std::make_pair(sensorID, hist1D_clusterSizeY));
    
-   	//create 2D map: hit map
-   	std::string histName_hitMap = basePath+"/hitMap_det"+ std::to_string(sensorID);
+    //create 2D map: hit map
+    std::string histName_hitMap = basePath+"/hitMap_det"+ std::to_string(sensorID);
     int xBin = maxX - minX + 1;
     double xMin = static_cast<double>(minX) - 0.5;
     double xMax = static_cast<double>(maxX) + 0.5;
@@ -530,8 +535,8 @@ void EUTelSparseClustering::bookHistos() {
     hist2D_hitMap->setTitle("Pixel index hit map; x index; y index; count");
     _hitMapHistos.insert(std::make_pair(sensorID, hist2D_hitMap));
     
-	//create 1D histogram: event multiplicity
-   	std::string histName_eventMultiplicity = basePath+"/eventMultiplicity_det"+ std::to_string(sensorID);
+    //create 1D histogram: event multiplicity
+    std::string histName_eventMultiplicity = basePath+"/eventMultiplicity_det"+ std::to_string(sensorID);
     AIDA::IHistogram1D *hist1D_eventMultiplicity = AIDAProcessor::histogramFactory(this)->
     	createHistogram1D(histName_eventMultiplicity, 15, -0.5, 14.5);
     hist1D_eventMultiplicity->setTitle("Event multiplicity; multiplicity; count");

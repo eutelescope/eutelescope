@@ -260,7 +260,7 @@ namespace eutelescope {
     std::map<int, AIDA::IBaseHistogram *> _clusterSizeYHistos;
     std::map<int, AIDA::IBaseHistogram *> _hitMapHistos;
     std::map<int, AIDA::IBaseHistogram *> _eventMultiplicityHistos;
-	#endif
+    #endif
 
     //! Geometry ready switch
     /*! This boolean reveals if the geometry has been properly
