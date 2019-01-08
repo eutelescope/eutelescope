@@ -192,9 +192,9 @@ namespace eutelescope {
     std::string _GEARFileSuffix;
     bool _dumpGEAR;
     std::vector<PreAligner> _preAligners;
-    std::vector<int> _ExcludedPlanesXCoord;
-    std::vector<int> _ExcludedPlanesYCoord;
-    std::vector<int> _ExcludedPlanes;
+    std::vector<int> _excludedPlanesXCoord;
+    std::vector<int> _excludedPlanesYCoord;
+    std::vector<int> _excludedPlanes;
   };
   
   //! A global instance of the processor
