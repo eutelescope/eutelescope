@@ -95,7 +95,6 @@ EUTelGBL::EUTelGBL(): Processor("EUTelGBL") {
   registerOptionalParameter("resolutionY","y-resolution of sensors (z-ordered) [mm]", _y_resolution_vec ,std::vector<float>());
   registerOptionalParameter("fixedPlanes","Fix sensor planes in the fit according to their sensor ids (it is recommended to fix two telescope planes)",_FixedPlanes ,std::vector<int>{0,5});
   registerOptionalParameter("maxTrackCandidatesTotal","Maximal number of track candidates (Total)",_maxTrackCandidatesTotal, 10000000);
-  registerOptionalParameter("maxTrackCandidates","Maximal number of track candidates",_maxTrackCandidates, 2000);
   registerOptionalParameter("milleBinaryFilename","Name of the Millepede binary file",_binaryFilename, std::string{"mille.bin"});
   registerOptionalParameter("alignMode","Number of alignment constants used. Available mode are:"
                               "\n\t\tXYShifts - shifts in X and Y"

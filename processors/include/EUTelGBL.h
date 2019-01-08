@@ -140,7 +140,6 @@ namespace eutelescope {
       
       double _kappa;
 
-      int _maxTrackCandidates;
       int _maxTrackCandidatesTotal;
 
       std::string _binaryFilename;
