@@ -1,6 +1,17 @@
-#ifndef EUTelFitTuple_h
-#define EUTelFitTuple_h 1
+/*
+ *   This source code is part of the Eutelescope package of Marlin.
+ *   You are free to use this source files for your own development as
+ *   long as it stays in a public research context. You are not
+ *   allowed to use it for commercial purpose. You must put this
+ *   header with author names in all development based on this file.
+ *
+ */
+#ifndef EUTELGBLOUTPUT_H
+#define EUTELGBLOUTPUT_H
 
+// eutelescope includes ".h"
+
+// marlin includes ".h"
 #include "marlin/Processor.h"
 
 // system includes <>
@@ -8,11 +19,13 @@
 #include <vector>
 #include <limits>
 
+// ROOT includes
 #include <TFile.h>
 #include <TTree.h>
 #include <TVectorT.h>
 
 namespace eutelescope {
+
   class EUTelGBLOutput : public marlin::Processor {
 
   public:
@@ -37,14 +50,10 @@ namespace eutelescope {
     bool _dumpHeader;
     std::vector<int> _SelectedPlanes;
 
-    // Internal processor variables
-    // ----------------------------
     int _nRun;
     int _nEvt;
     int _runNr;
     int _evtNr;
-
-    bool _isFirstEvent;
 
     TFile *_file;
 
