@@ -281,7 +281,7 @@ void EUTelPreAligner::processEvent(LCEvent *event) {
         
            prealign.at(ii)->addPoint(residX.at(ii), residY.at(ii));
 
-		#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
           if(_histogramSwitch) {
             (dynamic_cast<AIDA::IHistogram1D *>(
                  _hitXCorr[prealign.at(ii)->getIden()]))
@@ -290,7 +290,7 @@ void EUTelPreAligner::processEvent(LCEvent *event) {
                  _hitYCorr[prealign.at(ii)->getIden()]))
                 ->fill(residY.at(ii));
           }
-		#endif
+#endif
         }//[END] loop over prealigners
      }
      
@@ -366,21 +366,21 @@ void EUTelPreAligner::end() {
     constantsCollection->push_back(constant);
 
     //update the EUTelGeometry description
-     double updatedXOff;
-     double updatedYOff;
-     //Only want to update if needed, otherwise get a pointless warning
-     if(it == _excludedPlanes.end()) {
-       updatedXOff = geo::gGeometry().getPlaneXPosition(sensorID) + _preAligners.at(ii).getPeakX();
-       updatedYOff = geo::gGeometry().getPlaneYPosition(sensorID) + _preAligners.at(ii).getPeakY();
-     } else {
-        updatedXOff = 0;
-        updatedYOff = 0;
-     }
-
+    double updatedXOff;
+    double updatedYOff;
+    //Only want to update if needed, otherwise get a pointless warning
+    if(it == _excludedPlanes.end()) {
+      updatedXOff = geo::gGeometry().getPlaneXPosition(sensorID) + _preAligners.at(ii).getPeakX();
+      updatedYOff = geo::gGeometry().getPlaneYPosition(sensorID) + _preAligners.at(ii).getPeakY();
+    } else {
+      updatedXOff = 0;
+      updatedYOff = 0;
+    }
+    
     double oldZPos = geo::gGeometry().getPlaneZPosition(sensorID);
-
+    
     geo::gGeometry().alignGlobalPos(sensorID, updatedXOff, updatedYOff, oldZPos);
-
+    
     streamlog_out(MESSAGE5) << (*constant) << std::endl;
   }//[END] loop over prealigners
 
@@ -444,13 +444,13 @@ void EUTelPreAligner::bookHistos() {
       }
      
       //check if plane is excluded, then skip
-	  std::vector<int>::iterator it =
+      std::vector<int>::iterator it =
         std::find(_excludedPlanes.begin(), _excludedPlanes.end(), sensorID);
       if(it != _excludedPlanes.end()) {
       	continue;
       }     	
-    
-	//create folder for current detector
+      
+      //create folder for current detector
       std::string basePath = "detector_" + std::to_string(sensorID);
       marlin::AIDAProcessor::tree(this)->mkdir(basePath.c_str());
       basePath.append("/");
@@ -461,7 +461,7 @@ void EUTelPreAligner::bookHistos() {
           marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(
               (basePath + histName_hitXCorr).c_str(), 100, -10., 10.);
       hist1D_hitXCorr->setTitle("Hit correlation X (fixed to det "+std::to_string(sensorID)
-      +"); X position [mm]; count");
+				+"); X position [mm]; count");
       _hitXCorr.insert(std::make_pair(sensorID, hist1D_hitXCorr));
 
 	//create 1D histogram: hit correlation Y
@@ -470,7 +470,7 @@ void EUTelPreAligner::bookHistos() {
           marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(
               (basePath + histName_hitYCorr).c_str(), 100, -10., 10.);
       hist1D_hitYCorr->setTitle("Hit correlation Y (fixed to det "+std::to_string(sensorID)
-      +"); Y position [mm]; count");
+				+"); Y position [mm]; count");
       _hitYCorr.insert(std::make_pair(sensorID, hist1D_hitYCorr));
     }
    
