@@ -142,11 +142,18 @@ void EUTelCorrelator::init() {
   geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME,
                                              EUTELESCOPE::DUMPGEOROOT);
 
+  //get sensor ID vector and subtract excluded IDs
   _sensorIDVec = geo::gGeometry().sensorIDsVec();
+  for(auto excludeID : _excludedPlaneIDVec) {
+    _sensorIDVec.erase(std::remove(_sensorIDVec.begin(), _sensorIDVec.end(), excludeID),
+		       _sensorIDVec.end());
+  }
+  
+  //fill sensorIDtoZ map
   for(std::vector<int>::iterator it = _sensorIDVec.begin();
       it != _sensorIDVec.end(); it++) {
     _sensorIDtoZ.insert(std::make_pair(*it,
-	 static_cast<int>(it - _sensorIDVec.begin())));
+       static_cast<int>(it - _sensorIDVec.begin())));
   }
 
   //reset run and event counters
@@ -474,7 +481,7 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
           << std::endl;
 
       //[START] loop over collection (internal)
-      for (size_t iInt = 0; iInt < inputHitCollection->size(); ++iInt) {
+      for(size_t iInt = 0; iInt < inputHitCollection->size(); ++iInt) {
 
         TrackerHitImpl *internalHit = static_cast<TrackerHitImpl *>(
             inputHitCollection->getElementAt(iInt));
@@ -529,7 +536,7 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
 
       std::vector<int> planeID_unique = planeIDVec;          
       
-      //remove duplicates (@JHA: added here erase, function still okay)
+      //remove duplicates (@JHA: added here real erase, function still okay?)
       auto p_end = unique(planeID_unique.begin(),planeID_unique.end()); 
       planeID_unique.erase(p_end,planeID_unique.end());
       
@@ -586,27 +593,13 @@ void EUTelCorrelator::bookHistos() {
       marlin::AIDAProcessor::tree(this)->mkdir("ClusterY");
       
       //[START] loop over sensors (from)
-      for(auto fromID : activeSensorIDVec) {
+      for(auto fromID : _sensorIDVec) {
 	
 	std::map<unsigned int, AIDA::IHistogram2D *> innerMapXCluster;
 	std::map<unsigned int, AIDA::IHistogram2D *> innerMapYCluster;
-	
-	//check if plane is excluded, then skip
-	std::vector<int>::iterator it =
-	  std::find(_excludedPlaneIDVec.begin(), _excludedPlaneIDVec.end(), fromID);
-	if(it != _excludedPlaneIDVec.end()) {
-	  continue;
-	}     
       	
 	//[START] loop over sensors (to)
-	for(auto toID : activeSensorIDVec) {
-	
-	  //check if plane is excluded, then skip
-	  std::vector<int>::iterator it =
-	    std::find(_excludedPlaneIDVec.begin(), _excludedPlaneIDVec.end(), toID);
-	  if(it != _excludedPlaneIDVec.end()) {
-	    continue;
-	  }
+	for(auto toID : _sensorIDVec) {
       
 	  if((toID != getFixedPlaneID() && fromID == getFixedPlaneID()) ||
 	     (_sensorIDtoZ.at(toID) == _sensorIDtoZ.at(fromID) + 1)) {
@@ -673,14 +666,7 @@ void EUTelCorrelator::bookHistos() {
       
       //[START] loop over sensors (from)
       for(auto fromID : _sensorIDVec) {
-      
-      //check if plane is excluded, then skip
-	  std::vector<int>::iterator it =
-        std::find(_excludedPlaneIDVec.begin(), _excludedPlaneIDVec.end(), fromID);
-      if(it != _excludedPlaneIDVec.end()) {
-      	continue;
-      }     
-          	
+             	
 	std::map<unsigned int, AIDA::IHistogram2D *> innerMapXHit;
 	std::map<unsigned int, AIDA::IHistogram2D *> innerMapYHit;
 	std::map<unsigned int, AIDA::IHistogram2D *> innerMapXHitShift;
@@ -688,13 +674,6 @@ void EUTelCorrelator::bookHistos() {
       	
 	//[START] loop over sensors (to)
 	for(auto toID : _sensorIDVec) {
-	
-	//check if plane is excluded, then skip
-	  std::vector<int>::iterator it =
-        std::find(_excludedPlaneIDVec.begin(), _excludedPlaneIDVec.end(), toID);
-      if(it != _excludedPlaneIDVec.end()) {
-      	continue;
-      }
 	  
 	  if ((toID != getFixedPlaneID() && fromID == getFixedPlaneID()) ||
 	      (_sensorIDtoZ.at(toID) == _sensorIDtoZ.at(fromID) + 1)) {
