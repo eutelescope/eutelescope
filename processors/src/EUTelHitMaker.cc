@@ -320,10 +320,10 @@ void EUTelHitMaker::processEvent(LCEvent *event) {
 	//coordinate centre at the sensor centre
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 	if(_histogramSwitch) {
-      AIDA::IHistogram2D *histo = dynamic_cast<AIDA::IHistogram2D *>(
+      AIDA::IHistogram2D *histo_loc = dynamic_cast<AIDA::IHistogram2D *>(
               _hitLocalHistos[sensorID]);
-      if(histo) {	              
-        histo->fill(telPos[0], telPos[1]);
+      if(histo_loc) {	              
+        histo_loc->fill(telPos[0], telPos[1]);
       } else {
         streamlog_out(ERROR1)
             << "Not able to retrieve histogram pointer for hitLocal_det" << sensorID
@@ -342,10 +342,10 @@ void EUTelHitMaker::processEvent(LCEvent *event) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     if(_histogramSwitch) {
-      AIDA::IHistogram2D *histo = dynamic_cast<AIDA::IHistogram2D *>(
+      AIDA::IHistogram2D *histo_tel = dynamic_cast<AIDA::IHistogram2D *>(
               _hitTelescopeHistos[sensorID]);
-      if(histo) {	
-        histo->fill(telPos[0], telPos[1]);
+      if(histo_tel) {	
+        histo_tel->fill(telPos[0], telPos[1]);
       } else {
         streamlog_out(ERROR1)
             << "Not able to retrieve histogram pointer for hitTelescope_det" << sensorID
@@ -404,7 +404,7 @@ void EUTelHitMaker::end() {
 void EUTelHitMaker::bookHistos(int sensorID) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-  std::string basePath = "detector_" + to_string(sensorID);
+  std::string basePath = "detector_" + std::to_string(sensorID);
   AIDAProcessor::tree(this)->mkdir(basePath.c_str());
   basePath = basePath + "/";
   
@@ -417,7 +417,7 @@ void EUTelHitMaker::bookHistos(int sensorID) {
   int yPixels = geo::gGeometry().getPlaneNumberOfPixelsY(sensorID);
 
   //create 2D histogram: hit map local
-  std::string histName_hitLocal = "hitLocal_det" + to_string(sensorID);
+  std::string histName_hitLocal = "hitLocal_det" + std::to_string(sensorID);
   //note: in local frame the origin is at the centre of the sensor; need both, 
   //+/- x/y direction; add/subtract constant to see all hits on histogram
   double constant = 5; 
@@ -444,7 +444,7 @@ void EUTelHitMaker::bookHistos(int sensorID) {
   }
   
   //create 2D histogram: hit map telescope
-  std::string histName_hitTelescope = "hitTelescope_det" + to_string(sensorID);
+  std::string histName_hitTelescope = "hitTelescope_det" + std::to_string(sensorID);
   double safetyFactor = 1.2;
   xMin = safetyFactor * (xPosition - (0.5*xSize));
   xMax = safetyFactor * (xPosition + (0.5*xSize));
@@ -458,7 +458,7 @@ void EUTelHitMaker::bookHistos(int sensorID) {
           (basePath+histName_hitTelescope).c_str(), xNBin, xMin, xMax, yNBin, yMin, yMax);
   if(hist2D_hitTelescope) {
     hist2D_hitTelescope->setTitle("Hit map (telescope frame); x position [mm]; y position [mm]");
-    _hitLocalHistos.insert(std::make_pair(sensorID, hist2D_hitTelescope));
+    _hitTelescopeHistos.insert(std::make_pair(sensorID, hist2D_hitTelescope));
   } else {
     streamlog_out(ERROR1) << "Problem booking the "
                           << (basePath + histName_hitTelescope) << ".\n"
