@@ -522,16 +522,12 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
         }//[ENDIF] check planes
       }//[END] loop over collection (internal)
 
-      std::vector<int> planeID_unique = planeIDVec;
-      std::vector<int>::iterator p, p_end;
+      std::vector<int> planeID_unique = planeIDVec;          
       
-      std::cout << "DEBUG: vorher " << planeID_unique.size() << std::endl;
+      //remove duplicates (@JHA: added here erase, function still okay)
+      auto p_end = unique(planeID_unique.begin(),planeID_unique.end()); 
+      planeID_unique.erase(p_end,planeID_unique.end());
       
-      //remove duplicates
-      p_end = unique(planeID_unique.begin(),planeID_unique.end()); 
-      
-      std::cout << "DEBUG: nachher " << planeID_unique.size() << std::endl;
-
       //[IF] check for minmal number of correlated hits
       if(static_cast<int>(planeID_unique.size()) > _minNumberOfCorrelatedHits &&
           trackXVec.size() == trackYVec.size()) {
