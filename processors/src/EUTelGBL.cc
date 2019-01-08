@@ -119,7 +119,7 @@ EUTelGBL::EUTelGBL(): Processor("EUTelGBL") {
   registerOptionalParameter("SUT_ID", "ID of the plane whose scattering should be investigated (negative for none)", _SUTID, -1);
   registerOptionalParameter("DUTCuts", "Cuts in x and y for matching DUT hits [mm]", _DUTCuts, std::vector<float>{1.,1.});
   registerOptionalParameter("zMid", "Z Position used for triplet matching (default to center between end of first triplet and start of second triplet)", _zMid, -1.0);
-  registerOptionalParameter("chi2Cut", "Cut on the chi2 for the tracks to be passed to Millepede", _chi2cut, 0.001);
+  registerOptionalParameter("chi2Cut", "Cut on chi2 over Ndf for the tracks to be passed to Millepede", _chi2cut, 0.001);
   registerOptionalParameter("pedeSteerfileName","Name of the steering file for the pede program",_pedeSteerfileName, std::string{"steer_mille.txt"});
   registerProcessorParameter("kappa","Global factor to Highland formula, 1.0 means HL as is, 1.2 means 20/% additional scattering", _kappa, 1.0);
 }
@@ -786,7 +786,7 @@ void EUTelGBL::processEvent( LCEvent * event ) {
   
     // do not pass very bad tracks to mille. Only if the alignment is performed
     if(_performAlignment){
-      if(probchi > _chi2cut) { // FIXME should it be a cut on the chi2 or on the probability
+      if(Chi2 / Ndf < _chi2cut) {
           traj.milleOut( *milleAlignGBL );
             _nMilleTracks ++;
       }
