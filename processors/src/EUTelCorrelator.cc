@@ -97,6 +97,11 @@ EUTelCorrelator::EUTelCorrelator()
                             _fixedPlaneID,
 			    0);
 
+  registerOptionalParameter("ExcludedPlanes",
+                            "The list of sensor IDs that shall be excluded (e.g. passive plane).",
+                            _excludedPlaneIDVec,
+			    std::vector<int>());
+
   registerOptionalParameter("ResidualsXMin",
 			    "Minimal values of the hit residuals in the X direction "
 			    "for a correlation band (ordered along z of sensors).",
@@ -563,7 +568,7 @@ void EUTelCorrelator::bookHistos() {
   //if no cluster and hits, no histograms needed
   if(!_hasClusterCollection && !_hasHitCollection)
     return;
-  
+     
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   try {
     streamlog_out(DEBUG5) << "Booking histograms" << std::endl;
@@ -581,14 +586,28 @@ void EUTelCorrelator::bookHistos() {
       marlin::AIDAProcessor::tree(this)->mkdir("ClusterY");
       
       //[START] loop over sensors (from)
-      for(auto fromID : _sensorIDVec) {
+      for(auto fromID : activeSensorIDVec) {
 	
 	std::map<unsigned int, AIDA::IHistogram2D *> innerMapXCluster;
 	std::map<unsigned int, AIDA::IHistogram2D *> innerMapYCluster;
+	
+	//check if plane is excluded, then skip
+	std::vector<int>::iterator it =
+	  std::find(_excludedPlaneIDVec.begin(), _excludedPlaneIDVec.end(), fromID);
+	if(it != _excludedPlaneIDVec.end()) {
+	  continue;
+	}     
       	
 	//[START] loop over sensors (to)
-	for(auto toID : _sensorIDVec) {
-	  
+	for(auto toID : activeSensorIDVec) {
+	
+	  //check if plane is excluded, then skip
+	  std::vector<int>::iterator it =
+	    std::find(_excludedPlaneIDVec.begin(), _excludedPlaneIDVec.end(), toID);
+	  if(it != _excludedPlaneIDVec.end()) {
+	    continue;
+	  }
+      
 	  if((toID != getFixedPlaneID() && fromID == getFixedPlaneID()) ||
 	     (_sensorIDtoZ.at(toID) == _sensorIDtoZ.at(fromID) + 1)) {
             
@@ -654,7 +673,14 @@ void EUTelCorrelator::bookHistos() {
       
       //[START] loop over sensors (from)
       for(auto fromID : _sensorIDVec) {
-    	
+      
+      //check if plane is excluded, then skip
+	  std::vector<int>::iterator it =
+        std::find(_excludedPlaneIDVec.begin(), _excludedPlaneIDVec.end(), fromID);
+      if(it != _excludedPlaneIDVec.end()) {
+      	continue;
+      }     
+          	
 	std::map<unsigned int, AIDA::IHistogram2D *> innerMapXHit;
 	std::map<unsigned int, AIDA::IHistogram2D *> innerMapYHit;
 	std::map<unsigned int, AIDA::IHistogram2D *> innerMapXHitShift;
@@ -662,6 +688,13 @@ void EUTelCorrelator::bookHistos() {
       	
 	//[START] loop over sensors (to)
 	for(auto toID : _sensorIDVec) {
+	
+	//check if plane is excluded, then skip
+	  std::vector<int>::iterator it =
+        std::find(_excludedPlaneIDVec.begin(), _excludedPlaneIDVec.end(), toID);
+      if(it != _excludedPlaneIDVec.end()) {
+      	continue;
+      }
 	  
 	  if ((toID != getFixedPlaneID() && fromID == getFixedPlaneID()) ||
 	      (_sensorIDtoZ.at(toID) == _sensorIDtoZ.at(fromID) + 1)) {

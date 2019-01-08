@@ -118,7 +118,7 @@ namespace eutelescope {
     virtual int getFixedPlaneID() { return _fixedPlaneID; }
 
   protected:
-  	//! Input collection name.
+    //! Input collection name.
     /*! This is the name of the input hit collection.
      */
     std::string _inputHitCollectionName;
@@ -130,6 +130,9 @@ namespace eutelescope {
     
     //! set the plane to use as a reference/starting point for correlations
     int _fixedPlaneID;
+    
+    //! exclude planes (e.g. passive planes)
+    std::vector<int> _excludedPlaneIDVec;
 
     //! vector of correlation band cuts in X (upper limit)
     std::vector<float> _residualsXMax;
@@ -140,7 +143,7 @@ namespace eutelescope {
     //! vector of correlation band cuts in Y (lower limit)
     std::vector<float> _residualsYMin;
 
-	//! required number of correlated hits
+    //! required number of correlated hits
     int _minNumberOfCorrelatedHits; 
 
     //! Cluster charge cut
