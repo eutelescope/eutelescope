@@ -1,4 +1,3 @@
-// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -7,12 +6,15 @@
  *   header with author names in all development based on this file.
  *
  */
-#ifndef EUTELMULTILINEFIT_H
-#define EUTELMULTILINEFIT_H
+#ifndef EUTELGBL_H
+#define EUTELGBL_H
 
 // built only if GEAR is available
 #ifdef USE_GEAR
+
 // eutelescope includes ".h"
+#include "EUTelUtility.h"
+#include "EUTelTripletGBLUtility.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -22,16 +24,13 @@
 #include <EVENT/LCEvent.h>
 #include <IMPL/TrackerHitImpl.h>
 
-//for gbl::MilleBinary
-#include "include/MilleBinary.h"
-
-#include "EUTelUtility.h"
-#include "EUTelTripletGBLUtility.h"
-
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #endif
+
+//for gbl::MilleBinary
+#include "include/MilleBinary.h"
 
 // system includes <>
 #include <string>
@@ -51,9 +50,7 @@ namespace eutelescope {
        *
        *  @return a new EUTelGBL.
        */
-      virtual Processor * newProcessor() {
-	return new EUTelGBL;
-      }
+      virtual Processor * newProcessor() { return new EUTelGBL; }
 
       //! Default constructor
       EUTelGBL ();
@@ -76,22 +73,14 @@ namespace eutelescope {
        */
       virtual void processRunHeader (LCRunHeader * run);
 
-      //! Called for first event per run
-      /*! Reads hotpixel information from hotPixelCollection into hotPixelMap
-       * to be used in the sensor exclusion area logic 
-       */
-      //DP virtual void  FillHotPixelMap(LCEvent *event);
-
       //! Called every event
       virtual void processEvent (LCEvent * evt);
-
 
       //! Called after data processing.
       /*! This method is called when the loop on events is
        *  finished.
        */
       virtual void end();
-
 
       //! Histogram booking
       /*! Some control histograms are filled during this procedure in
@@ -166,7 +155,7 @@ namespace eutelescope {
       //MILLEPEDE
       std::string _binaryFilename;
       std::string _pedeSteerfileName;
-      std::unique_ptr<gbl::MilleBinary>  milleAlignGBL; // for producing MillePede-II binary file
+      std::unique_ptr<gbl::MilleBinary> milleAlignGBL;
 
       //statistics
       int _iRun;
@@ -181,9 +170,7 @@ namespace eutelescope {
       int _suggestAlignmentCuts;
       int _dumpTracks;
 
-    // definition of static members mainly used to name histograms
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-
     //histograms: hits, triplets and tracks
     AIDA::IHistogram1D * hist1D_nTelescopeHits;
     AIDA::IHistogram1D * hist1D_nUpstreamTriplets;
@@ -203,16 +190,14 @@ namespace eutelescope {
     std::vector<AIDA::IHistogram1D*> hist1D_gblKinkX;
     std::vector<AIDA::IHistogram1D*> hist1D_gblKinkY;
 
+	//histograms: SUT specific
     AIDA::IProfile2D* profile2D_gblSUTKinkXvsXY;
     AIDA::IProfile2D* profile2D_gblSUTKinkYvsXY;
-
 #endif
-
-  };
+  };	
 
   //! A global instance of the processor
   EUTelGBL gEUTelGBL;
-
 }
 #endif
 #endif

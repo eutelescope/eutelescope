@@ -16,23 +16,20 @@
 #include "EUTelPStream.h" // process streams redi::ipstream
 #include "EUTelGeometryTelescopeGeoDescription.h"
 #include "EUTelGenericPixGeoDescr.h"
+#include "EUTelTripletGBLUtility.h"
 
-// GBL:
+// GBL includes
 #include "include/GblTrajectory.h"
 #include "include/MilleBinary.h"
-
-#include "EUTelTripletGBLUtility.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
 #include "marlin/Global.h"
 #include "marlin/Exceptions.h"
 #include "marlin/AIDAProcessor.h"
-
-// marlin util includes
 #include "Mille.h"
 
-// aida includes <.h>
+// AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogramFactory.h>
@@ -76,60 +73,193 @@ using namespace lcio;
 using namespace marlin;
 using namespace eutelescope;
 
-
-
-//------------------------------------------------------------------------------
 EUTelGBL::EUTelGBL(): Processor("EUTelGBL") {
 
-  // modify processor description
   _description = "EUTelGBL uses the MILLE program to write data files for MILLEPEDE II.";
 
-  registerInputCollections(LCIO::TRACKERHIT,"hitCollectionName","Input hit collections name",_hitCollectionName, std::vector<std::string>{"hit"});
-  registerProcessorParameter("eBeam","Beam energy [GeV]",_eBeam, 4.0);
-  registerOptionalParameter("excludePlanes","Exclude planes from fit (their scattering budget is considered)",_excludedPlanes ,std::vector<int>());
-  registerOptionalParameter("requiredPlane","Only tracks with a hit on selected plane are considered",_requiredPlane, -1);
-  registerOptionalParameter("upstreamTriplet","The three sensors used as the upstream triplet", _upstreamTriplet_IDs, std::vector<int>{0,1,2});
-  registerOptionalParameter("downstreamTriplet","The three sensors used as the downstream triplet", _downstreamTriplet_IDs, std::vector<int>{3,4,5});
-  registerOptionalParameter("lastUpstreamSensor","The last plane (z-ordered) which still should be attached to the upstream triplet", _lastUpstreamSensorID, 2);
-  registerOptionalParameter("resolutionX","x-resolution of sensors (z-ordered) [mm]", _xResolutionVec ,std::vector<float>());
-  registerOptionalParameter("resolutionY","y-resolution of sensors (z-ordered) [mm]", _yResolutionVec ,std::vector<float>());
-  registerOptionalParameter("fixedPlanes","Fix sensor planes in the fit according to their sensor ids (it is recommended to fix two telescope planes)",_fixedPlanes ,std::vector<int>{0,5});
-  registerOptionalParameter("maxTrackCandidatesTotal","Maximal number of track candidates (Total)",_maxTrackCandidatesTotal, 10000000);
-  registerOptionalParameter("maxTrackCandidates","Maximal number of track candidates",_maxTrackCandidates, 2000);
-  registerOptionalParameter("milleBinaryFilename","Name of the Millepede binary file",_binaryFilename, std::string{"mille.bin"});
+  registerInputCollections(LCIO::TRACKERHIT,
+			   "hitCollectionName",
+			   "Input hit collections name",
+			   _hitCollectionName,
+			   std::vector<std::string>{"hit"});
+
+  registerProcessorParameter("eBeam",
+			     "Beam energy [GeV]",
+			     _eBeam,
+			     4.0);
+
+  registerProcessorParameter("kappa",
+			     "Global factor to Highland formula, 1.0 means HL as is, 1.2 means 20/% additional scattering",
+			     _kappa,
+			     1.0);
+
+  registerOptionalParameter("excludedPlanes",
+			    "Exclude planes from fit (their scattering budget is considered)",
+			    _excludedPlanes,
+			    std::vector<int>());
+
+  registerOptionalParameter("requiredPlane",
+			    "Only tracks with a hit on selected plane are considered",
+			    _requiredPlane,
+			    -1);
+
+  registerOptionalParameter("upstreamTriplet",
+			    "The three sensors used as the upstream triplet",
+			    _upstreamTriplet_IDs,
+			    std::vector<int>{0,1,2});
+
+  registerOptionalParameter("downstreamTriplet",
+			    "The three sensors used as the downstream triplet",
+			    _downstreamTriplet_IDs,
+			    std::vector<int>{3,4,5});
+
+  registerOptionalParameter("lastUpstreamSensor",
+			    "The last plane (z-ordered) which still should be attached to the upstream triplet",
+			    _lastUpstreamSensorID,
+			    2);
+
+  registerOptionalParameter("resolutionX",
+			    "x-resolution of sensors (z-ordered) [mm]",
+			    _xResolutionVec,
+			    std::vector<float>());
+
+  registerOptionalParameter("resolutionY",
+			    "y-resolution of sensors (z-ordered) [mm]",
+			    _yResolutionVec,
+			    std::vector<float>());
+
+  registerOptionalParameter("fixedPlanes",
+			    "Fix sensor planes in the fit according to their sensor ids (it is recommended to fix two telescope planes)",
+			    _fixedPlanes,
+			    std::vector<int>{0,5});
+
+  registerOptionalParameter("maxTrackCandidatesTotal",
+			    "Maximal number of track candidates (Total)",
+			    _maxTrackCandidatesTotal,
+			    10000000);
+
+  registerOptionalParameter("maxTrackCandidates",
+			    "Maximal number of track candidates",
+			    _maxTrackCandidates,
+			    2000);
+
+  registerOptionalParameter("milleBinaryFilename",
+			    "Name of the Millepede binary file",
+			    _binaryFilename,
+			    std::string{"mille.bin"});
+
   registerOptionalParameter("alignMode","Number of alignment constants used. Available mode are:"
-                              "\n\t\tXYShifts - shifts in X and Y"
-                              "\n\t\tXYShiftsRotZ - shifts in X and Y and rotation around the Z axis,"
-                              "\n\t\tXYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis"
-                              "\n\t\tXYZShiftsRotXYZ - all shifts and rotations allowed",
-                              _alignModeString, std::string{ "XYShiftsRotZ" });
-  registerOptionalParameter("performAlignment","Set to 0 if you do not want to perform the alignment",_performAlignment, 1);
-  registerOptionalParameter("suggestAlignmentCuts","Set to 1 if you want suggestions of which cuts to use on the tracks slope/residual to be print out during the alignment",_suggestAlignmentCuts, 0);
-  registerOptionalParameter("dumpTracks","Set to 0 if you do not want to dump tracks in an lcio collection (necessary to dump in an NTuple)",_dumpTracks, 1);
-  registerOptionalParameter("fixedXShift","List of planes which should be fixed in X direction",_FixedXShift ,std::vector<int>());
-  registerOptionalParameter("fixedYShift","List of planes which should be fixed in Y direction",_FixedYShift ,std::vector<int>());
-  registerOptionalParameter("fixedZShift","List of planes which should be fixed in Z direction",_FixedZShift ,std::vector<int>());
-  registerOptionalParameter("fixedZRot","List of planes which should have a fixed Z rotation",_FixedZRot ,std::vector<int>());
-  registerOptionalParameter("fixedYRot","List of planes which should have a fixed Y rotation",_FixedYRot ,std::vector<int>{0,1,2,3,4,5});
-  registerOptionalParameter("fixedXRot","List of planes which should have a fixed X rotation",_FixedXRot ,std::vector<int>{0,1,2,3,4,5});
-  registerOptionalParameter("upstreamTripletResidualCut", "Upstream triplet residual cut [mm]", _upstreamTriplet_ResCut, 0.30);
-  registerOptionalParameter("downstreamTripletResidualCut", "Downstream triplet residual cut [mm]", _downstreamTriplet_ResCut, 0.40);
-  registerOptionalParameter("upstreamTripletSlopeCut", "Upstream triplet slope cut [mrad]", _upstreamTriplet_SlopeCut, 3.);
-  registerOptionalParameter("downstreamTripletSlopeCut", "Downstream triplet slope cut [mrad]", _downstreamTriplet_SlopeCut, 5.);
-  registerOptionalParameter("tripletsMatchingCut", "Upstream-downstream triplet matching cut [mm]", _upDownTripletMatchCut, 0.60);
-  registerOptionalParameter("SUT_ID", "ID of the plane whose scattering should be investigated (negative for none)", _SUT_ID, -1);
-  registerOptionalParameter("DUTCuts", "Cuts in x and y for matching DUT hits [mm]", _dutCuts, std::vector<float>{1.,1.});
-  registerOptionalParameter("zMid", "Z Position used for triplet matching (default to center between end of first triplet and start of second triplet)", _zMid, -1.0);
-  registerOptionalParameter("chi2Cut", "Cut on the chi2 for the tracks to be passed to Millepede", _chi2Cut, 0.001);
-  registerOptionalParameter("pedeSteerfileName","Name of the steering file for the pede program",_pedeSteerfileName, std::string{"steer_mille.txt"});
-  registerProcessorParameter("kappa","Global factor to Highland formula, 1.0 means HL as is, 1.2 means 20/% additional scattering", _kappa, 1.0);
+			    "\n\t\tXYShifts - shifts in X and Y"
+			    "\n\t\tXYShiftsRotZ - shifts in X and Y and rotation around the Z axis,"
+			    "\n\t\tXYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis"
+			    "\n\t\tXYZShiftsRotXYZ - all shifts and rotations allowed",
+			    _alignModeString,
+			    std::string{ "XYShiftsRotZ" });
+
+  registerOptionalParameter("performAlignment",
+			    "Set to 0 if you do not want to perform the alignment",
+			    _performAlignment,
+			    1);
+
+  registerOptionalParameter("suggestAlignmentCuts",
+			    "Set to 1 if you want suggestions of which cuts to use on the tracks "
+			    "slope/residual to be print out during the alignment",
+			    _suggestAlignmentCuts,
+			    0);
+
+  registerOptionalParameter("dumpTracks",
+			    "Set to 0 if you do not want to dump tracks in an lcio collection "
+			    "(necessary to dump in an NTuple)",
+			    _dumpTracks,
+			    1);
+
+  registerOptionalParameter("fixedXShift",
+			    "List of planes which should be fixed in X direction",
+			    _FixedXShift,
+			    std::vector<int>());
+
+  registerOptionalParameter("fixedYShift",
+			    "List of planes which should be fixed in Y direction",
+			    _FixedYShift,
+			    std::vector<int>());
+
+  registerOptionalParameter("fixedZShift",
+			    "List of planes which should be fixed in Z direction",
+			    _FixedZShift,
+			    std::vector<int>());
+
+  registerOptionalParameter("fixedZRot",
+			    "List of planes which should have a fixed Z rotation",
+			    _FixedZRot,
+			    std::vector<int>());
+
+  registerOptionalParameter("fixedXRot",
+			    "List of planes which should have a fixed X rotation",
+			    _FixedXRot,
+			    std::vector<int>{0,1,2,3,4,5});
+
+  registerOptionalParameter("fixedYRot",
+			    "List of planes which should have a fixed Y rotation",
+			    _FixedYRot,
+			    std::vector<int>{0,1,2,3,4,5});
+
+  registerOptionalParameter("upstreamTripletResidualCut",
+			    "Upstream triplet residual cut [mm]",
+			    _upstreamTriplet_ResCut,
+			    0.30);
+
+  registerOptionalParameter("downstreamTripletResidualCut",
+			    "Downstream triplet residual cut [mm]",
+			    _downstreamTriplet_ResCut,
+			    0.40);
+
+  registerOptionalParameter("upstreamTripletSlopeCut",
+			    "Upstream triplet slope cut [mrad]",
+			    _upstreamTriplet_SlopeCut,
+			    3.);
+
+  registerOptionalParameter("downstreamTripletSlopeCut",
+			    "Downstream triplet slope cut [mrad]",
+			    _downstreamTriplet_SlopeCut,
+			    5.);
+
+  registerOptionalParameter("tripletsMatchingCut",
+			    "Upstream-downstream triplet matching cut [mm]",
+			    _upDownTripletMatchCut,
+			    0.60);
+
+  registerOptionalParameter("SUT_ID",
+			    "ID of the plane whose scattering should be investigated (negative for none)",
+			    _SUT_ID,
+			    -1);
+
+  registerOptionalParameter("DUTCuts",
+			    "Cuts in x and y for matching DUT hits [mm]",
+			    _dutCuts,
+			    std::vector<float>{1.,1.});
+
+  registerOptionalParameter("zMid",
+			    "Z Position used for triplet matching (default to center between end of "
+			    "first triplet and start of second triplet)",
+			    _zMid,
+			    -1.0);
+
+  registerOptionalParameter("chi2Cut",
+			    "Cut on the chi2 for the tracks to be passed to Millepede",
+			    _chi2Cut,
+			    0.001);
+
+  registerOptionalParameter("pedeSteerfileName",
+			    "Name of the steering file for the pede program",
+			    _pedeSteerfileName,
+			    std::string{"steer_mille.txt"});
 }
 
-//------------------------------------------------------------------------------
+
 void EUTelGBL::init() {
   geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME,
                                              EUTELESCOPE::DUMPGEOROOT);
-
+  
   //get vector of sensorIDs ordered along the global z-axis (guaranteed by the framework)
   _sensorIDVec = geo::gGeometry().sensorIDsVec();
   _nPlanes = _sensorIDVec.size();
@@ -164,9 +294,6 @@ void EUTelGBL::init() {
   for(int id : _DUT_IDs) streamlog_out(MESSAGE4) << id << " ";
   streamlog_out(MESSAGE4) << std::endl;
 
-  for(int id : _sensorIDVec) streamlog_out(MESSAGE4) << "SUT: " << geo::gGeometry().getPlaneRadiationLength(id) << " " << geo::gGeometry().getPlaneZSize(id) << std::endl;
-  streamlog_out(MESSAGE4) << std::endl;
-
   //compute the total radiation length
   double totalRadLength = 0;
   //add air from the first to the last plane
@@ -178,7 +305,7 @@ void EUTelGBL::init() {
   }
 
   for(auto& radLen: _planeRadLength) {
-      // Paper showed HL predicts too high angle, at least for biased measurement. 
+      //Paper showed HL predicts too high angle, at least for biased measurement. 
       double tetSi = _kappa*0.0136 * sqrt(radLen) / _eBeam * ( 1 + 0.038*std::log(totalRadLength) );
       _planeWscatSi.emplace_back( 1.0/(tetSi*tetSi), 1.0/(tetSi*tetSi) );
   }
@@ -191,10 +318,10 @@ void EUTelGBL::init() {
   }
 
   //FIXME: Really needed this output?
-  streamlog_out(MESSAGE4)   << "Assumed beam energy " << _eBeam << " GeV" <<  std::endl;
-  streamlog_out(MESSAGE4)   << "\n\t_planeRadLength has size: \t" << _planeRadLength.size() 
-                            << "\n\t_planeWscatSi has size: \t" << _planeWscatSi.size() 
-                            << "\n\t_planeWscatAir has size: \t" << _planeWscatAir.size() << '\n';
+  streamlog_out(MESSAGE4) << "Assumed beam energy " << _eBeam << " GeV" <<  std::endl;
+  streamlog_out(MESSAGE4) << "\n\t_planeRadLength has size: \t" << _planeRadLength.size() 
+			  << "\n\t_planeWscatSi has size: \t" << _planeWscatSi.size() 
+			  << "\n\t_planeWscatAir has size: \t" << _planeWscatAir.size() << std::endl;
 
   for(size_t ipl = 0; ipl < _nPlanes; ipl++) {
     auto x_res = _xResolutionVec.at(ipl);
@@ -202,7 +329,7 @@ void EUTelGBL::init() {
     _planeMeasPrec.emplace_back(1.0/(x_res*x_res), 1.0/(y_res*y_res));
   }
 
-  // calculation of center of triplets (only needed if not given by user)
+  //calculation of center of triplets (only needed if not given by user)
   if( _zMid<0 ) {
     double upstreamTriplet_zEnd = 0;
     double downstreamTriplet_zStart = 0;
@@ -215,16 +342,15 @@ void EUTelGBL::init() {
   
   streamlog_out( MESSAGE4 ) << "Extrapolated tracks from the triplets will be matched in z position = " << _zMid << std::endl;
 
-  // this method is called only once even when the rewind is active
-  // usually a good idea to
+  //usually a good idea to do
   printParameters ();
 
-  // set to zero the run and event counters
+  //reset run and event counters
   _iRun = 0;
   _iEvt = 0;
   _printEventCounter = 0;
 
-  // Initialise Mille statistics:
+  //initialise Mille statistics
   _nMilleTracks = 0;
 
   // booking histograms
@@ -232,14 +358,14 @@ void EUTelGBL::init() {
   gblutil.setParent(this);
   gblutil.bookHistos();
   
-  // to be used only during alignment
+  //only for alignment
   if(_performAlignment){ 
-    streamlog_out( MESSAGE2 ) << "Initialising Mille..." << endl;
+    streamlog_out( MESSAGE2 ) << "Initialising Mille..." << std::endl;
 
     unsigned int reserveSize = 8000;
     milleAlignGBL = std::make_unique<gbl::MilleBinary>( _binaryFilename, reserveSize );
 
-    streamlog_out( MESSAGE2 ) << "Filename for the binary file is: " << _binaryFilename.c_str() << endl;
+    streamlog_out( MESSAGE2 ) << "Filename for the binary file is: " << _binaryFilename.c_str() << std::endl;
 
     if(_alignModeString.compare("XYShiftsRotZ") == 0 ) {
       _alignMode = Utility::alignMode::XYShiftsRotZ;
@@ -255,7 +381,7 @@ void EUTelGBL::init() {
     }
   
     //Creating the steering file here in init, since doing it in the end section creates problem with opening it in EUTelPedeGEAR
-    streamlog_out( MESSAGE4 ) << "Generating the steering file for the pede program..." << endl;
+    streamlog_out( MESSAGE4 ) << "Generating the steering file for the pede program..." << std::endl;
 
     std::ofstream steerFile;
     steerFile.open(_pedeSteerfileName.c_str());
@@ -265,14 +391,18 @@ void EUTelGBL::init() {
       steerFile << _binaryFilename << std::endl << std::endl;
       steerFile << "Parameter" << std::endl;
 
-      // loop over all planes
+      //[START] loop over all planes
       for(size_t ipl=0; ipl<_nPlanes; ipl++) {
 
 	//check if current plane is excluded, if so skip
-        if(std::find(std::begin(_excludedPlanes), std::end(_excludedPlanes), _sensorIDVec[ipl]) != _excludedPlanes.end()) continue;
+        if(std::find(std::begin(_excludedPlanes), std::end(_excludedPlanes), 
+		     _sensorIDVec[ipl]) != _excludedPlanes.end()) {
+	  continue;
+	}
 	
 	//check if fixed: current plane is not fixed
-	if(std::find(std::begin(_fixedPlanes), std::end(_fixedPlanes), _sensorIDVec[ipl]) != _fixedPlanes.end()) {
+	if(std::find(std::begin(_fixedPlanes), std::end(_fixedPlanes),
+		     _sensorIDVec[ipl]) != _fixedPlanes.end()) {
 	  std::map<Utility::alignMode, int> map_alignModes;
 	  map_alignModes[Utility::alignMode::XYShifts] = 3;
 	  map_alignModes[Utility::alignMode::XYShiftsRotZ] = 4;
@@ -310,41 +440,39 @@ void EUTelGBL::init() {
 	  }
 	}
 	
-      } // end loop over all planes
+      }//[END] loop over all planes
       
-      steerFile << endl;
-      steerFile << "! chiscut 5.0 2.5" << endl;
-      steerFile << "outlierdownweighting 4" << endl;
-      steerFile << "dwfractioncut 0.1" << endl;
-      steerFile << endl;
-      steerFile << "method inversion 10  0.1" << endl;
+      steerFile << std::endl;
+      steerFile << "! chiscut 5.0 2.5" << std::endl;
+      steerFile << "outlierdownweighting 4" << std::endl;
+      steerFile << "dwfractioncut 0.1" << std::endl;
+      steerFile << std::endl;
+      steerFile << "method inversion 10  0.1" << std::endl;
       // Use 10 OpenMP threads to process the data:
-      steerFile << "threads 10 1" << endl;
-      steerFile << endl;
-      steerFile << "histprint" << endl;
-      steerFile << endl;
-      steerFile << "end" << endl;
-
+      steerFile << "threads 10 1" << std::endl;
+      steerFile << std::endl;
+      steerFile << "histprint" << std::endl;
+      steerFile << std::endl;
+      steerFile << "end" << std::endl;
       steerFile.close();
       
-      streamlog_out( MESSAGE2 ) << "File " << _pedeSteerfileName << " written." << endl;
+      streamlog_out( MESSAGE2 ) << "File " << _pedeSteerfileName << " written." << std::endl;
     } else {
-      streamlog_out( ERROR2 ) << "Could not open steering file." << endl;
+      streamlog_out( ERROR2 ) << "Could not open steering file." << std::endl;
     }
     // end writing the pede steering file
   }
-  streamlog_out( MESSAGE2 ) << "end of init" << endl;
+  streamlog_out( MESSAGE2 ) << "end of init" << std::endl;
 }
 
-//------------------------------------------------------------------------------
 void EUTelGBL::processRunHeader( LCRunHeader* rdr ) {
+
   auto header = std::make_unique<EUTelRunHeaderImpl>(rdr);
-  header->addProcessor( type() ) ;
-  // increment the run counter
+  header->addProcessor(type());
+  //increment the run counter
   ++_iRun;
 }
 
-//------------------------------------------------------------------------------
 inline Eigen::Matrix<double,5,5> Jac55new( double ds ) {
   /* for GBL:
      Jacobian for straight line track
@@ -358,10 +486,9 @@ inline Eigen::Matrix<double,5,5> Jac55new( double ds ) {
   return jac;
 }
 
-//------------------------------------------------------------------------------
 void EUTelGBL::processEvent( LCEvent * event ) {
 
-  if( _iEvt % 1000 == 0 ) {
+  if(_iEvt % 1000 == 0) {
     streamlog_out( MESSAGE2 ) << "Processing event "
       << setw(6) << setiosflags(ios::right)
       << event->getEventNumber() << " in run "
@@ -369,18 +496,19 @@ void EUTelGBL::processEvent( LCEvent * event ) {
       << event->getRunNumber()
       << ", currently having "
       << _nMilleTracks << " tracks "
-      << endl;
+      << std::endl;
   }
   
   //FIXME?: compiler doesn't like it inside an if clause
   LCCollectionVec* _outputTracks = new LCCollectionVec(LCIO::LCGENERICOBJECT);
   
-  if( _nMilleTracks > static_cast<size_t>(_maxTrackCandidatesTotal) ) {
+  if(_nMilleTracks > static_cast<size_t>(_maxTrackCandidatesTotal)) {
     throw StopProcessingException(this);
   }
+
   EUTelEventImpl* evt = static_cast<EUTelEventImpl*> (event) ;
 
-  if( evt->getEventType() == kEORE ) {
+  if(evt->getEventType() == kEORE) {
     streamlog_out( DEBUG2 ) << "EORE found: nothing else to do." << endl;
     return;
   }
@@ -412,13 +540,18 @@ void EUTelGBL::processEvent( LCEvent * event ) {
       auto sensorID = hitCellDecoder(hit)["sensorID"];
       auto hitPosition = hit->getPosition();
 
-      if(std::find(std::begin(_upstreamTriplet_IDs), std::end(_upstreamTriplet_IDs), sensorID) != _upstreamTriplet_IDs.end() || 
-	 std::find(std::begin(_downstreamTriplet_IDs), std::end(_downstreamTriplet_IDs), sensorID) != _downstreamTriplet_IDs.end()) {
+      if(std::find(std::begin(_upstreamTriplet_IDs), std::end(_upstreamTriplet_IDs), 
+		   sensorID) != _upstreamTriplet_IDs.end() || 
+	 std::find(std::begin(_downstreamTriplet_IDs), std::end(_downstreamTriplet_IDs), 
+		   sensorID) != _downstreamTriplet_IDs.end()) {
         telescopeHitsVec.emplace_back(hitPosition, sensorID);
       } else {
         dutHitsVec.emplace_back(hitPosition, sensorID);
       }
-      if(_printEventCounter < NO_PRINT_EVENT_COUNTER) streamlog_out(DEBUG0) << "Hit on plane " << sensorID << " at " << hitPosition[0] << "|" << hitPosition[1]  << std::endl;
+      if(_printEventCounter < NO_PRINT_EVENT_COUNTER) 
+	streamlog_out(DEBUG0) << "Hit on plane " << sensorID << " at " 
+			      << hitPosition[0] << "|" << hitPosition[1]  
+			      << std::endl;
     } //[END] loop over all hits in collection
   }//[END] loop over all input hit collections
 
@@ -426,8 +559,10 @@ void EUTelGBL::processEvent( LCEvent * event ) {
   auto upstreamTripletVec = std::vector<EUTelTripletGBLUtility::triplet>();
   auto downstreamTripletVec = std::vector<EUTelTripletGBLUtility::triplet>();
 
-  gblutil.FindTriplets(telescopeHitsVec, _upstreamTriplet_IDs, _upstreamTriplet_ResCut, _upstreamTriplet_SlopeCut/1000., upstreamTripletVec, false, true);
-  gblutil.FindTriplets(telescopeHitsVec, _downstreamTriplet_IDs, _downstreamTriplet_ResCut, _downstreamTriplet_SlopeCut/1000., downstreamTripletVec, false, false);
+  gblutil.FindTriplets(telescopeHitsVec, _upstreamTriplet_IDs, _upstreamTriplet_ResCut,
+		       _upstreamTriplet_SlopeCut/1000., upstreamTripletVec, false, true);
+  gblutil.FindTriplets(telescopeHitsVec, _downstreamTriplet_IDs, _downstreamTriplet_ResCut,
+		       _downstreamTriplet_SlopeCut/1000., downstreamTripletVec, false, false);
 
   if(_printEventCounter < NO_PRINT_EVENT_COUNTER){
     streamlog_out(DEBUG2)  << "UpstreamTriplets:" << std::endl;
@@ -440,13 +575,15 @@ void EUTelGBL::processEvent( LCEvent * event ) {
     }
   }
 
-  hist1D_nUpstreamTriplets->fill( upstreamTripletVec.size()  );
-  hist1D_nDownstreamTriplets->fill( downstreamTripletVec.size() );
+  hist1D_nUpstreamTriplets->fill(upstreamTripletVec.size());
+  hist1D_nDownstreamTriplets->fill(downstreamTripletVec.size());
 
   auto matchedTripletVec = std::vector<EUTelTripletGBLUtility::track>();
-  gblutil.MatchTriplets(upstreamTripletVec, downstreamTripletVec, _zMid, _upDownTripletMatchCut, matchedTripletVec);
+  gblutil.MatchTriplets(upstreamTripletVec, downstreamTripletVec, _zMid,
+			_upDownTripletMatchCut, matchedTripletVec);
 
-  if(_printEventCounter < NO_PRINT_EVENT_COUNTER) streamlog_out(DEBUG2) << "Matched to:" << std::endl; 
+  if(_printEventCounter < NO_PRINT_EVENT_COUNTER)
+    streamlog_out(DEBUG2) << "Matched to:" << std::endl; 
 
   if(!_DUT_IDs.empty())
     {
@@ -480,22 +617,22 @@ void EUTelGBL::processEvent( LCEvent * event ) {
   //[START] loop over matched tracks
   for(auto& track: matchedTripletVec) 
     {
-      // GBL point vector for the trajectory (in [mm])
-      // GBL with triplet A as seed
+      //GBL point vector for the trajectory (in [mm])
+      //GBL with triplet A as seed
       std::vector<gbl::GblPoint> traj_points;
-      // build up trajectory:
+      //build up trajectory:
       std::vector<unsigned int> labelVec;
       vector<double> sPoint;
       
-      // the arc length at the first measurement plane is 0.
+      //arc length at the first measurement plane is 0
       double s = 0;
       
       Eigen::Matrix2d proL2m = Eigen::Matrix2d::Identity();
-      Eigen::Vector2d scat = Eigen::Vector2d::Zero(); //mean is zero
+      Eigen::Vector2d scat = Eigen::Vector2d::Zero();
       
       auto uptriplet = track.get_upstream();
       auto downtriplet = track.get_downstream();
-      //We need the triplet slope to compute residual
+      //need triplet slope to compute residual
       auto tripletSlope = uptriplet.slope();
       
       std::vector<EUTelTripletGBLUtility::hit> DUThits;
@@ -506,7 +643,8 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 	DUThits.emplace_back(it->second);
       }
       
-      if(_printEventCounter < NO_PRINT_EVENT_COUNTER) streamlog_out(DEBUG2) << "Track has " << DUThits.size() << " DUT hits" << std::endl;
+      if(_printEventCounter < NO_PRINT_EVENT_COUNTER) 
+	streamlog_out(DEBUG2) << "Track has " << DUThits.size() << " DUT hits" << std::endl;
       
       //selection of tracks with a hit on a selected/required plane
       if(_requiredPlane!=-1) {
@@ -520,7 +658,8 @@ void EUTelGBL::processEvent( LCEvent * event ) {
         if(rejectTrack) continue;
       }
       
-      //FIXME: to be used only during alignment. Matrix defined outside if clause to avoid complaints from compiler. Could be done better
+      //FIXME: to be used only during alignment. Matrix defined outside if clause to 
+      //avoid complaints from compiler. Could be done better
       
       //define alignment derivatives
       Eigen::Matrix2d alDer2;
@@ -570,14 +709,15 @@ void EUTelGBL::processEvent( LCEvent * event ) {
       //[START] loop over all planes
       for(size_t ipl=0; ipl<_nPlanes; ++ipl) {
 
-	//We have to add all the planes, the up and downstream arm of the telescope will definitely have
-	//hits, the DUTs might not though!
+	//add all the planes: up/downstream telescope will have hits, DUTs maybe
 	EUTelTripletGBLUtility::hit const *hit = nullptr;
 	auto sensorID = _sensorIDVec[ipl];
 
-	if(std::find(_upstreamTriplet_IDs.begin(), _upstreamTriplet_IDs.end(), sensorID) != _upstreamTriplet_IDs.end()) {
+	if(std::find(_upstreamTriplet_IDs.begin(), _upstreamTriplet_IDs.end(), 
+		     sensorID) != _upstreamTriplet_IDs.end()) {
 	  hit = &uptriplet.gethit(sensorID);
-	} else if(std::find(_downstreamTriplet_IDs.begin(), _downstreamTriplet_IDs.end(), sensorID) != _downstreamTriplet_IDs.end()) {
+	} else if(std::find(_downstreamTriplet_IDs.begin(), _downstreamTriplet_IDs.end(), 
+			    sensorID) != _downstreamTriplet_IDs.end()) {
 	  hit = &downtriplet.gethit(sensorID);
 	} else if(uptriplet.has_DUT(sensorID)) {
 	  hit = &uptriplet.get_DUT_Hit(sensorID);
@@ -585,7 +725,7 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 	  hit = &downtriplet.get_DUT_Hit(sensorID);
 	}
 
-	//if there is no hit we take the plane position from the geo description
+	//if there is no hit, take plane position from the geo description
 	double zz = hit ? hit->z : _planePosition[ipl];// [mm]
 	
 	//transport matrix in (q/p, x', y', x, y) space
@@ -595,38 +735,42 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 	
 	if(hit) {
 	  hasHit[ipl] = true; 
-	  //if there is a hit we will add a measurement to the point
-	  //in case of excluded plane, we want to know if there is a hit, but we don't process it here
-	  if(std::find(std::begin(_excludedPlanes), std::end(_excludedPlanes), _sensorIDVec[ipl]) == _excludedPlanes.end()){
+	  //if there is a hit, add a measurement to the point
+	  //for excluded plane: want to know if there is a hit, but don't process it here
+	  if(std::find(std::begin(_excludedPlanes), std::end(_excludedPlanes), 
+		       _sensorIDVec[ipl]) == _excludedPlanes.end()){
 	    double xs = uptriplet.getx_at(zz);
 	    double ys = uptriplet.gety_at(zz);
 	    
-	    if(_printEventCounter < NO_PRINT_EVENT_COUNTER) streamlog_out(DEBUG2) << "xs = " << xs << "   ys = " << ys << std::endl;
+	    if(_printEventCounter < NO_PRINT_EVENT_COUNTER)
+	      streamlog_out(DEBUG2) << "xs = " << xs << "   ys = " << ys << std::endl;
 	    
 	    //add residuals as hit to triplet
 	    rx[ipl] = (hit->x - xs);
 	    ry[ipl] = (hit->y - ys);
 	    
-	    //fill meas vector for GBL
-	    Eigen::Vector2d meas (rx[ipl], ry[ipl]);
+	    //fill measurement vector for GBL
+	    Eigen::Vector2d meas(rx[ipl], ry[ipl]);
 	    point.addMeasurement( proL2m, meas, _planeMeasPrec[ipl] );
 	    
-	    // if there is a SUT, add a local parameter for kink estimation for the planes after the SUT
+	    //for SUT: add local parameter for kink estimation for the planes after the SUT
 	    if(_SUT_ID > 0){
-	      double SUT_zpos = geo::gGeometry().getPlaneZPosition(_SUT_ID); //FIXME: very sloppy. SUT_zpos should not be retrieved every time
+	      //FIXME: very sloppy. SUT_zpos should not be retrieved every time
+	      double SUT_zpos = geo::gGeometry().getPlaneZPosition(_SUT_ID);
 	      double distSUT = _planePosition[ipl] - SUT_zpos; 
 	      if(distSUT > 0){
-		Eigen::Matrix<double,2,4> addDer = Eigen::Matrix<double,2,4>::Zero(); //FIXME: definition can stay here or should be moved out?
+		//FIXME: definition can stay here or should be moved out?
+		Eigen::Matrix<double,2,4> addDer = Eigen::Matrix<double,2,4>::Zero();
 		double thickness = geo::gGeometry().getPlaneZSize(_SUT_ID);
-		addDer(0,0) = (distSUT - thickness/sqrt(12)); // first scatterer in target
+		addDer(0,0) = (distSUT - thickness/sqrt(12)); //first scatterer in target
 		addDer(1,1) = (distSUT - thickness/sqrt(12)); 
-		addDer(0,2) = (distSUT + thickness/sqrt(12)); // second scatterer in target
+		addDer(0,2) = (distSUT + thickness/sqrt(12)); //second scatterer in target
 		addDer(1,3) = (distSUT + thickness/sqrt(12)); 
 		point.addLocals(addDer);
 	      }
 	    }
 
-	    //to be used only during alignment
+	    //only during alignment
 	    if(_performAlignment) {
 	      
 	      //alignMode: only x and y shifts
@@ -635,7 +779,7 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 		std::vector<int> globalLabels(2);
 		globalLabels[0] = _sensorIDVec[ipl] * 10 + 1; //x
 		globalLabels[1] = _sensorIDVec[ipl] * 10 + 2; //y
-		point.addGlobals( globalLabels, alDer2 ); // for MillePede alignment
+		point.addGlobals( globalLabels, alDer2 );
 	      } 
 	      //alignMode: x,y shifts and rotation z
 	      else if( _alignMode == Utility::alignMode::XYShiftsRotZ ) {
@@ -645,7 +789,7 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 		globalLabels[2] = _sensorIDVec[ipl] * 10 + 3; //rotZ
 		alDer3(0,2) = -ys; //dx/dphi
 		alDer3(1,2) =  xs; //dy/dphi
-		point.addGlobals( globalLabels, alDer3 ); // for MillePede alignment
+		point.addGlobals( globalLabels, alDer3 );
 	      } 
 	      //alignMode: x,y,z shifts and rotation z
 	      else if( _alignMode == Utility::alignMode::XYZShiftsRotZ ) {
@@ -656,12 +800,13 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 		globalLabels[3] = _sensorIDVec[ipl] * 10 + 4; //z
 		alDer4(0,2) = -ys; //dx/dphi
 		alDer4(1,2) =  xs; //dy/dphi
-		point.addGlobals( globalLabels, alDer4 ); // for MillePede alignment
+		point.addGlobals( globalLabels, alDer4 );
 	      } 
 	      //alignMode: x,y,z shifts and rotation x,y,z
 	      else if( _alignMode == Utility::alignMode::XYZShiftsRotXYZ ) {
 		double deltaz = hit->z - _planePosition[ipl];
-		if ( deltaz < 1E-9 ) deltaz = 1E-9; //FIXME: a bit hacky? : deltaz cannot be zero, otherwise this mode doesn't work
+		//FIXME: a bit hacky? : deltaz cannot be zero, otherwise this mode doesn't work
+		if ( deltaz < 1E-9 ) deltaz = 1E-9;
 		std::vector<int> globalLabels(6);
 		globalLabels[0] = _sensorIDVec[ipl] * 10 + 1; //x
 		globalLabels[1] = _sensorIDVec[ipl] * 10 + 2; //y
@@ -675,7 +820,7 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 		alDer6(1,5) = xs; //dy/dg
 		alDer6(2,3) = ys; //dz/da
 		alDer6(2,4) = -xs; //dz/db
-		point.addGlobals( globalLabels, alDer6 ); // for MillePede alignment
+		point.addGlobals( globalLabels, alDer6 );
 	      }
 	    }
 	  }
@@ -693,19 +838,19 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 	//fill up with two air scatters in between planes
 	if( ipl < _nPlanes-1 ) {
 	  double distplane = _planePosition[ipl+1] - _planePosition[ipl];
-	  step = 0.21*distplane; // in [mm]
+	  step = 0.21*distplane; //in [mm]
 	  auto point_left = gbl::GblPoint( Jac55new( step ) );
 	  point_left.addScatterer( scat, _planeWscatAir[ipl] );
 	  s += step;
 	  traj_points.push_back(point_left);
 	  sPoint.push_back( s );
-	  step = 0.58*distplane; // in [mm]
+	  step = 0.58*distplane; //in [mm]
 	  auto point_right = gbl::GblPoint( Jac55new( step ) );
 	  point_right.addScatterer( scat, _planeWscatAir[ipl] );
 	  s += step;
 	  traj_points.push_back(point_right);
 	  sPoint.push_back( s );
-	  step = 0.21*distplane; // remaining distance to next plane, in [mm]
+	  step = 0.21*distplane; //remaining distance to next plane, in [mm]
 	}
 	
       }//[END] loop over all planes
@@ -749,13 +894,13 @@ void EUTelGBL::processEvent( LCEvent * event ) {
       double probchi = TMath::Prob( Chi2, Ndf );
       hist1D_gblProbAlign->fill( probchi );
       
-      // look at fit:
+      //look at fit:
       Eigen::VectorXd localPar;
       Eigen::MatrixXd localCov;
       double prevAngleX = 0;
       double prevAngleY = 0;
       
-      // at plane 0:
+      //at plane 0:
       unsigned int ndata = 2;
       unsigned int ndim = 2;
       Eigen::VectorXd aResiduals(ndim);
@@ -776,9 +921,11 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 	
 	//check for an hit on plane
 	if(hasHit[ix]) {
-	  //check: plan is not excluded
-	  if(std::find(std::begin(_excludedPlanes), std::end(_excludedPlanes), _sensorIDVec[ix]) == _excludedPlanes.end()){
-	    traj.getMeasResults( ipos, ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+	  //check: plane is not excluded
+	  if(std::find(std::begin(_excludedPlanes), std::end(_excludedPlanes),
+		       _sensorIDVec[ix]) == _excludedPlanes.end()){
+	    traj.getMeasResults( ipos, ndata, aResiduals, aMeasErrors,
+				 aResErrors, aDownWeights );
 	    hist1D_gblResidX[ix]->fill( (aResiduals[0])*1E3 );
 	    hist1D_gblResidY[ix]->fill( (aResiduals[1])*1E3 );
 	    hist1D_gblPullX[ix]->fill( aResiduals[0]/aResErrors[0] );
@@ -787,17 +934,19 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 	  //check: plane is excluded
 	  else {
 	    EUTelTripletGBLUtility::hit const * hit = nullptr;
-	    if(std::find(_upstreamTriplet_IDs.begin(), _upstreamTriplet_IDs.end(), _sensorIDVec[ix]) != _upstreamTriplet_IDs.end()) {
+	    if(std::find(_upstreamTriplet_IDs.begin(), _upstreamTriplet_IDs.end(),
+			 _sensorIDVec[ix]) != _upstreamTriplet_IDs.end()) {
 	      hit = &uptriplet.gethit(_sensorIDVec[ix]);
-	    } else if(std::find(_downstreamTriplet_IDs.begin(), _downstreamTriplet_IDs.end(), _sensorIDVec[ix]) != _downstreamTriplet_IDs.end()) {
+	    } else if(std::find(_downstreamTriplet_IDs.begin(), _downstreamTriplet_IDs.end(),
+				_sensorIDVec[ix]) != _downstreamTriplet_IDs.end()) {
 	      hit = &downtriplet.gethit(_sensorIDVec[ix]);
 	    } else if(uptriplet.has_DUT(_sensorIDVec[ix])) {
 	      hit = &uptriplet.get_DUT_Hit(_sensorIDVec[ix]);
 	    } else if(downtriplet.has_DUT(_sensorIDVec[ix])) {
 	      hit = &downtriplet.get_DUT_Hit(_sensorIDVec[ix]);
 	    }
-	    hist1D_gblResidX[ix]->fill( hit->x*1E3 - uptriplet.getx_at(_planePosition[ix]) *1E3 - localPar[3]*1E3);
-	    hist1D_gblResidY[ix]->fill( hit->y*1E3 - uptriplet.gety_at(_planePosition[ix]) *1E3 - localPar[4]*1E3);
+	    hist1D_gblResidX[ix]->fill(hit->x*1E3 - uptriplet.getx_at(_planePosition[ix]) *1E3 - localPar[3]*1E3);
+	    hist1D_gblResidY[ix]->fill(hit->y*1E3 - uptriplet.gety_at(_planePosition[ix]) *1E3 - localPar[4]*1E3);
 	  }
 	}
 	
@@ -832,8 +981,12 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 	  hist1D_gblKinkY[ix]->fill( (localPar[6]+localPar[8])*1E3 );
 
 	  //FIXME: newly added kink maps
-	  profile2D_gblSUTKinkXvsXY->fill( uptriplet.getx_at(_planePosition[ix])+localPar[3], uptriplet.gety_at(_planePosition[ix])+localPar[4], fabs(localPar[5]+localPar[7])*1E3 );
-	  profile2D_gblSUTKinkYvsXY->fill( uptriplet.getx_at(_planePosition[ix])+localPar[3], uptriplet.gety_at(_planePosition[ix])+localPar[4], fabs(localPar[6]+localPar[8])*1E3 );
+	  profile2D_gblSUTKinkXvsXY->fill(uptriplet.getx_at(_planePosition[ix])+localPar[3],
+					  uptriplet.gety_at(_planePosition[ix])+localPar[4],
+					  fabs(localPar[5]+localPar[7])*1E3 );
+	  profile2D_gblSUTKinkYvsXY->fill(uptriplet.getx_at(_planePosition[ix])+localPar[3],
+					  uptriplet.gety_at(_planePosition[ix])+localPar[4],
+					  fabs(localPar[6]+localPar[8])*1E3 );
 	}
 	
 	prevAngleX = localPar[1];
@@ -852,41 +1005,50 @@ void EUTelGBL::processEvent( LCEvent * event ) {
   if(_dumpTracks) event->addCollection(_outputTracks,"TracksCollection");
   hist1D_nTracksPerEvent->fill( numbertracks );
   
-  // count events:
+  //count events
   _iEvt++;
-  if( isFirstEvent() ) _isFirstEvent = false;
 }
 
-//------------------------------------------------------------------------------
 void EUTelGBL::end() {
-  milleAlignGBL.reset(nullptr);	
-  if(_suggestAlignmentCuts) gblutil.determineBestCuts();
-}//end
 
-//------------------------------------------------------------------------------
+  milleAlignGBL.reset(nullptr);
+  //if user wishes alignment cut suggestion
+  if(_suggestAlignmentCuts) {
+  	gblutil.determineBestCuts();
+  }
+}
+
 void EUTelGBL::bookHistos(std::vector<int> const & sensorIDVec) {
 
   try {
     streamlog_out( MESSAGE2 ) << "Booking histograms..." << std::endl;
 
-    hist1D_nTelescopeHits = AIDAProcessor::histogramFactory(this)->createHistogram1D( "nAllHit", 201, -0.5, 200.5 );
-    hist1D_nTelescopeHits->setTitle( "Telescope hits/event;telescope hits;events" );
+    hist1D_nTelescopeHits = AIDAProcessor::histogramFactory(this)->
+      createHistogram1D("nAllHit", 201, -0.5, 200.5);
+    hist1D_nTelescopeHits->setTitle( "Telescope hits/event;telescope hits;events");
 
-    hist1D_nUpstreamTriplets = AIDAProcessor::histogramFactory(this)->createHistogram1D( "nUpstreamTriplets", 21, -0.5, 20.5 );
-    hist1D_nUpstreamTriplets->setTitle( "Number of Upstream Triplets per Event; Number of Upstream Triplets;Events" );
+    hist1D_nUpstreamTriplets = AIDAProcessor::histogramFactory(this)->
+      createHistogram1D("nUpstreamTriplets", 21, -0.5, 20.5);
+    hist1D_nUpstreamTriplets->setTitle( "Number of Upstream Triplets per Event; "
+					"Number of Upstream Triplets;Events");
 
-    hist1D_nDownstreamTriplets = AIDAProcessor::histogramFactory(this)->createHistogram1D( "nDownstreamTriplets", 21, -0.5, 20.5 );
-    hist1D_nDownstreamTriplets->setTitle( "Number of Downstream Triplets per Event; Number of Downstream Triplets;Events" );
+    hist1D_nDownstreamTriplets = AIDAProcessor::histogramFactory(this)->
+      createHistogram1D("nDownstreamTriplets", 21, -0.5, 20.5);
+    hist1D_nDownstreamTriplets->setTitle( "Number of Downstream Triplets per Event; "
+					  "Number of Downstream Triplets;Events");
 
     // GBL:
-    hist1D_gblNdfAlign = AIDAProcessor::histogramFactory(this)->createHistogram1D( "gblNdf", 16, -0.5, 15.5 );
+    hist1D_gblNdfAlign = AIDAProcessor::histogramFactory(this)->
+      createHistogram1D("gblNdf", 16, -0.5, 15.5);
     hist1D_gblNdfAlign->setTitle( "GBL fit NDF;GBL NDF;tracks" );
 
-    hist1D_gblChi2Align = AIDAProcessor::histogramFactory(this)->createHistogram1D( "gblChi2", 100, 0, 100 );
-    hist1D_gblChi2Align->setTitle( "GBL fit chi2 / degrees of freedom ;GBL chi2 / Ndf ;tracks" );
+    hist1D_gblChi2Align = AIDAProcessor::histogramFactory(this)->
+      createHistogram1D("gblChi2", 100, 0, 100);
+    hist1D_gblChi2Align->setTitle( "GBL fit chi2 / degrees of freedom ;GBL chi2/Ndf ;tracks");
 
-    hist1D_gblProbAlign = AIDAProcessor::histogramFactory(this)->createHistogram1D( "gblProb", 100, 0, 1 );
-    hist1D_gblProbAlign->setTitle( "GBL fit probability;GBL fit probability;tracks" );
+    hist1D_gblProbAlign = AIDAProcessor::histogramFactory(this)->
+      createHistogram1D("gblProb", 100, 0, 1);
+    hist1D_gblProbAlign->setTitle( "GBL fit probability;GBL fit probability;tracks");
 
     AIDAProcessor::tree(this)->mkdir("GBLFit");
     AIDAProcessor::tree(this)->mkdir("GBLFit/Angles");
@@ -902,58 +1064,77 @@ void EUTelGBL::bookHistos(std::vector<int> const & sensorIDVec) {
 	std::string histNameAngleX = "GBLFit/Angles/ax"+sensorIdString;
 	std::string histNameAngleY = "GBLFit/Angles/ay"+sensorIdString;
 	
-	hist1D_gblAngleX.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNameAngleX, 100, -5, 5));
-	hist1D_gblAngleX.back()->setTitle( "GBL angle at plane "+sensorIdString+";x angle at plane "+sensorIdString+" [mrad];tracks" ); 
+	hist1D_gblAngleX.push_back(AIDAProcessor::histogramFactory(this)->
+				   createHistogram1D( histNameAngleX, 100, -5, 5));
+	hist1D_gblAngleX.back()->setTitle( "GBL angle at plane "+sensorIdString
+					   +";x angle at plane "+sensorIdString+" [mrad];tracks"); 
 	
-	hist1D_gblAngleY.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNameAngleY, 100, -5, 5));
-	hist1D_gblAngleY.back()->setTitle( "GBL angle at plane "+sensorIdString+";y angle at plane "+sensorIdString+" [mrad];tracks" ); 
+	hist1D_gblAngleY.push_back(AIDAProcessor::histogramFactory(this)->
+				   createHistogram1D( histNameAngleY, 100, -5, 5));
+	hist1D_gblAngleY.back()->setTitle( "GBL angle at plane "+sensorIdString
+					   +";y angle at plane "+sensorIdString+" [mrad];tracks"); 
 	
 	std::string histNameResidX = "GBLFit/Residuals/rx"+sensorIdString; 
 	std::string histNameResidY = "GBLFit/Residuals/ry"+sensorIdString; 
 	
-	hist1D_gblResidX.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNameResidX, 500, -250, 250));
-	hist1D_gblResidX.back()->setTitle( "GBL residual at plane "+sensorIdString+";x resid at plane "+sensorIdString+" [#mum];tracks" ); 
+	hist1D_gblResidX.push_back(AIDAProcessor::histogramFactory(this)->
+				   createHistogram1D( histNameResidX, 500, -250, 250));
+	hist1D_gblResidX.back()->setTitle( "GBL residual at plane "+sensorIdString
+					   +";x resid at plane "+sensorIdString+" [#mum];tracks"); 
 	
-	hist1D_gblResidY.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNameResidY, 500, -250, 250));
-	hist1D_gblResidY.back()->setTitle( "GBL residual at plane "+sensorIdString+";y resid at plane "+sensorIdString+" [#mum];tracks" ); 
+	hist1D_gblResidY.push_back(AIDAProcessor::histogramFactory(this)->
+				   createHistogram1D( histNameResidY, 500, -250, 250));
+	hist1D_gblResidY.back()->setTitle( "GBL residual at plane "+sensorIdString
+					   +";y resid at plane "+sensorIdString+" [#mum];tracks"); 
 	
 	std::string histNamePullX = "GBLFit/Pulls/px"+sensorIdString; 
 	std::string histNamePullY = "GBLFit/Pulls/py"+sensorIdString; 
 	
-	hist1D_gblPullX.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNamePullX, 100, -5, 5));
-	hist1D_gblPullX.back()->setTitle( "GBL pull at plane "+sensorIdString+";x pull at plane "+sensorIdString+";tracks" ); 
+	hist1D_gblPullX.push_back(AIDAProcessor::histogramFactory(this)->
+				  createHistogram1D( histNamePullX, 100, -5, 5));
+	hist1D_gblPullX.back()->setTitle( "GBL pull at plane "+sensorIdString
+					  +";x pull at plane "+sensorIdString+";tracks"); 
 	
-	hist1D_gblPullY.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNamePullY, 100, -5, 5));
-	hist1D_gblPullY.back()->setTitle( "GBL pull at plane "+sensorIdString+";y pull at plane "+sensorIdString+";tracks" ); 
+	hist1D_gblPullY.push_back(AIDAProcessor::histogramFactory(this)->
+				  createHistogram1D( histNamePullY, 100, -5, 5));
+	hist1D_gblPullY.back()->setTitle( "GBL pull at plane "+sensorIdString
+					  +";y pull at plane "+sensorIdString+";tracks"); 
 	
 	std::string histNameKinkX = "GBLFit/Kinks/kx"+sensorIdString;
 	std::string histNameKinkY = "GBLFit/Kinks/ky"+sensorIdString;
 	
-	hist1D_gblKinkX.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNameKinkX, 100, -5, 5));
-	hist1D_gblKinkX.back()->setTitle( "GBL kink angle at plane "+sensorIdString+";plane "+sensorIdString+" x kink [mrad];tracks" );
+	hist1D_gblKinkX.push_back(AIDAProcessor::histogramFactory(this)->
+				  createHistogram1D( histNameKinkX, 100, -5, 5));
+	hist1D_gblKinkX.back()->setTitle( "GBL kink angle at plane "+sensorIdString
+					  +";plane "+sensorIdString+" x kink [mrad];tracks");
 	
-	hist1D_gblKinkY.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D( histNameKinkY, 100, -5, 5));
-	hist1D_gblKinkY.back()->setTitle( "GBL kink angle at plane "+sensorIdString+";plane "+sensorIdString+" y kink [mrad];tracks" );
+	hist1D_gblKinkY.push_back(AIDAProcessor::histogramFactory(this)->
+				  createHistogram1D( histNameKinkY, 100, -5, 5));
+	hist1D_gblKinkY.back()->setTitle( "GBL kink angle at plane "+sensorIdString
+					  +";plane "+sensorIdString+" y kink [mrad];tracks");
 
 	if(sensorIDVec[ix]==_SUT_ID) {
 	  std::string histNameKinkXvsXY = "GBLFit/Kinks/kinkx_vs_xy"+sensorIdString;
 	  std::string histNameKinkYvsXY = "GBLFit/Kinks/kinky_vs_xy"+sensorIdString;
 
-	  profile2D_gblSUTKinkXvsXY = AIDAProcessor::histogramFactory(this)->createProfile2D( histNameKinkXvsXY, 120, -12, 12, 60, -6, 6, 0, 100);
-	  profile2D_gblSUTKinkXvsXY->setTitle( "GBL kink angle at plane "+sensorIdString+"; x pos [mm]; y pos [mm]; sqrt(<kinkX^{2}>) [mrad]" );
+	  profile2D_gblSUTKinkXvsXY = AIDAProcessor::histogramFactory(this)->
+	    createProfile2D( histNameKinkXvsXY, 120, -12, 12, 60, -6, 6, 0, 100);
+	  profile2D_gblSUTKinkXvsXY->setTitle( "GBL kink angle at plane "+sensorIdString
+					       +"; x pos [mm]; y pos [mm]; sqrt(<kinkX^{2}>) [mrad]");
 
-	  profile2D_gblSUTKinkYvsXY = AIDAProcessor::histogramFactory(this)->createProfile2D( histNameKinkYvsXY, 120, -12, 12, 60, -6, 6, 0, 100);
-	  profile2D_gblSUTKinkYvsXY->setTitle( "GBL kink angle at plane "+sensorIdString+"; x pos [mm]; y pos [mm]; sqrt(<kinkY^{2}>) [mrad]" );
+	  profile2D_gblSUTKinkYvsXY = AIDAProcessor::histogramFactory(this)->
+	    createProfile2D( histNameKinkYvsXY, 120, -12, 12, 60, -6, 6, 0, 100);
+	  profile2D_gblSUTKinkYvsXY->setTitle( "GBL kink angle at plane "+sensorIdString
+					       +"; x pos [mm]; y pos [mm]; sqrt(<kinkY^{2}>) [mrad]");
 	}
 
       }//[END] loop over sensor IDs
     
-    hist1D_nTracksPerEvent = AIDAProcessor::histogramFactory(this)->createHistogram1D( "ntracksperevent", 21, -0.5, 20.5 );
+    hist1D_nTracksPerEvent = AIDAProcessor::histogramFactory(this)->
+      createHistogram1D( "ntracksperevent", 21, -0.5, 20.5 );
     hist1D_nTracksPerEvent->setTitle( "Matched Tracks;Track Matches in an Event;Events" );
-    
-  }//try
-  catch( lcio::Exception& e ) {
+  
+  } catch( lcio::Exception& e ) {
     //FIXME: fill in here something?!
   }
 }
-
