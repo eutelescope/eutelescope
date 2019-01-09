@@ -14,7 +14,6 @@
 // EUTelescope includes:
 #include "EUTelTripletGBLUtility.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
-//#include "EUTelTripletGBLDUTscatInstance.h"
 
 #include "EUTELESCOPE.h"
 #include <cmath>
@@ -483,12 +482,11 @@ std::pair<double,double> EUTelTripletGBLUtility::doIterativeGaussianFit(AIDA::IH
     mean = fitresult->GetParams()[1];
     sigma = fitresult->GetParams()[2];
 
-    /*--- This is for DEBUGGING ONLY !!!*/
+    /*--- This is for DEBUGGING ONLY !!!   
     TCanvas can; 
     can.cd();
     current.Draw();
-    can.SaveAs(TString(in_hist->title()).ReplaceAll(" ","")+".pdf");
-    /**/
+    can.SaveAs(TString(in_hist->title()).ReplaceAll(" ","")+".pdf");*/    
     
     return std::pair<double,double> (mean, sigma);
 }
