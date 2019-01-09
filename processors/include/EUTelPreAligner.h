@@ -39,7 +39,6 @@ namespace eutelescope {
   class PreAligner {
   
   private:
-    float pitchX, pitchY;
     std::vector<int> histoX, histoY;
     float minX, maxX;
     float range;
@@ -85,17 +84,17 @@ namespace eutelescope {
 	  "sensor frame might be empty or heavily misaligned. Please "
 	  "check the GEAR file!"
 	  << std::endl;
+	  return(maxBin);
       }
       return (exp(pos1-weight) + exp(pos2-weight) + exp(pos3-weight));
     }
     
   public:
-  PreAligner(float pitchX, float pitchY, float zPos, int iden)
-    : pitchX(pitchX), pitchY(pitchY), minX(-20.0), maxX(20.0),
-      range(maxX - minX), zPos(zPos), iden(iden) {
+  PreAligner(float zPos, int iden)
+    : minX(-20.0), maxX(20.0), range(maxX - minX), zPos(zPos), iden(iden) {
       
-      histoX.assign(200, 0);
-      histoY.assign(200, 0);
+      histoX.assign(400, 0); // 500 bins
+      histoY.assign(400, 0);
     }
     
     void *current() { return this; }
@@ -111,19 +110,19 @@ namespace eutelescope {
     //add point if within bounds, throw away data that is out of bounds
     void addPoint(float x, float y) {
       try {
-	histoX.at(static_cast<int>(x - minX)) += 1;
+	histoX.at(static_cast<int>((x - minX)*400./range)) += 1;
       } catch(std::out_of_range &e) {;}
       try {
-	histoY.at(static_cast<int>(y - minX)) += 1;
+	histoY.at(static_cast<int>((y - minX)*400./range)) += 1;
       } catch(std::out_of_range &e) {;}
     }	
     
     float getPeakX() { 
-      return (getMaxBin(histoX) + minX); 
+      return (getMaxBin(histoX)*range/400. + minX); 
     }
     
     float getPeakY() { 
-      return (getMaxBin(histoY) + minX); 
+      return (getMaxBin(histoY)*range/400. + minX); 
     }
   };
   
