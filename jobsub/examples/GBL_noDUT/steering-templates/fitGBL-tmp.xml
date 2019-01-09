@@ -50,7 +50,7 @@
   <!--Cuts in x and y for matching DUT hits [mm]-->
   <!--parameter name="DUTCuts" type="FloatVec"> 1 1 </parameter-->
   <!--ID of the plane whose scattering should be investigated (negative for none)-->
-  <!--parameter name="SUT_ID" type="int" value=""/-->
+  <parameter name="SUT_ID" type="int" value="-1"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
   <!--Number of alignment constants used. Available mode are:
@@ -60,7 +60,7 @@
 		XYZShiftsRotXYZ - all shifts and rotations allowed-->
   <parameter name="alignMode" type="string" value="@AlignMode@"/>
   <!--Cut on the chi2 for the tracks to be passed to Millepede-->
-  <parameter name="chi2Cut" type="double" value="-1"/>
+  <parameter name="chi2Cut" type="double" value="@Chi2Cut@"/>
   <!--The three sensors used as the downstream triplet-->
   <parameter name="downstreamTriplet" type="IntVec" value="@DownstreamTriplet@"/>
   <!--Downstream triplet residual cut [mm]-->
@@ -72,7 +72,7 @@
   <!--Beam energy [GeV]-->
   <parameter name="eBeam" type="double" value="@BeamEnergy@"/>
   <!--Exclude planes from fit (their scattering budget is considered)-->
-  <!--parameter name="excludedPlanes" type="IntVec"> </parameter-->
+  <parameter name="excludedPlanes" type="IntVec" value="@ExcludedPlanes@"/>
   <!--Fix sensor planes in the fit according to their sensor ids (it is recommended to fix two telescope planes)-->
   <parameter name="fixedPlanes" type="IntVec" value="@FixedPlanes@"/>
   <!--List of planes which should have a fixed X rotation-->
