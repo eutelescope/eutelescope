@@ -459,7 +459,7 @@ void EUTelPreAligner::bookHistos() {
       std::string histName_hitXCorr = "hitXCorr_det" + std::to_string(sensorID);
       AIDA::IHistogram1D *hist1D_hitXCorr =
           marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(
-              (basePath + histName_hitXCorr).c_str(), 100, -10., 10.);
+              (basePath + histName_hitXCorr).c_str(), 200, -20., 20.);
       hist1D_hitXCorr->setTitle("Hit correlation X (fixed to det "+std::to_string(sensorID)
 				+"); X position [mm]; count");
       _hitXCorr.insert(std::make_pair(sensorID, hist1D_hitXCorr));
@@ -468,7 +468,7 @@ void EUTelPreAligner::bookHistos() {
       std::string histName_hitYCorr = "hitYCorr_det" + std::to_string(sensorID);
       AIDA::IHistogram1D *hist1D_hitYCorr =
           marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(
-              (basePath + histName_hitYCorr).c_str(), 100, -10., 10.);
+              (basePath + histName_hitYCorr).c_str(), 200, -20., 20.);
       hist1D_hitYCorr->setTitle("Hit correlation Y (fixed to det "+std::to_string(sensorID)
 				+"); Y position [mm]; count");
       _hitYCorr.insert(std::make_pair(sensorID, hist1D_hitYCorr));
