@@ -149,7 +149,6 @@ namespace eutelescope {
 
       //track parameters
       double _chi2Cut;   
-      int _maxTrackCandidates;
       int _maxTrackCandidatesTotal;
 
       //MILLEPEDE

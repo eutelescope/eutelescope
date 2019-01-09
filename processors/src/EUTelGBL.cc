@@ -77,6 +77,7 @@ EUTelGBL::EUTelGBL(): Processor("EUTelGBL") {
 
   _description = "EUTelGBL uses the MILLE program to write data files for MILLEPEDE II.";
 
+
   registerInputCollections(LCIO::TRACKERHIT,
 			   "hitCollectionName",
 			   "Input hit collections name",
@@ -137,11 +138,6 @@ EUTelGBL::EUTelGBL(): Processor("EUTelGBL") {
 			    "Maximal number of track candidates (Total)",
 			    _maxTrackCandidatesTotal,
 			    10000000);
-
-  registerOptionalParameter("maxTrackCandidates",
-			    "Maximal number of track candidates",
-			    _maxTrackCandidates,
-			    2000);
 
   registerOptionalParameter("milleBinaryFilename",
 			    "Name of the Millepede binary file",
@@ -245,9 +241,9 @@ EUTelGBL::EUTelGBL(): Processor("EUTelGBL") {
 			    -1.0);
 
   registerOptionalParameter("chi2Cut",
-			    "Cut on the chi2 for the tracks to be passed to Millepede",
+			    "Cut on chi2 over Ndf for the tracks to be passed to Millepede",
 			    _chi2Cut,
-			    0.001);
+			    100.);
 
   registerOptionalParameter("pedeSteerfileName",
 			    "Name of the steering file for the pede program",
@@ -991,12 +987,13 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 	
 	prevAngleX = localPar[1];
 	prevAngleY = localPar[2];
-      }
-      
-      //only for alignment, and then do not pass very bad tracks to mille
-      if(_performAlignment && probchi>_chi2Cut) { //FIXME: should it be a cut on the chi2 or on the probability
-	traj.milleOut( *milleAlignGBL );
-	_nMilleTracks++;
+ }
+    
+  // do not pass very bad tracks to mille. Only if the alignment is performed
+  if(_performAlignment) {
+      if(Chi2 / Ndf < _chi2cut) {
+          traj.milleOut( *milleAlignGBL );
+            _nMilleTracks ++;
       }
 
       numbertracks++;
