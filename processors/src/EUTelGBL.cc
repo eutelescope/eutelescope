@@ -1040,7 +1040,7 @@ void EUTelGBL::bookHistos(std::vector<int> const & sensorIDVec) {
     hist1D_gblNdfAlign->setTitle( "GBL fit NDF;GBL NDF;tracks" );
 
     hist1D_gblChi2Align = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D("gblChi2", 100, 0, 100);
+      createHistogram1D("gblChi2", 100, 0, 10);
     hist1D_gblChi2Align->setTitle( "GBL fit chi2 / degrees of freedom ;GBL chi2/Ndf ;tracks");
 
     hist1D_gblProbAlign = AIDAProcessor::histogramFactory(this)->
