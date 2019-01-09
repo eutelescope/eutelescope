@@ -3,10 +3,10 @@
 <marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
 
    <execute>
-      <processor name="AIDAProcessor"/>
+      <processor name="AIDA"/>
       <processor name="TransformHitLocalToGlobal"/>
-      <processor name="PerformPedeToGEAR"/>
-      <processor name="PerformGBLAlignment"/>
+      <processor name="PerformGBLFit"/>
+      <processor name="DumpGBLOutput"/>
       <processor name="PrintEventNumber"/>
    </execute>
 
@@ -14,17 +14,17 @@
       <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-hitmaker.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
-      <parameter name="SkipNEvents" value="0"/>
+      <parameter name="SkipNEvents" value="@SkipNEvents@"/>
       <parameter name="SupressCheck" value="false"/>
-      <parameter name="Verbosity" value="MESSAGE0"/>
+      <parameter name="Verbosity" value="@Verbosity@"/>
    </global>
 
- <processor name="AIDAProcessor" type="AIDAProcessor">
+ <processor name="AIDA" type="AIDAProcessor">
  <!--Processor that handles AIDA files. Creates on directory per processor. Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor.-->
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-alignment@GEARSuffix@"/>
+  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-fitGBL"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -43,27 +43,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="PerformPedeToGEAR" type="EUTelPedeGEAR">
- <!--EUTelPedeGEAR calls PEDE to process a MILLE binary file and create an updated GEAR file with the updated MILLEPEDE II alignment constants.-->
-  <!--Number of alignment constants used. Available mode are: 
-		XYShiftsRotZ - shifts in the X and Y directions and a rotation around the Z axis,
-		XYShifts - only shifts in the X and Y directions,
-		XYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis
-		XYZShiftsRotXYZ - all shifts and rotations allowed-->
-  <parameter name="AlignMode" type="string" value="@AlignMode@"/>
-  <!--Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file-->
-  <!--parameter name="GEARSuffix" type="string" value="_aligned"/-->
-  <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
-  <parameter name="NewGEARSuffix" value="@GEARSuffix@"/>
-  <!--Name of the steering file for the pede program.-->
-  <parameter name="PedeSteerfileName" type="string" value="@PedeSteerFile@"/>
-  <!--Apply the obtained rotation to the preexisting offset vector or not..-->
-  <parameter name="RotateOffsetVec" type="bool" value="true"/>
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
-</processor>
-
- <processor name="PerformGBLAlignment" type="EUTelGBL">
+ <processor name="PerformGBLFit" type="EUTelGBL">
  <!--EUTelGBL uses the MILLE program to write data files for MILLEPEDE II.-->
   <!--Input hit collections name-->
   <parameter name="hitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
@@ -116,9 +96,9 @@
   <!--Maximal number of track candidates (Total)-->
   <!--parameter name="maxTrackCandidatesTotal" type="int" value="10000000"/-->
   <!--Name of the Millepede binary file-->
-  <parameter name="milleBinaryFilename" type="string" value="@MilleBinaryFile@"/>
+  <!--parameter name="milleBinaryFilename" type="string" value="mille.bin"/-->
   <!--Name of the steering file for the pede program-->
-  <parameter name="pedeSteerfileName" type="string" value="@PedeSteerFile@"/>
+  <!--parameter name="pedeSteerfileName" type="string" value="steer_mille.txt"/-->
   <!--Set to 0 if you do not want to perform the alignment-->
   <parameter name="performAlignment" type="int" value="@performAlignment@"/>
   <!--Only tracks with a hit on selected plane are considered-->
@@ -128,7 +108,7 @@
   <!--y-resolution of sensors (z-ordered) [mm]-->
   <parameter name="resolutionY" type="FloatVec" value="@ResolutionY@"/>
   <!--Set to 1 if you want suggestions of which cuts to use on the tracks slope/residual to be print out during the alignment-->
-  <parameter name="suggestAlignmentCuts" type="int" value="@suggestAlignmentCuts@"/>
+  <!--parameter name="suggestAlignmentCuts" type="int" value="0"/-->
   <!--Upstream-downstream triplet matching cut [mm]-->
   <parameter name="tripletsMatchingCut" type="double" value="@TripletMatchingCut@"/>
   <!--The three sensors used as the upstream triplet-->
@@ -139,6 +119,26 @@
   <parameter name="upstreamTripletSlopeCut" type="double" value="@UpstreamSlopeCut@"/>
   <!--Z Position used for triplet matching (default to center between end of first triplet and start of second triplet)-->
   <!--parameter name="zMid" type="double" value="-1"/-->
+</processor>
+
+ <processor name="DumpGBLOutput" type="EUTelGBLOutput">
+ <!--EUTelGBLOutput generates NTuple containing hits, zero suppressed data and track position from GBL processor-->
+  <!--Vector with the names of the hit collections (use the right coordinate system)-->
+  <parameter name="InputHitCollections" type="string" lcioInType="TrackerHit"> @HitCollections@ </parameter>
+  <!--Vector with the names of the zs collections-->
+  <parameter name="InputZsCollections" type="string" lcioInType="TrackerHit"> @ZSCollections@ </parameter>
+  <!--Path/File where root-file should be stored-->
+  <parameter name="OutputPath" type="string" value="@OutputPath@"/>
+  <!--IDs for which the information should be dumped (leave empty for all the planes)-->
+  <parameter name="OutputPlanes" type="IntVec" value="@OutputPlanes@"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+  <!--Decide whether to dump the event header information-->
+  <parameter name="dumpHeader" type="bool" value="false"/>
+  <!--Decide whether to dump hits and zs data only for events with a track-->
+  <parameter name="onlyEventsWithTracks" type="bool" value="true"/>
+  <!--Decide whether to dump track positions in local coordinate system-->
+  <parameter name="tracksLocalSystem" type="bool" value="true"/>
 </processor>
 
  <processor name="PrintEventNumber" type="EUTelEventNumberPrinter">

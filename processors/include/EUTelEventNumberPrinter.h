@@ -1,14 +1,24 @@
-#ifndef EUTelUtilityPrintEventNumber_h
-#define EUTelUtilityPrintEventNumber_h 1
+/*
+ *   This source code is part of the Eutelescope package of Marlin.
+ *   You are free to use this source files for your own development as
+ *   long as it stays in a public research context. You are not
+ *   allowed to use it for commercial purpose. You must put this
+ *   header with author names in all development based on this file.
+ *
+ */
+#ifndef EUTELEVENTNUMBERPRINTER_H
+#define EUTELEVENTNUMBERPRINTER_H
 
-// C++
-#include <string>
+// eutelescope includes ".h"
 
-// LCIO
+// marlin includes ".h"
+#include "marlin/Processor.h"
+
+// lcio includes <.h>
 #include "lcio.h"
 
-// Marlin
-#include "marlin/Processor.h"
+// system includes <>
+#include <string>
 
 namespace eutelescope {
 
@@ -20,14 +30,14 @@ namespace eutelescope {
    *   @parameter printTimestamp Print the events timestamp as read from LCIO
    *
    */
-  class EUTelUtilityPrintEventNumber : public marlin::Processor {
+  class EUTelEventNumberPrinter : public marlin::Processor {
 
   public:
     /* This method will be called by the marlin package
      * It returns a processor of the currend type
      */
     virtual Processor *newProcessor() {
-      return new EUTelUtilityPrintEventNumber;
+      return new EUTelEventNumberPrinter;
     }
 
     virtual const std::string &name() const { return Processor::name(); }
@@ -36,7 +46,7 @@ namespace eutelescope {
      * here the processor parameters are registered to the marlin package
      * other initialisation should be placed in the init method
      */
-    EUTelUtilityPrintEventNumber();
+    EUTelEventNumberPrinter();
 
     /* Called at the beginning of the job before anything is read.
      * Use to initialize the processor, e.g. book histograms
@@ -83,7 +93,7 @@ namespace eutelescope {
   };
 
   //! A global instance of the processor
-  EUTelUtilityPrintEventNumber gEUTelUtilityPrintEventNumber;
+  EUTelEventNumberPrinter gEUTelEventNumberPrinter;
 }
 
 #endif

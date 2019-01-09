@@ -1,7 +1,4 @@
 /*
- *   This processor masks noisy clustes, i.e. clusters containing
- *   hot pixels as specified by the hot pixel collection.
- *
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
  *   long as it stays in a public research context. You are not
@@ -11,7 +8,7 @@
  */
 
 // eutelescope includes ".h"
-#include "EUTelProcessorNoisyClusterMasker.h"
+#include "EUTelNoisyClusterMasker.h"
 #include "CellIDReencoder.h"
 #include "EUTELESCOPE.h"
 #include "EUTelRunHeaderImpl.h"
@@ -37,142 +34,142 @@
 #include <EVENT/LCEvent.h>
 #include <Exceptions.h>
 
-// system includes
+// system includes <>
 #include <algorithm>
 #include <memory>
 
 namespace eutelescope {
 
-  bool EUTelProcessorNoisyClusterMasker::_staticPrintedSummary = false;
+  bool EUTelNoisyClusterMasker::_staticPrintedSummary = false;
 
-  EUTelProcessorNoisyClusterMasker::EUTelProcessorNoisyClusterMasker()
-      : Processor("EUTelProcessorNoisyClusterMasker"), _inputCollectionName(""),
+  EUTelNoisyClusterMasker::EUTelNoisyClusterMasker()
+      : Processor("EUTelNoisyClusterMasker"), _inputCollectionName(""),
         _iRun(0), _iEvt(0), _firstEvent(true), _dataFormatChecked(false),
         _wrongDataFormat(false) {
-    _description = "EUTelProcessorNoisyClusterMasker masks pulses which "
-                   "contain hot pixels. For this, the quality field of pulses "
+        
+    _description = "EUTelNoisyClusterMasker masks pulses which contain hot "
+                   "pixels. For this, the quality field of pulses "
                    "is used to encode the kNoisyCluster enum provided by "
                    "EUTelescope.";
 
-    registerInputCollection(
-        LCIO::TRACKERPULSE, "InputCollectionName",
-        "Input of zero suppressed data, still containing hot pixels",
-        _inputCollectionName, std::string("cluster"));
+    registerInputCollection(LCIO::TRACKERPULSE, 
+			    "InputCollectionName",
+			    "Input of zero suppressed data, still containing hot pixels",
+			    _inputCollectionName, 
+			    std::string("cluster"));
 
-    registerOptionalParameter(
-        "HotPixelCollectionName", "Name of the hot pixel collection.",
-        _noisyPixelCollectionName, std::string("hotpixel"));
+    registerOptionalParameter("HotPixelCollectionName", 
+			      "Name of the hot pixel collection.",
+			      _noisyPixelCollectionName, 
+			      std::string("hotpixel"));
   }
 
-  void EUTelProcessorNoisyClusterMasker::init() {
-    // this method is called only once even when the rewind is active
-    // usually a good idea to
+  void EUTelNoisyClusterMasker::init() {
+  
+    //usually a good idea to do
     printParameters();
-    // set to zero the run and event counters
+    
+    //reset run and event counters
     _iRun = 0;
     _iEvt = 0;
   }
 
-  void
-  EUTelProcessorNoisyClusterMasker::processRunHeader(LCRunHeader * /*rdr*/) {
-    // increment the run counter
+  void EUTelNoisyClusterMasker::processRunHeader(LCRunHeader * /*rdr*/) {
+    //increment run counter
     ++_iRun;
-    // reset the event counter
+    //reset event counter
     _iEvt = 0;
   }
 
-  void EUTelProcessorNoisyClusterMasker::processEvent(LCEvent *event) {
+  void EUTelNoisyClusterMasker::processEvent(LCEvent *event) {
     if (_firstEvent) {
-      // The noisy pixel collection stores all thot pixels in event #1
-      // Thus we have to read it in in that case
+      //noisy pixel collection stores all thot pixels in event #1, thus read it
       _noisyPixelMap =
           Utility::readNoisyPixelList(event, _noisyPixelCollectionName);
       _firstEvent = false;
     }
 
-    // get the collection of interest from the event.
+    //get the collection of interest from the event.
     LCCollectionVec *pulseInputCollectionVec = nullptr;
-
     try {
       pulseInputCollectionVec = dynamic_cast<LCCollectionVec *>(
           event->getCollection(_inputCollectionName));
-    } catch (lcio::DataNotAvailableException &e) {
+    } catch(lcio::DataNotAvailableException &e) {
       return;
     }
 
-    // prepare decoder for input data
+    //prepare decoder for input data
     CellIDDecoder<TrackerPulseImpl> cellDecoder(pulseInputCollectionVec);
 
-    // read the encoding string from the input collection
-    std::string encoding =
-        pulseInputCollectionVec->getParameters().getStringVal(
-            LCIO::CellIDEncoding);
-    // and the encoder for the data
+    //read the encoding string from the input collection
+    std::string encoding = pulseInputCollectionVec->
+      getParameters().getStringVal(LCIO::CellIDEncoding);
+    //and the encoder for the data
     lcio::UTIL::CellIDReencoder<TrackerPulseImpl> cellReencoder(
         encoding, pulseInputCollectionVec);
 
-    // loop over all the pulses
-    for (size_t iPulse = 0; iPulse < pulseInputCollectionVec->size();
-         iPulse++) {
-      // the vector contains tracker pulses
+    //[START] loop over all pulses
+    for(size_t iPulse = 0; iPulse < pulseInputCollectionVec->size(); iPulse++) {
+         
+      //vector contains tracker pulses
       TrackerPulseImpl *pulseData = dynamic_cast<TrackerPulseImpl *>(
           pulseInputCollectionVec->getElementAt(iPulse));
       int sensorID = cellDecoder(pulseData)["sensorID"];
 
-      // get the noise vector for the given plane
+      //get noise vector for the given plane
       std::vector<int> *noiseVector = &(_noisyPixelMap[sensorID]);
 
-      // each pulse has the tracker data attached to it
+      //each pulse has tracker data attached to it
       TrackerDataImpl *trackerData =
           dynamic_cast<TrackerDataImpl *>(pulseData->getTrackerData());
-      // decoder for tracker data
+      //decoder for tracker data
       CellIDDecoder<TrackerDataImpl> trackerDecoder(
           EUTELESCOPE::ZSCLUSTERDEFAULTENCODING);
       int pixelType = trackerDecoder(trackerData)["sparsePixelType"];
 
-      // interface to sparsified data
+      //interface to sparsified data
       auto sparseData = Utility::getSparseData(trackerData, pixelType);
       bool noisy = false;
 
-      // Loop over all hits!
-      for (auto &pixelRef : *sparseData) {
+      //[START] loop over all hits
+      for(auto &pixelRef : *sparseData) {
         auto &pixel = pixelRef.get();
-        if (std::binary_search(
-                noiseVector->begin(), noiseVector->end(),
+        if(std::binary_search(noiseVector->begin(), noiseVector->end(),
                 Utility::cantorEncode(pixel.getXCoord(), pixel.getYCoord()))) {
           noisy = true;
           break;
         }
-      }
+      }//[END] loop over all hits
 
-      if (noisy) {
+      if(noisy) {
         int quality = cellDecoder(pulseData)["quality"];
         quality = quality | kNoisyCluster;
-        // next line actually copies the old values
+        //next line actually copies the old values
         cellReencoder.readValues(pulseData);
-        // then we overwrite the "quality" one
+        //then overwrite the "quality" one
         cellReencoder["quality"] = quality;
-        // and apply the changes
+        //and apply the changes
         cellReencoder.setCellID(pulseData);
         _maskedNoisyClusters[sensorID]++;
       }
-    }
+    }//[END] loop over all pulses
   }
 
-  void EUTelProcessorNoisyClusterMasker::end() {
-    // Print out some stats for the user
-    if (!_staticPrintedSummary) {
+  void EUTelNoisyClusterMasker::end() {
+    //print out some stats for the user
+    if(!_staticPrintedSummary) {
       streamlog_out(MESSAGE4) << "Noisy cluster masker(s) successfully finished"
                               << std::endl;
       streamlog_out(MESSAGE4) << "Printing summary:" << std::endl;
       _staticPrintedSummary = true;
     }
-    for (std::map<int, int>::iterator it = _maskedNoisyClusters.begin();
+    //[START] loop over found noisy clusters
+    for(std::map<int, int>::iterator it = _maskedNoisyClusters.begin();
          it != _maskedNoisyClusters.end(); ++it) {
       streamlog_out(MESSAGE4) << "Masked " << (*it).second
                               << " noisy clusters on plane " << (*it).first
                               << "." << std::endl;
-    }
+    }//[END]
   }
 
-} // namespace eutelescope
+}

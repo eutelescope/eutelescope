@@ -6,8 +6,8 @@
  *   header with author names in all development based on this file.
  *
  */
-#ifndef EUTelProcessorNoisyClusterMasker_H
-#define EUTelProcessorNoisyClusterMasker_H
+#ifndef EUTELNOISYCLUSTERMASKER_H
+#define EUTELNOISYCLUSTERMASKER_H
 
 // eutelescope includes ".h"
 #include "EUTelEventImpl.h"
@@ -20,12 +20,9 @@
 #include <IMPL/LCCollectionVec.h>
 #include <LCIOTypes.h>
 
-// AIDA includes <.h>
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-#include <AIDA/IBaseHistogram.h>
-#endif
-
-// system includes
+// system includes <>
+#include <map>
+#include <string>
 
 namespace eutelescope {
 
@@ -42,22 +39,20 @@ namespace eutelescope {
    *  If the original collection should be dumped, specify so in the
    *  EUTelOutputProcessor ("Save")
    */
-  class EUTelProcessorNoisyClusterMasker : public marlin::Processor {
+  class EUTelNoisyClusterMasker : public marlin::Processor {
 
   public:
-    //! Returns a new instance of EUTelProcessorNoisyClusterMasker
+    //! Returns a new instance of EUTelNoisyClusterMasker
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
-     *
-     *  @return a new EUTelNoisyPixelKiller.
      */
     virtual Processor *newProcessor() {
-      return new EUTelProcessorNoisyClusterMasker;
+      return new EUTelNoisyClusterMasker;
     }
 
     //! Default constructor
-    EUTelProcessorNoisyClusterMasker();
+    EUTelNoisyClusterMasker();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -70,22 +65,22 @@ namespace eutelescope {
     /*! It is called for every run, and consequently the run counter
      *  is incremented.
      *
-     *  @param run LCRunHeader of the this current run
+     *  @param run LCRunHeader of the current run
      *
-     *  @throw InvalidParameterException if a paramter is wrongly set
+     *  @throw InvalidParameterException if a parameter is wrongly set
      */
     virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
-    /*! This is called for each event in the file. If the current @c
-     *  evt is flagged to be used for update, then the selected
+    /*! This is called for each event in the file. If the current 
+     *  @evt is flagged to be used for update, then the selected
      *  algorithm wrapper is called
      *
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      *
      *  @throw InvalidParameterException if information in the cellID
-     *  are inconsistence
+     *  is inconsistent
      */
     virtual void processEvent(LCEvent *evt);
 
@@ -96,26 +91,11 @@ namespace eutelescope {
     virtual void end();
 
   protected:
-    void readNoisyPixelList(LCEvent *event);
-
-    //! Encoding function to encode the two pixel indices in a unique way
-    /*! Uses Cantor's pairing function */
-    inline int encode(int X, int Y);
-
     //! Input collection name for data
     std::string _inputCollectionName;
 
-    //! Output collection name for noise free data
-    std::string _outputCollectionName;
-
     //! Name of the hot pixel collection
     std::string _noisyPixelCollectionName;
-
-    //! Integer to track the collection size
-    /*! Used to monitor if anything changed and the collection needs
-     *! to be updated
-     */
-    unsigned int _initialoutputPulseCollectionSize;
 
     //! Current run number.
     /*! This number is used to store the current run number */
@@ -145,13 +125,11 @@ namespace eutelescope {
     std::map<int, int> _maskedNoisyClusters;
 
     //! Static bool flag to mark if any instance of this processor has printed
-    //! out generla info
+    //! out general info
     static bool _staticPrintedSummary;
   };
 
   //! A global instance of the processor
-  EUTelProcessorNoisyClusterMasker gEUTelProcessorNoisyClusterMasker;
-
-} // namespace eutelescope
-
-#endif // EUTelProcessorNoisyClusterMasker_H
+  EUTelNoisyClusterMasker gEUTelNoisyClusterMasker;
+}
+#endif

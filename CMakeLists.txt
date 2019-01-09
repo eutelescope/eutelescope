@@ -274,8 +274,10 @@ install (CODE
 ENABLE_TESTING()
 
 # Include example configurations:
-ADD_SUBDIRECTORY(ctest)
-
+option(ctestFlag "Build all ctests." OFF)
+if(ctestFlag)
+  ADD_SUBDIRECTORY(ctest)
+endif()
 
 option(utest "Build all tests." OFF)
 if(utest)
@@ -367,11 +369,13 @@ endif()
 # software coordinators.
 # !RELEASE: the data-driven tests require DESY-AFS access and are not
 # useful for typical users (comment out the following lines)
-  INCLUDE(jobsub/examples/datura-noDUT/testing.cmake)
-  INCLUDE(jobsub/examples/datura-alone/testing.cmake)
-  INCLUDE(jobsub/examples/anemone-2FEI4/testing.cmake)
-  INCLUDE(jobsub/examples/aconite-4chip/testing.cmake)
-  INCLUDE(jobsub/examples/aconite-4chipLocal/testing.cmake)
+
+# for GBL release: legacy status for tests, commented out
+#  INCLUDE(jobsub/examples/datura-noDUT/testing.cmake)
+#  INCLUDE(jobsub/examples/datura-alone/testing.cmake)
+#  INCLUDE(jobsub/examples/anemone-2FEI4/testing.cmake)
+#  INCLUDE(jobsub/examples/aconite-4chip/testing.cmake)
+#  INCLUDE(jobsub/examples/aconite-4chipLocal/testing.cmake)
 
   configure_file (
 	       ./CTestCustom.cmake.in   # set custom settings (e.g. tests to be skipped for valgrind)

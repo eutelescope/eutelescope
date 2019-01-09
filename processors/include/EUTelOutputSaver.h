@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef EUTELOUTPUTPROCESSOR_H
-#define EUTELOUTPUTPROCESSOR_H 1
+#ifndef EUTELOUTPUTSAVER_H
+#define EUTELOUTPUTSAVER_H
 
 // eutelescope includes ".h"
 #include "EUTELESCOPE.h"
@@ -37,7 +37,7 @@ namespace eutelescope {
    *
    *  The use of this processor is very helpful when for example an
    *  input LCIO file has been produced without the EORE and this
-   *  should be appended in order to compatible with the full analysis
+   *  should be appended in order to be compatible with the full analysis
    *  chain.
    *
    *  Another occasion in which the use of this processor is crucial
@@ -47,14 +47,14 @@ namespace eutelescope {
    *  (being the last one a EORE), if the analysis is limited to
    *  MaxRecordNumber = 100, the last processed event will be a DE and
    *  not the EORE. Consequently in the saved output file, the last
-   *  event will not a EORE breaking the consistency of the analysis
-   *  chain. The use of EUTelOutputProcessor instead of
+   *  event will not a EORE, breaking the consistency of the analysis
+   *  chain. The use of EUTelOutputSaver instead of
    *  LCIOOutputProcessor allows to fix this problem because, if the
    *  last processed event was not a EORE, then a EORE is appended
    *  before closing the output file.
    *
    *  A possible drawback of having EORE at the end of each run is
-   *  that when Marlin is executed having more than one input files,
+   *  that when Marlin is executed having more than one input file,
    *  this will result in an output file with several EOREs. This
    *  could be unpractical in all cases the output file should be used
    *  as input of other processors using the EORE to end up the
@@ -66,28 +66,25 @@ namespace eutelescope {
    *  @see eutelescope::EventType
    *  @see eutelescope::EUTelEventImpl
    *
-   *  @param All parameters available in LCIOOutputProcessir
+   *  @param All parameters available in LCIOOutputProcessor
    *  @param SkipIntermediateEORE Remove EORE in between following runs.
    *
-   *
-   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id$
    */
 
-  class EUTelOutputProcessor : public marlin::LCIOOutputProcessor {
+  class EUTelOutputSaver : public marlin::LCIOOutputProcessor {
 
   public:
-    //*! Returns a new instance of EUTelOutputProcessor
+    //*! Returns a new instance of EUTelOutputSaver
     /*!  This method returns a new instance of this processor. It is
      *   called by Marlin execution framework and it should not be
      *   called/used by the final user.
      *
-     *   @return a new EUTelOutputProcessor.
+     *   @return a new EUTelOutputSaver.
      */
-    virtual Processor *newProcessor() { return new EUTelOutputProcessor; }
+    virtual Processor *newProcessor() { return new EUTelOutputSaver; }
 
     //! Default constructor
-    EUTelOutputProcessor();
+    EUTelOutputSaver();
 
     //! Opening the LCIO output file
     /*! This is executed only once in the whole execution. It opens
@@ -146,8 +143,8 @@ namespace eutelescope {
     bool _skipIntermediateEORESwitch;
   };
 
-  //! A global instance of EUTelOutputProcessor
-  EUTelOutputProcessor gEUTelOutputProcessor;
+  //! A global instance of EUTelOutputSaver
+  EUTelOutputSaver gEUTelOutputSaver;
 
-} // end namespace eutelescope
+}
 #endif

@@ -1,4 +1,3 @@
-// Version $Id$
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -8,19 +7,15 @@
  *
  */
 
-// since v00-00-09, this processor requires GEAR
-// mainly for geometry initialization.
-
+//GEAR is required for this processor
 #if defined(USE_GEAR)
 
 // eutelescope includes ".h"
+#include "EUTelCorrelator.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
-#include "EUTelHistogramManager.h"
-
 #include "EUTELESCOPE.h"
 #include "EUTelAlignmentConstant.h"
 #include "EUTelBrickedClusterImpl.h"
-#include "EUTelCorrelator.h"
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelEventImpl.h"
 #include "EUTelExceptions.h"
@@ -29,19 +24,12 @@
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelVirtualCluster.h"
 
-#include <UTIL/LCTime.h>
-
-#include <EVENT/LCCollection.h>
-#include <EVENT/LCEvent.h>
-#include <Exceptions.h>
-
 // marlin includes ".h"
 #include "marlin/Global.h"
 #include "marlin/Processor.h"
 
 // aida includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-#include <AIDA/IAxis.h>
 #include <AIDA/IHistogram2D.h>
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/ITree.h>
@@ -56,6 +44,10 @@
 #include <IMPL/TrackerRawDataImpl.h>
 #include <UTIL/CellIDDecoder.h>
 #include <UTIL/CellIDEncoder.h>
+#include <UTIL/LCTime.h>
+#include <EVENT/LCCollection.h>
+#include <EVENT/LCEvent.h>
+#include <Exceptions.h>
 
 // system includes <>
 #include <cstdio>
@@ -66,145 +58,109 @@
 #include <vector>
 
 using namespace std;
-using namespace marlin;
 using namespace eutelescope;
 
-// definition of static members mainly used to name histograms
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-std::string EUTelCorrelator::_clusterXCorrelationHistoName =
-    "ClusterXCorrelation";
-std::string EUTelCorrelator::_clusterYCorrelationHistoName =
-    "ClusterYCorrelation";
-std::string EUTelCorrelator::_hitXCorrelationHistoName = "HitXCorrelation";
-std::string EUTelCorrelator::_hitYCorrelationHistoName = "HitYCorrelation";
-
-std::string EUTelCorrelator::_hitXCorrShiftHistoName = "HitXCorrShift";
-std::string EUTelCorrelator::_hitYCorrShiftHistoName = "HitYCorrShift";
-std::string EUTelCorrelator::_hitXCorrShiftProjectionHistoName =
-    "HitXCorrShiftProjection";
-std::string EUTelCorrelator::_hitYCorrShiftProjectionHistoName =
-    "HitYCorrShiftProjection";
-
-#endif
-
 EUTelCorrelator::EUTelCorrelator()
-    : Processor("EUTelCorrelator"), _histoInfoFileName("histoinfo.xml"),
-      _sensorIDVec() {
+    : Processor("EUTelCorrelator"), _sensorIDVec() {
 
-  // modify processor description
   _description = "EUTelCorrelator fills histograms with correlation plots";
 
   EVENT::StringVec _clusterCollectionVecExample;
 
-  registerInputCollections(LCIO::TRACKERPULSE, "InputClusterCollections",
-                           "List of cluster collections", _clusterCollectionVec,
+  registerInputCollections(LCIO::TRACKERPULSE,
+			   "InputClusterCollections",
+                           "List of cluster collections",
+			   _clusterCollectionVec,
                            _clusterCollectionVecExample);
 
-  registerInputCollection(LCIO::TRACKERHIT, "InputHitCollectionName",
-                          "Hit collection name", _inputHitCollectionName,
-                          string("hit"));
+  registerInputCollection(LCIO::TRACKERHIT,
+			  "InputHitCollectionName",
+                          "Hit collection name",
+			  _inputHitCollectionName,
+                          std::string("hit"));
 
   registerProcessorParameter("ClusterChargeMinimum",
                              "Minimum allowed cluster charge to be taken into "
                              "account for the correlation plots (default = 2)",
-                             _clusterChargeMin, 2);
+                             _clusterChargeMin,
+			     2);
 
-  registerProcessorParameter("Events", "How many events are needed to get "
-                                       "reasonable correlation plots (and "
-                                       "Offset DB)? (default=1000)",
-                             _events, 1000);
+  registerProcessorParameter("RequiredEvents",
+			     "How many events are needed to get "
+			     "reasonable correlation plots (and "
+			     "Offset DB)? (default=1000)",
+                             _requiredEvents,
+			     1000);
 
-  registerOptionalParameter("FixedPlane", "SensorID of fixed plane",
-                            _fixedPlaneID, 0);
+  registerOptionalParameter("FixedPlane",
+			    "SensorID of fixed plane",
+                            _fixedPlaneID,
+			    0);
 
-  registerOptionalParameter(
-      "ResidualsXMin", "Minimal values of the hit residuals in the X direction "
-                       "for a correlation band. Note: these numbers are "
-                       "ordered according to the z position of the sensors and "
-                       "NOT according to the sensor id.",
-      _residualsXMin, std::vector<float>(6, -10.));
+  registerOptionalParameter("ExcludedPlanes",
+                            "The list of sensor IDs that shall be excluded (e.g. passive plane).",
+                            _excludedPlaneIDVec,
+			    std::vector<int>());
 
-  registerOptionalParameter(
-      "ResidualsYMin", "Minimal values of the hit residuals in the Y direction "
-                       "for a correlation band. Note: these numbers are "
-                       "ordered according to the z position of the sensors and "
-                       "NOT according to the sensor id.",
-      _residualsYMin, std::vector<float>(6, -10.));
+  registerOptionalParameter("ResidualsXMin",
+			    "Minimal values of the hit residuals in the X direction "
+			    "for a correlation band (ordered along z of sensors).",
+			    _residualsXMin,
+			    std::vector<float>(6, -10.));
 
-  registerOptionalParameter(
-      "ResidualsXMax", "Maximal values of the hit residuals in the X direction "
-                       "for a correlation band. Note: these numbers are "
-                       "ordered according to the z position of the sensors and "
-                       "NOT according to the sensor id.",
-      _residualsXMax, std::vector<float>(6, 10.));
+  registerOptionalParameter("ResidualsYMin",
+			    "Minimal values of the hit residuals in the Y direction "
+			    "for a correlation band (ordered along z of sensors).",
+			    _residualsYMin,
+			    std::vector<float>(6, -10.));
 
-  registerOptionalParameter(
-      "ResidualsYMax", "Maximal values of the hit residuals in the Y direction "
-                       "for a correlation band. Note: these numbers are "
-                       "ordered according to the z position of the sensors and "
-                       "NOT according to the sensor id.",
-      _residualsYMax, std::vector<float>(6, 10.));
+  registerOptionalParameter("ResidualsXMax",
+			    "Maximal values of the hit residuals in the X direction "
+			    "for a correlation band (ordered along z of sensors).",
+			    _residualsXMax,
+			    std::vector<float>(6, 10.));
+
+  registerOptionalParameter("ResidualsYMax",
+			    "Maximal values of the hit residuals in the Y direction "
+			    "for a correlation band (ordered along z of sensors).",
+			    _residualsYMax,
+			    std::vector<float>(6, 10.));
 
   registerOptionalParameter("MinNumberOfCorrelatedHits",
                             "If there are more then this number of correlated "
                             "hits (planes->track candidate) (default=5)",
-                            _minNumberOfCorrelatedHits, 5);
-
-  registerOptionalParameter("HistogramInfoFilename",
-                            "Name of histogram info xml file",
-                            _histoInfoFileName, string("histoinfo.xml"));
+                            _minNumberOfCorrelatedHits,
+			    5);
 }
 
 void EUTelCorrelator::init() {
-  // this method is called only once even when the rewind is active
-  // usually a good idea to
+  
+  //usually a good idea to do
   printParameters();
 
+  //initialize geometry
   geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME,
                                              EUTELESCOPE::DUMPGEOROOT);
 
-  _sensorIDVec.clear();
+  //get sensor ID vector and subtract excluded IDs
   _sensorIDVec = geo::gGeometry().sensorIDsVec();
-  for (std::vector<int>::iterator it = _sensorIDVec.begin();
-       it != _sensorIDVec.end(); it++) {
-    _sensorIDtoZ.insert(
-        std::make_pair(*it, static_cast<int>(it - _sensorIDVec.begin())));
+  for(auto excludeID : _excludedPlaneIDVec) {
+    _sensorIDVec.erase(std::remove(_sensorIDVec.begin(), _sensorIDVec.end(), excludeID),
+		       _sensorIDVec.end());
+  }
+  
+  //fill sensorIDtoZ map
+  for(std::vector<int>::iterator it = _sensorIDVec.begin();
+      it != _sensorIDVec.end(); it++) {
+    _sensorIDtoZ.insert(std::make_pair(*it,
+       static_cast<int>(it - _sensorIDVec.begin())));
   }
 
-  // clear the sensor ID map
-  _sensorIDVecMap.clear();
-  _sensorIDtoZOrderMap.clear();
-
-  // clear the sensor ID vector (z-axis order)
-  _sensorIDVecZOrder.clear();
-
-  // set to zero the run and event counters
+  //reset run and event counters
   _iRun = 0;
   _iEvt = 0;
 
-  for (size_t iin = 0; iin < geo::gGeometry().nPlanes(); iin++) {
-    int sensorID = _sensorIDVec.at(iin);
-
-    _minX[sensorID] = 0;
-    _minY[sensorID] = 0;
-    _maxX[sensorID] = geo::gGeometry().getPlaneNumberOfPixelsX(sensorID) - 1;
-    _maxY[sensorID] = geo::gGeometry().getPlaneNumberOfPixelsY(sensorID) - 1;
-
-    _maxX[sensorID] = geo::gGeometry().getPlaneNumberOfPixelsX(sensorID) - 1;
-    _maxY[sensorID] = geo::gGeometry().getPlaneNumberOfPixelsY(sensorID) - 1;
-
-    _hitMinX[sensorID] = geo::gGeometry().getPlaneXPosition(sensorID) -
-                         0.5 * geo::gGeometry().getPlaneXSize(sensorID);
-    _hitMaxX[sensorID] = geo::gGeometry().getPlaneXPosition(sensorID) +
-                         0.5 * geo::gGeometry().getPlaneXSize(sensorID);
-    _hitMinY[sensorID] = geo::gGeometry().getPlaneYPosition(sensorID) -
-                         0.5 * geo::gGeometry().getPlaneYSize(sensorID);
-    _hitMaxY[sensorID] = geo::gGeometry().getPlaneYPosition(sensorID) +
-                         0.5 * geo::gGeometry().getPlaneYSize(sensorID);
-  }
-
-  _outputCorrelatedHitCollectionVec = nullptr;
-
+  //set initalization flag
   _isInitialize = false;
 }
 
@@ -217,24 +173,23 @@ void EUTelCorrelator::processRunHeader(LCRunHeader *rdr) {
   // beam test. The same number should be saved in the run header and
   // in the xml file. If the numbers are different, instead of barely
   // quitting ask the user what to do.
-
-  if (runHeader->getGeoID() == 0)
+  if(runHeader->getGeoID() == 0)
     streamlog_out(WARNING0)
-        << "The geometry ID in the run header is set to zero." << endl
-        << "This may mean that the GeoID parameter was not set" << endl;
+      << "The geometry ID in the run header is set to zero." << std::endl
+      << "This may mean that the GeoID parameter was not set" << std::endl;
 
-  if (static_cast<unsigned int>(runHeader->getGeoID()) !=
+  if(static_cast<unsigned int>(runHeader->getGeoID()) !=
       geo::gGeometry().getLayoutID()) {
     streamlog_out(WARNING5)
-        << "Error during the geometry consistency check: " << endl
-        << "The run header says the GeoID is " << runHeader->getGeoID() << endl
-        << "The GEAR description says is     "
-        << geo::gGeometry().getLayoutID() << endl;
+      << "Error during the geometry consistency check: " << std::endl
+      << "The run header says the GeoID is " << runHeader->getGeoID() << std::endl
+      << "The GEAR description says is     "
+      << geo::gGeometry().getLayoutID() << std::endl;
   }
 
   delete runHeader;
 
-  // increment the run counter
+  //increment run counter
   ++_iRun;
 }
 
@@ -242,101 +197,96 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-  if (_iEvt > _events)
+  //required events reached, then stop
+  if(_iEvt > _requiredEvents)
     return;
+    
+  //increment event counter
   ++_iEvt;
 
+  //check event type
   EUTelEventImpl *evt = static_cast<EUTelEventImpl *>(event);
-
-  if (evt->getEventType() == kEORE) {
-    streamlog_out(DEBUG4) << "EORE found: nothing else to do." << endl;
+  if(evt->getEventType() == kEORE) {
+    streamlog_out(DEBUG4) << "EORE found: nothing else to do." << std::endl;
     return;
-  } else if (evt->getEventType() == kUNKNOWN) {
+  } else if(evt->getEventType() == kUNKNOWN) {
     streamlog_out(WARNING2) << "Event number " << evt->getEventNumber()
                             << " in run " << evt->getRunNumber()
                             << " is of unknown type. Continue considering it "
                                "as a normal Data Event."
-                            << endl;
+                            << std::endl;
   }
 
-  /// intialise:
+  //intialize booleans
   _hasClusterCollection = false;
   _hasHitCollection = false;
 
-  for (size_t i = 0; i < _clusterCollectionVec.size(); i++) {
-    std::string _inputClusterCollectionName = _clusterCollectionVec[i];
-
+  //[START] loop over cluster collections
+  for (size_t icoll = 0; icoll < _clusterCollectionVec.size(); icoll++) {
+  
+    std::string _inputClusterCollectionName = _clusterCollectionVec[icoll];
     try {
-      // let's check if we have cluster collections
+      //check if cluster collections exist
       event->getCollection(_inputClusterCollectionName);
-
       _hasClusterCollection = true;
-      streamlog_out(DEBUG5) << "found " << i << " name "
-                            << _inputClusterCollectionName.c_str() << endl;
+      streamlog_out(DEBUG5) << "found cluster collection " << icoll 
+			    << " with name "
+                            << _inputClusterCollectionName.c_str() << std::endl;
 
-    } catch (lcio::Exception &e) {
-
+    } catch(lcio::Exception &e) {
       _hasClusterCollection = false;
-      streamlog_out(WARNING) << "NOT found " << i << " name "
-                             << _inputClusterCollectionName.c_str() << endl;
-
+      streamlog_out(WARNING) << "NOT found cluster collection " << icoll 
+			     << " with name "
+			     << _inputClusterCollectionName.c_str() << std::endl;
       break;
     }
-  }
-
+  }//[END] loop over cluster collections
+  
   try {
-    // let's check if we have hit collections
-
+    //check if hit collections exist
     event->getCollection(_inputHitCollectionName);
-
     _hasHitCollection = true;
-    streamlog_out(DEBUG5) << "found "
-                          << " name " << _inputHitCollectionName.c_str()
-                          << endl;
-
+    streamlog_out(DEBUG5) << "found hit collection with name "
+                          << _inputHitCollectionName.c_str()
+                          << std::endl;
+    
   } catch (lcio::Exception &e) {
-
+    
     _hasHitCollection = false;
-    streamlog_out(DEBUG5) << "NOT found "
-                          << " name " << _inputHitCollectionName.c_str()
-                          << endl;
+    streamlog_out(DEBUG5) << "NOT found hit collection with name "
+                          << _inputHitCollectionName.c_str()
+                          << std::endl;
   }
-
-  // check if we have at least one collection.
-  if (!_hasClusterCollection && !_hasHitCollection) {
-
-    // this is the case we didn't find any collection in this event
+  
+  //if there is no collection at all, stop for this event
+  if(!_hasClusterCollection && !_hasHitCollection) {
     return;
   }
 
-  // if the Event that we are looking is the first we create files
-  // with histograms.
-  if (!_isInitialize) {
-    // book histograms anyway, check that collections exist in the next clause
+  //if not initialized, book histograms
+  if(!_isInitialize) {
     bookHistos();
     _isInitialize = true;
   }
-
-  //  try {
-
-  if (_hasClusterCollection && !_hasHitCollection) {
-
-    for (size_t eCol = 0; eCol < _clusterCollectionVec.size(); eCol++) {
-      std::string _ExternalInputClusterCollectionName =
-          _clusterCollectionVec[eCol];
-
+  
+  //[IF] hasCluster
+  if(_hasClusterCollection && !_hasHitCollection) {
+    
+    //[START] loop over collection (external)
+    for(size_t eCol = 0; eCol < _clusterCollectionVec.size(); eCol++) {
+    
+      std::string externalInputClusterCollectionName =
+	_clusterCollectionVec[eCol];
+      
       LCCollectionVec *externalInputClusterCollection =
-          static_cast<LCCollectionVec *>(
-              event->getCollection(_ExternalInputClusterCollectionName));
+	static_cast<LCCollectionVec *>(
+	   event->getCollection(externalInputClusterCollectionName));
       CellIDDecoder<TrackerPulseImpl> pulseCellDecoder(
           externalInputClusterCollection);
 
-      // we have an external detector where we consider a cluster each
-      // time (external cluster) that is correlated with another
-      // detector's clusters (internal cluster)
-
-      for (size_t iExt = 0; iExt < externalInputClusterCollection->size();
-           ++iExt) {
+      //[START] loop over cluster (external)
+      for(size_t iExt = 0; iExt < externalInputClusterCollection->size();
+	  ++iExt) {
 
         TrackerPulseImpl *externalPulse = static_cast<TrackerPulseImpl *>(
             externalInputClusterCollection->getElementAt(iExt));
@@ -345,30 +295,28 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
 
         ClusterType type = static_cast<ClusterType>(
             static_cast<int>((pulseCellDecoder(externalPulse)["type"])));
-
-        // we check that the type of cluster is ok
-
-        if (type == kEUTelDFFClusterImpl) {
+	
+        //check that the type of cluster is ok
+        if(type == kEUTelDFFClusterImpl) {
           externalCluster = new EUTelDFFClusterImpl(
               static_cast<TrackerDataImpl *>(externalPulse->getTrackerData()));
-        } else if (type == kEUTelBrickedClusterImpl) {
+        } else if(type == kEUTelBrickedClusterImpl) {
           externalCluster = new EUTelBrickedClusterImpl(
               static_cast<TrackerDataImpl *>(externalPulse->getTrackerData()));
-        } else if (type == kEUTelFFClusterImpl) {
+        } else if(type == kEUTelFFClusterImpl) {
           externalCluster = new EUTelFFClusterImpl(
               static_cast<TrackerDataImpl *>(externalPulse->getTrackerData()));
-
-        } else if (type == kEUTelSparseClusterImpl) {
+        } else if(type == kEUTelSparseClusterImpl) {
           externalCluster = new EUTelSparseClusterImpl<EUTelGenericSparsePixel>(
               static_cast<TrackerDataImpl *>(externalPulse->getTrackerData()));
-
-          if (externalCluster != nullptr &&
+          if(externalCluster != nullptr &&
               externalCluster->getTotalCharge() < _clusterChargeMin) {
             delete externalCluster;
             continue;
           }
-        } else
+        } else {
           continue;
+        }	
 
         int externalSensorID = pulseCellDecoder(externalPulse)["sensorID"];
 
@@ -376,28 +324,31 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
                               << " externalCluster=" << externalCluster
                               << std::endl;
 
+	//get coordinates of external seed
         float externalXCenter = 0.;
         float externalYCenter = 0.;
-
-        // we catch the coordinates of the external seed
-
         externalCluster->getCenterOfGravity(externalXCenter, externalYCenter);
-        if (externalCluster->getTotalCharge() <= _clusterChargeMin) {
+        
+        //check minimal charge requirement
+        if(externalCluster->getTotalCharge() <= _clusterChargeMin) {
           delete externalCluster;
           continue;
         }
 
-        for (size_t iCol = 0; iCol < _clusterCollectionVec.size(); iCol++) {
-          std::string _InternalInputClusterCollectionName =
+	//[START] loop over collection (internal)
+        for(size_t iCol = 0; iCol < _clusterCollectionVec.size(); iCol++) {
+        
+          std::string internalInputClusterCollectionName =
               _clusterCollectionVec[iCol];
 
           LCCollectionVec *internalInputClusterCollection =
               static_cast<LCCollectionVec *>(
-                  event->getCollection(_InternalInputClusterCollectionName));
+                  event->getCollection(internalInputClusterCollectionName));
           CellIDDecoder<TrackerPulseImpl> pulseCellDecoder(
               internalInputClusterCollection);
 
-          for (size_t iInt = 0; iInt < internalInputClusterCollection->size();
+	  //[START] loop over cluster (internal)
+          for(size_t iInt = 0; iInt < internalInputClusterCollection->size();
                ++iInt) {
 
             TrackerPulseImpl *internalPulse = static_cast<TrackerPulseImpl *>(
@@ -408,756 +359,410 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
             ClusterType type = static_cast<ClusterType>(
                 static_cast<int>((pulseCellDecoder(internalPulse)["type"])));
 
-            // we check that the type of cluster is ok
-            if (type == kEUTelDFFClusterImpl) {
+            //check that the type of cluster is ok
+            if(type == kEUTelDFFClusterImpl) {
               internalCluster =
                   new EUTelDFFClusterImpl(static_cast<TrackerDataImpl *>(
                       internalPulse->getTrackerData()));
-
-            } else if (type == kEUTelBrickedClusterImpl) {
+            } else if(type == kEUTelBrickedClusterImpl) {
               internalCluster =
                   new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl *>(
                       internalPulse->getTrackerData()));
-
-            } else if (type == kEUTelFFClusterImpl) {
+            } else if(type == kEUTelFFClusterImpl) {
               internalCluster =
                   new EUTelFFClusterImpl(static_cast<TrackerDataImpl *>(
                       internalPulse->getTrackerData()));
-
-            } else if (type == kEUTelSparseClusterImpl) {
-
+            } else if(type == kEUTelSparseClusterImpl) {
               internalCluster =
                   new EUTelSparseClusterImpl<EUTelGenericSparsePixel>(
                       static_cast<TrackerDataImpl *>(
                           internalPulse->getTrackerData()));
-
-              if (internalCluster != nullptr &&
+              if(internalCluster != nullptr &&
                   internalCluster->getTotalCharge() < _clusterChargeMin) {
                 delete internalCluster;
                 continue;
               }
-
-            } else
+            } else {
               continue;
-
-            if (internalCluster->getTotalCharge() < _clusterChargeMin) {
+			}
+			
+	    //check charge requirement
+            if(internalCluster->getTotalCharge() < _clusterChargeMin) {
               delete internalCluster;
               continue;
             }
 
             int internalSensorID = pulseCellDecoder(internalPulse)["sensorID"];
 
-            if ((internalSensorID != getFixedPlaneID() &&
-                 externalSensorID == getFixedPlaneID()) ||
-                (_sensorIDtoZ.at(internalSensorID) ==
-                 _sensorIDtoZ.at(externalSensorID) + 1)) {
-
+            if((internalSensorID != getFixedPlaneID() &&
+                externalSensorID == getFixedPlaneID()) ||
+	       (_sensorIDtoZ.at(internalSensorID) ==
+		_sensorIDtoZ.at(externalSensorID) + 1)) {
+	      
+	      //get coordinates of internal seed
               float internalXCenter = 0.;
               float internalYCenter = 0.;
-
-              // we catch the coordinates of the internal seed
-
               internalCluster->getCenterOfGravity(internalXCenter,
                                                   internalYCenter);
 
-              streamlog_out(DEBUG5) << "Filling histo " << externalSensorID
-                                    << " " << internalSensorID << endl;
-
-              // we input the coordinates in the correlation matrix, one
-              // for each type of coordinate: X and Y
-
+              streamlog_out(DEBUG5) << "Filling histo for " 
+              << "extID " << externalSensorID << " and intID " 
+	      << internalSensorID << std::endl;
+              
+              //input coordinates in correlation matrix (for X and Y)
+              _clusterXCorrelationMatrix[externalSensorID][internalSensorID]
+                  ->fill(externalXCenter, internalXCenter);
+              _clusterYCorrelationMatrix[externalSensorID][internalSensorID]
+                  ->fill(externalYCenter, internalYCenter);    
               streamlog_out(MESSAGE1)
                   << " ex " << externalSensorID << " = [" << externalXCenter
                   << ":" << externalYCenter << "]"
                   << " in " << internalSensorID << " = [" << internalXCenter
                   << ":" << internalYCenter << "]" << std::endl;
-
-              _clusterXCorrelationMatrix[externalSensorID][internalSensorID]
-                  ->fill(externalXCenter, internalXCenter);
-              _clusterYCorrelationMatrix[externalSensorID][internalSensorID]
-                  ->fill(externalYCenter, internalYCenter);
-
-            } // endif
+            }
 
             delete internalCluster;
-
-          } // internal loop
-        }   // internal loop of collections
+          }//[END] loop over cluster (internal)
+        }//[END] loop over collection (internal)
 
         delete externalCluster;
-      } // external loop
-    }   // external loop of collections
-
-  } // endif hasCluster
-
-  if (_hasHitCollection) {
+      }//[END] loop over cluster (external)
+    }//[END] loop over collection (external)
+  }//[ENDIF] hasCluster
+  
+  //[IF] hasCollection
+  if(_hasHitCollection) {
 
     LCCollectionVec *inputHitCollection = static_cast<LCCollectionVec *>(
         event->getCollection(_inputHitCollectionName));
     UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder(EUTELESCOPE::HITENCODING);
 
     streamlog_out(MESSAGE2) << "inputHitCollection "
-                            << _inputHitCollectionName.c_str() << endl;
+                            << _inputHitCollectionName.c_str() << std::endl;
 
-    for (size_t iExt = 0; iExt < inputHitCollection->size(); ++iExt) {
-      std::vector<double> trackX;
-      std::vector<double> trackY;
-      std::vector<int> iplane;
+    //[START] loop over collection (external) 
+    for(size_t iExt = 0; iExt < inputHitCollection->size(); ++iExt) {
+    
+      std::vector<double> trackXVec;
+      std::vector<double> trackYVec;
+      std::vector<int> planeIDVec;
+      trackXVec.clear();
+      trackYVec.clear();
+      planeIDVec.clear();
 
-      trackX.clear();
-      trackY.clear();
-      iplane.clear();
-
-      // this is the external hit
-
+      //get external hit
       TrackerHitImpl *externalHit =
           static_cast<TrackerHitImpl *>(inputHitCollection->getElementAt(iExt));
-
       double *externalPosition =
           const_cast<double *>(externalHit->getPosition());
-
       int externalSensorID = hitDecoder(externalHit)["sensorID"];
-
       double etrackPointLocal[] = {externalPosition[0], externalPosition[1],
                                    externalPosition[2]};
       double etrackPointGlobal[] = {externalPosition[0], externalPosition[1],
                                     externalPosition[2]};
 
-      if (hitDecoder(externalHit)["properties"] != kHitInGlobalCoord) {
+      //check for coordinate system
+      if(hitDecoder(externalHit)["properties"] != kHitInGlobalCoord) {
+      	//transfer to global frame
         geo::gGeometry().local2Master(externalSensorID, etrackPointLocal,
                                       etrackPointGlobal);
       } else {
-        // do nothing, already in global telescope frame
+        //do nothing, already in global telescope frame
       }
 
-      trackX.push_back(etrackPointGlobal[0]);
-      trackY.push_back(etrackPointGlobal[1]);
-
-      iplane.push_back(externalSensorID);
+      trackXVec.push_back(etrackPointGlobal[0]);
+      trackYVec.push_back(etrackPointGlobal[1]);
+      planeIDVec.push_back(externalSensorID);
 
       streamlog_out(MESSAGE2)
-          << "eplane:" << externalSensorID << " loc: " << etrackPointLocal[0]
-          << " " << etrackPointLocal[1] << " "
-          << " glo: " << etrackPointGlobal[0] << " " << etrackPointGlobal[1]
-          << " " << endl;
+          << "extPlane:" << externalSensorID << " at local position: " << etrackPointLocal[0]
+          << " " << etrackPointLocal[1]
+          << " and global position: " << etrackPointGlobal[0] << " " << etrackPointGlobal[1]
+          << std::endl;
 
-      for (size_t iInt = 0; iInt < inputHitCollection->size(); ++iInt) {
+      //[START] loop over collection (internal)
+      for(size_t iInt = 0; iInt < inputHitCollection->size(); ++iInt) {
 
         TrackerHitImpl *internalHit = static_cast<TrackerHitImpl *>(
             inputHitCollection->getElementAt(iInt));
 
         double *internalPosition =
             const_cast<double *>(internalHit->getPosition());
-
         int internalSensorID = hitDecoder(internalHit)["sensorID"];
-
         double itrackPointLocal[] = {internalPosition[0], internalPosition[1],
                                      internalPosition[2]};
         double itrackPointGlobal[] = {internalPosition[0], internalPosition[1],
                                       internalPosition[2]};
 
-        if (hitDecoder(internalHit)["properties"] != kHitInGlobalCoord) {
+	//check for coordinate system
+        if(hitDecoder(internalHit)["properties"] != kHitInGlobalCoord) {
+	  //transfer to global frame
           geo::gGeometry().local2Master(internalSensorID, itrackPointLocal,
                                         itrackPointGlobal);
         } else {
-          // do nothing, already in global telescope frame
+          //do nothing, already in global telescope frame
         }
 
-        if ((internalSensorID != getFixedPlaneID() &&
-             externalSensorID == getFixedPlaneID()) ||
-            (_sensorIDtoZ.at(internalSensorID) ==
-             _sensorIDtoZ.at(externalSensorID) + 1)) {
+	//[IF] check planes
+	if((internalSensorID != getFixedPlaneID() &&
+	    externalSensorID == getFixedPlaneID()) ||
+	   (_sensorIDtoZ.at(internalSensorID) ==
+	    _sensorIDtoZ.at(externalSensorID) + 1)) {
 
           int iz = _sensorIDtoZ.at(internalSensorID);
 
-          if (((etrackPointGlobal[0] - itrackPointGlobal[0]) <
+	  //[IF] check residual requirement
+          if(((etrackPointGlobal[0] - itrackPointGlobal[0]) <
                _residualsXMax[iz]) &&
-              (_residualsXMin[iz] <
+	     (_residualsXMin[iz] <
                (etrackPointGlobal[0] - itrackPointGlobal[0])) &&
-              ((etrackPointGlobal[1] - itrackPointGlobal[1]) <
+	     ((etrackPointGlobal[1] - itrackPointGlobal[1]) <
                _residualsYMax[iz]) &&
-              (_residualsYMin[iz] <
-               (etrackPointGlobal[1] - itrackPointGlobal[1]))) {
+	     (_residualsYMin[iz] <
+	      (etrackPointGlobal[1] - itrackPointGlobal[1]))) {
 
-            trackX.push_back(itrackPointGlobal[0]);
-            trackY.push_back(itrackPointGlobal[1]);
-            iplane.push_back(internalSensorID);
+            trackXVec.push_back(itrackPointGlobal[0]);
+            trackYVec.push_back(itrackPointGlobal[1]);
+            planeIDVec.push_back(internalSensorID);
+	    
+            streamlog_out(MESSAGE2) << "intPlane:" << internalSensorID
+                                    << " at loc position: " << itrackPointLocal[0] << " "
+                                    << itrackPointLocal[1] 
+                                    << " and global position: " << itrackPointGlobal[0] << " "
+                                    << itrackPointGlobal[1] << std::endl;
+          }//[ENDIF] check residual requirement
+        }//[ENDIF] check planes
+      }//[END] loop over collection (internal)
 
-            streamlog_out(MESSAGE2) << "iplane:" << internalSensorID
-                                    << " loc: " << itrackPointLocal[0] << " "
-                                    << itrackPointLocal[1] << " "
-                                    << " glo: " << itrackPointGlobal[0] << " "
-                                    << itrackPointGlobal[1] << " " << endl;
-          }
-        }
-      }
-
-      vector<int> iplane_unique = iplane;
-      vector<int>::iterator p, p_end;
-
-      p_end = unique(iplane_unique.begin(),
-                     iplane_unique.end()); // remove duplicates
-
-      if (static_cast<int>(iplane_unique.size()) > _minNumberOfCorrelatedHits &&
-          trackX.size() == trackY.size()) {
-                        // the externalID loop
+      std::vector<int> planeID_unique = planeIDVec;          
+      
+      //remove duplicates (@JHA: added here real erase, function still okay?)
+      auto p_end = unique(planeID_unique.begin(),planeID_unique.end()); 
+      planeID_unique.erase(p_end,planeID_unique.end());
+      
+      //[IF] check for minmal number of correlated hits
+      if(static_cast<int>(planeID_unique.size()) > _minNumberOfCorrelatedHits &&
+          trackXVec.size() == trackYVec.size()) {
+                        
         size_t indexPlane = 0;
-          for (size_t i = 0; i < trackX.size(); i++) {
-            if (i == indexPlane)
-              continue; // skip as this one is not booked
-            _hitXCorrelationMatrix[iplane[indexPlane]][iplane[i]]->fill(
-                trackX[indexPlane], trackX[i]);
-            _hitYCorrelationMatrix[iplane[indexPlane]][iplane[i]]->fill(
-                trackY[indexPlane], trackY[i]);
-            // assume all rotations have been done in the hitmaker processor:
-            _hitXCorrShiftMatrix[iplane[indexPlane]][iplane[i]]->fill(
-                trackX[indexPlane], trackX[indexPlane] - trackX[i]);
-            _hitYCorrShiftMatrix[iplane[indexPlane]][iplane[i]]->fill(
-                trackY[indexPlane], trackY[indexPlane] - trackY[i]);
+        
+          for(size_t i = 0; i < trackXVec.size(); i++) {
+            if(i == indexPlane) continue; //skip as this one is not booked
+            
+            _hitXCorrelationMatrix[planeIDVec[indexPlane]][planeIDVec[i]]->fill(
+                trackXVec[indexPlane], trackXVec[i]);
+            _hitYCorrelationMatrix[planeIDVec[indexPlane]][planeIDVec[i]]->fill(
+                trackYVec[indexPlane], trackYVec[i]);
+            //assumption: all rotations were done in hitmaker processor
+            _hitXCorrShiftMatrix[planeIDVec[indexPlane]][planeIDVec[i]]->fill(
+                trackXVec[indexPlane], trackXVec[indexPlane] - trackXVec[i]);
+            _hitYCorrShiftMatrix[planeIDVec[indexPlane]][planeIDVec[i]]->fill(
+                trackYVec[indexPlane], trackYVec[indexPlane] - trackYVec[i]);
           }
-      } else {
-      }
-    }
-  }
-//  } catch (DataNotAvailableException& e  ) {
-//
-//    streamlog_out  ( MESSAGE2 ) <<  "No input collection found on event " <<
-//    event->getEventNumber()
-//                                << " in run " << event->getRunNumber() <<
-//                                endl;
-//  }
-
+      } //[ENDIF]
+    }//[END] loop over collection (external)
+  }//[ENDIF] hasCollection
 #endif
 }
 
 void EUTelCorrelator::end() {
 
-  if (_hasHitCollection) {
-    streamlog_out(MESSAGE5) << "The input CollectionVec contains "
-                               "HitCollection, calculating offset values "
-                            << endl;
-
-    for (size_t exx = 0; exx < geo::gGeometry().nPlanes(); exx++) {
-      int exPlaneID = _sensorIDVec.at(exx);
-      if (exPlaneID != getFixedPlaneID())
-        continue;
-      for (size_t inn = 0; inn < geo::gGeometry().nPlanes(); inn++) {
-        int inPlaneID = _sensorIDVec.at(inn);
-        if (inPlaneID == getFixedPlaneID())
-          continue;
-
-        if (_hitXCorrShiftMatrix[exPlaneID][inPlaneID] == nullptr)
-          continue;
-        if (_hitXCorrShiftMatrix[exPlaneID][inPlaneID]->yAxis().bins() <= 0)
-          continue;
-
-        float _heighestBinX = 0.;
-        for (int ibin = 0;
-             ibin < _hitXCorrShiftMatrix[exPlaneID][inPlaneID]->yAxis().bins();
-             ibin++) {
-          double xbin =
-              _hitXCorrShiftProjection[inPlaneID]->axis().binLowerEdge(ibin) +
-              _hitXCorrShiftProjection[inPlaneID]->axis().binWidth(ibin) / 2.;
-          double _binValue =
-              _hitXCorrShiftMatrix[exPlaneID][inPlaneID]->binEntriesY(ibin);
-          _hitXCorrShiftProjection[inPlaneID]->fill(xbin, _binValue);
-          if (_binValue > 0)
-            if (_binValue > _heighestBinX) {
-              _heighestBinX = _binValue;
-            }
-        }
-
-        float _heighestBinY = 0.;
-        for (int ibin = 0;
-             ibin < _hitYCorrShiftMatrix[exPlaneID][inPlaneID]->yAxis().bins();
-             ibin++) {
-          double xbin =
-              _hitYCorrShiftProjection[inPlaneID]->axis().binLowerEdge(ibin) +
-              _hitYCorrShiftProjection[inPlaneID]->axis().binWidth(ibin) / 2.;
-          double _binValue =
-              _hitYCorrShiftMatrix[exPlaneID][inPlaneID]->binEntriesY(ibin);
-          _hitYCorrShiftProjection[inPlaneID]->fill(xbin, _binValue);
-          if (_binValue > 0)
-            if (_binValue > _heighestBinY) {
-              _heighestBinY = _binValue;
-            }
-        }
-
-        // get the highert bin and its neighbours
-        //
-        double _correlationBandBinsX = 0.;
-        double _correlationBandCenterX = 0.;
-
-        for (int ibin = 0;
-             ibin < _hitXCorrShiftProjection[inPlaneID]->axis().bins();
-             ibin++) {
-          double ybin = _hitXCorrShiftProjection[inPlaneID]->binHeight(ibin);
-
-          if (ybin < _heighestBinX * 0.9)
-            continue;
-          double xbin =
-              _hitXCorrShiftProjection[inPlaneID]->axis().binLowerEdge(ibin) +
-              _hitXCorrShiftProjection[inPlaneID]->axis().binWidth(ibin) / 2.;
-
-          _correlationBandBinsX += ybin;
-          _correlationBandCenterX += xbin * ybin;
-        }
-
-        double _correlationBandBinsY = 0.;
-        double _correlationBandCenterY = 0.;
-
-        for (int ibin = 0;
-             ibin < _hitYCorrShiftMatrix[exPlaneID][inPlaneID]->yAxis().bins();
-             ibin++) {
-          double ybin = _hitYCorrShiftProjection[inPlaneID]->binHeight(ibin);
-
-          if (ybin < _heighestBinY * 0.9)
-            continue;
-          double xbin =
-              _hitYCorrShiftProjection[inPlaneID]->axis().binLowerEdge(ibin) +
-              _hitYCorrShiftProjection[inPlaneID]->axis().binWidth(ibin) / 2.;
-
-          _correlationBandBinsY += ybin;
-          _correlationBandCenterY += ybin * xbin;
-        }
-
-        streamlog_out(MESSAGE5) << "Hit Offset values: ";
-        streamlog_out(MESSAGE5) << " plane : " << inPlaneID
-                                << " to plane : " << exPlaneID;
-        streamlog_out(MESSAGE5)
-            << " X offset : "
-            << (_correlationBandBinsX == 0. ? 0. : _correlationBandCenterX /
-                                                       _correlationBandBinsX);
-        streamlog_out(MESSAGE5)
-            << " Y offset : "
-            << (_correlationBandBinsY == 0. ? 0. : _correlationBandCenterY /
-                                                       _correlationBandBinsY);
-        streamlog_out(MESSAGE5) << endl;
-      }
-    }
-  }
-
-  streamlog_out(MESSAGE4) << "Successfully finished" << endl;
+  streamlog_out(MESSAGE4) << "Successfully finished" << std::endl;
 }
 
 void EUTelCorrelator::bookHistos() {
 
-  if (!_hasClusterCollection && !_hasHitCollection)
+  //if no cluster and hits, no histograms needed
+  if(!_hasClusterCollection && !_hasHitCollection)
     return;
-
+     
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-
   try {
+    streamlog_out(DEBUG5) << "Booking histograms" << std::endl;
+    
+    //declare variables
+    int xBin, yBin;
+    double xMin, xMax;
+    double yMin, yMax;
+    
+    //[IF] cluster correlation
+    if(_hasClusterCollection && !_hasHitCollection) {
+    
+      //create directories
+      marlin::AIDAProcessor::tree(this)->mkdir("ClusterX");
+      marlin::AIDAProcessor::tree(this)->mkdir("ClusterY");
+      
+      //[START] loop over sensors (from)
+      for(auto fromID : _sensorIDVec) {
+	
+	std::map<unsigned int, AIDA::IHistogram2D *> innerMapXCluster;
+	std::map<unsigned int, AIDA::IHistogram2D *> innerMapYCluster;
+      	
+	//[START] loop over sensors (to)
+	for(auto toID : _sensorIDVec) {
+      
+	  if((toID != getFixedPlaneID() && fromID == getFixedPlaneID()) ||
+	     (_sensorIDtoZ.at(toID) == _sensorIDtoZ.at(fromID) + 1)) {
+            
+	    //create 2D histogram: cluster correlation X
+	    std::string histName_clusterXCorr = "ClusterX/ClusterXCorrelation_d" +
+	      to_string(fromID) + "_d" + to_string(toID);
 
-    streamlog_out(DEBUG5) << "Booking histograms" << endl;
+            xBin = geo::gGeometry().getPlaneNumberOfPixelsX(toID);
+            xMin = 0.;
+            xMax = geo::gGeometry().getPlaneNumberOfPixelsX(toID);
+            yBin = geo::gGeometry().getPlaneNumberOfPixelsX(fromID);
+            yMin = 0.;
+            yMax = geo::gGeometry().getPlaneNumberOfPixelsX(fromID);
+	    
+            AIDA::IHistogram2D *hist2D_clusterXCorr =
+	      marlin::AIDAProcessor::histogramFactory(this)->createHistogram2D(
+		 histName_clusterXCorr, xBin, xMin, xMax, yBin, yMin, yMax);
+	    
+            hist2D_clusterXCorr->setTitle("Cluster correlation in X (d" + std::to_string(fromID) 
+					  +"->d" + std::to_string(toID)+"); X_d"+std::to_string(toID)
+					  +" [mm]; X_d"+std::to_string(fromID)+" [mm]");
+            
+            innerMapXCluster[toID] = hist2D_clusterXCorr;
+            
+            //create 2D histogram: cluster correlation Y
+            std::string histName_clusterYCorr = "ClusterY/ClusterYCorrelation_d" +
+	      to_string(fromID) + "_d" + to_string(toID);
 
-    std::unique_ptr<EUTelHistogramManager> histoMgr =
-        std::make_unique<EUTelHistogramManager>(_histoInfoFileName);
-    EUTelHistogramInfo *histoInfo;
-    bool isHistoManagerAvailable;
+            xBin = geo::gGeometry().getPlaneNumberOfPixelsY(toID);
+            xMin = 0.;
+            xMax = geo::gGeometry().getPlaneNumberOfPixelsY(toID);
+            yBin = geo::gGeometry().getPlaneNumberOfPixelsY(fromID);
+            yMin = 0.;
+            yMax = geo::gGeometry().getPlaneNumberOfPixelsY(fromID);
+	    
+            AIDA::IHistogram2D *hist2D_clusterYCorr =
+                marlin::AIDAProcessor::histogramFactory(this)->createHistogram2D(
+                    histName_clusterYCorr, xBin, xMin, xMax, yBin, yMin, yMax);
 
-    try {
-      isHistoManagerAvailable = histoMgr->init();
-    } catch (ios::failure &e) {
-      streamlog_out(ERROR5)
-          << "I/O problem with " << _histoInfoFileName << "\n"
-          << "Continuing without histogram manager using default settings"
-          << endl;
-      isHistoManagerAvailable = false;
-    } catch (ParseException &e) {
-      streamlog_out(ERROR5)
-          << e.what() << "\n"
-          << "Continuing without histogram manager using default settings"
-          << endl;
-      isHistoManagerAvailable = false;
-    }
+            hist2D_clusterYCorr->setTitle("Cluster correlation in Y (d" + std::to_string(fromID)
+					  +"->d" + std::to_string(toID)+"); Y_d"+std::to_string(toID)
+					  +" [mm]; Y_d"+std::to_string(fromID)+" [mm]");
+            
+            innerMapYCluster[toID] = hist2D_clusterYCorr;
+          } else {
+	    innerMapXCluster[toID] = nullptr;
+            innerMapYCluster[toID] = nullptr;          
+	  }
+        }//[END] loop over sensors (to)
+        _clusterXCorrelationMatrix[fromID] = innerMapXCluster;
+        _clusterYCorrelationMatrix[fromID] = innerMapYCluster;
+      }//[END] loop over sensors (from)
+    }//[ENDIF] cluster correlation
+    
+    //[IF] hit correlation
+    if(_hasHitCollection) {
+      
+      //create directories
+      marlin::AIDAProcessor::tree(this)->mkdir("HitX");
+      marlin::AIDAProcessor::tree(this)->mkdir("HitY");
+      marlin::AIDAProcessor::tree(this)->mkdir("HitXShift");
+      marlin::AIDAProcessor::tree(this)->mkdir("HitYShift");   
+      
+      //[START] loop over sensors (from)
+      for(auto fromID : _sensorIDVec) {
+             	
+	std::map<unsigned int, AIDA::IHistogram2D *> innerMapXHit;
+	std::map<unsigned int, AIDA::IHistogram2D *> innerMapYHit;
+	std::map<unsigned int, AIDA::IHistogram2D *> innerMapXHitShift;
+	std::map<unsigned int, AIDA::IHistogram2D *> innerMapYHitShift;
+      	
+	//[START] loop over sensors (to)
+	for(auto toID : _sensorIDVec) {
+	  
+	  if ((toID != getFixedPlaneID() && fromID == getFixedPlaneID()) ||
+	      (_sensorIDtoZ.at(toID) == _sensorIDtoZ.at(fromID) + 1)) {
+	    
+	    //create 2D histogram: hit correlation X
+	    std::string histName_hitXCorr = "HitX/HitXCorrelation_d" +
+	      to_string(fromID) + "_d" + to_string(toID);
 
-    // declare.initialize:
+            xBin = 100;
+            xMin = -0.5 * geo::gGeometry().getPlaneXSize(toID);
+            xMax = 0.5 * geo::gGeometry().getPlaneXSize(toID);
+	    yBin = 100;
+            yMin = -0.5 * geo::gGeometry().getPlaneXSize(fromID);
+            yMax = 0.5 * geo::gGeometry().getPlaneXSize(fromID);
 
-    int xBin = 10;
-    double xMin = -10.;
-    double xMax = 10.;
+	    AIDA::IHistogram2D *hist2D_hitXCorr =
+	      marlin::AIDAProcessor::histogramFactory(this)->createHistogram2D(
+		 histName_hitXCorr, xBin, xMin, xMax, yBin, yMin, yMax);
+            
+            hist2D_hitXCorr->setTitle("Hit correlation in X (d"+std::to_string(fromID)
+				      +"->d"+std::to_string(toID)+"); X_d"+std::to_string(toID)
+				      +" [mm]; X_d"+std::to_string(fromID)+" [mm]");
+            
+            innerMapXHit[toID] = hist2D_hitXCorr;
+            
+            //create 2D histogram: hit correlation X shift
+            std::string histName_hitXCorrShift = "HitXShift/HitXCorrShift_d" +
+	      to_string(fromID) + "_d" + to_string(toID);
 
-    int yBin = 10;
-    double yMin = -10.;
-    double yMax = 10.;
+	    AIDA::IHistogram2D *hist2D_hitXCorrShift =
+	      marlin::AIDAProcessor::histogramFactory(this)->createHistogram2D(
+		 histName_hitXCorrShift, xBin, xMin, xMax, yBin, yMin, yMax);
+            
+            hist2D_hitXCorrShift->setTitle("Hit correlation shift in X (d"+std::to_string(fromID)
+					   +"->d"+std::to_string(toID)+"); X_d"+std::to_string(toID)
+					   +" [mm]; X_d"+std::to_string(fromID)+" [mm]");
+            
+            innerMapXHitShift[toID] = hist2D_hitXCorrShift;         
 
-    int colNBin = 64;
-    double colMin = 0.;
-    double colMax = 64.;
+            //create 2D histogram: hit correlation Y
+	    std::string histName_hitYCorr = "HitY/HitYCorrelation_d" +
+	      to_string(fromID) + "_d" + to_string(toID);
+	    xBin = 100;
+            xMin = -0.5 * geo::gGeometry().getPlaneYSize(toID);
+            xMax = 0.5 * geo::gGeometry().getPlaneYSize(toID);
+	    yBin = 100;
+            yMin = -0.5 * geo::gGeometry().getPlaneYSize(fromID);
+            yMax = 0.5 * geo::gGeometry().getPlaneYSize(fromID);
+            
+            AIDA::IHistogram2D *hist2D_hitYCorr =
+	      marlin::AIDAProcessor::histogramFactory(this)->createHistogram2D(
+		 histName_hitYCorr, xBin, xMin, xMax, yBin, yMin, yMax);
+            
+            hist2D_hitYCorr->setTitle("Hit correlation in Y (d"+std::to_string(fromID)
+				      +"->d"+std::to_string(toID)+"); Y_d"+std::to_string(toID)
+				      +" [mm]; Y_d"+std::to_string(fromID)+" [mm]");
+            
+            innerMapYHit[toID] = hist2D_hitYCorr;
 
-    int rowNBin = 64;
-    double rowMin = 0.;
-    double rowMax = 64.;
-
-    // create all the directories first
-    vector<string> dirNames;
-
-    if (_hasClusterCollection && !_hasHitCollection) {
-      dirNames.push_back("ClusterX");
-      dirNames.push_back("ClusterY");
-    }
-
-    if (_hasHitCollection) {
-      dirNames.push_back("HitX");
-      dirNames.push_back("HitY");
-      dirNames.push_back("HitXShift");
-      dirNames.push_back("HitYShift");
-    }
-
-    for (size_t iPos = 0; iPos < dirNames.size(); iPos++) {
-
-      AIDAProcessor::tree(this)->mkdir(dirNames[iPos].c_str());
-    }
-
-    string tempHistoName = "";
-    string tempHistoTitle = "";
-
-    for (size_t r = 0; r < _sensorIDVec.size(); ++r) {
-
-      int row = _sensorIDVec.at(r);
-
-      map<unsigned int, AIDA::IHistogram2D *> innerMapXCluster;
-      map<unsigned int, AIDA::IHistogram2D *> innerMapYCluster;
-
-      map<unsigned int, AIDA::IHistogram2D *> innerMapXCluShift;
-      map<unsigned int, AIDA::IHistogram2D *> innerMapYCluShift;
-      map<unsigned int, AIDA::IHistogram1D *> innerMapXCluShiftProjection;
-      map<unsigned int, AIDA::IHistogram1D *> innerMapYCluShiftProjection;
-
-      map<unsigned int, AIDA::IHistogram2D *> innerMapXHit;
-      map<unsigned int, AIDA::IHistogram2D *> innerMapYHit;
-
-      map<unsigned int, AIDA::IHistogram2D *> innerMapXHitShift;
-      map<unsigned int, AIDA::IHistogram2D *> innerMapYHitShift;
-      map<unsigned int, AIDA::IHistogram1D *> innerMapXHitShiftProjection;
-      map<unsigned int, AIDA::IHistogram1D *> innerMapYHitShiftProjection;
-
-      for (size_t c = 0; c < _sensorIDVec.size(); ++c) {
-
-        int col = _sensorIDVec.at(c);
-
-        if ((col != getFixedPlaneID() && row == getFixedPlaneID()) ||
-            (_sensorIDtoZ.at(col) == _sensorIDtoZ.at(row) + 1)) {
-
-          // we create histograms for X and Y Cluster correlation
-          if (_hasClusterCollection && !_hasHitCollection) {
-
-            // double safetyFactor = 1.0; // 2 should be enough because it
-            // means that the sensor is wrong
-            // by all its size.
-
-            /////////////////////////////////////////////////
-            // book X
-            tempHistoName = "ClusterX/" + _clusterXCorrelationHistoName + "_d" +
-                            to_string(row) + "_d" + to_string(col);
-            streamlog_out(DEBUG5) << "Booking histo " << tempHistoName << endl;
-
-            histoInfo =
-                histoMgr->getHistogramInfo(_clusterXCorrelationHistoName);
-            xBin = (isHistoManagerAvailable && histoInfo)
-                       ? histoInfo->_xBin
-                       : geo::gGeometry().getPlaneNumberOfPixelsX(row);
-            xMin =
-                (isHistoManagerAvailable && histoInfo) ? histoInfo->_xMin : 0.;
-            xMax = (isHistoManagerAvailable && histoInfo)
-                       ? histoInfo->_xMax
-                       : geo::gGeometry().getPlaneNumberOfPixelsX(row);
-            yBin = (isHistoManagerAvailable && histoInfo)
-                       ? histoInfo->_yBin
-                       : geo::gGeometry().getPlaneNumberOfPixelsX(col);
-            yMin =
-                (isHistoManagerAvailable && histoInfo) ? histoInfo->_yMin : 0.;
-            yMax = (isHistoManagerAvailable && histoInfo)
-                       ? histoInfo->_yMax
-                       : geo::gGeometry().getPlaneNumberOfPixelsX(col);
-
-            AIDA::IHistogram2D *histo2D =
-                AIDAProcessor::histogramFactory(this)->createHistogram2D(
-                    tempHistoName.c_str(), xBin, xMin, xMax, yBin, yMin, yMax);
-
-            tempHistoTitle = "ClusterX/" + _clusterXCorrelationHistoName +
-                             "_d" + to_string(row) + "_d" + to_string(col);
-            histo2D->setTitle(tempHistoTitle.c_str());
-            innerMapXCluster[col] = histo2D;
-
-            /////////////////////////////////////////////////
-            // book Y
-            tempHistoName = "ClusterY/" + _clusterYCorrelationHistoName + "_d" +
-                            to_string(row) + "_d" + to_string(col);
-            streamlog_out(DEBUG5) << "Booking histo " << tempHistoName << endl;
-
-            histoInfo =
-                histoMgr->getHistogramInfo(_clusterYCorrelationHistoName);
-            xBin = (isHistoManagerAvailable && histoInfo)
-                       ? histoInfo->_xBin
-                       : geo::gGeometry().getPlaneNumberOfPixelsY(row);
-            xMin =
-                (isHistoManagerAvailable && histoInfo) ? histoInfo->_xMin : 0.;
-            xMax = (isHistoManagerAvailable && histoInfo)
-                       ? histoInfo->_xMax
-                       : geo::gGeometry().getPlaneNumberOfPixelsY(row);
-            yBin = (isHistoManagerAvailable && histoInfo)
-                       ? histoInfo->_yBin
-                       : geo::gGeometry().getPlaneNumberOfPixelsY(col);
-            yMin =
-                (isHistoManagerAvailable && histoInfo) ? histoInfo->_yMin : 0.;
-            yMax = (isHistoManagerAvailable && histoInfo)
-                       ? histoInfo->_yMax
-                       : geo::gGeometry().getPlaneNumberOfPixelsY(col);
-
-            histo2D = AIDAProcessor::histogramFactory(this)->createHistogram2D(
-                tempHistoName.c_str(), xBin, xMin, xMax, yBin, yMin, yMax);
-            tempHistoTitle = "ClusterY/" + _clusterYCorrelationHistoName +
-                             "_d" + to_string(row) + "_d" + to_string(col);
-            histo2D->setTitle(tempHistoTitle.c_str());
-
-            innerMapYCluster[col] = histo2D;
+            //create 2D histogram: hit correlation Y shift
+            std::string histName_hitYCorrShift = "HitYShift/HitYCorrShift_d" +
+	      to_string(fromID) + "_d" + to_string(toID);
+	    
+	    AIDA::IHistogram2D *hist2D_hitYCorrShift =
+	      marlin::AIDAProcessor::histogramFactory(this)->createHistogram2D(
+                 histName_hitYCorrShift, xBin, xMin, xMax, yBin, yMin, yMax);
+            
+            hist2D_hitYCorrShift->setTitle("Hit correlation shift in Y (d"+std::to_string(fromID)
+					   +"->d"+std::to_string(toID)+"); Y_d"+std::to_string(toID)
+					   +" [mm]; Y_d"+std::to_string(fromID)+" [mm]");
+            
+            innerMapYHitShift[toID] = hist2D_hitYCorrShift;             
+          } else {
+          
+            innerMapXHit[toID] = nullptr;
+            innerMapYHit[toID] = nullptr;
+	    innerMapXHitShift[toID] = nullptr;
+            innerMapYHitShift[toID] = nullptr;
           }
-
-          // the idea of using ICloud2D instead of H2D is interesting,
-          // but because of a problem when the clouds is converted, I
-          // prefer to use an histogram with a standard binning.
-          //
-          // the boundaries of the histos can be read from the GEAR
-          // description and for safety multiplied by a safety factor
-          // to take into account possible misalignment.
-
-          if (_hasHitCollection) {
-
-            double safetyFactor = 1.0; // 2 should be enough because it
-            // means that the sensor is wrong
-            // by all its size.
-
-            tempHistoName = "HitX/" + _hitXCorrelationHistoName + "_d" +
-                            to_string(row) + "_d" + to_string(col);
-            streamlog_out(DEBUG5) << "Booking histo " << tempHistoName << endl;
-            tempHistoTitle = "HitX/" + _hitXCorrelationHistoName + "_d" +
-                             to_string(row) + "_d" + to_string(col);
-
-            histoInfo = histoMgr->getHistogramInfo(_hitXCorrelationHistoName);
-            colNBin =
-                (isHistoManagerAvailable && histoInfo) ? histoInfo->_xBin : 100;
-            colMin = (isHistoManagerAvailable && histoInfo)
-                         ? histoInfo->_xMin
-                         : -0.5 * geo::gGeometry().getPlaneXSize(row);
-            colMax = (isHistoManagerAvailable && histoInfo)
-                         ? histoInfo->_xMax
-                         : 0.5 * geo::gGeometry().getPlaneXSize(row);
-            rowNBin =
-                (isHistoManagerAvailable && histoInfo) ? histoInfo->_yBin : 100;
-            rowMin = (isHistoManagerAvailable && histoInfo)
-                         ? histoInfo->_yMin
-                         : -0.5 * geo::gGeometry().getPlaneXSize(col);
-            rowMax = (isHistoManagerAvailable && histoInfo)
-                         ? histoInfo->_yMax
-                         : 0.5 * geo::gGeometry().getPlaneXSize(col);
-
-            AIDA::IHistogram2D *histo2D =
-                AIDAProcessor::histogramFactory(this)->createHistogram2D(
-                    tempHistoName.c_str(), rowNBin, rowMin, rowMax, colNBin,
-                    colMin, colMax);
-
-            histo2D->setTitle(tempHistoTitle.c_str());
-
-            innerMapXHit[col] = histo2D;
-
-            // now the hit on the Y direction
-            colNBin = _maxY[col];
-            rowNBin = _maxY[row];
-
-            rowMin = safetyFactor * (_hitMinY[row]);
-            rowMax = safetyFactor * (_hitMaxY[row]);
-            colMin = safetyFactor * (_hitMinY[col]);
-            colMax = safetyFactor * (_hitMaxY[col]);
-
-            tempHistoName = "HitY/" + _hitYCorrelationHistoName + "_d" +
-                            to_string(row) + "_d" + to_string(col);
-            streamlog_out(DEBUG5) << "Booking cloud " << tempHistoName << endl;
-            tempHistoTitle = "HitY/" + _hitYCorrelationHistoName + "_d" +
-                             to_string(row) + "_d" + to_string(col);
-
-            histoInfo = histoMgr->getHistogramInfo(_hitYCorrelationHistoName);
-            colNBin =
-                (isHistoManagerAvailable && histoInfo) ? histoInfo->_xBin : 100;
-            colMin = (isHistoManagerAvailable && histoInfo)
-                         ? histoInfo->_xMin
-                         : -0.5 * geo::gGeometry().getPlaneYSize(row);
-            colMax = (isHistoManagerAvailable && histoInfo)
-                         ? histoInfo->_xMax
-                         : 0.5 * geo::gGeometry().getPlaneYSize(row);
-            rowNBin =
-                (isHistoManagerAvailable && histoInfo) ? histoInfo->_yBin : 100;
-            rowMin = (isHistoManagerAvailable && histoInfo)
-                         ? histoInfo->_yMin
-                         : -0.5 * geo::gGeometry().getPlaneYSize(col);
-            rowMax = (isHistoManagerAvailable && histoInfo)
-                         ? histoInfo->_yMax
-                         : 0.5 * geo::gGeometry().getPlaneYSize(col);
-
-            histo2D = AIDAProcessor::histogramFactory(this)->createHistogram2D(
-                tempHistoName.c_str(), rowNBin, rowMin, rowMax, colNBin, colMin,
-                colMax);
-
-            histo2D->setTitle(tempHistoTitle.c_str());
-
-            innerMapYHit[col] = histo2D;
-
-            // book special histos to calculate sensors initial offsets in X and
-            // Y
-            // book X
-            tempHistoName = "HitXShift/" + _hitXCorrShiftHistoName + "_d" +
-                            to_string(row) + "_d" + to_string(col);
-
-            streamlog_out(DEBUG5) << "Booking histo " << tempHistoName << endl;
-
-            histoInfo = histoMgr->getHistogramInfo(_hitXCorrShiftHistoName);
-            colNBin =
-                (isHistoManagerAvailable && histoInfo) ? histoInfo->_xBin : 100;
-            colMin = (isHistoManagerAvailable && histoInfo)
-                         ? histoInfo->_xMin
-                         : -0.5 * geo::gGeometry().getPlaneXSize(row);
-            colMax = (isHistoManagerAvailable && histoInfo)
-                         ? histoInfo->_xMax
-                         : 0.5 * geo::gGeometry().getPlaneXSize(row);
-            rowNBin =
-                (isHistoManagerAvailable && histoInfo) ? histoInfo->_yBin : 100;
-            rowMin = (isHistoManagerAvailable && histoInfo)
-                         ? histoInfo->_yMin
-                         : -0.5 * geo::gGeometry().getPlaneXSize(col);
-            rowMax = (isHistoManagerAvailable && histoInfo)
-                         ? histoInfo->_yMax
-                         : 0.5 * geo::gGeometry().getPlaneXSize(col);
-
-            histo2D = AIDAProcessor::histogramFactory(this)->createHistogram2D(
-                tempHistoName.c_str(), rowNBin, rowMin, rowMax, colNBin, colMin,
-                colMax);
-
-            tempHistoTitle = "HitXShift/" + _hitXCorrShiftHistoName + "_d" +
-                             to_string(row) + "_d" + to_string(col);
-            histo2D->setTitle(tempHistoTitle.c_str());
-            innerMapXHitShift[col] = histo2D;
-
-            // book Y
-            tempHistoName = "HitYShift/" + _hitYCorrShiftHistoName + "_d" +
-                            to_string(row) + "_d" + to_string(col);
-
-            streamlog_out(DEBUG5) << "Booking histo " << tempHistoName << endl;
-
-            histoInfo = histoMgr->getHistogramInfo(_hitYCorrShiftHistoName);
-            colNBin =
-                (isHistoManagerAvailable && histoInfo) ? histoInfo->_xBin : 100;
-            colMin = (isHistoManagerAvailable && histoInfo)
-                         ? histoInfo->_xMin
-                         : -0.5 * geo::gGeometry().getPlaneYSize(row);
-            colMax = (isHistoManagerAvailable && histoInfo)
-                         ? histoInfo->_xMax
-                         : 0.5 * geo::gGeometry().getPlaneYSize(row);
-            rowNBin =
-                (isHistoManagerAvailable && histoInfo) ? histoInfo->_yBin : 100;
-            rowMin = (isHistoManagerAvailable && histoInfo)
-                         ? histoInfo->_yMin
-                         : -0.5 * geo::gGeometry().getPlaneYSize(col);
-            rowMax = (isHistoManagerAvailable && histoInfo)
-                         ? histoInfo->_yMax
-                         : 0.5 * geo::gGeometry().getPlaneYSize(col);
-
-            histo2D = AIDAProcessor::histogramFactory(this)->createHistogram2D(
-                tempHistoName.c_str(), rowNBin, rowMin, rowMax, colNBin, colMin,
-                colMax);
-
-            tempHistoTitle = "HitYShift/" + _hitYCorrShiftHistoName + "_d" +
-                             to_string(row) + "_d" + to_string(col);
-            histo2D->setTitle(tempHistoTitle.c_str());
-            innerMapYHitShift[col] = histo2D;
-          }
-
-        } else {
-
-          if (_hasClusterCollection && !_hasHitCollection) {
-            innerMapXCluster[col] = nullptr;
-            innerMapYCluster[col] = nullptr;
-
-            innerMapXCluShift[col] = nullptr;
-            innerMapYCluShift[col] = nullptr;
-            innerMapXCluShiftProjection[col] = nullptr;
-            innerMapYCluShiftProjection[col] = nullptr;
-          }
-
-          if (_hasHitCollection) {
-            innerMapXHit[col] = nullptr;
-            innerMapYHit[col] = nullptr;
-
-            innerMapXHitShift[col] = nullptr;
-            innerMapYHitShift[col] = nullptr;
-            innerMapXHitShiftProjection[col] = nullptr;
-            innerMapYHitShiftProjection[col] = nullptr;
-          }
-        }
-      }
-
-      if (_hasClusterCollection && !_hasHitCollection) {
-        _clusterXCorrelationMatrix[row] = innerMapXCluster;
-        _clusterYCorrelationMatrix[row] = innerMapYCluster;
-      }
-
-      if (_hasHitCollection) {
-        _hitXCorrelationMatrix[row] = innerMapXHit;
-        _hitYCorrelationMatrix[row] = innerMapYHit;
-
-        _hitXCorrShiftMatrix[row] = innerMapXHitShift;
-        _hitYCorrShiftMatrix[row] = innerMapYHitShift;
-
-        // book special histos to calculate sensors initial offsets in X and Y
-        // (Projection histograms)
-        // book X
-        tempHistoName = "HitXShift/" + _hitXCorrShiftProjectionHistoName +
-                        "_d" + to_string(row);
-
-        streamlog_out(DEBUG5) << "Booking histo " << tempHistoName << endl;
-
-        // double safetyFactor = 1.0; // 2 should be enough because it
-        // means that the sensor is wrong
-        // by all its size.
-
-        histoInfo =
-            histoMgr->getHistogramInfo(_hitXCorrShiftProjectionHistoName);
-        xBin = (isHistoManagerAvailable && histoInfo) ? histoInfo->_xBin : 100;
-        xMin = (isHistoManagerAvailable && histoInfo) ? histoInfo->_xMin : -10.;
-        xMax = (isHistoManagerAvailable && histoInfo) ? histoInfo->_xMax : 10.;
-
-        AIDA::IHistogram1D *histo1D = nullptr;
-        histo1D = AIDAProcessor::histogramFactory(this)->createHistogram1D(
-            tempHistoName.c_str(), xBin, xMin, xMax);
-        tempHistoTitle = "HitXShift/" + _hitXCorrShiftProjectionHistoName +
-                         "_d" + to_string(row);
-        histo1D->setTitle(tempHistoTitle.c_str());
-
-        _hitXCorrShiftProjection[row] = histo1D;
-
-        // book Y
-        tempHistoName = "HitYShift/" + _hitYCorrShiftProjectionHistoName +
-                        "_d" + to_string(row);
-
-        streamlog_out(DEBUG5) << "Booking histo " << tempHistoName << endl;
-
-        histoInfo =
-            histoMgr->getHistogramInfo(_hitXCorrShiftProjectionHistoName);
-        xBin = (isHistoManagerAvailable && histoInfo) ? histoInfo->_xBin : 100;
-        xMin = (isHistoManagerAvailable && histoInfo) ? histoInfo->_xMin : -10.;
-        xMax = (isHistoManagerAvailable && histoInfo) ? histoInfo->_xMax : 10.;
-
-        histo1D = AIDAProcessor::histogramFactory(this)->createHistogram1D(
-            tempHistoName.c_str(), xBin, xMin, xMax);
-        tempHistoTitle = "HitYShift/" + _hitYCorrShiftProjectionHistoName +
-                         "_d" + to_string(row);
-        histo1D->setTitle(tempHistoTitle.c_str());
-
-        _hitYCorrShiftProjection[row] = histo1D;
-      }
-    }
-
-  } catch (lcio::Exception &e) {
+	}//[END] loop over sensors (to)
+        
+        _hitXCorrelationMatrix[fromID] = innerMapXHit;
+        _hitYCorrelationMatrix[fromID] = innerMapYHit;
+        _hitXCorrShiftMatrix[fromID] = innerMapXHitShift;
+        _hitYCorrShiftMatrix[fromID] = innerMapYHitShift;
+      }//[END] loop over sensors (from)
+    }//[ENDIF] hit correlation
+    
+  } catch(lcio::Exception &e) {
 
     streamlog_out(ERROR1)
         << "No AIDAProcessor initialized. Sorry for quitting..." << endl;
@@ -1166,62 +771,57 @@ void EUTelCorrelator::bookHistos() {
 #endif
 }
 
-std::vector<double>
-EUTelCorrelator::guessSensorOffset(int internalSensorID, int externalSensorID,
-                                   std::vector<double> cluCenter)
-
-{
+std::vector<double> EUTelCorrelator::guessSensorOffset(int internalSensorID, int externalSensorID,
+						       std::vector<double> cluCenter) {
   double internalXCenter = cluCenter.at(0);
   double internalYCenter = cluCenter.at(1);
   double externalXCenter = cluCenter.at(2);
   double externalYCenter = cluCenter.at(3);
 
   double xDet_in =
-      internalXCenter * geo::gGeometry().getPlaneXPitch(internalSensorID);
+    internalXCenter * geo::gGeometry().getPlaneXPitch(internalSensorID);
   double yDet_in =
-      internalYCenter * geo::gGeometry().getPlaneYPitch(internalSensorID);
+    internalYCenter * geo::gGeometry().getPlaneYPitch(internalSensorID);
   double xDet_ex =
-      externalXCenter * geo::gGeometry().getPlaneXPitch(externalSensorID);
+    externalXCenter * geo::gGeometry().getPlaneXPitch(externalSensorID);
   double yDet_ex =
-      externalYCenter * geo::gGeometry().getPlaneYPitch(externalSensorID);
-
+    externalYCenter * geo::gGeometry().getPlaneYPitch(externalSensorID);
+  
   double xCoo_in = internalXCenter;
   double yCoo_in = internalYCenter;
-
-  // get rotated sensors coordinates (in mm or um)
+  
+  //get rotated sensors coordinates (in mm or um)
   double xPos_in = xDet_in;
   double yPos_in = yDet_in;
   double xPos_ex = xDet_ex;
   double yPos_ex = yDet_ex;
-
+  
   double xCooPos_in = xCoo_in;
   double yCooPos_in = yCoo_in;
-
-  // get rotated sensor coordinates (only in pixel number: col num)
-
+  
+  //get rotated sensor coordinates (only in pixel number: col number)
   xPos_in += geo::gGeometry().getPlaneXPosition(internalSensorID) +
-             geo::gGeometry().getPlaneXSize(internalSensorID) / 2.;
-
+    geo::gGeometry().getPlaneXSize(internalSensorID) / 2.;
+  
   xCooPos_in = xCooPos_in;
-
+  
   yPos_in += geo::gGeometry().getPlaneYPosition(internalSensorID) +
-             geo::gGeometry().getPlaneYSize(internalSensorID) / 2.;
-
+    geo::gGeometry().getPlaneYSize(internalSensorID) / 2.;
+  
   yCooPos_in = yCooPos_in;
-
+  
   xPos_ex += geo::gGeometry().getPlaneXPosition(externalSensorID) +
-             geo::gGeometry().getPlaneXSize(externalSensorID) / 2.;
-
+    geo::gGeometry().getPlaneXSize(externalSensorID) / 2.;
+  
   yPos_ex += geo::gGeometry().getPlaneYPosition(externalSensorID) +
-             geo::gGeometry().getPlaneYSize(externalSensorID) / 2.;
-
+    geo::gGeometry().getPlaneYSize(externalSensorID) / 2.;
+  
   std::vector<double> cluster_offset;
-
+  
   cluster_offset.push_back(-(xPos_in - xPos_ex));
   cluster_offset.push_back(-(yPos_in - yPos_ex));
-  //
-  // add also internal sensor X and Y coord
-  //
+  
+  //add also internal sensor X and Y coord
   cluster_offset.push_back(xCooPos_in);
   cluster_offset.push_back(yCooPos_in);
 

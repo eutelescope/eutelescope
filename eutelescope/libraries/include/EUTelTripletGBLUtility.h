@@ -95,7 +95,7 @@ public:
 
     void bookHistos();
 
-    std::pair<double,double> doIterativeGaussianFit(AIDA::IHistogram1D* in_hist, int need_rebin=1) const;
+    std::pair<double,double> doIterativeGaussianFit(AIDA::IHistogram1D* in_hist, int rebinFactor=1) const;
     
     // Determine the best cuts on the tracks - will only print them out, they should be updated manually
     void determineBestCuts() const;

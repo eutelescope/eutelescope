@@ -90,12 +90,12 @@ namespace eutelescope {
   protected:
 
     Utility::alignMode _alignMode;
-	std::string _alignModeString;
+    std::string _alignModeString;
 
-    // set by the user.
+    //! Name of pede steering file
     std::string _pedeSteerfileName;
 
-	bool _rotateOldOffsetVec;
+    bool _rotateOldOffsetVec;
 
   private:
     //! Run number

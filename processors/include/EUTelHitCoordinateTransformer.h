@@ -1,4 +1,3 @@
-// Writen by Alexander Morton <alexander.morton@desy.de>
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -7,8 +6,8 @@
  *   header with author names in all development based on this file.
  *
  */
-#ifndef EUTELCOORDINATETRANSFORMHITS_H
-#define EUTELCOORDINATETRANSFORMHITS_H
+#ifndef EUTELHITCOORDINATETRANSFORMER_H
+#define EUTELHITCOORDINATETRANSFORMER_H
 
 // built only if GEAR is available
 #ifdef USE_GEAR
@@ -28,46 +27,35 @@
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
 #include <EVENT/LCRunHeader.h>
+#include <UTIL/CellIDDecoder.h>
+#include <UTIL/CellIDEncoder.h>
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #endif
-
 #include <IMPL/LCCollectionVec.h>
 
 // system includes <>
-#include <map>
-#include <set>
 #include <string>
 #include <vector>
 
-// lcio includes <.h>
-#include <UTIL/CellIDDecoder.h>
-#include <UTIL/CellIDEncoder.h>
-
 namespace eutelescope {
 
-  class EUTelProcessorCoordinateTransformHits : public marlin::Processor {
+  class EUTelHitCoordinateTransformer : public marlin::Processor {
 
   private:
-    DISALLOW_COPY_AND_ASSIGN(EUTelProcessorCoordinateTransformHits) // This
-                                                                    // makes
-                                                                    // ensures
-                                                                    // that no
-                                                                    // other
-                                                                    // with this
-                                                                    // name can
-                                                                    // be
-                                                                    // created
+    DISALLOW_COPY_AND_ASSIGN(EUTelHitCoordinateTransformer)
 
   public:
-    // Returns a new instance of EUTelProcessorCoordinateTransformHits
+    // Returns a new instance of EUTelHitCoordinateTransformer
     virtual Processor *newProcessor() {
-      return new EUTelProcessorCoordinateTransformHits;
+      return new EUTelHitCoordinateTransformer;
     }
 
-    EUTelProcessorCoordinateTransformHits(); // Default constructor
+	// Default constructor
+    EUTelHitCoordinateTransformer();
+    
     // Called only at the begining of a job
     virtual void init();
 
@@ -81,18 +69,17 @@ namespace eutelescope {
     virtual void end();
 
   private:
-    // Only names wit _(name) come from the steering file.
     // Collection names
     std::string _hitCollectionNameInput;
     std::string _hitCollectionNameOutput;
+    
+    //parameter
     bool _undoAlignment;
-
-  }; // close class declaration
+  };
 
   //! A global instance of the processor
-  EUTelProcessorCoordinateTransformHits gEUTelLocaltoGlobalHitMaker;
+  EUTelHitCoordinateTransformer gEUTelHitCoordinateTransformer;
 
-} // close eutelescope namespace scope
-
-#endif // Gear check ifndef
-#endif // EUTelLocaltoGlobalHitMaker ifndef
+}
+#endif
+#endif
