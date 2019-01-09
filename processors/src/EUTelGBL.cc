@@ -991,11 +991,11 @@ void EUTelGBL::processEvent( LCEvent * event ) {
     
   // do not pass very bad tracks to mille. Only if the alignment is performed
   if(_performAlignment) {
-      if(Chi2 / Ndf < _chi2cut) {
+      if(Chi2 / Ndf < _chi2Cut) {
           traj.milleOut( *milleAlignGBL );
             _nMilleTracks ++;
       }
-
+  }
       numbertracks++;
     }//[END] loop over matched tracks
   
