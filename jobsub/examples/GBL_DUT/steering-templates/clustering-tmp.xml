@@ -67,7 +67,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="ClusteringMimosa" type="EUTelProcessorSparseClustering">
+ <processor name="ClusteringMimosa" type="EUTelSparseClustering">
  <!--EUTelProcessorGeometricClustering is looking for clusters into a calibrated pixel matrix.-->
   <!--Input of Zero Suppressed data-->
   <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata </parameter>
@@ -85,7 +85,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="ClusteringAPIX" type="EUTelProcessorSparseClustering">
+ <processor name="ClusteringAPIX" type="EUTelSparseClustering">
  <!--EUTelProcessorGeometricClustering is looking for clusters into a calibrated pixel matrix.-->
   <!--Input of Zero Suppressed data-->
   <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_apix </parameter>
@@ -103,7 +103,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
-<processor name="ClusteringStrip" type="EUTelProcessorSparseClustering">
+<processor name="ClusteringStrip" type="EUTelSparseClustering">
  <!--EUTelProcessorGeometricClustering is looking for clusters into a calibrated pixel matrix.-->
   <!--Input of Zero Suppressed data-->
   <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_strip </parameter>
@@ -121,7 +121,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="NoisyClusterMaskerM26" type="EUTelProcessorNoisyClusterMasker">
+ <processor name="NoisyClusterMaskerM26" type="EUTelNoisyClusterMasker">
  <!--EUTelProcessorNoisyClusterMasker masks pulses which contain hot pixels. For this, the quality field of pulses is used to encode the kNoisyCluster enum provided by EUTelescope.-->
   <!--Input of zero suppressed data, still containing hot pixels-->
   <parameter name="InputCollectionName" type="string" lcioInType="TrackerData"> cluster_m26 </parameter>
@@ -131,7 +131,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="NoisyClusterMaskerAPIX" type="EUTelProcessorNoisyClusterMasker">
+ <processor name="NoisyClusterMaskerAPIX" type="EUTelNoisyClusterMasker">
  <!--EUTelProcessorNoisyClusterMasker masks pulses which contain hot pixels. For this, the quality field of pulses is used to encode the kNoisyCluster enum provided by EUTelescope.-->
   <!--Input of zero suppressed data, still containing hot pixels-->
   <parameter name="InputCollectionName" type="string" lcioInType="TrackerData"> cluster_apix </parameter>
@@ -141,7 +141,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="NoisyClusterRemoverM26" type="EUTelProcessorNoisyClusterRemover">
+ <processor name="NoisyClusterRemoverM26" type="EUTelNoisyClusterRemover">
  <!--EUTelProcessorNoisyClusterRemover removes masked noisy clusters (TrackerPulses) from a collection, please note that the clusters have to be masked previously. This processor does not read in a hot pixel collection, it simply removes previusly masked TrackerPulses.-->
   <!--Input collection containing noise masked tracker pulse objects-->
   <parameter name="InputCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26 </parameter>
@@ -151,7 +151,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="NoisyClusterRemoverAPIX" type="EUTelProcessorNoisyClusterRemover">
+ <processor name="NoisyClusterRemoverAPIX" type="EUTelNoisyClusterRemover">
  <!--EUTelProcessorNoisyClusterRemover removes masked noisy clusters (TrackerPulses) from a collection, please note that the clusters have to be masked previously. This processor does not read in a hot pixel collection, it simply removes previusly masked TrackerPulses.-->
   <!--Input collection containing noise masked tracker pulse objects-->
   <parameter name="InputCollectionName" type="string" lcioInType="TrackerPulse"> cluster_apix </parameter>
@@ -161,7 +161,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="Save" type="EUTelOutputProcessor">
+ <processor name="Save" type="EUTelOutputSaver">
  <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
   <!--drops the named collections from the event-->
   <parameter name="DropCollectionNames" type="StringVec"> cluster_m26 cluster_apix </parameter>
@@ -183,7 +183,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="EUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+ <processor name="EUTelUtilityPrintEventNumber" type="EUTelEventNumberPrinter">
  <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
   <!--Print event number for every n-th event-->
   <parameter name="EveryNEvents" type="int" value="@NEventsMessage@"/>

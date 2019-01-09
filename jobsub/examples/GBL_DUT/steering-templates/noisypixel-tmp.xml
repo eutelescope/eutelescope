@@ -66,7 +66,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="NoisyPixelMaskerM26" type="EUTelProcessorNoisyPixelFinder">
+ <processor name="NoisyPixelMaskerM26" type="EUTelNoisyPixelFinder">
  <!--EUTelProcessorNoisyPixelFinder computes the firing frequency of pixels and applies a cut on this value to mask (NOT remove) hot pixels.-->
   <!--Input of Zero Suppressed data-->
   <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata </parameter>
@@ -89,7 +89,7 @@ within the selected number of event per cycle-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="NoisyPixelMaskerAPIX" type="EUTelProcessorNoisyPixelFinder">
+ <processor name="NoisyPixelMaskerAPIX" type="EUTelNoisyPixelFinder">
  <!--EUTelProcessorNoisyPixelFinder computes the firing frequency of pixels and applies a cut on this value to mask (NOT remove) hot pixels.-->
   <!--Input of Zero Suppressed data-->
   <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_apix </parameter>
@@ -112,7 +112,7 @@ within the selected number of event per cycle-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="Save" type="EUTelOutputProcessor">
+ <processor name="Save" type="EUTelOutputSaver">
  <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
   <!--drops the named collections from the event-->
   <!--parameter name="DropCollectionNames" type="StringVec"> TPCHits HCalHits </parameter-->
@@ -134,7 +134,7 @@ within the selected number of event per cycle-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="EUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+ <processor name="EUTelUtilityPrintEventNumber" type="EUTelEventNumberPrinter">
  <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
   <!--Print event number for every n-th event-->
   <parameter name="EveryNEvents" type="int" value="@NEventsMessage@"/>
