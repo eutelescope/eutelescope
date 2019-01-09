@@ -32,23 +32,15 @@ EUTelEventNumberPrinter aPrintEventNumber;
 EUTelEventNumberPrinter::EUTelEventNumberPrinter()
     : Processor("EUTelEventNumberPrinter"), _everyNEvents(1000),
       _printTimestamp(false), totalevents(0), totalruns(0) {
-  /* the constructor call first the super constructor which the name
-   * of the processor
-   * this must by the same as the class name.
-   */
 
   _description = "EUTelEventNumberPrinter prints the event number to screen"
-                 " depending on the verbosity level";
+                 " depending on the verbosity level.";
 
-  /* register steering parameters: name, description, class-variable, default
-   * value
-   * the type will by definded by the type of the default value
-   * string, double, float and int are possible
-   */
   registerProcessorParameter("EveryNEvents",
                              "Print event number for every n-th event",
                              _everyNEvents, 
                              1000);
+
   registerOptionalParameter("printTimestamp",
                             "print the event timestamp as read from LCIO",
                             _printTimestamp, 
@@ -56,9 +48,8 @@ EUTelEventNumberPrinter::EUTelEventNumberPrinter()
 }
 
 void EUTelEventNumberPrinter::init() {
-  // this method is called only once even when the rewind is active
 
-  // usually a good idea to do
+  //usually a good idea to do
   printParameters();
 }
 

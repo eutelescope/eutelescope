@@ -29,8 +29,8 @@ using namespace eutelescope;
 EUTelOutputSaver::EUTelOutputSaver()
     : LCIOOutputProcessor("EUTelOutputSaver") {
 
-  _description = "Writes the current event to the specified LCIO outputfile."
-                 "Eventually it adds a EORE at the of the file if it was missing"
+  _description = "EUTelOutputSaver writes the current event to the specified LCIO outputfile. "
+                 "Eventually it adds a EORE at the of the file if it was missing. "
                  "Needs to be the last ActiveProcessor.";
 
   #ifndef MARLIN_VERSION_GE
