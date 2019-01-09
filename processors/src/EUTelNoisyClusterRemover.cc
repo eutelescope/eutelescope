@@ -43,10 +43,9 @@ namespace eutelescope {
         _iEvt(0) {
 
     _description = "EUTelNoisyClusterRemover removes masked noisy "
-                   "clusters (TrackerPulses) from a collection, please note "
-                   "that the clusters have to be masked previously. This "
-                   "processor does not read in a hot pixel collection, it "
-                   "simply removes previously masked TrackerPulses.";
+                   "clusters (TrackerPulses) from a collection. It does "
+                   "not read in a hot pixel collection, but removes masked "
+                   "TrackerPulses.";
 
     registerInputCollection(LCIO::TRACKERPULSE, 
 			    "InputCollectionName",
