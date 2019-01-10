@@ -35,7 +35,7 @@
   <!--Input of Zero Suppressed data-->
   <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata </parameter>
   <!--The list of sensor IDs that shall be excluded.-->
-  <parameter name="ExcludedPlanes" type="IntVec" value="@ExcludedPlanes@"/>
+  <!--parameter name="ExcludedPlanes" type="IntVec" value=""/-->
   <!--This is the name of the hot pixel collection to be saved into the output slcio file-->
   <parameter name="HotPixelCollectionName" type="string" value="hotpixel_m26"/>
   <!--This is the name of the LCIO file name with the output noisyPixel db (add .slcio)-->
