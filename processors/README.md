@@ -1,4 +1,4 @@
-# EUTelscope processors
+# EUTelescope processors
 
 ## List of processors:
 
