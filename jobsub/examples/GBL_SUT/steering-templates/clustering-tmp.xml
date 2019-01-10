@@ -57,7 +57,7 @@
   <!--Cluster (output) collection name-->
   <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_m26 </parameter>
   <!--The list of sensor ids that have to be excluded from the clustering.-->
-  <parameter name="ExcludedPlanes" type="IntVec" value="@ExcludedPlanes@"/>
+  <!--parameter name="ExcludedPlanes" type="IntVec" value=""/-->
   <!--Switch on or off the histogram filling-->
   <parameter name="HistogramFilling" type="bool" value="true"/>
   <!--Minimum distance squared between sparsified pixel ( touching == 2) [integer]-->
