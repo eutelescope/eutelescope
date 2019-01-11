@@ -4,12 +4,12 @@
 
    <execute>
       <processor name="AIDA"/>
-      <processor name="MakeHits"/>
-      <processor name="TransformHitLocalToGlobal"/>
-      <processor name="PerformPrealignment"/>
-      <processor name="PlotCorrelation"/>
+      <processor name="HitMaker"/>
+      <processor name="HitLocalToGlobal"/>
+      <processor name="PreAligner"/>
+      <processor name="Correlator"/>
       <processor name="SaveLCIO"/>
-      <processor name="PrintEventNumber"/>
+      <processor name="EventNumber"/>
    </execute>
 
    <global>
@@ -33,7 +33,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="MakeHits" type="EUTelHitMaker">
+ <processor name="HitMaker" type="EUTelHitMaker">
  <!--EUTelHitMaker is responsible to translate cluster centers from the local frame of reference 
  to the external frame of reference using the GEAR geometry description-->
   <!--Input cluster collection name-->
@@ -48,7 +48,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="TransformHitLocalToGlobal" type="EUTelHitCoordinateTransformer">
+ <processor name="HitLocalToGlobal" type="EUTelHitCoordinateTransformer">
  <!--EUTelHitCoordinateTransformer is responsible to change local coordinates to global using the EUTelGeometryClass.-->
   <!--Input hit collection name-->
   <parameter name="hitCollectionNameInput" type="string" lcioInType="TrackerHit"> local_hit </parameter>
@@ -60,7 +60,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="PerformPrealignment" type="EUTelPreAligner">
+ <processor name="PreAligner" type="EUTelPreAligner">
  <!--EUTelPreAligner applies alignment constants to hit collection.-->
   <!--The name of the input hit collection-->
   <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
@@ -79,9 +79,9 @@
   <!--Suffix for the new GEAR file, set to empty string to overwrite old GEAR file (default: _pre)-->
   <parameter name="GEARSuffix" type="string" value="@GEARSuffix@"/>
   <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
-  <parameter name="MinNumberOfCorrelatedHits" type="int" value="@CorrelatedHits@"/>
+  <parameter name="MinNumberOfCorrelatedHits" type="int" value="5"/>
   <!--Switch for histogram plotting (default: true)-->
-  <!--parameter name="PlotHistograms" type="bool" value="true"/-->
+  <parameter name="PlotHistograms" type="bool" value="true"/>
   <!--How many events should be used for an approximation to the X,Y shifts (pre-alignment)? (default=50000)-->
   <parameter name="RequiredEvents" type="int" value="@Events@"/>
   <!--Maximal values of the hit residuals in the X direction for a correlation band (ordered according to z position).-->
@@ -96,7 +96,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="PlotCorrelation" type="EUTelCorrelator">
+ <processor name="Correlator" type="EUTelCorrelator">
  <!--EUTelCorrelator fills histograms with correlation plots.-->
   <!--Hit collection name-->
   <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
@@ -109,7 +109,7 @@
   <!--List of cluster collections-->
   <parameter name="InputClusterCollections" type="StringVec"> </parameter>
   <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
-  <parameter name="MinNumberOfCorrelatedHits" type="int" value="@CorrelatedHits@"/>
+  <parameter name="MinNumberOfCorrelatedHits" type="int" value="5"/>
   <!--How many events are needed to get reasonable correlation plots (and Offset DB)? (default=1000)-->
   <parameter name="RequiredEvents" type="int" value="@Events@"/>
   <!--Maximal values of the hit residuals in the X direction for a correlation band (ordered along z of sensors).-->
@@ -142,7 +142,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="PrintEventNumber" type="EUTelEventNumberPrinter">
+ <processor name="EventNumber" type="EUTelEventNumberPrinter">
  <!--EUTelEventNumberPrinter prints the event number to screen depending on the verbosity level.-->
   <!--Print event number for every n-th event-->
   <parameter name="EveryNEvents" type="int" value="2500"/>

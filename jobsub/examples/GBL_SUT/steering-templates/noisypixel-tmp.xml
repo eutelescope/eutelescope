@@ -4,8 +4,8 @@
 
    <execute>
       <processor name="AIDA"/>
-      <processor name="MaskHotPixel"/>
-      <processor name="PrintEventNumber"/>
+      <processor name="HotPixelMasker"/>
+      <processor name="EventNumber"/>
    </execute>
 
    <global>
@@ -30,10 +30,10 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="MaskHotPixel" type="EUTelNoisyPixelFinder">
+ <processor name="HotPixelMasker" type="EUTelNoisyPixelFinder">
  <!--EUTelNoisyPixelFinder computes the firing frequency of pixels and applies a cut on this value to mask (NOT remove) noisy pixels.-->
   <!--Input of Zero Suppressed data-->
-  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata </parameter>
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
   <!--The list of sensor IDs that shall be excluded.-->
   <!--parameter name="ExcludedPlanes" type="IntVec" value=""/-->
   <!--This is the name of the hot pixel collection to be saved into the output slcio file-->
@@ -50,7 +50,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="PrintEventNumber" type="EUTelEventNumberPrinter">
+ <processor name="EventNumber" type="EUTelEventNumberPrinter">
  <!--EUTelEventNumberPrinter prints the event number to screen depending on the verbosity level.-->
   <!--Print event number for every n-th event-->
   <parameter name="EveryNEvents" type="int" value="2500"/>

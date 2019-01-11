@@ -24,25 +24,25 @@ You should be able to run the analysis now. For this, execute the following comm
 First example is a homogenous aluminium plate (3mm thickness) as SUT:
 
 ```
-jobsub -c config.cfg -csv runlist.csv -g noisypixel 699
-jobsub -c config.cfg -csv runlist.csv -g clustering 699
-jobsub -c config.cfg -csv runlist.csv -g hitmaker 699
-jobsub -c config.cfg -csv runlist.csv -g alignGBL 699
-jobsub -c config.cfg -csv runlist.csv -g alignGBL2 699
-jobsub -c config.cfg -csv runlist.csv -g alignGBL3 699
-jobsub -c config.cfg -csv runlist.csv -g fitGBL 699
+jobsub -c config_AluSample.cfg -csv runlist.csv -g noisypixel 699
+jobsub -c config_AluSample.cfg -csv runlist.csv -g clustering 699
+jobsub -c config_AluSample.cfg -csv runlist.csv -g hitmaker 699
+jobsub -c config_AluSample.cfg -csv runlist.csv -g alignGBL 699
+jobsub -c config_AluSample.cfg -csv runlist.csv -g alignGBL2 699
+jobsub -c config_AluSample.cfg -csv runlist.csv -g alignGBL3 699
+jobsub -c config_AluSample.cfg -csv runlist.csv -g fitGBL 699
 ```
 
 Second example is a copper sample, providing four different regions with 0/25/50/100% X/X0:
 
 ```
-jobsub -c config.cfg -csv runlist.csv -g noisypixel 681
-jobsub -c config.cfg -csv runlist.csv -g clustering 681
-jobsub -c config.cfg -csv runlist.csv -g hitmaker 681
-jobsub -c config.cfg -csv runlist.csv -g alignGBL 681
-jobsub -c config.cfg -csv runlist.csv -g alignGBL2 681
-jobsub -c config.cfg -csv runlist.csv -g alignGBL3 681
-jobsub -c config.cfg -csv runlist.csv -g fitGBL 681
+jobsub -c config_CuSample.cfg -csv runlist.csv -g noisypixel 681
+jobsub -c config_CuSample.cfg -csv runlist.csv -g clustering 681
+jobsub -c config_CuSample.cfg -csv runlist.csv -g hitmaker 681
+jobsub -c config_CuSample.cfg -csv runlist.csv -g alignGBL 681
+jobsub -c config_CuSample.cfg -csv runlist.csv -g alignGBL2 681
+jobsub -c config_CuSample.cfg -csv runlist.csv -g alignGBL3 681
+jobsub -c config_CuSample.cfg -csv runlist.csv -g fitGBL 681
 ```
 
 ### EUDAQ1 version
