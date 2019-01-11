@@ -4,10 +4,10 @@
 
    <execute>
       <processor name="AIDAProcessor"/>
-      <processor name="TransformHitLocalToGlobal"/>
-      <processor name="PerformPedeToGEAR"/>
-      <processor name="PerformGBLAlignment"/>
-      <processor name="PrintEventNumber"/>
+      <processor name="HitLocalToGlobal"/>
+      <processor name="PedeToGEAR"/>
+      <processor name="GBLAlignment"/>
+      <processor name="EventNumber"/>
    </execute>
 
    <global>
@@ -31,7 +31,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="TransformHitLocalToGlobal" type="EUTelHitCoordinateTransformer">
+ <processor name="HitLocalToGlobal" type="EUTelHitCoordinateTransformer">
  <!--EUTelHitCoordinateTransformer is responsible to change local coordinates to global using the EUTelGeometryClass.-->
   <!--Input hit collection name-->
   <parameter name="hitCollectionNameInput" type="string" lcioInType="TrackerHit"> local_hit </parameter>
@@ -43,7 +43,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="PerformPedeToGEAR" type="EUTelPedeGEAR">
+ <processor name="PedeToGEAR" type="EUTelPedeGEAR">
  <!--EUTelPedeGEAR calls PEDE to process a MILLE binary file and create an updated GEAR file with the updated MILLEPEDE II alignment constants.-->
   <!--Number of alignment constants used. Available mode are: 
 		XYShiftsRotZ - shifts in the X and Y directions and a rotation around the Z axis,
@@ -52,9 +52,7 @@
 		XYZShiftsRotXYZ - all shifts and rotations allowed-->
   <parameter name="AlignMode" type="string" value="@AlignMode@"/>
   <!--Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file-->
-  <!--parameter name="GEARSuffix" type="string" value="_aligned"/-->
-  <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
-  <parameter name="NewGEARSuffix" value="@GEARSuffix@"/>
+  <parameter name="GEARSuffix" value="@GEARSuffix@"/>
   <!--Name of the steering file for the pede program.-->
   <parameter name="PedeSteerfileName" type="string" value="@PedeSteerFile@"/>
   <!--Apply the obtained rotation to the preexisting offset vector or not..-->
@@ -63,7 +61,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="PerformGBLAlignment" type="EUTelGBL">
+ <processor name="GBLAlignment" type="EUTelGBL">
  <!--EUTelGBL uses the MILLE program to write data files for MILLEPEDE II.-->
   <!--Input hit collections name-->
   <parameter name="hitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
@@ -111,8 +109,6 @@
   <parameter name="kappa" type="double" value="@kappa@"/>
   <!--The last plane (z-ordered) which still should be attached to the upstream triplet-->
   <parameter name="lastUpstreamSensor" type="int" value="@LastUpstreamSensor@"/>
-  <!--Maximal number of track candidates-->
-  <!--parameter name="maxTrackCandidates" type="int" value="2000"/-->
   <!--Maximal number of track candidates (Total)-->
   <!--parameter name="maxTrackCandidatesTotal" type="int" value="10000000"/-->
   <!--Name of the Millepede binary file-->
@@ -141,7 +137,7 @@
   <!--parameter name="zMid" type="double" value="-1"/-->
 </processor>
 
- <processor name="PrintEventNumber" type="EUTelEventNumberPrinter">
+ <processor name="EventNumber" type="EUTelEventNumberPrinter">
  <!--EUTelEventNumberPrinter prints the event number to screen depending on the verbosity level.-->
   <!--Print event number for every n-th event-->
   <parameter name="EveryNEvents" type="int" value="2500"/>
