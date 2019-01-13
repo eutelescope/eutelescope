@@ -537,7 +537,7 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
       std::vector<int> planeID_unique = planeIDVec;          
       
       //remove duplicates
-      std::vector<int>::iterator p_end = unique(planeID_unique.begin(),planeID_unique.end()); 
+      //std::vector<int>::iterator p_end = unique(planeID_unique.begin(),planeID_unique.end()); 
       //FIXME: should there be real erasing, change function... (jha92)
       //planeID_unique.erase(p_end,planeID_unique.end());
       
