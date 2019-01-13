@@ -120,7 +120,7 @@ to the external frame of reference using the GEAR geometry description-->
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
   <parameter name="DumpOffset" value="false"/>
   <!--How many events are needed to get reasonable correlation plots (and Offset DB)? (default=1000)-->
-  <parameter name="Events" type="int" value="@NoEvents@"/>
+  <parameter name="RequiredEvents" type="int" value="@NoEvents@"/>
   <!--SensorID of fixed plane-->
   <!--parameter name="FixedPlane" type="int" value="0"/-->
   <!--Name of histogram info xml file-->

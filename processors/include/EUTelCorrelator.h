@@ -192,7 +192,7 @@ namespace eutelescope {
     bool _hasClusterCollection;
     bool _hasHitCollection;
 
-    //! vector of Sensor ID (subtracted by posible excluded ones)
+    //! vector of Sensor ID (subtracted by possible excluded ones)
     std::vector<int> _sensorIDVec;
     
     //! map of Sensor ID and z position

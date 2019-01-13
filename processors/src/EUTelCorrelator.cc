@@ -543,7 +543,7 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
       //FIXME: should there be real erasing, change function... (jha92)
       //planeID_unique.erase(p_end,planeID_unique.end());
       
-      //[IF] check for minmal number of correlated hits
+      //[IF] check for minimal number of correlated hits
       if(static_cast<int>(planeID_unique.size()) > _minNumberOfCorrelatedHits &&
           trackXVec.size() == trackYVec.size()) {
                         
