@@ -161,7 +161,7 @@ namespace eutelescope {
       int _iEvt;
       int _printEventCounter;
       size_t _nMilleDataPoints;
-      size_t _nMilleTracks;
+      size_t _nTotalTracks;
       size_t _nPlanes;
 
       //flags
