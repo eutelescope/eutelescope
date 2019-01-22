@@ -529,7 +529,7 @@ void EUTelTripletGBLUtility::determineBestCuts() const {
     double tripletMatchingCut = std::max( fabs(res_tripletMatchingResidualX.first)+nb_sigma*res_tripletMatchingResidualX.second, 
 					  fabs(res_tripletMatchingResidualY.first)+nb_sigma*res_tripletMatchingResidualY.second );
 
-    streamlog_out (MESSAGE5) << "__________ *** We then recommend the following cuts, although they should be checked ! : __________" << std::endl;
+    streamlog_out (MESSAGE5) << "We recommend the following cuts, although they should be checked ! :" << std::endl;
     streamlog_out (MESSAGE5) << "UpstreamTripletCut 	= " << upstreamTripletCut  << std::endl;
     streamlog_out (MESSAGE5) << "DownstreamTripletCut 	= " << downstreamTripletCut << std::endl;
     streamlog_out (MESSAGE5) << "UpstreamSlopeCut   	= " << upstreamSlopeCut << std::endl;
