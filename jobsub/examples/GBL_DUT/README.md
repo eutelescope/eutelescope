@@ -18,7 +18,9 @@ To run the example, execute the following commands one after another and check f
 jobsub -c config.cfg -csv runlist.csv -g noisypixel 2365
 jobsub -c config.cfg -csv runlist.csv -g clustering 2365
 jobsub -c config.cfg -csv runlist.csv -g hitmaker 2365
-jobsub -c config.cfg -csv runlist.csv -g alignGBL 2365
+jobsub -c config.cfg -csv runlist.csv -g alignGBL1 2365
+jobsub -c config.cfg -csv runlist.csv -g alignGBL2 2365
+jobsub -c config.cfg -csv runlist.csv -g alignGBL3 2365
 jobsub -c config.cfg -csv runlist.csv -g fitGBL 2365
 ```
 

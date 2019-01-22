@@ -75,8 +75,6 @@
   <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_m26 </parameter>
   <!--The list of sensor ids that have to be excluded from the clustering.-->
   <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
-  <!--This is the name of the histogram information file-->
-  <parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
   <!--Switch on or off the histogram filling-->
   <parameter name="HistogramFilling" type="bool" value="true"/>
   <!--Time cut in time units of your sensor-->
@@ -93,8 +91,6 @@
   <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_apix </parameter>
   <!--The list of sensor ids that have to be excluded from the clustering.-->
   <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
-  <!--This is the name of the histogram information file-->
-  <parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
   <!--Switch on or off the histogram filling-->
   <parameter name="HistogramFilling" type="bool" value="true"/>
   <!--Time cut in time units of your sensor-->
@@ -111,8 +107,6 @@
   <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_strip </parameter>
   <!--The list of sensor ids that have to be excluded from the clustering.-->
   <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
-  <!--This is the name of the histogram information file-->
-  <parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
   <!--Switch on or off the histogram filling-->
   <parameter name="HistogramFilling" type="bool" value="true"/>
   <!--Time cut in time units of your sensor-->

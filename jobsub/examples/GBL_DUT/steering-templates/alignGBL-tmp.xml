@@ -37,7 +37,7 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-alignGBL-histo"/>
+  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-alignGBL@Iteration@-histo"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -143,7 +143,7 @@
   <!--Fix sensor planes in the fit according to their sensor ids.-->
   <!--parameter name="FixedPlanes" type="IntVec"> </parameter-->
   <!--Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file-->
-  <parameter name="NewGEARSuffix" type="string">_aligned </parameter>
+  <parameter name="GEARSuffix" type="string"> @GEARSuffix@ </parameter>
   <!--Name of the steering file for the pede program.-->
   <!--parameter name="PedeSteerfileName" type="string">steer_mille.txt </parameter-->
   <!--Apply the obtained rotation to the preexisting offset vector or not..-->

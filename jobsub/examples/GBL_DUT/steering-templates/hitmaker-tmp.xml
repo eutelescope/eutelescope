@@ -123,8 +123,6 @@ to the external frame of reference using the GEAR geometry description-->
   <parameter name="RequiredEvents" type="int" value="@NoEvents@"/>
   <!--SensorID of fixed plane-->
   <!--parameter name="FixedPlane" type="int" value="0"/-->
-  <!--Name of histogram info xml file-->
-  <parameter name="HistogramInfoFilename" type="string" value="@HistoInfoFile@"/>
   <!--This is the name of the hot pixel collection to be saved into the output slcio file-->
   <!--parameter name="HotPixelCollectionName" type="string" value="hotpixel"/-->
   <!--List of cluster collections-->
