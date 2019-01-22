@@ -115,7 +115,6 @@ void EUTelGBLOutput::init() {
   _eutracks->Branch("planeID", &_planeID);
   _eutracks->Branch("trackID", &_trackID);
   _eutracks->Branch("triggerID",&_triggerID);
-  _eutracks->Branch("nb_tracks",&_nb_tracks);
   _eutracks->Branch("timestamp",&_timestamp);
   _eutracks->Branch("xPos", &_xPos);
   _eutracks->Branch("yPos", &_yPos);
@@ -196,7 +195,6 @@ void EUTelGBLOutput::processEvent(LCEvent *event) {
 	
       _planeID->push_back(thisID);
       _trackID->push_back(trackposition->getIntVal(2));  
-      _nb_tracks = std::max(_nb_tracks, _trackID->back());
       _ndof->push_back(trackposition->getIntVal(1));
       //FIXME: inserting float numbers into a double, since root doesn't want vector of floats
       _chi2->push_back(trackposition->getFloatVal(0));
@@ -294,7 +292,7 @@ void EUTelGBLOutput::processEvent(LCEvent *event) {
   
   //fill the TTrees
   //the event number would make it fill this TTree even for events with no tracks
-  if(TrackCollection->getNumberOfElements() != 0) _eutracks->Fill();
+  if(!(_onlyWithTracks) || TrackCollection->getNumberOfElements() != 0) _eutracks->Fill();
   if(_inputHitCollections.size() != 0) _euhits->Fill();
   if(_inputZsCollections.size() != 0) _zstree->Fill();
 }

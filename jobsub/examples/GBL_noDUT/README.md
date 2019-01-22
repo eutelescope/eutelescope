@@ -17,36 +17,36 @@ You can set the variables for your working directory here as well as input param
 
 There a two different versions, one for raw-data taken with EUDAQ1 and one with already converted data files taken with EUDAQ2.
 
-### EUDAQ2 version (run701)
+### EUDAQ2 version
 
 You should be able to run the analysis now. For this, execute the following commands one after another and check for each of the processors to successfully finish.
 
 ```
-jobsub -c config.cfg -csv runlist.csv -g noisypixel 701
-jobsub -c config.cfg -csv runlist.csv -g clustering 701
-jobsub -c config.cfg -csv runlist.csv -g hitmaker 701
-jobsub -c config.cfg -csv runlist.csv -g alignGBL 701
-jobsub -c config.cfg -csv runlist.csv -g alignGBL2 701
-jobsub -c config.cfg -csv runlist.csv -g alignGBL3 701
-jobsub -c config.cfg -csv runlist.csv -g fitGBL 701
+jobsub -c config_DESY2018.cfg -csv runlist.csv -g noisypixel 701
+jobsub -c config_DESY2018.cfg -csv runlist.csv -g clustering 701
+jobsub -c config_DESY2018.cfg -csv runlist.csv -g hitmaker 701
+jobsub -c config_DESY2018.cfg -csv runlist.csv -g alignGBL 701
+jobsub -c config_DESY2018.cfg -csv runlist.csv -g alignGBL2 701
+jobsub -c config_DESY2018.cfg -csv runlist.csv -g alignGBL3 701
+jobsub -c config_DESY2018.cfg -csv runlist.csv -g fitGBL 701
 ```
 
 
-### EUDAQ1 version (run117)
+### EUDAQ1 version
 
 For this version, one has to convert the file in the first step. Furthermore, it is then needed to change the inputs for the following processes to the newly created LCIO file.
 Please have a look in the steering-templates for noisypixel and clustering; here comment out the current LCIOInput and take the other provided one.
 Then the analysis should work in the same way:
 
 ```
-jobsub -c config.cfg -csv runlist.csv -g converter 117
-jobsub -c config.cfg -csv runlist.csv -g noisypixel 117
-jobsub -c config.cfg -csv runlist.csv -g clustering 117
-jobsub -c config.cfg -csv runlist.csv -g hitmaker 117
-jobsub -c config.cfg -csv runlist.csv -g alignGBL 117
-jobsub -c config.cfg -csv runlist.csv -g alignGBL2 117
-jobsub -c config.cfg -csv runlist.csv -g alignGBL3 117
-jobsub -c config.cfg -csv runlist.csv -g fitGBL 117
+jobsub -c config_DESY2012.cfg -csv runlist.csv -g converter 117
+jobsub -c config_DESY2012.cfg -csv runlist.csv -g noisypixel 117
+jobsub -c config_DESY2012.cfg -csv runlist.csv -g clustering 117
+jobsub -c config_DESY2012.cfg -csv runlist.csv -g hitmaker 117
+jobsub -c config_DESY2012.cfg -csv runlist.csv -g alignGBL 117
+jobsub -c config_DESY2012.cfg -csv runlist.csv -g alignGBL2 117
+jobsub -c config_DESY2012.cfg -csv runlist.csv -g alignGBL3 117
+jobsub -c config_DESY2012.cfg -csv runlist.csv -g fitGBL 117
 ```
 
 ## Output

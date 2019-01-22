@@ -1,2 +1,4 @@
-RunNumber,BeamEnergy,kappaValue,GearGeoFile
-000110,2.4,0.751,gear_beforeAlign
+RunNumber,BeamEnergy,GearGeoFile
+110,2.4,gear_DESY2017
+699,4.0,gear_AluSample
+681,4.0,gear_CuSample

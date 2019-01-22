@@ -158,6 +158,7 @@ INCLUDE_DIRECTORIES( ./eutelescope/interfaces/pixel/include )
 INCLUDE_DIRECTORIES( ./eutelescope/interfaces/cluster/include )
 INCLUDE_DIRECTORIES( ./processors/include )
 INCLUDE_DIRECTORIES( ./datasources/include )
+INCLUDE_DIRECTORIES( ./processors/include/legacy )
 INCLUDE_DIRECTORIES( ./processors/include/alibava )
 INCLUDE_DIRECTORIES( ./processors/include/cms )
 INCLUDE_DIRECTORIES( ./geometries/include/ )
@@ -198,6 +199,7 @@ IF(BUILD_PROCESSORS)
   # Processor Library
   SET( processors EutelProcessors )
   AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/processors/src processor_sources )
+  AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/processors/src/legacy processor_sources )
   AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/processors/src/alibava processor_sources )
   AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/processors/src/cms processor_sources )
   ADD_SHARED_LIBRARY( ${processors} ${processor_sources} )
@@ -265,9 +267,6 @@ install (CODE
     EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/parsepede/parsemilleout.sh ${PROJECT_SOURCE_DIR}/bin/parsemilleout.sh)
     EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/resIntoSteer.py ${PROJECT_SOURCE_DIR}/bin/resIntoSteer.py)
     EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/iterAlign.py ${PROJECT_SOURCE_DIR}/bin/iterAlign )"
-
-
-
 )
 
 # Enable testing

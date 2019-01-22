@@ -347,7 +347,7 @@ void EUTelGBL::init() {
   _printEventCounter = 0;
 
   //initialise Mille statistics
-  _nMilleTracks = 0;
+  _nTotalTracks = 0;
 
   // booking histograms
   bookHistos(_sensorIDVec);
@@ -491,14 +491,14 @@ void EUTelGBL::processEvent( LCEvent * event ) {
       << setw(6) << setiosflags(ios::right)
       << event->getRunNumber()
       << ", currently having "
-      << _nMilleTracks << " tracks "
+      << _nTotalTracks << " tracks "
       << std::endl;
   }
   
   //FIXME?: compiler doesn't like it inside an if clause
   LCCollectionVec* _outputTracks = new LCCollectionVec(LCIO::LCGENERICOBJECT);
   
-  if(_nMilleTracks > static_cast<size_t>(_maxTrackCandidatesTotal)) {
+  if(_nTotalTracks > static_cast<size_t>(_maxTrackCandidatesTotal)) {
     throw StopProcessingException(this);
   }
 
@@ -885,6 +885,8 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 	_printEventCounter++;
       }
       
+      if(Chi2 / Ndf >_chi2Cut) continue;
+      
       hist1D_gblNdfAlign->fill( Ndf );
       hist1D_gblChi2Align->fill( Chi2 / Ndf );
       double probchi = TMath::Prob( Chi2, Ndf );
@@ -991,12 +993,10 @@ void EUTelGBL::processEvent( LCEvent * event ) {
     
   // do not pass very bad tracks to mille. Only if the alignment is performed
   if(_performAlignment) {
-      if(Chi2 / Ndf < _chi2Cut) {
           traj.milleOut( *milleAlignGBL );
-            _nMilleTracks ++;
-      }
   }
-      numbertracks++;
+  _nTotalTracks ++;
+   numbertracks++;
     }//[END] loop over matched tracks
   
   if(_dumpTracks) event->addCollection(_outputTracks,"TracksCollection");
@@ -1013,6 +1013,8 @@ void EUTelGBL::end() {
   if(_suggestAlignmentCuts) {
   	gblutil.determineBestCuts();
   }
+  streamlog_out( MESSAGE5 ) << "Found " << _nTotalTracks << " tracks in " << _iEvt << " events" << std::endl;
+  streamlog_out( MESSAGE5 ) << "Successfully finished" << std::endl;
 }
 
 void EUTelGBL::bookHistos(std::vector<int> const & sensorIDVec) {

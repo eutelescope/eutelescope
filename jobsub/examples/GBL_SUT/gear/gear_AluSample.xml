@@ -6,7 +6,7 @@
     <detector name="SiPlanes" geartype="SiPlanesParameters">
       <siplanesID ID="0"/>
       <siplanesType type="TelescopeWithoutDUT"/>
-      <siplanesNumber number="6"/>
+      <siplanesNumber number="7"/>
       <layers>
 	<!--Telescope Plane 0 -->
 	<layer>
@@ -54,12 +54,30 @@
 			/>
 	  <sensitive 	ID="2" 
 			positionX="0.00"	positionY="0.00"	positionZ="47.0" 
-			sizeX="21.2"		sizeY="10.6"		thickness="0.0713"
+			sizeX="21.2"		sizeY="10.6"		thickness="0.014"
 			npixelX="1152"		npixelY="576"
-			pitchX="0.018402778" 	pitchY="0.018402778" 	resolution="0.0045"
+			pitchX="0.018402778" 	pitchY="0.018402778" 	resolution="0.0713"
 			rotation1="-1.0"	rotation2="0.0"
 			rotation3="0.0" 	rotation4="-1.0" 
 			radLength="93.660734"
+			/>
+	</layer>
+	<!--SUT Plane: aluminium plate 3mm-->
+	<layer>
+	  <ladder       ID="100"
+			positionX="0.00"        positionY="0.00"        positionZ="62.5"
+			rotationZY="0.00"       rotationZX="0.0"        rotationXY="0.0"
+			sizeX="50."             sizeY="50."             thickness="3.0"
+			radLength="89."
+			/>
+	  <sensitive    ID="100"
+			positionX="0.00"        positionY="0.00"        positionZ="62.5"
+			sizeX="50."             sizeY="50."             thickness="3.0"
+			npixelX="1  "           npixelY="1"
+			pitchX="50"             pitchY="50"             resolution="1e10"
+			rotation1="-1.0"        rotation2="0.0"
+			rotation3="0.0"         rotation4="-1.0"
+			radLength="89."
 			/>
 	</layer>
         <!--Telescope Plane 3 -->

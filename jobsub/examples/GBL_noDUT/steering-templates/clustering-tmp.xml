@@ -5,11 +5,11 @@
    <execute>
       <processor name="AIDA"/>
       <processor name="LoadHotPixelDB"/>
-      <processor name="ClusterMimosa"/>
-      <processor name="MaskNoisyCluster"/>
-      <processor name="RemoveNoisyCluster"/>
+      <processor name="Clustering"/>
+      <processor name="NoisyClusterMasker"/>
+      <processor name="NoisyClusterRemover"/>
       <processor name="SaveLCIO"/>
-      <processor name="PrintEventNumber"/>
+      <processor name="EventNumber"/>
    </execute>
 
    <global>
@@ -50,10 +50,10 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="ClusterMimosa" type="EUTelSparseClustering">
+ <processor name="Clustering" type="EUTelSparseClustering">
  <!--EUTelSparseClustering is looking for clusters into a calibrated pixel matrix.-->
   <!--Input of Zero Suppressed data-->
-  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata </parameter>
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
   <!--Cluster (output) collection name-->
   <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_m26 </parameter>
   <!--The list of sensor ids that have to be excluded from the clustering.-->
@@ -66,7 +66,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="MaskNoisyCluster" type="EUTelNoisyClusterMasker">
+ <processor name="NoisyClusterMasker" type="EUTelNoisyClusterMasker">
  <!--EUTelNoisyClusterMasker masks pulses which contain hot pixels. For this, the quality field of pulses is used to encode the kNoisyCluster enum provided by EUTelescope.-->
   <!--Input of zero suppressed data, still containing hot pixels-->
   <parameter name="InputCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26 </parameter>
@@ -76,7 +76,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="RemoveNoisyCluster" type="EUTelNoisyClusterRemover">
+ <processor name="NoisyClusterRemover" type="EUTelNoisyClusterRemover">
  <!--EUTelNoisyClusterRemover removes masked noisy clusters (TrackerPulses) from a collection. It does not read in a hot pixel collection, but removes masked TrackerPulses.-->
   <!--Input collection containing noise masked tracker pulse objects-->
   <parameter name="InputCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26 </parameter>
@@ -104,7 +104,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="PrintEventNumber" type="EUTelEventNumberPrinter">
+ <processor name="EventNumber" type="EUTelEventNumberPrinter">
  <!--EUTelEventNumberPrinter prints the event number to screen depending on the verbosity level.-->
   <!--Print event number for every n-th event-->
   <parameter name="EveryNEvents" type="int" value="2500"/>

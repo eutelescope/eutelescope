@@ -4,10 +4,10 @@
 
    <execute>
       <processor name="AIDA"/>
-      <processor name="TransformHitLocalToGlobal"/>
-      <processor name="PerformGBLFit"/>
-      <processor name="DumpGBLOutput"/>
-      <processor name="PrintEventNumber"/>
+      <processor name="HitLocalToGlobal"/>
+      <processor name="GBLFit"/>
+      <processor name="GBLOutput"/>
+      <processor name="EventNumber"/>
    </execute>
 
    <global>
@@ -31,7 +31,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="TransformHitLocalToGlobal" type="EUTelHitCoordinateTransformer">
+ <processor name="HitLocalToGlobal" type="EUTelHitCoordinateTransformer">
  <!--EUTelHitCoordinateTransformer is responsible to change local coordinates to global using the EUTelGeometryClass.-->
   <!--Input hit collection name-->
   <parameter name="hitCollectionNameInput" type="string" lcioInType="TrackerHit"> local_hit </parameter>
@@ -43,7 +43,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="PerformGBLFit" type="EUTelGBL">
+ <processor name="GBLFit" type="EUTelGBL">
  <!--EUTelGBL uses the MILLE program to write data files for MILLEPEDE II.-->
   <!--Input hit collections name-->
   <parameter name="hitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
@@ -91,8 +91,6 @@
   <parameter name="kappa" type="double" value="@kappa@"/>
   <!--The last plane (z-ordered) which still should be attached to the upstream triplet-->
   <parameter name="lastUpstreamSensor" type="int" value="@LastUpstreamSensor@"/>
-  <!--Maximal number of track candidates-->
-  <!--parameter name="maxTrackCandidates" type="int" value="2000"/-->
   <!--Maximal number of track candidates (Total)-->
   <!--parameter name="maxTrackCandidatesTotal" type="int" value="10000000"/-->
   <!--Name of the Millepede binary file-->
@@ -121,7 +119,7 @@
   <!--parameter name="zMid" type="double" value="-1"/-->
 </processor>
 
- <processor name="DumpGBLOutput" type="EUTelGBLOutput">
+ <processor name="GBLOutput" type="EUTelGBLOutput">
  <!--EUTelGBLOutput generates NTuple containing hits, zero suppressed data and track position from GBL processor-->
   <!--Vector with the names of the hit collections (use the right coordinate system)-->
   <parameter name="InputHitCollections" type="string" lcioInType="TrackerHit"> @HitCollections@ </parameter>
@@ -141,7 +139,7 @@
   <parameter name="tracksLocalSystem" type="bool" value="true"/>
 </processor>
 
- <processor name="PrintEventNumber" type="EUTelEventNumberPrinter">
+ <processor name="EventNumber" type="EUTelEventNumberPrinter">
  <!--EUTelEventNumberPrinter prints the event number to screen depending on the verbosity level.-->
   <!--Print event number for every n-th event-->
   <parameter name="EveryNEvents" type="int" value="2500"/>

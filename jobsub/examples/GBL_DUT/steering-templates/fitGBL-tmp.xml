@@ -69,7 +69,7 @@
 		XYZShiftsRotXYZ - all shifts and rotations allowed-->
   <!--parameter name="alignMode" type="string">XYShiftsRotZ </parameter-->
   <!--Cut on the chi2 for the tracks to be passed to Millepede-->
-  <parameter name="chi2Cut" type="double"> -1 </parameter>
+  <parameter name="chi2Cut" type="double"> 100 </parameter>
   <!--The three sensors used as the downstream triplet-->
   <!--parameter name="downstreamTriplet" type="IntVec">3 4 5  </parameter-->
   <!--Downstream triplet residual cut [mm]-->
