@@ -81,7 +81,7 @@
   <!--Beam energy [GeV]-->
   <parameter name="eBeam" type="double"> @BeamEnergy@ </parameter>
   <!--Exclude planes from fit according to their sensor ids-->
-  <parameter name="excludePlanes" type="IntVec"> @ExcludedPlanes@ </parameter>
+  <parameter name="excludedPlanes" type="IntVec"> @ExcludedPlanes@ </parameter>
   <!--Fix sensor planes in the fit according to their sensor ids (it is recommended to fix two telescope planes)-->
   <!--parameter name="fixedPlanes" type="IntVec">0 5  </parameter-->
   <!--List of planes which should have a fixed X rotation-->
