@@ -1096,7 +1096,7 @@ void EUTelGBL::bookHistos(std::vector<int> const & sensorIDVec) {
 	
 	hist1D_gblPullY.push_back(AIDAProcessor::histogramFactory(this)->
 				  createHistogram1D( histNamePullY, 100, -5, 5));
-	hist1D_gblPullY.back()->setTitle( "GBL pull pull at plane "+sensorIdString
+	hist1D_gblPullY.back()->setTitle( "GBL pull residuals at plane "+sensorIdString
 					  +";y pull at plane "+sensorIdString+";tracks"); 
 	
 	std::string histNameKinkX = "GBLFit/Kinks/KinkAngleX"+sensorIdString;
