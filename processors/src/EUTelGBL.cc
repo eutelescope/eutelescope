@@ -1060,8 +1060,8 @@ void EUTelGBL::bookHistos(std::vector<int> const & sensorIDVec) {
       {
 	auto sensorIdString = std::to_string(sensorIDVec[ix]);
 	
-	std::string histNameAngleX = "GBLFit/Angles/ax"+sensorIdString;
-	std::string histNameAngleY = "GBLFit/Angles/ay"+sensorIdString;
+	std::string histNameAngleX = "GBLFit/Angles/AngleX"+sensorIdString;
+	std::string histNameAngleY = "GBLFit/Angles/AngleY"+sensorIdString;
 	
 	hist1D_gblAngleX.push_back(AIDAProcessor::histogramFactory(this)->
 				   createHistogram1D( histNameAngleX, 100, -5, 5));
@@ -1073,8 +1073,8 @@ void EUTelGBL::bookHistos(std::vector<int> const & sensorIDVec) {
 	hist1D_gblAngleY.back()->setTitle( "GBL angle at plane "+sensorIdString
 					   +";y angle at plane "+sensorIdString+" [mrad];tracks"); 
 	
-	std::string histNameResidX = "GBLFit/Residuals/rx"+sensorIdString; 
-	std::string histNameResidY = "GBLFit/Residuals/ry"+sensorIdString; 
+	std::string histNameResidX = "GBLFit/Residuals/ResidualsX"+sensorIdString; 
+	std::string histNameResidY = "GBLFit/Residuals/ResidualsY"+sensorIdString; 
 	
 	hist1D_gblResidX.push_back(AIDAProcessor::histogramFactory(this)->
 				   createHistogram1D( histNameResidX, 500, -250, 250));
@@ -1085,22 +1085,22 @@ void EUTelGBL::bookHistos(std::vector<int> const & sensorIDVec) {
 				   createHistogram1D( histNameResidY, 500, -250, 250));
 	hist1D_gblResidY.back()->setTitle( "GBL residual at plane "+sensorIdString
 					   +";y resid at plane "+sensorIdString+" [#mum];tracks"); 
-	
-	std::string histNamePullX = "GBLFit/Pulls/px"+sensorIdString; 
-	std::string histNamePullY = "GBLFit/Pulls/py"+sensorIdString; 
+						
+	std::string histNamePullX = "GBLFit/Pulls/ResidualsPullX"+sensorIdString; 
+	std::string histNamePullY = "GBLFit/Pulls/ResidualsPullY"+sensorIdString; 
 	
 	hist1D_gblPullX.push_back(AIDAProcessor::histogramFactory(this)->
 				  createHistogram1D( histNamePullX, 100, -5, 5));
-	hist1D_gblPullX.back()->setTitle( "GBL pull at plane "+sensorIdString
+	hist1D_gblPullX.back()->setTitle( "GBL pull residuals at plane "+sensorIdString
 					  +";x pull at plane "+sensorIdString+";tracks"); 
 	
 	hist1D_gblPullY.push_back(AIDAProcessor::histogramFactory(this)->
 				  createHistogram1D( histNamePullY, 100, -5, 5));
-	hist1D_gblPullY.back()->setTitle( "GBL pull at plane "+sensorIdString
+	hist1D_gblPullY.back()->setTitle( "GBL pull pull at plane "+sensorIdString
 					  +";y pull at plane "+sensorIdString+";tracks"); 
 	
-	std::string histNameKinkX = "GBLFit/Kinks/kx"+sensorIdString;
-	std::string histNameKinkY = "GBLFit/Kinks/ky"+sensorIdString;
+	std::string histNameKinkX = "GBLFit/Kinks/KinkAngleX"+sensorIdString;
+	std::string histNameKinkY = "GBLFit/Kinks/KinkAngleY"+sensorIdString;
 	
 	hist1D_gblKinkX.push_back(AIDAProcessor::histogramFactory(this)->
 				  createHistogram1D( histNameKinkX, 100, -5, 5));
@@ -1113,8 +1113,8 @@ void EUTelGBL::bookHistos(std::vector<int> const & sensorIDVec) {
 					  +";plane "+sensorIdString+" y kink [mrad];tracks");
 
 	if(sensorIDVec[ix]==_SUT_ID) {
-	  std::string histNameKinkXvsXY = "GBLFit/Kinks/kinkx_vs_xy"+sensorIdString;
-	  std::string histNameKinkYvsXY = "GBLFit/Kinks/kinky_vs_xy"+sensorIdString;
+	  std::string histNameKinkXvsXY = "GBLFit/Kinks/KinkAngleX_vs_XY"+sensorIdString;
+	  std::string histNameKinkYvsXY = "GBLFit/Kinks/KinkAngleY_vs_XY"+sensorIdString;
 
 	  profile2D_gblSUTKinkXvsXY = AIDAProcessor::histogramFactory(this)->
 	    createProfile2D( histNameKinkXvsXY, 120, -12, 12, 60, -6, 6, 0, 100);
