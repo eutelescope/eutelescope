@@ -44,7 +44,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="HitLocalToGlobal" type="EUTelProcessorCoordinateTransformHits">
+ <processor name="HitLocalToGlobal" type="EUTelHitCoordinateTransformer">
  <!--EUTelLocaltoGlobalHitMaker is responsible to change local coordinates to global. This is done using the EUTelGeometryClass-->
   <!--Local input hit collection name-->
   <parameter name="hitCollectionNameInput" type="string" lcioInType="TrackerHit"> local_hit </parameter>
@@ -80,7 +80,7 @@
     <parameter name="NDutHits" type="int" value="0"/>
   </processor>
 
- <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+ <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelEventNumberPrinter">
  <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
   <!--Print event number for every n-th event-->
   <parameter name="EveryNEvents" type="int" value="2500"/>
@@ -90,7 +90,7 @@
   <!--parameter name="printTimestamp" type="bool" value="false"/-->
 </processor>
 
- <processor name="Save" type="EUTelOutputProcessor">
+ <processor name="Save" type="EUTelOutputSaver">
  <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
   <!--drops the named collections from the event-->
   <parameter name="DropCollectionNames" type="StringVec"> hit hit_eta3x3 alignedHit_eta3x3 </parameter>
