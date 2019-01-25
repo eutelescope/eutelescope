@@ -45,7 +45,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="HitLocalToGlobal" type="EUTelProcessorCoordinateTransformHits">
+ <processor name="HitLocalToGlobal" type="EUTelHitCoordinateTransformer">
  <!--EUTelLocaltoGlobalHitMaker is responsible to change local coordinates to global. This is done using the EUTelGeometryClass-->
   <!--Local input hit collection name-->
   <parameter name="hitCollectionNameInput" type="string" lcioInType="TrackerHit"> local_hit </parameter>
@@ -136,6 +136,8 @@
   <!--parameter name="RotateOffsetVec" type="bool">false </parameter-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Conversion from um to mm. Not needed by GBL (set to false), but needed by EUTelMille (set to true). -->
+  <parameter name="UnitConversion" type="bool" value="true"/>
 </processor>
 
  <processor name="Align" type="EUTelMille">
@@ -253,7 +255,7 @@ XYShiftsAllRot - shifts in the X,Y and Z directions and rotations around all thr
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
-<processor name="EUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+<processor name="EUTelUtilityPrintEventNumber" type="EUTelEventNumberPrinter">
   <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
   <!--Print event number for every n-th event-->
   <parameter name="EveryNEvents" type="int"> 100000 </parameter>

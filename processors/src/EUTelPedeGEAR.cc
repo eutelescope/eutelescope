@@ -61,6 +61,10 @@ EUTelPedeGEAR::EUTelPedeGEAR() : Processor("EUTelPedeGEAR") {
                             "(this is not default!) to overwrite old GEAR file",
                             _GEARFileSuffix,
 			    std::string("_aligned"));
+			    
+  registerOptionalParameter("UnitConversion",
+                            "Conversion from um to mm. Not needed by GBL (set to 0), but needed by EUTelMille (set to 1).",
+                            _unitConversion, false);
 
   registerOptionalParameter("RotateOffsetVec",
                             "Apply the obtained rotation to the preexisting offset vector or not..",
@@ -291,16 +295,20 @@ void EUTelPedeGEAR::end() {
             goodLine = false;
           }
 
+      // Gear uses mm, as well as GBL. However, EUTelMille uses um.
+      double ConversionFactor = 1.;
+      if(_unitConversion) ConversionFactor = 1000.;
+      
 	  //parameter 0
 	  if(iParam == 0) {
 	    sensorID = (tokens[0] - 1) / 10; //FIXME: should be done better                                                                                                                               
-	    xOff = tokens[1];
-	    if(tokens[2] == 0) xOffErr = tokens[4];
+	    xOff = tokens[1]/ConversionFactor;
+	    if(tokens[2] == 0) xOffErr = tokens[4]/ConversionFactor;
 	  }
 	  //parameter 1
 	  else if(iParam == 1) {
-	    yOff = tokens[1];
-	    if(tokens[2] == 0) yOffErr = tokens[4];
+	    yOff = tokens[1]/ConversionFactor;
+	    if(tokens[2] == 0) yOffErr = tokens[4]/ConversionFactor;
 	  }
 	  //parameter 2
 	  else if(iParam == 2) {
@@ -313,15 +321,15 @@ void EUTelPedeGEAR::end() {
               if(tokens[2] == 0) gammaErr = tokens[4];
 	    }
 	    else if(_alignMode == Utility::alignMode::XYZShiftsRotXYZ) {
-	      zOff = tokens[1];
-              if(tokens[2] == 0) zOffErr = tokens[4];
+	      zOff = tokens[1]/ConversionFactor;
+              if(tokens[2] == 0) zOffErr = tokens[4]/ConversionFactor;
 	    }
 	  }
 	  //parameter 3
           else if(iParam == 3) {
 	    if(_alignMode == Utility::alignMode::XYZShiftsRotZ) {
-	      zOff = tokens[1];
-              if(tokens[2] == 0) zOffErr = tokens[4];
+	      zOff = tokens[1]/ConversionFactor;
+              if(tokens[2] == 0) zOffErr = tokens[4]/ConversionFactor;
 	    }
 	    else if(_alignMode == Utility::alignMode::XYZShiftsRotXYZ) {
 	      alpha = -tokens[1];

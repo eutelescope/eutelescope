@@ -1971,8 +1971,9 @@ void EUTelMille::processEvent(LCEvent *event) {
           float residual;
 
           // create labels
-          for (int help = 0; help < nGL; help++) {
-            label[help] = help + 1;
+          for (unsigned int help = 0; help < (_nPlanes - _nExcludePlanes); help++) {
+            label[help*2] = _orderedSensorID_wo_excluded.at(help)*10 + 1;
+            label[help*2+1] = _orderedSensorID_wo_excluded.at(help)*10 + 2;
           }
 
           for (int help = 0; help < nGL; help++) {
@@ -2045,7 +2046,7 @@ void EUTelMille::processEvent(LCEvent *event) {
         } else if (_alignMode == Utility::alignMode::XYShiftsRotZ) {
 
           const int nLC = 4;            // number of local parameters
-          const int nGL = _nPlanes * 3; // number of global parameters
+          const int nGL = _nPlanes * 3; // number of global parameters. This doesn't work with excluded planes!!!
 
           float sigma = _telescopeResolution;
 
@@ -2058,9 +2059,11 @@ void EUTelMille::processEvent(LCEvent *event) {
 
           float residual;
 
-          // create labels
-          for (int help = 0; help < nGL; help++) {
-            label[help] = help + 1;
+          //create labels
+          for (unsigned int help = 0; help < _nPlanes; help++) {
+            label[help*3] = _orderedSensorID.at(help)*10 + 1; 
+            label[help*3+1] = _orderedSensorID.at(help)*10 + 2;
+            label[help*3+2] = _orderedSensorID.at(help)*10 + 3;
           }
 
           for (int help = 0; help < nGL; help++) {
@@ -2136,7 +2139,7 @@ void EUTelMille::processEvent(LCEvent *event) {
         } else if (_alignMode == Utility::alignMode::XYShiftsAllRot) {
           if (validminuittrack || _inputMode == 1) {
             const int nLC = 4;            // number of local parameters
-            const int nGL = _nPlanes * 6; // number of global parameters
+            const int nGL = _nPlanes * 6; // number of global parameters. This doesn't work with excluded planes!!!
 
             float *derLC =
                 new float[nLC]; // array of derivatives for local parameters
@@ -2147,10 +2150,15 @@ void EUTelMille::processEvent(LCEvent *event) {
 
             float residual;
 
-            // create labels
-            for (int help = 0; help < nGL; help++) {
-              label[help] = help + 1;
-            }
+          //create labels
+          for (unsigned int help = 0; help < _nPlanes; help++) {
+            label[help*6] = _orderedSensorID.at(help)*10 + 1;
+            label[help*6+1] = _orderedSensorID.at(help)*10 + 2;
+            label[help*6+2] = _orderedSensorID.at(help)*10 + 3;
+            label[help*6+3] = _orderedSensorID.at(help)*10 + 4;
+            label[help*6+4] = _orderedSensorID.at(help)*10 + 5;
+            label[help*6+5] = _orderedSensorID.at(help)*10 + 6;
+          }
 
             for (int help = 0; help < nGL; help++) {
               derGL[help] = 0;
@@ -2701,153 +2709,128 @@ void EUTelMille::end() {
 
       // loop over all planes
       for (unsigned int help = 0; help < _nPlanes; help++) {
+        int sensorID = _orderedSensorID.at(help);
 
-        int excluded = 0; // flag for excluded planes
+        //check if current plane is excluded, if so skip
+        if (std::find(std::begin(_excludePlanes_sensorIDs), std::end(_excludePlanes_sensorIDs), sensorID) != _excludePlanes_sensorIDs.end()) {
+          continue;
+        }
 
-        // loop over all excluded planes
-        for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
-
-          if (help == _excludePlanes[helphelp]) {
-            //            excluded = 1;
-          }
-
-        } // end loop over all excluded planes
-
-        // if plane not excluded
-        if (excluded == 0) {
-
-          bool fixed = false;
-          for (size_t i = 0; i < _FixedPlanes.size(); i++) {
-            if (_FixedPlanes[i] == static_cast<int>(help))
-              fixed = true;
-          }
-
-          if (fixed || (_FixedPlanes.empty() &&
-                        (help == firstnotexcl || help == lastnotexcl))) {
-            if (_alignMode == Utility::alignMode::XYShiftsRotZ) {
-              steerFile << (counter * 3 + 1) << " 0.0 -1.0" << endl;
-              steerFile << (counter * 3 + 2) << " 0.0 -1.0" << endl;
-              steerFile << (counter * 3 + 3) << " 0.0 -1.0" << endl;
-            } else if (_alignMode == Utility::alignMode::XYShifts) {
-              steerFile << (counter * 2 + 1) << " 0.0 -1.0" << endl;
-              steerFile << (counter * 2 + 2) << " 0.0 -1.0" << endl;
-            } else if (_alignMode == Utility::alignMode::XYShiftsAllRot) {
-              steerFile << (counter * 6 + 1) << " 0.0 -1.0" << endl;
-              steerFile << (counter * 6 + 2) << " 0.0 -1.0" << endl;
-              steerFile << (counter * 6 + 3) << " 0.0 -1.0" << endl;
-              steerFile << (counter * 6 + 4) << " 0.0 -1.0" << endl;
-              steerFile << (counter * 6 + 5) << " 0.0 -1.0" << endl;
-              steerFile << (counter * 6 + 6) << " 0.0 -1.0" << endl;
-            }
-
-          } else {
+        //check if fixed: current plane is not fixed
+	    if(std::find(std::begin(_FixedPlanes_sensorIDs), std::end(_FixedPlanes_sensorIDs), sensorID)!= _FixedPlanes_sensorIDs.end()) {
+	    std::map<Utility::alignMode, int> map_alignModes;
+        map_alignModes[Utility::alignMode::XYShifts] = 3;
+	    map_alignModes[Utility::alignMode::XYShiftsRotZ] = 4;
+	    map_alignModes[Utility::alignMode::XYShiftsAllRot] = 7;
+	    int stopid = map_alignModes[_alignMode];
+	    for(int id = 1 ; id < stopid ; id++) steerFile << (sensorID * 10 + id) << "  0.0 -1.0" << endl;
+        } else {
 
             if (_alignMode == Utility::alignMode::XYShiftsRotZ) {
 
               if (_usePedeUserStartValues == 0) {
-                steerFile << (counter * 3 + 1) << " "
+                steerFile << (sensorID * 10 + 1) << " "
                           << (averageX - meanX[help]) << " 0.0" << endl;
-                steerFile << (counter * 3 + 2) << " "
+                steerFile << (sensorID * 10 + 2) << " "
                           << (averageY - meanY[help]) << " 0.0" << endl;
-                steerFile << (counter * 3 + 3) << " "
+                steerFile << (sensorID * 10 + 3) << " "
                           << " 0.0 0.0" << endl;
               } else {
-                steerFile << (counter * 3 + 1) << " "
+                steerFile << (sensorID * 10 + 1) << " "
                           << _pedeUserStartValuesX[help] << " 0.0" << endl;
-                steerFile << (counter * 3 + 2) << " "
+                steerFile << (sensorID * 10 + 2) << " "
                           << _pedeUserStartValuesY[help] << " 0.0" << endl;
-                steerFile << (counter * 3 + 3) << " "
+                steerFile << (sensorID * 10 + 3) << " "
                           << _pedeUserStartValuesGamma[help] << " 0.0" << endl;
               }
 
             } else if (_alignMode == Utility::alignMode::XYShifts) {
 
               if (_usePedeUserStartValues == 0) {
-                steerFile << (counter * 2 + 1) << " "
+                steerFile << (sensorID * 10 + 1) << " "
                           << (averageX - meanX[help]) << " 0.0" << endl;
-                steerFile << (counter * 2 + 2) << " "
+                steerFile << (sensorID * 10 + 2) << " "
                           << (averageY - meanY[help]) << " 0.0" << endl;
               } else {
-                steerFile << (counter * 2 + 1) << " "
+                steerFile << (sensorID * 10 + 1) << " "
                           << _pedeUserStartValuesX[help] << " 0.0" << endl;
-                steerFile << (counter * 2 + 2) << " "
+                steerFile << (sensorID * 10 + 2) << " "
                           << _pedeUserStartValuesY[help] << " 0.0" << endl;
               }
 
             } else if (_alignMode == Utility::alignMode::XYShiftsAllRot) {
               if (_usePedeUserStartValues == 0) {
                 if (_FixParameter[help] & (1 << 0))
-                  steerFile << (counter * 6 + 1) << " 0.0 -1.0" << endl;
+                  steerFile << (sensorID * 10 + 1) << " 0.0 -1.0" << endl;
                 else
-                  steerFile << (counter * 6 + 1) << " "
+                  steerFile << (sensorID * 10 + 1) << " "
                             << (averageX - meanX[help]) << " 0.0" << endl;
 
                 if (_FixParameter[help] & (1 << 1))
-                  steerFile << (counter * 6 + 2) << " 0.0 -1.0" << endl;
+                  steerFile << (sensorID * 10 + 2) << " 0.0 -1.0" << endl;
                 else
-                  steerFile << (counter * 6 + 2) << " "
+                  steerFile << (sensorID * 10 + 2) << " "
                             << (averageY - meanY[help]) << " 0.0" << endl;
 
                 if (_FixParameter[help] & (1 << 2))
-                  steerFile << (counter * 6 + 3) << " 0.0 -1.0" << endl;
+                  steerFile << (sensorID * 10 + 3) << " 0.0 -1.0" << endl;
                 else
-                  steerFile << (counter * 6 + 3) << " "
+                  steerFile << (sensorID * 10 + 3) << " "
                             << (averageZ - meanZ[help]) << " 0.0" << endl;
 
                 if (_FixParameter[help] & (1 << 3))
-                  steerFile << (counter * 6 + 4) << " 0.0 -1.0" << endl;
+                  steerFile << (sensorID * 10 + 4) << " 0.0 -1.0" << endl;
                 else
-                  steerFile << (counter * 6 + 4) << " 0.0 0.0" << endl;
+                  steerFile << (sensorID * 10 + 4) << " 0.0 0.0" << endl;
 
                 if (_FixParameter[help] & (1 << 4))
-                  steerFile << (counter * 6 + 5) << " 0.0 -1.0" << endl;
+                  steerFile << (sensorID * 10 + 5) << " 0.0 -1.0" << endl;
                 else
-                  steerFile << (counter * 6 + 5) << " 0.0 0.0" << endl;
+                  steerFile << (sensorID * 10 + 5) << " 0.0 0.0" << endl;
 
                 if (_FixParameter[help] & (1 << 5))
-                  steerFile << (counter * 6 + 6) << " 0.0 -1.0" << endl;
+                  steerFile << (sensorID * 10 + 6) << " 0.0 -1.0" << endl;
                 else
-                  steerFile << (counter * 6 + 6) << " 0.0 0.0" << endl;
+                  steerFile << (sensorID * 10 + 6) << " 0.0 0.0" << endl;
               } else {
                 if (_FixParameter[help] & (1 << 0))
-                  steerFile << (counter * 6 + 1) << " 0.0 -1.0" << endl;
+                  steerFile << (sensorID * 10 + 1) << " 0.0 -1.0" << endl;
                 else
-                  steerFile << (counter * 6 + 1) << " "
+                  steerFile << (sensorID * 10 + 1) << " "
                             << _pedeUserStartValuesX[help] << " 0.0" << endl;
 
                 if (_FixParameter[help] & (1 << 1))
-                  steerFile << (counter * 6 + 2) << " 0.0 -1.0" << endl;
+                  steerFile << (sensorID * 10 + 2) << " 0.0 -1.0" << endl;
                 else
-                  steerFile << (counter * 6 + 2) << " "
+                  steerFile << (sensorID * 10 + 2) << " "
                             << _pedeUserStartValuesY[help] << " 0.0" << endl;
 
                 if (_FixParameter[help] & (1 << 2))
-                  steerFile << (counter * 6 + 3) << " 0.0 -1.0" << endl;
+                  steerFile << (sensorID * 10 + 3) << " 0.0 -1.0" << endl;
                 else
-                  steerFile << (counter * 6 + 3) << " "
+                  steerFile << (sensorID * 10 + 3) << " "
                             << _pedeUserStartValuesZ[help] << " 0.0" << endl;
 
                 if (_FixParameter[help] & (1 << 3))
-                  steerFile << (counter * 6 + 4) << " 0.0 -1.0" << endl;
+                  steerFile << (sensorID * 10 + 4) << " 0.0 -1.0" << endl;
                 else
-                  steerFile << (counter * 6 + 4) << " "
+                  steerFile << (sensorID * 10 + 4) << " "
                             << _pedeUserStartValuesAlpha[help] << " 0.0"
                             << endl;
 
                 if (_FixParameter[help] & (1 << 4))
-                  steerFile << (counter * 6 + 5) << " 0.0 -1.0" << endl;
+                  steerFile << (sensorID * 10 + 5) << " 0.0 -1.0" << endl;
                 else
-                  steerFile << (counter * 6 + 5) << " "
+                  steerFile << (sensorID * 106 + 5) << " "
                             << _pedeUserStartValuesBeta[help] << " 0.0" << endl;
 
                 if (_FixParameter[help] & (1 << 5))
-                  steerFile << (counter * 6 + 6) << " 0.0 -1.0" << endl;
+                  steerFile << (sensorID * 10 + 6) << " 0.0 -1.0" << endl;
                 else
-                  steerFile << (counter * 6 + 6) << " "
+                  steerFile << (sensorID * 10 + 6) << " "
                             << _pedeUserStartValuesGamma[help] << " 0.0"
                             << endl;
               }
-            }
           }
 
           counter++;
@@ -3078,7 +3061,8 @@ void EUTelMille::end() {
               numpars = 3;
             else
               numpars = 6;
-
+            
+            int sensorID;
             for (unsigned int iParam = 0; iParam < numpars; ++iParam) {
               getline(millepede, line);
 
@@ -3106,6 +3090,7 @@ void EUTelMille::end() {
               bool isFixed = (tokens.size() == 3);
               if (_alignMode != Utility::alignMode::XYShiftsAllRot) {
                 if (iParam == 0) {
+				  sensorID = (tokens[0] - 1) / 10; //FIXME: should be done better
                   constant->setXOffset(tokens[1] / 1000.);
                   if (!isFixed)
                     constant->setXOffsetError(tokens[4] / 1000.);
@@ -3122,6 +3107,7 @@ void EUTelMille::end() {
                 }
               } else {
                 if (iParam == 0) {
+				  sensorID = (tokens[0] - 1) / 10; //FIXME: should be done better
                   constant->setXOffset(tokens[1] / 1000.);
                   if (!isFixed)
                     constant->setXOffsetError(tokens[4] / 1000.);
@@ -3158,7 +3144,7 @@ void EUTelMille::end() {
             if (goodLine) {
               //               constant->setSensorID(
               //               _orderedSensorID_wo_excluded.at( counter ) );
-              constant->setSensorID(_orderedSensorID.at(counter));
+              constant->setSensorID(sensorID);
               ++counter;
               constantsCollection->push_back(constant);
               streamlog_out(DEBUG9) << (*constant) << endl;

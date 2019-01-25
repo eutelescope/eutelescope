@@ -154,12 +154,8 @@
 		XYShifts - only shifts in the X and Y directions
 		XYShiftsAllRot - shifts in the X,Y and Z directions and rotations around all three axis-->
   <parameter name="AlignMode" type="string"> XYShiftsRotZ </parameter>
-  <!--Exclude planes from fit according to their sensor ids.-->
-  <parameter name="ExcludePlanes" type="IntVec"> @ExcludePlanes@ </parameter>
-  <!--Fix sensor planes in the fit according to their sensor ids.-->
-  <parameter name="FixedPlanes" type="IntVec"> @FixedPlanes@ </parameter>
   <!--Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file-->
-  <parameter name="NewGEARSuffix" type="string"> _aligned </parameter>
+  <parameter name="GEARSuffix" type="string"> _aligned </parameter>
   <!--Offset scale factor.-->
   <!--parameter name="OffsetScaleFactor" type="int">1000 </parameter-->
   <!--Name of the steering file for the pede program.-->
@@ -168,6 +164,8 @@
   <!--parameter name="RotateOffsetVec" type="bool">false </parameter-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Conversion from um to mm. Not needed by GBL (set to false), but needed by EUTelMille (set to true). -->
+  <parameter name="UnitConversion" type="bool" value="true"/>
 </processor>
 
  <processor name="Align" type="EUTelMille">
