@@ -49,6 +49,8 @@ namespace eutelescope {
     bool _tracksLocalSystem;
     bool _dumpHeader;
     std::vector<int> _SelectedPlanes;
+    std::map<int, float> _xSensSize;
+    std::map<int, float> _ySensSize;
 
     int _nRun;
     int _nEvt;
@@ -72,17 +74,22 @@ namespace eutelescope {
     std::vector<double> *_chi2;
     std::vector<int> *_ndof;
     TTree *_euhits;
+    int _nHits;
     std::vector<int> *_hitSensorId;
     std::vector<double> *_hitXPos;
     std::vector<double> *_hitYPos;
     std::vector<double> *_hitZPos;
     
     TTree *_zstree;
+    int _nPixHits;
     std::vector<int> *zs_id;
     std::vector<int> *zs_x;
     std::vector<int> *zs_y;
     std::vector<double> *zs_signal;
     std::vector<int> *zs_time;
+
+    TTree *_versionTree;
+    std::vector<double> *_versionNo;
   };
 
   //! A global instance of the processor.
