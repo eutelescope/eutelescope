@@ -236,8 +236,6 @@ void EUTelPedeGEAR::end() {
       //get the first line and throw it away since it is a comment!
       std::getline(millepede, line);
 
-      int counter = 0;
-
       while (!millepede.eof()) {
         bool goodLine = true;
         unsigned int numpars = 0;
@@ -374,12 +372,10 @@ void EUTelPedeGEAR::end() {
           
 	  //transfer alignment to geometry
 	  geo::gGeometry().alignGlobalPos(sensorID, 
-					  oldOffset[0] - xOff,
+                      oldOffset[0] - xOff,
                       oldOffset[1] - yOff,
                       oldOffset[2] - zOff);
           geo::gGeometry().alignGlobalRot(sensorID, rotAlign * rotOld);
-	  
-          counter++;
         }
       }
     }
