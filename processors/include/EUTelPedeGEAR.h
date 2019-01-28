@@ -96,7 +96,6 @@ namespace eutelescope {
     std::string _pedeSteerfileName;
 
 	bool _unitConversion;
-    bool _rotateOldOffsetVec;
 
   private:
     //! Run number

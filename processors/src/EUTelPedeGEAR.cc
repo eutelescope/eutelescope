@@ -65,11 +65,6 @@ EUTelPedeGEAR::EUTelPedeGEAR() : Processor("EUTelPedeGEAR") {
   registerOptionalParameter("UnitConversion",
                             "Conversion from um to mm. Not needed by GBL (set to 0), but needed by EUTelMille (set to 1).",
                             _unitConversion, false);
-
-  registerOptionalParameter("RotateOffsetVec",
-                            "Apply the obtained rotation to the preexisting offset vector or not..",
-                            _rotateOldOffsetVec,
-			    true); //FIXME: I can't align if this is set to false. Should we keep this option?
 }
 
 void EUTelPedeGEAR::init() {
@@ -372,21 +367,16 @@ void EUTelPedeGEAR::end() {
                     << newCoeff[0] << ", " << newCoeff[1] << ", " << newCoeff[2]
                     << std::endl;
 
-          Eigen::Vector3d oldOffset;
-          oldOffset << geo::gGeometry().getPlaneXPosition(sensorID),
-	    geo::gGeometry().getPlaneYPosition(sensorID),
-	    geo::gGeometry().getPlaneZPosition(sensorID);
-		
-	  //FIXME: is this useful somehow or just a residual of old alignment collection?
-	  if(_rotateOldOffsetVec) {
-	    oldOffset = rotAlign*oldOffset;          
-	  }
+      Eigen::Vector3d oldOffset;
+        oldOffset << geo::gGeometry().getPlaneXPosition(sensorID),
+        geo::gGeometry().getPlaneYPosition(sensorID),
+        geo::gGeometry().getPlaneZPosition(sensorID);
           
 	  //transfer alignment to geometry
 	  geo::gGeometry().alignGlobalPos(sensorID, 
 					  oldOffset[0] - xOff,
-                                          oldOffset[1] - yOff,
-                                          oldOffset[2] - zOff);
+                      oldOffset[1] - yOff,
+                      oldOffset[2] - zOff);
           geo::gGeometry().alignGlobalRot(sensorID, rotAlign * rotOld);
 	  
           counter++;
