@@ -367,8 +367,16 @@ void EUTelPreAligner::end() {
     double updatedYOff;
     //Only want to update if needed, otherwise get a pointless warning
     if(it == _excludedPlanes.end()) {
-      updatedXOff = geo::gGeometry().getPlaneXPosition(sensorID) + _preAligners.at(ii).getPeakX();
-      updatedYOff = geo::gGeometry().getPlaneYPosition(sensorID) + _preAligners.at(ii).getPeakY();
+      if(itXCoord == _excludedPlanesXCoord.end()) { 
+        updatedXOff = geo::gGeometry().getPlaneXPosition(sensorID) + _preAligners.at(ii).getPeakX();
+      } else {
+        updatedXOff =0;
+      }
+      if(itYCoord == _excludedPlanesYCoord.end()) {
+        updatedYOff = geo::gGeometry().getPlaneYPosition(sensorID) + _preAligners.at(ii).getPeakY();
+      } else {
+        updatedXOff = 0;  
+      }
     } else {
       updatedXOff = 0;
       updatedYOff = 0;
