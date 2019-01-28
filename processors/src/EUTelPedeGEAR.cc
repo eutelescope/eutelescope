@@ -46,7 +46,8 @@ EUTelPedeGEAR::EUTelPedeGEAR() : Processor("EUTelPedeGEAR") {
 			    "Number of alignment constants used. Available mode are: "
 			    "\n\t\tXYShiftsRotZ - shifts in the X and Y directions and a rotation around the Z axis,"
 			    "\n\t\tXYShifts - only shifts in the X and Y directions,"
-			    "\n\t\tXYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis"
+			    "\n\t\tXYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis,"
+			    "\n\t\tXYShiftsAllRot - shifts in XY and all rotations (only DAF),"
 			    "\n\t\tXYZShiftsRotXYZ - all shifts and rotations allowed",
 			    _alignModeString,
 			    std::string("XYShiftsRotZ"));
@@ -86,8 +87,10 @@ void EUTelPedeGEAR::init() {
 	_alignMode = Utility::alignMode::XYShifts;
   } else if( _alignModeString.compare("XYZShiftsRotZ") == 0 ) {
 	_alignMode = Utility::alignMode::XYZShiftsRotZ;
+  } else if( _alignModeString.compare("XYShiftsAllRot") == 0 ) {
+	_alignMode = Utility::alignMode::XYShiftsAllRot;
   } else if( _alignModeString.compare("XYZShiftsRotXYZ") == 0 ) {
-	_alignMode = Utility::alignMode::XYZShiftsRotXYZ;
+    _alignMode = Utility::alignMode::XYZShiftsRotXYZ;
   } else {
 	streamlog_out(ERROR) << "The chosen AlignMode: '" << _alignModeString 
 			     << "' is invalid. Please correct your steering template and retry!" 
@@ -246,7 +249,7 @@ void EUTelPedeGEAR::end() {
           numpars = 3;
         } else if (_alignMode == Utility::alignMode::XYZShiftsRotZ) {
           numpars = 4;
-        } else if  (_alignMode == Utility::alignMode::XYZShiftsRotXYZ){
+        } else if  (_alignMode == Utility::alignMode::XYZShiftsRotXYZ || _alignMode == Utility::alignMode::XYShiftsAllRot){
           numpars = 6;
         }
         
@@ -313,7 +316,7 @@ void EUTelPedeGEAR::end() {
 	      gamma = -tokens[1];
               if(tokens[2] == 0) gammaErr = tokens[4];
 	    }
-	    else if(_alignMode == Utility::alignMode::XYZShiftsRotXYZ) {
+	    else if(_alignMode == Utility::alignMode::XYZShiftsRotXYZ || _alignMode == Utility::alignMode::XYShiftsAllRot) {
 	      zOff = tokens[1]/ConversionFactor;
               if(tokens[2] == 0) zOffErr = tokens[4]/ConversionFactor;
 	    }
@@ -324,7 +327,7 @@ void EUTelPedeGEAR::end() {
 	      zOff = tokens[1]/ConversionFactor;
               if(tokens[2] == 0) zOffErr = tokens[4]/ConversionFactor;
 	    }
-	    else if(_alignMode == Utility::alignMode::XYZShiftsRotXYZ) {
+	    else if(_alignMode == Utility::alignMode::XYZShiftsRotXYZ || _alignMode == Utility::alignMode::XYShiftsAllRot) {
 	      alpha = -tokens[1];
               if(tokens[2] == 0) alphaErr = tokens[4];
 	    }
