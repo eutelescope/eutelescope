@@ -2046,7 +2046,7 @@ void EUTelMille::processEvent(LCEvent *event) {
         } else if (_alignMode == Utility::alignMode::XYShiftsRotZ) {
 
           const int nLC = 4;            // number of local parameters
-          const int nGL = _nPlanes * 3; // number of global parameters. This doesn't work with excluded planes!!!
+          const int nGL = (_nPlanes - _nExcludePlanes) * 3; // number of global parameters. This doesn't work with excluded planes!!!
 
           float sigma = _telescopeResolution;
 
@@ -2060,10 +2060,10 @@ void EUTelMille::processEvent(LCEvent *event) {
           float residual;
 
           //create labels
-          for (unsigned int help = 0; help < _nPlanes; help++) {
-            label[help*3] = _orderedSensorID.at(help)*10 + 1; 
-            label[help*3+1] = _orderedSensorID.at(help)*10 + 2;
-            label[help*3+2] = _orderedSensorID.at(help)*10 + 3;
+          for (unsigned int help = 0; help < (_nPlanes - _nExcludePlanes); help++) {
+            label[help*3] = _orderedSensorID_wo_excluded.at(help)*10 + 1; 
+            label[help*3+1] = _orderedSensorID_wo_excluded.at(help)*10 + 2;
+            label[help*3+2] = _orderedSensorID_wo_excluded.at(help)*10 + 3;
           }
 
           for (int help = 0; help < nGL; help++) {
@@ -2139,7 +2139,7 @@ void EUTelMille::processEvent(LCEvent *event) {
         } else if (_alignMode == Utility::alignMode::XYShiftsAllRot) {
           if (validminuittrack || _inputMode == 1) {
             const int nLC = 4;            // number of local parameters
-            const int nGL = _nPlanes * 6; // number of global parameters. This doesn't work with excluded planes!!!
+            const int nGL = (_nPlanes - _nExcludePlanes) * 6; // number of global parameters. This doesn't work with excluded planes!!!
 
             float *derLC =
                 new float[nLC]; // array of derivatives for local parameters
@@ -2151,13 +2151,13 @@ void EUTelMille::processEvent(LCEvent *event) {
             float residual;
 
           //create labels
-          for (unsigned int help = 0; help < _nPlanes; help++) {
-            label[help*6] = _orderedSensorID.at(help)*10 + 1;
-            label[help*6+1] = _orderedSensorID.at(help)*10 + 2;
-            label[help*6+2] = _orderedSensorID.at(help)*10 + 3;
-            label[help*6+3] = _orderedSensorID.at(help)*10 + 4;
-            label[help*6+4] = _orderedSensorID.at(help)*10 + 5;
-            label[help*6+5] = _orderedSensorID.at(help)*10 + 6;
+          for (unsigned int help = 0; help < (_nPlanes - _nExcludePlanes); help++) {
+            label[help*6] = _orderedSensorID_wo_excluded.at(help)*10 + 1;
+            label[help*6+1] = _orderedSensorID_wo_excluded.at(help)*10 + 2;
+            label[help*6+2] = _orderedSensorID_wo_excluded.at(help)*10 + 3;
+            label[help*6+3] = _orderedSensorID_wo_excluded.at(help)*10 + 4;
+            label[help*6+4] = _orderedSensorID_wo_excluded.at(help)*10 + 5;
+            label[help*6+5] = _orderedSensorID_wo_excluded.at(help)*10 + 6;
           }
 
             for (int help = 0; help < nGL; help++) {

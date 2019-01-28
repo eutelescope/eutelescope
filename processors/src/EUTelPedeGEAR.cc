@@ -82,17 +82,17 @@ void EUTelPedeGEAR::init() {
                                              EUTELESCOPE::DUMPGEOROOT);
 
   if(_alignModeString.compare("XYShiftsRotZ") == 0 ) {
-	_alignMode = Utility::alignMode::XYShiftsRotZ;
+    _alignMode = Utility::alignMode::XYShiftsRotZ;
   } else if( _alignModeString.compare("XYShifts") == 0 ) {
-	_alignMode = Utility::alignMode::XYShifts;
+    _alignMode = Utility::alignMode::XYShifts;
   } else if( _alignModeString.compare("XYZShiftsRotZ") == 0 ) {
-	_alignMode = Utility::alignMode::XYZShiftsRotZ;
+    _alignMode = Utility::alignMode::XYZShiftsRotZ;
   } else if( _alignModeString.compare("XYShiftsAllRot") == 0 ) {
-	_alignMode = Utility::alignMode::XYShiftsAllRot;
+    _alignMode = Utility::alignMode::XYShiftsAllRot;
   } else if( _alignModeString.compare("XYZShiftsRotXYZ") == 0 ) {
     _alignMode = Utility::alignMode::XYZShiftsRotXYZ;
   } else {
-	streamlog_out(ERROR) << "The chosen AlignMode: '" << _alignModeString 
+    streamlog_out(ERROR) << "The chosen AlignMode: '" << _alignModeString 
 			     << "' is invalid. Please correct your steering template and retry!" 
 			     << std::endl;
 	throw InvalidParameterException("AlignMode");
@@ -133,7 +133,7 @@ void EUTelPedeGEAR::end() {
 
   if(!pede.is_open()) {
     streamlog_out(ERROR5) << "Pede cannot be executed: command not found in the path." 
-			  << std::endl;
+                          << std::endl;
     encounteredError = true;
   } else {
     //output multiplexing: parse pede output in both stdout and stderr and echo
