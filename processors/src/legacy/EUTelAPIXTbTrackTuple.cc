@@ -1,15 +1,23 @@
-// eutelescope inlcudes
+/*
+ *   This source code is part of the Eutelescope package of Marlin.
+ *   You are free to use this source files for your own development as
+ *   long as it stays in a public research context. You are not
+ *   allowed to use it for commercial purpose. You must put this
+ *   header with author names in all development based on this file.
+ *
+ */
+ 
+// eutelescope includes ".h"
 #include "EUTelAPIXTbTrackTuple.h"
 #include "EUTELESCOPE.h"
 #include "EUTelEventImpl.h"
 #include "EUTelExceptions.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelTrackerDataInterfacerImpl.h"
-
-// eutelescope geometry
 #include "EUTelGenericPixGeoDescr.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
 
+// lcio includes <.h>
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
 #include <IMPL/LCCollectionVec.h>
@@ -17,14 +25,14 @@
 #include <IMPL/TrackerHitImpl.h>
 #include <UTIL/CellIDDecoder.h>
 
+// system includes <>
 #include <algorithm>
 
 using namespace eutelescope;
 
 EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple()
     : Processor("EUTelAPIXTbTrackTuple"), _inputTrackColName(""),
-      _inputTrackerHitColName(""), _inputTelPulseCollectionName(""),
-      _inputDutPulseCollectionName(""), _telZsColName(""), _dutZsColName(""),
+      _inputTrackerHitColName(""), _inputDutPulseCollectionName(""), _dutZsColName(""),
       _path2file(""), _DUTIDs(std::vector<int>()), _nRun(0), _nEvt(0),
       _runNr(0), _evtNr(0), _isFirstEvent(false), _file(nullptr), _eutracks(nullptr),
       _nTrackParams(0), _xPos(nullptr), _yPos(nullptr), _dxdz(nullptr), _dydz(nullptr),
@@ -33,32 +41,40 @@ EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple()
       p_iden(nullptr), p_lv1(nullptr), p_hitTime(nullptr), p_frameTime(nullptr),
       _euhits(nullptr), _nHits(0), _hitXPos(nullptr), _hitYPos(nullptr), _hitZPos(nullptr),
       _hitSensorId(nullptr) {
+      
   // processor description
-  _description = "Prepare tbtrack style n-tuple with track fit results";
+  _description = "EUTelAPIXTbTrackTuple prepares tbtrack style n-tuple with track fit results.";
 
-  registerInputCollection(LCIO::TRACK, "InputTrackCollectionName",
+  registerInputCollection(LCIO::TRACK,
+			  "InputTrackCollectionName",
                           "Name of the input Track collection",
-                          _inputTrackColName, std::string("fittracks"));
+                          _inputTrackColName,
+			  std::string("fittracks"));
 
-  registerInputCollection(LCIO::TRACKERHIT, "InputTrackerHitCollectionName",
+  registerInputCollection(LCIO::TRACKERHIT,
+			  "InputTrackerHitCollectionName",
                           "Name of the plane-wide hit-data hit collection",
-                          _inputTrackerHitColName, std::string("fitpoints"));
+                          _inputTrackerHitColName,
+			  std::string("fitpoints"));
 
   registerProcessorParameter("DutZsColName",
                              "DUT zero surpressed data colection name",
-                             _dutZsColName, std::string("zsdata_apix"));
+                             _dutZsColName,
+			     std::string("zsdata_apix"));
 
   registerProcessorParameter("OutputPath",
                              "Path/File where root-file should be stored",
-                             _path2file, std::string("NTuple.root"));
+                             _path2file,
+			     std::string("NTuple.root"));
 
   registerProcessorParameter("DUTIDs",
-                             "Int std::vector containing the IDs of the DUTs",
-                             _DUTIDs, std::vector<int>());
+                             "IDs of the DUTs",
+                             _DUTIDs,
+			     std::vector<int>());
 }
 
 void EUTelAPIXTbTrackTuple::init() {
-  // usually a good idea to
+  // usually a good idea to do
   printParameters();
 
   _isFirstEvent = true;
@@ -85,6 +101,7 @@ void EUTelAPIXTbTrackTuple::init() {
 }
 
 void EUTelAPIXTbTrackTuple::processRunHeader(LCRunHeader *runHeader) {
+
   auto eutelHeader = std::make_unique<EUTelRunHeaderImpl>(runHeader);
   eutelHeader->addProcessor(type());
   _nRun++;
@@ -94,6 +111,7 @@ void EUTelAPIXTbTrackTuple::processRunHeader(LCRunHeader *runHeader) {
 }
 
 void EUTelAPIXTbTrackTuple::processEvent(LCEvent *event) {
+
   _nEvt++;
   _evtNr = event->getEventNumber();
   EUTelEventImpl *euEvent = static_cast<EUTelEventImpl *>(event);
@@ -139,6 +157,7 @@ void EUTelAPIXTbTrackTuple::end() {
 
 // Read in TrackerHit(Impl) to later dump them
 bool EUTelAPIXTbTrackTuple::readHits(std::string hitColName, LCEvent *event) {
+
   LCCollection *hitCollection = nullptr;
 
   try {
@@ -183,6 +202,7 @@ bool EUTelAPIXTbTrackTuple::readHits(std::string hitColName, LCEvent *event) {
 
 // Read in TrackerHit to later dump
 bool EUTelAPIXTbTrackTuple::readTracks(LCEvent *event) {
+
   LCCollection *trackCol = nullptr;
 
   try {
@@ -253,6 +273,7 @@ bool EUTelAPIXTbTrackTuple::readTracks(LCEvent *event) {
 
 // Read in raw (zs) TrackerData(Impl) to later dump
 bool EUTelAPIXTbTrackTuple::readZsHits(std::string colName, LCEvent *event) {
+
   LCCollectionVec *zsInputCollectionVec = nullptr;
 
   try {

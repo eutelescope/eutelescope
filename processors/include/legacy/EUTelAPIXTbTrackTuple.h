@@ -1,6 +1,16 @@
-#ifndef EUTelFitTuple_h
-#define EUTelFitTuple_h 1
+/*
+ *   This source code is part of the Eutelescope package of Marlin.
+ *   You are free to use this source files for your own development as
+ *   long as it stays in a public research context. You are not
+ *   allowed to use it for commercial purpose. You must put this
+ *   header with author names in all development based on this file.
+ *
+ */
+ 
+#ifndef EUTELAPIXTBTRACKTUPLE_H
+#define EUTELAPIXTBTRACKTUPLE_H
 
+// marlin includes ".h"
 #include "marlin/Processor.h"
 
 // system includes <>
@@ -12,6 +22,7 @@
 #include <TVectorT.h>
 
 namespace eutelescope {
+
   class EUTelAPIXTbTrackTuple : public marlin::Processor {
 
   public:
@@ -35,9 +46,7 @@ namespace eutelescope {
 
     std::string _inputTrackColName;
     std::string _inputTrackerHitColName;
-    std::string _inputTelPulseCollectionName;
     std::string _inputDutPulseCollectionName;
-    std::string _telZsColName;
     std::string _dutZsColName;
 
     std::string _path2file;
