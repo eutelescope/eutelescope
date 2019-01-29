@@ -21,6 +21,7 @@ You should be able to run the analysis now. For this, execute the following comm
 
 ```
 jobsub -c config.cfg -csv runlist.csv -g converter 1085
+jobsub -c config.cfg -csv runlist.csv -g noisypixel 1085
 jobsub -c config.cfg -csv runlist.csv -g clustering 1085
 jobsub -c config.cfg -csv runlist.csv -g hitmaker 1085
 jobsub -c config.cfg -csv runlist.csv -g alignDAF 1085
