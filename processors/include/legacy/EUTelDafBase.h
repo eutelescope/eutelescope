@@ -1,9 +1,11 @@
-// Version: $Id$
-//! Author Havard Gjersdal <haavagj@fys.uio.no>
 /*
  *   This source code is part of the Eutelescope package of Marlin.
+ *   You are free to use this source files for your own development as
+ *   long as it stays in a public research context. You are not
+ *   allowed to use it for commercial purpose. You must put this
+ *   header with author names in all development based on this file.
+ *
  */
-
 #ifndef EUTELDAFBASE_H
 #define EUTELDAFBASE_H
 
@@ -45,12 +47,8 @@
 namespace eutelescope {
 
   class EUTelDafBase : public marlin::Processor {
+  
   public:
-    // Marlin processor interface funtions
-    //! Returns a new instance of EUTelDafFitter
-    // virtual Processor * newProcessor() {
-    //   return new EUTelDafFitter;
-    // }
     //! Default constructor
     EUTelDafBase();
     EUTelDafBase(std::string);
@@ -62,12 +60,11 @@ namespace eutelescope {
     virtual void processEvent(LCEvent *evt);
     //! Called after data processing.
     virtual void end();
+    
     bool defineSystemFromData();
-
     enum DafTrackFinder { simpleCluster, combinatorialKF };
 
   protected:
-    std::ofstream trackstream;
     //! Input hit collection name
     std::vector<std::string> _hitCollectionName;
     std::vector<std::string> _alignColNames;
@@ -88,6 +85,7 @@ namespace eutelescope {
 
     //! resolution of sensor planes
     float _telResX, _telResY, _dutResX, _dutResY;
+    
     //! Nominal beam energy
     float _eBeam;
 
@@ -99,35 +97,31 @@ namespace eutelescope {
     //! Radius for track finder finder
     /*!
      * Track finder works by projecting all hits into plane 0, assuming a beam
-     * parallel to
-     * the z-axis, then running a cluster finder on these hits. This radius
-     * determines
-     * whether a hit is included or not.
+     * parallel to the z-axis, then running a cluster finder on these hits. This radius
+     * determines whether a hit is included or not.
      */
     float _normalizedRadius;
 
     //! Cutoff value for DAF
     /*!
      * This determines the maximum distance between a track and a measurement
-     * for the
-     * measurement to be included in the fit.
+     * for the measurement to be included in the fit.
      */
     float _chi2cutoff;
+    
     float _nXdz, _nYdz, _nXdzMaxDeviance, _nYdzMaxDeviance;
     int _nDutHits;
-
     float _nSkipMax;
     float _ndofMin;
-    //! maximum allowed chi2 /ndof for track to be accepted.
+    
+    //! maximum allowed chi2/ndof for track to be accepted.
     float _maxChi2;
-    float _scaleScatter;
 
     virtual void dafInit() { ; }
     virtual void dafEvent(LCEvent * /*evt*/) {
       ;
     } // evt commented out because it causes a warning, function doesn't seem to
-      // do anything here but is probably used in another file through
-      // inheritance
+      // do anything here but is probably used in another file through inheritance
     virtual void dafEnd() { ; }
     virtual void dafParams() { ; }
 
@@ -141,6 +135,7 @@ namespace eutelescope {
     bool checkTrack(daffitter::TrackCandidate<float, 4> &track);
     int checkInTime(daffitter::TrackCandidate<float, 4> &track);
     void printStats();
+    
     // alignment stuff
     void gearRotate(size_t index, int gearIndex);
     Eigen::Vector3f applyAlignment(EUTelAlignmentConstant *alignment,
@@ -159,13 +154,6 @@ namespace eutelescope {
         n_failedChi2OverNdof, n_failedIsnan, n_passedNdof, n_passedChi2OverNdof,
         n_passedIsnan;
 
-    std::string _clusterCollectionName;
-    LCCollectionVec *_clusterVec;
-
-    //! Silicon planes parameters as described in GEAR
-    gear::SiPlanesParameters *_siPlanesParameters;
-    gear::SiPlanesLayerLayout *_siPlanesLayerLayout;
-
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     std::map<std::string, AIDA::IHistogram1D *> _aidaHistoMap;
     std::map<std::string, AIDA::IHistogram2D *> _aidaHistoMap2D;
@@ -179,6 +167,7 @@ namespace eutelescope {
 
     //! Fill histogram switch
     bool _histogramSwitch;
+    
     //! LCIO switch
     bool _addToLCIO;
   };
