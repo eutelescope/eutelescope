@@ -1,29 +1,29 @@
-// Version: $Id$
-// Author Havard Gjersdal, UiO(haavagj@fys.uio.no)
-/*!
- * This is a track fitting processor for the Eutelescope package.
+/*
+ *   This source code is part of the Eutelescope package of Marlin.
+ *   You are free to use this source files for your own development as
+ *   long as it stays in a public research context. You are not
+ *   allowed to use it for commercial purpose. You must put this
+ *   header with author names in all development based on this file.
  *
- * It preforms track finding and fitting on a supplied hit collection.
+ */
+
+/*!
+  * This is a track fitting processor for the Eutelescope package.
+ *
+ * It performs track finding and fitting on a supplied hit collection.
  *
  * The track finder works by propagating all hits to plane 0, currently assuming
- * straight
- * line fits, then running a cluster finder. Hit clusters above some set value
- * are considered
- * track candidates.
+ * straight line fits, then running a cluster finder. Hit clusters above some set value
+ * are considered track candidates.
  *
  * This track candidate is then fitted using a implementation of a Deterministic
- * Annealing
- * Filter (DAF), that in short is a Kalman Filter running iteratively over a set
- * of weighted
- * measurements, reweighing the measurements after each fit based on the
- * residuals and a
- * supplied chi2 cut off.
+ * Annealing Filter (DAF), that in short is a Kalman Filter running iteratively over 
+ * a set of weighted measurements, reweighting the measurements after each fit based 
+ * on the residuals and a supplied chi2 cut off.
  *
  * This package uses the Eigen library for linear algebra. This package is very
- * quick when
- * compiled properly, but very slow when compiled for debugging. Make sure to
- * compile
- * properly before running productions.
+ * quick when compiled properly, but very slow when compiled for debugging. Make sure 
+ * to compile properly before running productions.
  *
  * Running 'cmake -i' inside the build folder, and then when it asks
  * Variable Name: CMAKE_CXX_FLAGS_RELEASE
@@ -38,11 +38,12 @@
  * enter:
  * New Value (Enter to keep current value): Release
  *
- * If youc cpu supports it, you could try -msse4 or -msse3 aswell.
+ * If your cpu supports it, you could try -msse4 or -msse3 as well.
  */
 
 // built only if GEAR and MARLINUTIL are used
 #if defined(USE_GEAR)
+
 // eutelescope includes ".h"
 #include "EUTelDafFitter.h"
 #include "EUTELESCOPE.h"
@@ -57,10 +58,6 @@
 #include "marlin/Exceptions.h"
 #include "marlin/Global.h"
 #include "marlin/Processor.h"
-
-// gear includes <.h>
-#include <gear/GearMgr.h>
-#include <gear/SiPlanesParameters.h>
 
 // aida includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -94,34 +91,36 @@
 #include <string>
 #include <vector>
 
-// ROOT includes
-#include "TVector3.h"
-
 using namespace std;
 using namespace lcio;
 using namespace marlin;
 using namespace eutelescope;
 
 EUTelDafFitter::EUTelDafFitter() : EUTelDafBase("EUTelDafFitter") {
-  // Child spesific params and description
+  // Child specific params and description
   dafParams();
 }
 
 void EUTelDafFitter::dafParams() {
-  _description = "This processor preforms track reconstruction. The tracks are "
+
+  _description = "EUTelDafFitter performs track reconstruction. The tracks are "
                  "as final track fit for analysis.";
 
-  // Tracker system options
-  registerOptionalParameter("AddToLCIO", "Should plots be made and filled?",
-                            _addToLCIO, true);
-  registerOptionalParameter(
-      "FitDuts",
-      "Set this to true if you want DUTs to be included in the track fit",
-      _fitDuts, false);
-  // Track fitter options
-  registerOutputCollection(LCIO::TRACK, "TrackCollectionName",
+  registerOutputCollection(LCIO::TRACK, 
+			   "TrackCollectionName",
                            "Collection name for fitted tracks",
-                           _trackCollectionName, string("fittracks"));
+                           _trackCollectionName, 
+			   std::string("fittracks"));
+
+  registerOptionalParameter("AddToLCIO",
+			    "Should plots be made and filled?",
+                            _addToLCIO,
+			    true);
+
+  registerOptionalParameter("FitDuts",
+			    "Set this to true if you want DUTs to be included in the track fit.",
+			    _fitDuts,
+			    false);  
 }
 
 void EUTelDafFitter::dafInit() {
@@ -140,21 +139,21 @@ void EUTelDafFitter::dafEvent(LCEvent *event) {
   // Prepare track collection
   if (_addToLCIO) {
     // Define output track and hit collections
-    _fittrackvec = new LCCollectionVec(LCIO::TRACK);
-    _fitpointvec = new LCCollectionVec(LCIO::TRACKERHIT);
+    _fittrackVec = new LCCollectionVec(LCIO::TRACK);
+    _fitpointVec = new LCCollectionVec(LCIO::TRACKERHIT);
     // Set flag for storing track hits in track collection
-    LCFlagImpl flag(_fittrackvec->getFlag());
+    LCFlagImpl flag(_fittrackVec->getFlag());
     flag.setBit(LCIO::TRBIT_HITS);
-    _fittrackvec->setFlag(flag.getFlag());
+    _fittrackVec->setFlag(flag.getFlag());
   }
 
   // Check found tracks
   for (size_t ii = 0; ii < _system.getNtracks(); ii++) {
     // run track fitte
     _nCandidates++;
-    // Prepare track for DAF fit
+    // prepare track for DAF fit
     _system.fitPlanesInfoDaf(_system.tracks.at(ii));
-    // Check resids, intime, angles
+    // check resids, intime, angles
     if (not checkTrack(_system.tracks.at(ii))) {
       continue;
     };
@@ -170,19 +169,17 @@ void EUTelDafFitter::dafEvent(LCEvent *event) {
     }
     // Dump to LCIO
     if (_addToLCIO) {
-      addToLCIO(_system.tracks.at(ii), _fitpointvec);
+      addToLCIO(_system.tracks.at(ii), _fitpointVec);
     }
     _nTracks++;
   }
 
   // Add track collection
   if (_addToLCIO) {
-    event->addCollection(_fittrackvec, _trackCollectionName);
+    event->addCollection(_fittrackVec, _trackCollectionName);
     std::string sfitpoints = "";
 
-    for (int i = 0; i < 2000; i++) // TODO (Phillip Hamnett) Why is this hard
-                                   // coded to 1000? Ric changed to 2000.
-    {
+    for (int i = 0; i < 2000; i++) {
       sfitpoints = "fitpoints" + i;
       try {
         dynamic_cast<LCCollectionVec *>(event->getCollection(sfitpoints));
@@ -190,7 +187,7 @@ void EUTelDafFitter::dafEvent(LCEvent *event) {
         break;
       }
     }
-    event->addCollection(_fitpointvec, sfitpoints);
+    event->addCollection(_fitpointVec, sfitpoints);
   }
 }
 
@@ -198,8 +195,8 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float, 4> &track,
                                LCCollectionVec *lcvec) {
   TrackImpl *fittrack = new TrackImpl();
   // Impact parameters are useless and set to 0
-  fittrack->setD0(0.);        // impact paramter of the track in (r-phi)
-  fittrack->setZ0(0.);        // impact paramter of the track in (r-z)
+  fittrack->setD0(0.);        // impact parameter of the track in (r-phi)
+  fittrack->setZ0(0.);        // impact parameter of the track in (r-z)
   fittrack->setTanLambda(0.); // dip angle of the track at reference point
 
   daffitter::TrackEstimate<float, 4> &est = track.estimates.at(0);
@@ -222,8 +219,7 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float, 4> &track,
     // encode and store sensorID
     int sensorID = _system.planes.at(plane).getSensorID();
     idHitEncoder["sensorID"] = sensorID;
-    // set the local/global bit flag property AND the FittedHit property for the
-    // hit
+    // set local/global bit flag property AND FittedHit property for the hit
     idHitEncoder["properties"] = kHitInGlobalCoord | kFittedHit;
     double pos[3];
     pos[0] = estim.getX() / 1000.0;
@@ -238,13 +234,12 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float, 4> &track,
     cov[1] = estim.cov(0, 1);
     cov[2] = estim.cov(1, 1);
     // Error of z position of fit is unclear to me, this would be a systematic
-    // alignment
-    // error. Set to 0 along with all covariances.
+    // alignment error. Set to 0 along with all covariances.
     cov[3] = cov[4] = cov[5] = 0.;
     fitpoint->setCovMatrix(cov);
     // store values
     idHitEncoder.setCellID(fitpoint);
-    _fitpointvec->push_back(fitpoint);
+    _fitpointVec->push_back(fitpoint);
     fittrack->addHit(fitpoint);
 
     streamlog_out(DEBUG3) << " hit : sensorID " << idHitEncoder["sensorID"]
@@ -270,8 +265,9 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float, 4> &track,
     }
   }
   fittrack->setReferencePoint(refpoint);
-  _fittrackvec->addElement(fittrack);
+  _fittrackVec->addElement(fittrack);
 }
 
-void EUTelDafFitter::dafEnd() {}
+void EUTelDafFitter::dafEnd() {
+}
 #endif // USE_GEAR

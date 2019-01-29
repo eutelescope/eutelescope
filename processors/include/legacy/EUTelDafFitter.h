@@ -1,21 +1,22 @@
-// Version: $Id$
-//! Author Havard Gjersdal <haavagj@fys.uio.no>
 /*
  *   This source code is part of the Eutelescope package of Marlin.
+ *   You are free to use this source files for your own development as
+ *   long as it stays in a public research context. You are not
+ *   allowed to use it for commercial purpose. You must put this
+ *   header with author names in all development based on this file.
+ *
  */
-
-#ifndef EUTELDAF_H
-#define EUTELDAF_H
+#ifndef EUTELDAFFITTER_H
+#define EUTELDAFFITTER_H
 
 // built only if GEAR is available
 #ifdef USE_GEAR
 
+// eutelescope includes
+#include "EUTelDafBase.h"
+
 // marlin includes ".h"
 #include "marlin/Processor.h"
-
-// gear includes <.h>
-#include <gear/SiPlanesLayerLayout.h>
-#include <gear/SiPlanesParameters.h>
 
 // lcio includes <.h>
 #include <EVENT/LCEvent.h>
@@ -33,12 +34,11 @@
 #include <string>
 #include <vector>
 
-#include "EUTelDafBase.h"
-
 namespace eutelescope {
+ 
   class EUTelDafFitter : EUTelDafBase {
+ 
   public:
-    // Marlin processor interface funtions
     //! Returns a new instance of EUTelDafFitter
     virtual Processor *newProcessor() { return new EUTelDafFitter; }
     //! Default constructor
@@ -56,12 +56,15 @@ namespace eutelescope {
     //! Output track collection name
     std::string _trackCollectionName;
     //! Output track collection
-    LCCollectionVec *_fittrackvec;
-    LCCollectionVec *_fitpointvec;
+    LCCollectionVec *_fittrackVec;
+    LCCollectionVec *_fitpointVec;
+    //! function for adding track to LCIO
     void addToLCIO(daffitter::TrackCandidate<float, 4> &track,
                    LCCollectionVec *lcvec);
     //! LCIO switch
-    bool _addToLCIO, _fitDuts;
+    bool _addToLCIO;
+    //! switch to include DUT in track fit
+    bool _fitDuts;
   };
   //! A global instance of the processor
   EUTelDafFitter gEUTelDafFitter;
