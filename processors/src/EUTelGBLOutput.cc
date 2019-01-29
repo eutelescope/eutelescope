@@ -336,9 +336,11 @@ void EUTelGBLOutput::processEvent(LCEvent *event) {
   
   //fill the TTrees
   //the event number would make it fill this TTree even for events with no tracks
-  if(!(_onlyWithTracks) || TrackCollection->getNumberOfElements() != 0) _eutracks->Fill();
+  if(!(_onlyWithTracks) || TrackCollection->getNumberOfElements() != 0) {
+  _eutracks->Fill();
   if(_inputHitCollections.size() != 0) _euhits->Fill();
   if(_inputZsCollections.size() != 0) _zstree->Fill();
+  }
 }
 
 void EUTelGBLOutput::end() {
