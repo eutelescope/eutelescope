@@ -141,18 +141,16 @@ EUTelDafBase::EUTelDafBase(std::string name) : marlin::Processor(name) {
 			    false);
 
   registerProcessorParameter("TelescopePlanes",
-			     "List of sensor IDs for the "
-			     "telescope planes. These "
-			     "planes are used for the track "
-			     "finder, and track fitter.",
+			     "List of sensor IDs for the telescope planes. These "
+			     "planes are used for the track finder, and track fitter.",
                              _telPlanes,
 			     std::vector<int>());
 
   registerOptionalParameter("DutPlanes",
 			    "List of sensor IDs for the DUT planes. Used to make the "
-			    "decision on whether ro accept the track or not. These "
+			    "decision on whether to accept the track or not. These "
 			    "planes are not used in track finder, and not in the track "
-			    "fitter unless option 'useDutsInFit' is set.",
+			    "fitter.",
 			    _dutPlanes,
 			    std::vector<int>());
 
@@ -207,8 +205,7 @@ EUTelDafBase::EUTelDafBase(std::string name) : marlin::Processor(name) {
 			    300.0f);
 
   registerOptionalParameter("Chi2Cutoff",
-			    "DAF fitter: The cutoff value for a "
-			    "measurement to be included in the fit.",
+			    "DAF fitter: The cutoff value for a measurement to be included in the fit.",
                             _chi2cutoff,
 			    300.0f);
 
@@ -259,9 +256,9 @@ bool EUTelDafBase::defineSystemFromData() {
 
     // If plane is not DUT and not Tel, it does not have hits, and cannot be
     // initialized
-    if (find(_telPlanes.begin(), _telPlanes.end(), pl.getSensorID()) ==
+    if (std::find(_telPlanes.begin(), _telPlanes.end(), pl.getSensorID()) ==
             _telPlanes.end() and
-        find(_dutPlanes.begin(), _dutPlanes.end(), pl.getSensorID()) ==
+        std::find(_dutPlanes.begin(), _dutPlanes.end(), pl.getSensorID()) ==
             _dutPlanes.end()) {
       continue;
     }
@@ -507,7 +504,7 @@ void EUTelDafBase::init() {
     streamlog_out(MESSAGE5) << " scatter: " << scatter << std::endl;
 
     // Is current plane a telescope plane?
-    if (find(_telPlanes.begin(), _telPlanes.end(), sensorID) !=
+    if (std::find(_telPlanes.begin(), _telPlanes.end(), sensorID) !=
         _telPlanes.end()) {
       _nRef.at(index) = 0;
       errX = _telResX;
@@ -515,7 +512,7 @@ void EUTelDafBase::init() {
       excluded = false;
     }
     // Is current plane a DUT plane?
-    if (find(_dutPlanes.begin(), _dutPlanes.end(), sensorID) !=
+    if (std::find(_dutPlanes.begin(), _dutPlanes.end(), sensorID) !=
         _dutPlanes.end()) {
       _nRef.at(index) = 0;
       errX = _dutResX;
@@ -705,7 +702,7 @@ int EUTelDafBase::checkInTime(daffitter::TrackCandidate<float, 4> &track) {
     daffitter::FitPlane<float> &plane = _system.planes.at(ii);
     int sensorID = plane.getSensorID();
     // Check if any DUT plane is "In time" with the
-    if (find(_dutPlanes.begin(), _dutPlanes.end(), sensorID) ==
+    if (std::find(_dutPlanes.begin(), _dutPlanes.end(), sensorID) ==
         _dutPlanes.end()) {
       continue;
     }
@@ -1106,7 +1103,7 @@ void EUTelDafBase::end() {
                           << std::endl;
   streamlog_out(MESSAGE5) << "Tracks with ok ndof: " << n_passedNdof << std::endl;
   streamlog_out(MESSAGE5) << "Tracks with BAD ndof: " << n_failedNdof << std::endl;
-  streamlog_out(MESSAGE5) << "Tracks with ok chi2/ndof: "e
+  streamlog_out(MESSAGE5) << "Tracks with ok chi2/ndof: "
                           << n_passedChi2OverNdof << std::endl;
   streamlog_out(MESSAGE5) << "Tracks with BAD chi2/ndof: "
                           << n_failedChi2OverNdof << std::endl;
