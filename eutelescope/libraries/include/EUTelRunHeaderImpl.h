@@ -47,17 +47,6 @@ namespace eutelescope {
    *  readable format the current date and time. Calling the set
    *  method, the current data is automatically saved.
    *
-   *  \li <b>DAQHWName</b>: this string is used to identify the
-   *  hardware part of the DAQ. In the EUTELESCOPE class few static
-   *  constant string are available for this purpose:
-   *  EUTELESCOPE::EUDRB, EUTELESCOPE::IPHCIMAGER and
-   *  EUTELESCOPE::SUCIMAIMAGER.
-   *
-   *  \li <b>DAQHWVersion</b>: this is a float number representing
-   *  the version of the DAQ hardware system. This value is
-   *  meaningful only when the run is not a simulation. The
-   *  conversion from version to float is the same of HeaderVersion
-   *
    *  \li <b>DAQSWName</b>: this is a string used to identify the
    *  software part of the used DAQ. In the EUTELESCOPE class there is
    *  (for the time being) just one static string for this purpose:
@@ -201,26 +190,6 @@ namespace eutelescope {
      */
     virtual void setDateTime();
 
-    //! Set the DAQ hardware name
-    /*! this string is used to identify the hardware part of the
-     *  DAQ. In the EUTELESCOPE class few static constant string are
-     *  available for this purpose: EUTELESCOPE::EUDRB and
-     *  EUTELESCOPE::IPHCIMAGER.
-     *
-     *  @param name The DAQ hardware name
-     */
-    virtual void setDAQHWName(std::string name);
-
-    //! Set the DAQ hardware version
-    /*! this is a float number representing
-     *  the version of the DAQ software. This value is meaningful only
-     *  when the run is not a simulation. The conversion from version to
-     *  float is the same of HeaderVersion.
-     *
-     *  @param ver The DAQ hardware version
-     */
-    virtual void setDAQHWVersion(float ver);
-
     //! Set the DAQ software name
     /*! this is a string used to identify the
      *  software part of the used DAQ. In the EUTELESCOPE class there is
@@ -353,24 +322,6 @@ namespace eutelescope {
      */
     virtual void setMaxY(lcio::IntVec yMax);
 
-    //! Set the detector modality
-    /*! This is the tag taken from the DAQ software to identify how
-     *  the EUDRBs are configured. For example if they are working in
-     *  RAW mode or in ZS.
-     *
-     *  @param mode A string representing the mode of operation
-     */
-    virtual void setEUDRBMode(std::string mode);
-
-    //! Set which detectors are in the telescope
-    /*! This is the tag takend from the DAQ software to identify which
-     *  sensors are in the telescope. In case of a mixed
-     *  configuration, the processor will discover the correct order
-     *
-     *  @param det A string naming the sensors in the telescope
-     */
-    virtual void setEUDRBDet(std::string det);
-
     //! Add a processor to the applied processor list
     /*! The analysis procedure of some input data usually requires
      *  that many processors have been applied sequentially. Saving
@@ -416,16 +367,6 @@ namespace eutelescope {
     //! return the date and time in a human readable format
     inline std::string getDateTime() const {
       return _lcHeader->parameters().getStringVal(EUTELESCOPE::DATETIME);
-    }
-
-    //! return the DAQ hardware name
-    inline std::string getDAQHWName() const {
-      return _lcHeader->parameters().getStringVal(EUTELESCOPE::DAQHWNAME);
-    }
-
-    //! return the DAQ hardware version
-    inline float getDAQHWVersion() const {
-      return _lcHeader->parameters().getFloatVal(EUTELESCOPE::DAQHWVERSION);
     }
 
     //! return the DAQ software name
@@ -490,20 +431,6 @@ namespace eutelescope {
     //! return the user comment
     inline std::string getUserComment() const {
       return _lcHeader->parameters().getStringVal(EUTELESCOPE::USERCOMMENT);
-    }
-
-    //! return the EUDRB operation mode
-    inline std::string getEUDRBMode() const {
-      if (_lcHeader->parameters().getStringVal(EUTELESCOPE::EUDRBMODE) == "")
-        return std::string("RAW3");
-      return _lcHeader->parameters().getStringVal(EUTELESCOPE::EUDRBMODE);
-    }
-
-    //! return the EUDRB global detector
-    inline std::string getEUDRBDet() const {
-      if (_lcHeader->parameters().getStringVal(EUTELESCOPE::EUDRBDET) == "")
-        return std::string("MIMOTEL");
-      return _lcHeader->parameters().getStringVal(EUTELESCOPE::EUDRBDET);
     }
 
     //! returns the LCRunHeaderImpl underlying object

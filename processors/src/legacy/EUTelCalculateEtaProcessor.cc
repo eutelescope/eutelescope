@@ -215,8 +215,6 @@ void EUTelCalculateEtaProcessor::processRunHeader(LCRunHeader *rdr) {
     newHeader->setHeaderVersion(runHeader->getHeaderVersion());
     newHeader->setDataType(runHeader->getDataType());
     newHeader->setDateTime();
-    newHeader->setDAQHWName(runHeader->getDAQHWName());
-    newHeader->setDAQHWVersion(runHeader->getDAQHWVersion());
     newHeader->setDAQSWName(runHeader->getDAQSWName());
     newHeader->setDAQSWVersion(runHeader->getDAQSWVersion());
     newHeader->setNoOfEvent(runHeader->getNoOfEvent());

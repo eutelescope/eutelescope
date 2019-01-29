@@ -157,7 +157,6 @@ INCLUDE_DIRECTORIES( ./eutelescope/libraries/include )
 INCLUDE_DIRECTORIES( ./eutelescope/interfaces/pixel/include )
 INCLUDE_DIRECTORIES( ./eutelescope/interfaces/cluster/include )
 INCLUDE_DIRECTORIES( ./processors/include )
-INCLUDE_DIRECTORIES( ./datasources/include )
 INCLUDE_DIRECTORIES( ./processors/include/legacy )
 INCLUDE_DIRECTORIES( ./processors/include/alibava )
 INCLUDE_DIRECTORIES( ./processors/include/cms )
@@ -190,12 +189,6 @@ INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
 OPTION(BUILD_PROCESSORS "Build the EUTelescope Marlin Processors" ON)
 
 IF(BUILD_PROCESSORS)
-  # Datasource Processor Library
-  SET( readers EutelReaders )
-  AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/datasources/src reader_sources )
-  ADD_SHARED_LIBRARY( ${readers} ${reader_sources} )
-  INSTALL_SHARED_LIBRARY( ${readers} DESTINATION lib )
-
   # Processor Library
   SET( processors EutelProcessors )
   AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/processors/src processor_sources )

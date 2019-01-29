@@ -47,14 +47,6 @@
 
  <processor name="UniversalNativeReader" type="EUTelNativeReader">
  <!--Reads data streams produced by EUDAQ and produced the corresponding LCIO output-->
-  <!--This is the depfet produced output collection-->
-  <parameter name="DEPFETOutputCollection" type="string" lcioOutType="TrackerData"> rawdata_dep </parameter>
-  <!--This is the eudrb producer output collection when read in RAW mode-->
-  <parameter name="EUBRDRawModeOutputCollection" type="string" lcioOutType="TrackerRawData"> rawdata </parameter>
-  <!--This si the mimotel output collection when read in ZS mode-->
-  <parameter name="EUDRBZSModeOutputCollection" type="string" lcioOutType="TrackerData"> zsdata </parameter>
-  <!--Type of sparsified pixel data structure (use SparsePixelType enumerator)-->
-  <!--parameter name="EUDRBSparsePixelType" type="int" value="1"/-->
   <!--The geometry identification number-->
   <parameter name="GeoID" type="int" value="0"/>
   <!--This is the input file name-->
