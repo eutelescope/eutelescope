@@ -197,6 +197,11 @@ IF(BUILD_PROCESSORS)
   AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/processors/src/cms processor_sources )
   ADD_SHARED_LIBRARY( ${processors} ${processor_sources} )
   INSTALL_SHARED_LIBRARY( ${processors} DESTINATION lib )
+
+  # FIXME: making here a copy of shared library because MARLIN_DLL expects libEutelReaders.so; this hack is here only for backward compatibility
+  ADD_SHARED_LIBRARY( EutelReaders ${processor_sources} )
+  INSTALL_SHARED_LIBRARY( EutelReaders DESTINATION lib )
+
 ENDIF(BUILD_PROCESSORS)
 
 # Pixel Geometry Shared Libraries
