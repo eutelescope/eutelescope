@@ -100,6 +100,17 @@ namespace eutelescope {
     //! format
     static const char *DATETIME;
 
+    //! Parameter key to store/recall the DAQ hardware name
+    /*! The value of the DAQHWNNAME stored in the header of LCIO file
+     *  can be one of the DAQ name provided in this class.  @see
+     *  EUTELESCOPE::EUDRB, EUTELESCOPE::IPHCIMAGER,
+     *  EUTELESCOPE::SUCIMAIMAGER
+     */
+    static const char *DAQHWNAME;
+
+    //! Parameter key to store/recall the DAQ hardware version
+    static const char *DAQHWVERSION;
+
     //! Parameter key to store/recall the DAQ software name
     /*! This parameter can be set using one of the const string
      *  defined as well in this class (e.g. EUDAQ).
@@ -164,8 +175,24 @@ namespace eutelescope {
     //! Constant used to identify data converted from another data format
     static const char *CONVDATA;
 
+    //! Constant used to identify the DAQ board designed by INFN
+    static const char *EUDRB;
+
+    //! Constant used to identify the DAQ board developed in IPHC/LEPSI
+    static const char *IPHCIMAGER;
+
+    //! Constant used to identify the DAQ board developed by the SUCIMA
+    //! collaboration
+    static const char *SUCIMAIMAGER;
+
     //! Constant used to identify the DAQ software developed by Geneva team
     static const char *EUDAQ;
+
+    //! Constant used to identify the EUDRB operation mode
+    static const char *EUDRBMODE;
+
+    //! Constant used to identify the detectors making the telescope
+    static const char *EUDRBDET;
 
     // PARAMETER NAMES USED IN THE EVENT IMPLEMENTATION
 

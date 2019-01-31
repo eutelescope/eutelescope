@@ -85,6 +85,20 @@ void EUTelRunHeaderImpl::setDateTime() {
   delete now;
 }
 
+void EUTelRunHeaderImpl::setDAQHWName(std::string name) {
+  // sets the DAQ hardware name.
+  // only in the case of EUTELESCOPE::DAQDATA
+
+  _lcHeader->parameters().setValue(EUTELESCOPE::DAQHWNAME, name);
+}
+
+void EUTelRunHeaderImpl::setDAQHWVersion(float ver) {
+  // sets the DAQ hardware version number
+  // only in the case of EUTELESCOPE::DAQDATA
+
+  _lcHeader->parameters().setValue(EUTELESCOPE::DAQHWVERSION, ver);
+}
+
 void EUTelRunHeaderImpl::setDAQSWName(std::string name) {
   // sets the DAQ software name
   // only in the case of EUTELESCOPE::DAQDATA
@@ -185,4 +199,12 @@ void EUTelRunHeaderImpl::addIntermediateFile(std::string file) {
 
 void EUTelRunHeaderImpl::setUserComment(std::string note) {
   _lcHeader->parameters().setValue(EUTELESCOPE::USERCOMMENT, note);
+}
+
+void EUTelRunHeaderImpl::setEUDRBMode(std::string mode) {
+  _lcHeader->parameters().setValue(EUTELESCOPE::EUDRBMODE, mode);
+}
+
+void EUTelRunHeaderImpl::setEUDRBDet(std::string det) {
+  _lcHeader->parameters().setValue(EUTELESCOPE::EUDRBDET, det);
 }
