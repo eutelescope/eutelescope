@@ -373,6 +373,7 @@ void EUTelPedeGEAR::end() {
         geo::gGeometry().getPlaneYPosition(sensorID),
         geo::gGeometry().getPlaneZPosition(sensorID);
           
+      oldOffset = rotAlign * oldOffset;
 	  //transfer alignment to geometry
 	  geo::gGeometry().alignGlobalPos(sensorID, 
                       oldOffset[0] - xOff,
