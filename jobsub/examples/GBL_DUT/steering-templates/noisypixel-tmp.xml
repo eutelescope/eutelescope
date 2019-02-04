@@ -21,7 +21,8 @@
       <!--processor name="UniversalNativeReader"/-->
       <processor name="NoisyPixelMaskerM26"/>
       <processor name="NoisyPixelMaskerAPIX"/>
-      <processor name="Save"/>
+      <!-- Not needed since the lcio file was already created by EUDAQ2 -->
+      <!--processor name="Save"/-->
       <processor name="EUTelUtilityPrintEventNumber"/>
    </execute>
 
