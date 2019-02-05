@@ -21,7 +21,7 @@
 // GBL includes
 #include "include/GblTrajectory.h"
 #include "include/MilleBinary.h"
-#include "Eigen/Dense"
+
 // marlin includes ".h"
 #include "marlin/Processor.h"
 #include "marlin/Global.h"
