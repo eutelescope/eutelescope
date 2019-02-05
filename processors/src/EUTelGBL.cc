@@ -781,7 +781,7 @@ void EUTelGBL::processEvent( LCEvent * event ) {
         dir << tripletSlope.x, //this is not exactly right
                tripletSlope.y,
                1-pow(tripletSlope.x,2)-pow(tripletSlope.y,2);
-        Eigen::Matrix3d drdm = Eigen::Matrix3d::Identity()-(normal*dir.transpose())/(normal.transpose()*dir);
+        Eigen::Matrix3d drdm = Eigen::Matrix3d::Identity()-(dir*normal.transpose())/(dir.transpose()*normal);
         Eigen::Matrix3d rotOld = geo::gGeometry().rotationMatrixFromAngles(_sensorIDVec[ipl]);
         Eigen::Matrix3d rotInv = rotOld.transpose();
         Eigen::MatrixXd aliToLoc = rotInv*drdm*alDer6;
