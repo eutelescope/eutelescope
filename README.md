@@ -1,3 +1,5 @@
+ONLY FOR TESTING
+
 # EUTelescope - a generic pixel telescope data analysis framework
 
 You can find documentation online: 
