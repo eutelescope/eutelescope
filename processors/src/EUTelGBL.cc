@@ -21,7 +21,7 @@
 // GBL includes
 #include "include/GblTrajectory.h"
 #include "include/MilleBinary.h"
-
+#include "Eigen/Dense"
 // marlin includes ".h"
 #include "marlin/Processor.h"
 #include "marlin/Global.h"
@@ -89,7 +89,7 @@ EUTelGBL::EUTelGBL(): Processor("EUTelGBL") {
 			     _eBeam,
 			     4.0);
 
-  registerProcessorParameter("kappa",
+  registerOptionalParameter("kappa",
 			     "Global factor to Highland formula, 1.0 means HL as is, 1.2 means 20/% additional scattering",
 			     _kappa,
 			     1.0);
@@ -145,9 +145,7 @@ EUTelGBL::EUTelGBL(): Processor("EUTelGBL") {
 			    std::string{"mille.bin"});
 
   registerOptionalParameter("alignMode","Number of alignment constants used. Available mode are:"
-			    "\n\t\tXYShifts - shifts in X and Y"
 			    "\n\t\tXYShiftsRotZ - shifts in X and Y and rotation around the Z axis,"
-			    "\n\t\tXYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis"
 			    "\n\t\tXYZShiftsRotXYZ - all shifts and rotations allowed",
 			    _alignModeString,
 			    std::string{ "XYShiftsRotZ" });
@@ -365,10 +363,6 @@ void EUTelGBL::init() {
 
     if(_alignModeString.compare("XYShiftsRotZ") == 0 ) {
       _alignMode = Utility::alignMode::XYShiftsRotZ;
-    } else if( _alignModeString.compare("XYShifts") == 0 ) {
-      _alignMode = Utility::alignMode::XYShifts;
-    } else if( _alignModeString.compare("XYZShiftsRotZ") == 0 ) {
-      _alignMode = Utility::alignMode::XYZShiftsRotZ;
     } else if( _alignModeString.compare("XYZShiftsRotXYZ") == 0 ) {
       _alignMode = Utility::alignMode::XYZShiftsRotXYZ;
     } else {
@@ -400,9 +394,7 @@ void EUTelGBL::init() {
 	if(std::find(std::begin(_fixedPlanes), std::end(_fixedPlanes),
 		     _sensorIDVec[ipl]) != _fixedPlanes.end()) {
 	  std::map<Utility::alignMode, int> map_alignModes;
-	  map_alignModes[Utility::alignMode::XYShifts] = 3;
 	  map_alignModes[Utility::alignMode::XYShiftsRotZ] = 4;
-	  map_alignModes[Utility::alignMode::XYZShiftsRotZ] = 5;
 	  map_alignModes[Utility::alignMode::XYZShiftsRotXYZ] = 7;
 
 	  int stopid = map_alignModes[_alignMode];
@@ -412,9 +404,7 @@ void EUTelGBL::init() {
 	else {
 	  std::vector< std::vector<int> > alignModeArray =  {_FixedXShift, _FixedYShift};
           
-	  if(_alignMode == Utility::alignMode::XYZShiftsRotZ) 
-	    alignModeArray.push_back(_FixedZRot);
-	  if(_alignMode == Utility::alignMode::XYZShiftsRotXYZ || _alignMode == Utility::alignMode::XYZShiftsRotZ) 
+	  if(_alignMode == Utility::alignMode::XYZShiftsRotXYZ) 
 	    alignModeArray.push_back(_FixedZShift);
 	  if(_alignMode == Utility::alignMode::XYZShiftsRotXYZ) {
 	    alignModeArray.push_back(_FixedXRot);
@@ -423,7 +413,7 @@ void EUTelGBL::init() {
 	  if(_alignMode == Utility::alignMode::XYShiftsRotZ || _alignMode == Utility::alignMode::XYZShiftsRotXYZ) 
 	    alignModeArray.push_back(_FixedZRot);
 	  
-	  if(alignModeArray.size() == 2 && _alignMode != Utility::alignMode::XYShifts ) continue;
+	  if(alignModeArray.size() == 2) continue;
           
 	  int counter = 1;
 	  for(auto current : alignModeArray) {
@@ -470,11 +460,6 @@ void EUTelGBL::processRunHeader( LCRunHeader* rdr ) {
 }
 
 inline Eigen::Matrix<double,5,5> Jac55new( double ds ) {
-  /* for GBL:
-     Jacobian for straight line track
-     track = q/p, x', y', x, y
-               0,  1,  2, 3, 4
-     */
   Eigen::Matrix<double,5,5> jac = Eigen::Matrix<double,5,5>::Identity();
   //jac.UnitMatrix();
   jac(3,1) = ds; // x = x0 + xp * ds
@@ -584,19 +569,6 @@ void EUTelGBL::processEvent( LCEvent * event ) {
   if(!_DUT_IDs.empty())
     {
       for(auto& track: matchedTripletVec) {    
-
-	/*
-	auto& triplet = track.get_upstream();
-	auto& driplet = track.get_downstream();
-	for(auto dutID: _dut_ids) {
-	  if(_is_sensor_upstream[dutID]) {
-	    gblutil.AttachDUT(triplet, dutHitsVec, dutID, _dutCuts);
-	  } else {
-	    gblutil.AttachDUT(driplet, dutHitsVec, dutID, _dutCuts);
-	  }
-	  }*/
-
-	//TO BE TESTED: to replace upper block
 	for(auto dutID: _DUT_IDs) {
 	  //either attach DUT to upstream
 	  if(_isSensorUpstream[dutID]) {
@@ -623,7 +595,7 @@ void EUTelGBL::processEvent( LCEvent * event ) {
       //arc length at the first measurement plane is 0
       double s = 0;
       
-      Eigen::Matrix2d proL2m = Eigen::Matrix2d::Identity();
+      //Eigen::Matrix2d proL2m = Eigen::Matrix2d::Identity();
       Eigen::Vector2d scat = Eigen::Vector2d::Zero();
       
       auto uptriplet = track.get_upstream();
@@ -658,36 +630,23 @@ void EUTelGBL::processEvent( LCEvent * event ) {
       //avoid complaints from compiler. Could be done better
       
       //define alignment derivatives
-      Eigen::Matrix2d alDer2;
       Eigen::Matrix<double,2,3> alDer3;
-      Eigen::Matrix<double, 2,4> alDer4;
       Eigen::Matrix<double, 3,6> alDer6;
       
       if(_performAlignment){ 
-	alDer2(0,0) = 1.0; // dx/dx GBL sign convention
-	alDer2(1,0) = 0.0; // dy/dx
-	alDer2(0,1) = 0.0; // dx/dy
-	alDer2(1,1) = 1.0; // dy/dy
 	
 	alDer3(0,0) = 1.0; // dx/dx
 	alDer3(1,0) = 0.0; // dy/dx
 	alDer3(0,1) = 0.0; // dx/dy
 	alDer3(1,1) = 1.0; // dy/dy
 	
-	alDer4(0,0) = 1.0; // dx/dx
-	alDer4(1,0) = 0.0; // dy/dx
-	alDer4(0,1) = 0.0; // dx/dy
-	alDer4(1,1) = 1.0; // dy/dy
-	alDer4(0,3) = tripletSlope.x; // dx/dz
-	alDer4(1,3) = tripletSlope.y; // dx/dz
-	
 	alDer6(0,0) = 1.0; // dx/dx
 	alDer6(0,1) = 0.0; // dx/dy
-	alDer6(0,2) = tripletSlope.x; // dx/dz
+	alDer6(0,2) = 0.0; // dx/dz
 	alDer6(0,3) = 0.0; // dx/da
 	alDer6(1,0) = 0.0; // dy/dx
 	alDer6(1,1) = 1.0; // dy/dy
-	alDer6(1,2) = tripletSlope.y; // dy/dz
+	alDer6(1,2) = 0.0; // dy/dz
 	alDer6(1,4) = 0.0; // dy/db
 	alDer6(2,0) = 0.0; // dz/dx
 	alDer6(2,1) = 0.0; // dz/dy
@@ -740,14 +699,35 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 	    
 	    if(_printEventCounter < NO_PRINT_EVENT_COUNTER)
 	      streamlog_out(DEBUG2) << "xs = " << xs << "   ys = " << ys << std::endl;
-	    
+	    Eigen::Matrix3d rott = geo::gGeometry().rotationMatrixFromAngles(_sensorIDVec[ipl]);
 	    //add residuals as hit to triplet
-	    rx[ipl] = (hit->x - xs);
-	    ry[ipl] = (hit->y - ys);
+	    Eigen::Vector3d oldhit;
+	    oldhit[0]=hit->x;
+	    oldhit[1]=hit->y;
+	    oldhit[2]=_planePosition[ipl];
+	    Eigen::Vector3d newhit;
+	    newhit = rott.transpose() * oldhit;
+	    Eigen::Vector3d oldtrip;
+	    oldtrip[0]=xs;
+	    oldtrip[1]=ys;
+	    oldtrip[2]=_planePosition[ipl];
+	    Eigen::Vector3d newtrip;
+	    newtrip = rott.transpose() * oldtrip;
+	    rx[ipl] = (newhit[0] - newtrip[0]);
+	    ry[ipl] = (newhit[1] - newtrip[1]);
 	    
 	    //fill measurement vector for GBL
 	    Eigen::Vector2d meas(rx[ipl], ry[ipl]);
-	    point.addMeasurement( proL2m, meas, _planeMeasPrec[ipl] );
+	    Eigen::Matrix<double,2,3> xyDir;
+	    xyDir(0,0) = 1; xyDir(0,1)=0.0; xyDir(0,2)= -tripletSlope.x;  
+        xyDir(1,0) = 0; xyDir(1,1)=1.0; xyDir(1,2)= -tripletSlope.y; 
+        Eigen::Matrix<double,3,2> measDir;
+	    measDir(0,0) = rott(0,0);	measDir(0,1) = rott(0,1);
+	    measDir(1,0) = rott(1,0);	measDir(1,1) = rott(1,1);
+        measDir(2,0) = rott(2,0); measDir(2,1) = rott(2,1);
+        Eigen::Matrix2d proM2l(2,2);
+        proM2l = (xyDir*measDir).inverse();
+	    point.addMeasurement( proM2l, meas, _planeMeasPrec[ipl] );
 	    
 	    //for SUT: add local parameter for kink estimation for the planes after the SUT
 	    if(_SUT_ID > 0){
@@ -767,18 +747,9 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 	    }
 
 	    //only during alignment
-	    if(_performAlignment) {
-	      
-	      //alignMode: only x and y shifts
-	      if( _alignMode == Utility::alignMode::XYShifts ) {
-		// global labels for MP:
-		std::vector<int> globalLabels(2);
-		globalLabels[0] = _sensorIDVec[ipl] * 10 + 1; //x
-		globalLabels[1] = _sensorIDVec[ipl] * 10 + 2; //y
-		point.addGlobals( globalLabels, alDer2 );
-	      } 
-	      //alignMode: x,y shifts and rotation z
-	      else if( _alignMode == Utility::alignMode::XYShiftsRotZ ) {
+	    if(_performAlignment) {	      
+	      //alignMode: x,y shifts and rotation z. TO BE FIXED
+	    if( _alignMode == Utility::alignMode::XYShiftsRotZ ) {
 		std::vector<int> globalLabels(3);
 		globalLabels[0] = _sensorIDVec[ipl] * 10 + 1; //x
 		globalLabels[1] = _sensorIDVec[ipl] * 10 + 2; //y
@@ -787,22 +758,11 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 		alDer3(1,2) =  xs; //dy/dphi
 		point.addGlobals( globalLabels, alDer3 );
 	      } 
-	      //alignMode: x,y,z shifts and rotation z
-	      else if( _alignMode == Utility::alignMode::XYZShiftsRotZ ) {
-		std::vector<int> globalLabels(4);
-		globalLabels[0] = _sensorIDVec[ipl] * 10 + 1; //x
-		globalLabels[1] = _sensorIDVec[ipl] * 10 + 2; //y
-		globalLabels[2] = _sensorIDVec[ipl] * 10 + 3; //rotZ
-		globalLabels[3] = _sensorIDVec[ipl] * 10 + 4; //z
-		alDer4(0,2) = -ys; //dx/dphi
-		alDer4(1,2) =  xs; //dy/dphi
-		point.addGlobals( globalLabels, alDer4 );
-	      } 
 	      //alignMode: x,y,z shifts and rotation x,y,z
 	      else if( _alignMode == Utility::alignMode::XYZShiftsRotXYZ ) {
-		double deltaz = hit->z - _planePosition[ipl];
+		double z = hit->z;
 		//FIXME: a bit hacky? : deltaz cannot be zero, otherwise this mode doesn't work
-		if ( deltaz < 1E-9 ) deltaz = 1E-9;
+		if ( z < 1E-9 ) z = 1E-9;
 		std::vector<int> globalLabels(6);
 		globalLabels[0] = _sensorIDVec[ipl] * 10 + 1; //x
 		globalLabels[1] = _sensorIDVec[ipl] * 10 + 2; //y
@@ -810,13 +770,22 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 		globalLabels[3] = _sensorIDVec[ipl] * 10 + 4; //z
 		globalLabels[4] = _sensorIDVec[ipl] * 10 + 5; //rotX
 		globalLabels[5] = _sensorIDVec[ipl] * 10 + 6; //rotY
-		alDer6(0,4) = deltaz; //dx/db
-		alDer6(0,5) = -ys; //dx/dg
-		alDer6(1,3) = -deltaz; //dy/da
-		alDer6(1,5) = xs; //dy/dg
-		alDer6(2,3) = ys; //dz/da
-		alDer6(2,4) = -xs; //dz/db
-		point.addGlobals( globalLabels, alDer6 );
+        alDer6(0,4) = z; //dx/db
+        alDer6(0,5) = -ys; //dx/dg
+        alDer6(1,3) = -z; //dy/da
+        alDer6(1,5) = xs; //dy/dg
+        alDer6(2,3) = ys; //dz/da
+        alDer6(2,4) = -xs; //dz/db
+        Eigen::Vector3d normal = geo::gGeometry().getPlaneNormalVector(_sensorIDVec[ipl]); //is it right?
+        Eigen::Vector3d dir;
+        dir << tripletSlope.x, //this is not exactly right
+               tripletSlope.y,
+               1-pow(tripletSlope.x,2)-pow(tripletSlope.y,2);
+        Eigen::Matrix3d drdm = Eigen::Matrix3d::Identity()-(normal*dir.transpose())/(normal.transpose()*dir);
+        Eigen::Matrix3d rotOld = geo::gGeometry().rotationMatrixFromAngles(_sensorIDVec[ipl]);
+        Eigen::Matrix3d rotInv = rotOld.transpose();
+        Eigen::MatrixXd aliToLoc = rotInv*drdm*alDer6;
+        point.addGlobals( globalLabels, aliToLoc );
 	      }
 	    }
 	  }
