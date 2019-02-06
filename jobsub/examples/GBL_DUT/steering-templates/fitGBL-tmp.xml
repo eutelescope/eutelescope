@@ -143,12 +143,15 @@
   <parameter name="OutputPlanes" type="IntVec"> @OutputPlanes@ </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
-  <!--Decide whether to dump the event header information-->
-  <parameter name="dumpHeader" type="bool">false </parameter>
-  <!--Decide whether to dump hits and zs data only for events with a track-->
-  <parameter name="onlyEventsWithTracks" type="bool">true </parameter>
-  <!--Decide whether to dump track positions in local coordinate system-->
-  <parameter name="tracksLocalSystem" type="bool">true </parameter>
+  <!--Decide whether to apply shift in x/y to move sensor center from (0|0) to left corner of sensor (default: false)-->
+  <parameter name="applyCenterShift" type="bool" value="@ApplyCenterShift@"/>
+  <!--Decide whether to dump the event header information (default: false)-->
+  <parameter name="dumpHeader" type="bool" value="false"/>
+  <!--Decide whether to dump hits and zs data only for events with a track (default: true)-->
+  <parameter name="onlyEventsWithTracks" type="bool" value="true"/>
+  <!--Decide whether to dump track positions in local coordinate system (default: true)-->
+  <parameter name="tracksLocalSystem" type="bool" value="true"/>
+
 </processor>
  
  <processor name="EUTelUtilityPrintEventNumber" type="EUTelEventNumberPrinter">
