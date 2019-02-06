@@ -156,9 +156,6 @@ void EUTelGBLOutput::init() {
     _zstree->Branch("Time", &zs_time);
   }
 
-  _euhits->AddFriend(_zstree);
-  _euhits->AddFriend(_eutracks);
-
   //initialize geometry
   geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME,
                                              EUTELESCOPE::DUMPGEOROOT);
