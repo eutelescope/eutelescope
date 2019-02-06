@@ -173,7 +173,7 @@ void EUTelGBLOutput::init() {
 
     if(_applyCenterShift) {
       //get needed shift to move sensor center from (0|0) in EUTel to lower left corner
-      geo::EUTelGenericPixGeoDescr *geoDescr = geo::gGeometry().getPixGeoDescr(dutID);
+      geo::EUTelGenericPixGeoDescr *geoDescr = geo::gGeometry().getPixGeoDescr(planeID);
       double xSize, ySize;
       geoDescr->getSensitiveSize(xSize, ySize);
       _xShift[planeID] = xSize/2.0;
