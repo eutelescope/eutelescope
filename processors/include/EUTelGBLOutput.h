@@ -48,9 +48,10 @@ namespace eutelescope {
     bool _onlyWithTracks;
     bool _tracksLocalSystem;
     bool _dumpHeader;
-    std::vector<int> _SelectedPlanes;
-    std::map<int, float> _xSensSize;
-    std::map<int, float> _ySensSize;
+    bool _applyCenterShift;
+    std::vector<int> _selectedPlanes;
+    std::map<int, float> _xShift;
+    std::map<int, float> _yShift;
 
     int _nRun;
     int _nEvt;
@@ -75,18 +76,18 @@ namespace eutelescope {
     std::vector<int> *_ndof;
     TTree *_euhits;
     int _nHits;
-    std::vector<int> *_hitSensorId;
+    std::vector<int> *_hitSensorID;
     std::vector<double> *_hitXPos;
     std::vector<double> *_hitYPos;
     std::vector<double> *_hitZPos;
     
     TTree *_zstree;
     int _nPixHits;
-    std::vector<int> *zs_id;
-    std::vector<int> *zs_x;
-    std::vector<int> *zs_y;
-    std::vector<double> *zs_signal;
-    std::vector<int> *zs_time;
+    std::vector<int> *_zsID;
+    std::vector<int> *_zsX;
+    std::vector<int> *_zsY;
+    std::vector<double> *_zsSignal;
+    std::vector<int> *_zsTime;
 
     TTree *_versionTree;
     std::vector<double> *_versionNo;

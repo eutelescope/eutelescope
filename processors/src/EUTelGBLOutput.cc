@@ -49,18 +49,24 @@ EUTelGBLOutput::EUTelGBLOutput() : Processor("EUTelGBLOutput") {
 			   std::vector<std::string>{});
   
   registerProcessorParameter("onlyEventsWithTracks",
-			     "Decide whether to dump hits and zs data only for events with a track",
+			     "Decide whether to dump hits and zs data only for events with a track (default: true)",
 			     _onlyWithTracks,
 			     true);
   
   registerProcessorParameter("tracksLocalSystem",
-			     "Decide whether to dump track positions in local coordinate system",
+			     "Decide whether to dump track positions in local coordinate system (default: true)",
 			     _tracksLocalSystem,
 			     true);
   
   registerProcessorParameter("dumpHeader",
-			     "Decide whether to dump the event header information",
+			     "Decide whether to dump the event header information (default: false)",
 			     _dumpHeader,
+			     false);
+  
+  registerProcessorParameter("applyCenterShift",
+			     "Decide whether to apply shift in x/y to move sensor center from (0|0) to "
+			     "left corner of sensor (default: false)",
+			     _applyCenterShift,
 			     false);
   
   registerProcessorParameter("OutputPath",
@@ -70,7 +76,7 @@ EUTelGBLOutput::EUTelGBLOutput() : Processor("EUTelGBLOutput") {
   
   registerProcessorParameter("OutputPlanes",
 			     "IDs for which the information should be dumped (leave empty for all the planes)",
-			     _SelectedPlanes,
+			     _selectedPlanes,
 			     std::vector<int>());
 }
 
@@ -100,13 +106,13 @@ void EUTelGBLOutput::init() {
   _hitXPos = new std::vector<double>();
   _hitYPos = new std::vector<double>();
   _hitZPos = new std::vector<double>();
-  _hitSensorId = new std::vector<int>();
+  _hitSensorID = new std::vector<int>();
 
-  zs_id = new std::vector<int>();
-  zs_x = new std::vector<int>();
-  zs_y = new std::vector<int>();
-  zs_signal = new std::vector<double>();
-  zs_time = new std::vector<int>();
+  _zsID = new std::vector<int>();
+  _zsX = new std::vector<int>();
+  _zsY = new std::vector<int>();
+  _zsSignal = new std::vector<double>();
+  _zsTime = new std::vector<int>();
 
   //tree for version number used for TBmon2
   _versionTree = new TTree("version", "version");
@@ -137,7 +143,7 @@ void EUTelGBLOutput::init() {
     _euhits->SetAutoSave(1000000000);
     _euhits->Branch("nHits", &_nHits);
     _euhits->Branch("eventNumber", &_nEvt);
-    _euhits->Branch("ID", &_hitSensorId);
+    _euhits->Branch("ID", &_hitSensorID);
     _euhits->Branch("xPos", &_hitXPos);
     _euhits->Branch("yPos", &_hitYPos);
     _euhits->Branch("zPos", &_hitZPos);
@@ -149,29 +155,31 @@ void EUTelGBLOutput::init() {
     _zstree->SetAutoSave(1000000000);
     _zstree->Branch("nPixHits", &_nPixHits);
     _zstree->Branch("eventNumber", &_nEvt);
-    _zstree->Branch("ID", &zs_id);
-    _zstree->Branch("xPos", &zs_x);
-    _zstree->Branch("yPos", &zs_y);
-    _zstree->Branch("Signal", &zs_signal);
-    _zstree->Branch("Time", &zs_time);
+    _zstree->Branch("ID", &_zsID);
+    _zstree->Branch("xPos", &_zsX);
+    _zstree->Branch("yPos", &_zsY);
+    _zstree->Branch("Signal", &_zsSignal);
+    _zstree->Branch("Time", &_zsTime);
   }
 
   //initialize geometry
   geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME,
                                              EUTELESCOPE::DUMPGEOROOT);
 
-  for (auto dutID : _SelectedPlanes) {
-    // Later we need to shift the sensor since in EUTel centre of sensor is 0|0
-    // while in TBmon(II) it is in the lower left corner
-    geo::EUTelGenericPixGeoDescr *geoDescr =
-        geo::gGeometry().getPixGeoDescr(dutID);
-    double xSize, ySize;
-    geoDescr->getSensitiveSize(xSize, ySize);
+  for(auto planeID : geo::gGeometry().sensorIDsVec()) {
+    //define shift in x/y coordinates for planes
+    _xShift[planeID] = 0;
+    _yShift[planeID] = 0;
 
-    _xSensSize[dutID] = xSize;
-    _ySensSize[dutID] = ySize;
-	}
-
+    if(_applyCenterShift) {
+      //get needed shift to move sensor center from (0|0) in EUTel to lower left corner
+      geo::EUTelGenericPixGeoDescr *geoDescr = geo::gGeometry().getPixGeoDescr(dutID);
+      double xSize, ySize;
+      geoDescr->getSensitiveSize(xSize, ySize);
+      _xShift[planeID] = xSize/2.0;
+      _yShift[planeID] = ySize/2.0;
+    }
+  }
 }
 
 void EUTelGBLOutput::processRunHeader(LCRunHeader *runHeader) {
@@ -211,12 +219,12 @@ void EUTelGBLOutput::processEvent(LCEvent *event) {
   //[START] loop over track collection
   for(int itrack = 0; itrack < TrackCollection->getNumberOfElements(); itrack++) {
   
-	EVENT::LCGenericObject* trackposition = 
-	  static_cast<EVENT::LCGenericObject*>(TrackCollection->getElementAt(itrack));
-	int thisID = trackposition->getIntVal(0);
-	
-	if(_SelectedPlanes.size() == 0 || std::find(std::begin(_SelectedPlanes), std::end(_SelectedPlanes),
-						    thisID) != _SelectedPlanes.end()) {
+    EVENT::LCGenericObject* trackposition = 
+      static_cast<EVENT::LCGenericObject*>(TrackCollection->getElementAt(itrack));
+    int thisID = trackposition->getIntVal(0);
+    
+    if(_selectedPlanes.size() == 0 || std::find(std::begin(_selectedPlanes), std::end(_selectedPlanes),
+						thisID) != _selectedPlanes.end()) {
 								
 	
       _planeID->push_back(thisID);
@@ -233,8 +241,8 @@ void EUTelGBLOutput::processEvent(LCEvent *event) {
         pos[2] = trackposition->getFloatVal(3);
         double pos_loc[3];
         geo::gGeometry().master2Local(thisID, pos, pos_loc);
-        _xPos->push_back(pos_loc[0] + _xSensSize.at(thisID) / 2.0); 
-        _yPos->push_back(pos_loc[1] + _ySensSize.at(thisID) / 2.0);
+        _xPos->push_back( pos_loc[0] + _xShift.at(thisID) ); 
+        _yPos->push_back( pos_loc[1] + _yShift.at(thisID) );
       } else {
         _xPos->push_back(trackposition->getFloatVal(1)); 
         _yPos->push_back(trackposition->getFloatVal(2));
@@ -262,23 +270,22 @@ void EUTelGBLOutput::processEvent(LCEvent *event) {
       int nHit = hitCollection->getNumberOfElements();
       _nHits = nHit;
 
-  	  //[START] loop over hits
+      //[START] loop over hits
       for(int ihit = 0; ihit < hitCollection->getNumberOfElements(); ihit++) {
         TrackerHitImpl *meshit = dynamic_cast<TrackerHitImpl *>(hitCollection->getElementAt(ihit));
         const double *pos = meshit->getPosition();
         UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder(EUTELESCOPE::HITENCODING);
         int thisID = hitDecoder(meshit)["sensorID"];
         
-        if(_SelectedPlanes.size() == 0 || std::find(std::begin(_SelectedPlanes), std::end(_SelectedPlanes),
-						    thisID) != _SelectedPlanes.end()) {
+        if(_selectedPlanes.size() == 0 || std::find(std::begin(_selectedPlanes), std::end(_selectedPlanes),
+						    thisID) != _selectedPlanes.end()) {
 
           double x = pos[0];
           double y = pos[1];
           double z = pos[2];
-
-          _hitSensorId->push_back(thisID);   
-          _hitXPos->push_back(x + _xSensSize.at(thisID) / 2.0);
-          _hitYPos->push_back(y + _ySensSize.at(thisID) / 2.0);
+          _hitSensorID->push_back(thisID);   
+          _hitXPos->push_back( x + _xShift.at(thisID) );
+          _hitYPos->push_back( y + _yShift.at(thisID) );
           _hitZPos->push_back(z);
 
         } 
@@ -306,17 +313,17 @@ void EUTelGBLOutput::processEvent(LCEvent *event) {
         int thisID = cellDecoder(zsData)["sensorID"];
         
         if(type == kEUTelGenericSparsePixel) { 
-          if(_SelectedPlanes.size() == 0 || std::find(std::begin(_SelectedPlanes), std::end(_SelectedPlanes),
-						      thisID) != _SelectedPlanes.end()) {
+          if(_selectedPlanes.size() == 0 || std::find(std::begin(_selectedPlanes), std::end(_selectedPlanes),
+						      thisID) != _selectedPlanes.end()) {
             auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
             //[START] loop over pixel
             for(auto &thispixel : *sparseData) {
               _nPixHits++;
-              zs_id->push_back(thisID);
-              zs_x->push_back(thispixel.getXCoord());
-              zs_y->push_back(thispixel.getYCoord());
-              zs_signal->push_back(static_cast<double>(thispixel.getSignal()));
-              zs_time->push_back(static_cast<int>(thispixel.getTime()));
+              _zsID->push_back(thisID);
+              _zsX->push_back(thispixel.getXCoord());
+              _zsY->push_back(thispixel.getYCoord());
+              _zsSignal->push_back(static_cast<double>(thispixel.getSignal()));
+              _zsTime->push_back(static_cast<int>(thispixel.getTime()));
             }//[END] loop over pixel
           }
         } else {
@@ -334,9 +341,9 @@ void EUTelGBLOutput::processEvent(LCEvent *event) {
   //fill the TTrees
   //the event number would make it fill this TTree even for events with no tracks
   if(!(_onlyWithTracks) || TrackCollection->getNumberOfElements() != 0) {
-  _eutracks->Fill();
-  if(_inputHitCollections.size() != 0) _euhits->Fill();
-  if(_inputZsCollections.size() != 0) _zstree->Fill();
+    _eutracks->Fill();
+    if(_inputHitCollections.size() != 0) _euhits->Fill();
+    if(_inputZsCollections.size() != 0) _zstree->Fill();
   }
 }
 
@@ -360,15 +367,15 @@ void EUTelGBLOutput::clear() {
   _chi2->clear();
   _ndof->clear();
   //clear hits
-  _hitSensorId->clear();
+  _hitSensorID->clear();
   _hitXPos->clear();
   _hitYPos->clear();
   _hitZPos->clear();
   //clear zsdata
-  zs_id->clear();
-  zs_x->clear();
-  zs_y->clear();
-  zs_signal->clear();
-  zs_time->clear();
+  _zsID->clear();
+  _zsX->clear();
+  _zsY->clear();
+  _zsSignal->clear();
+  _zsTime->clear();
   _nPixHits = 0;
 }
