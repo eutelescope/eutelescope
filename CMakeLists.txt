@@ -122,7 +122,8 @@ ADD_DEFINITIONS( "-DUSE_MARLIN" )
 ADD_DEFINITIONS( "-DUSE_GEAR" )
 ADD_DEFINITIONS( "-DUSE_MARLINUTIL" )
 ADD_DEFINITIONS( "-DUSE_CLHEP" )
-ADD_DEFINITIONS( "-DUSE_CED" )
+## remove CED installation in next release
+#ADD_DEFINITIONS( "-DUSE_CED" )
 
 # !RELEASE: switches on output parsed for automatic nightly tests
 # (only useful if using CDash web frontend to CTest otherwise produces superfluous output)
