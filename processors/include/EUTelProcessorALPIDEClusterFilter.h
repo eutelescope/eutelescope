@@ -49,7 +49,6 @@ namespace eutelescope {
     virtual void readCollections(LCCollectionVec * zsInputDataCollectionVec);
     virtual void writeCollection(LCCollectionVec * sparseClusterCollectionVec, LCCollectionVec * pulseCollection);
     virtual void filter();
-    virtual void effOfALPIDE();
     
   protected:
     //! Pulse collection size
