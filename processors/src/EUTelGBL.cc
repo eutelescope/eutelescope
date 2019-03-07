@@ -595,7 +595,7 @@ void EUTelGBL::processEvent( LCEvent * event ) {
       //arc length at the first measurement plane is 0
       double s = 0;
       
-      //Eigen::Matrix2d proL2m = Eigen::Matrix2d::Identity();
+      Eigen::Matrix2d proL2m = Eigen::Matrix2d::Identity();
       Eigen::Vector2d scat = Eigen::Vector2d::Zero();
       
       auto uptriplet = track.get_upstream();
@@ -642,11 +642,11 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 	
 	alDer6(0,0) = 1.0; // dx/dx
 	alDer6(0,1) = 0.0; // dx/dy
-	alDer6(0,2) = 0.0; // dx/dz
+	alDer6(0,2) = tripletSlope.x; // dx/dz
 	alDer6(0,3) = 0.0; // dx/da
 	alDer6(1,0) = 0.0; // dy/dx
 	alDer6(1,1) = 1.0; // dy/dy
-	alDer6(1,2) = 0.0; // dy/dz
+	alDer6(1,2) = tripletSlope.y; // dy/dz
 	alDer6(1,4) = 0.0; // dy/db
 	alDer6(2,0) = 0.0; // dz/dx
 	alDer6(2,1) = 0.0; // dz/dy
@@ -699,35 +699,13 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 	    
 	    if(_printEventCounter < NO_PRINT_EVENT_COUNTER)
 	      streamlog_out(DEBUG2) << "xs = " << xs << "   ys = " << ys << std::endl;
-	    Eigen::Matrix3d rott = geo::gGeometry().rotationMatrixFromAngles(_sensorIDVec[ipl]);
 	    //add residuals as hit to triplet
-	    Eigen::Vector3d oldhit;
-	    oldhit[0]=hit->x;
-	    oldhit[1]=hit->y;
-	    oldhit[2]=_planePosition[ipl];
-	    Eigen::Vector3d newhit;
-	    newhit = rott.transpose() * oldhit;
-	    Eigen::Vector3d oldtrip;
-	    oldtrip[0]=xs;
-	    oldtrip[1]=ys;
-	    oldtrip[2]=_planePosition[ipl];
-	    Eigen::Vector3d newtrip;
-	    newtrip = rott.transpose() * oldtrip;
-	    rx[ipl] = (newhit[0] - newtrip[0]);
-	    ry[ipl] = (newhit[1] - newtrip[1]);
+	    rx[ipl] = (hit->x - xs);
+	    ry[ipl] = (hit->y - ys);
 	    
 	    //fill measurement vector for GBL
 	    Eigen::Vector2d meas(rx[ipl], ry[ipl]);
-	    Eigen::Matrix<double,2,3> xyDir;
-	    xyDir(0,0) = 1; xyDir(0,1)=0.0; xyDir(0,2)= -tripletSlope.x;  
-        xyDir(1,0) = 0; xyDir(1,1)=1.0; xyDir(1,2)= -tripletSlope.y; 
-        Eigen::Matrix<double,3,2> measDir;
-	    measDir(0,0) = rott(0,0);	measDir(0,1) = rott(0,1);
-	    measDir(1,0) = rott(1,0);	measDir(1,1) = rott(1,1);
-        measDir(2,0) = rott(2,0); measDir(2,1) = rott(2,1);
-        Eigen::Matrix2d proM2l(2,2);
-        proM2l = (xyDir*measDir).inverse();
-	    point.addMeasurement( proM2l, meas, _planeMeasPrec[ipl] );
+	    point.addMeasurement( proL2m, meas, _planeMeasPrec[ipl] );
 	    
 	    //for SUT: add local parameter for kink estimation for the planes after the SUT
 	    if(_SUT_ID > 0){
@@ -776,16 +754,7 @@ void EUTelGBL::processEvent( LCEvent * event ) {
         alDer6(1,5) = xs; //dy/dg
         alDer6(2,3) = ys; //dz/da
         alDer6(2,4) = -xs; //dz/db
-        Eigen::Vector3d normal = geo::gGeometry().getPlaneNormalVector(_sensorIDVec[ipl]); //is it right?
-        Eigen::Vector3d dir;
-        dir << tripletSlope.x, //this is not exactly right
-               tripletSlope.y,
-               1-pow(tripletSlope.x,2)-pow(tripletSlope.y,2);
-        Eigen::Matrix3d drdm = Eigen::Matrix3d::Identity()-(dir*normal.transpose())/(dir.transpose()*normal);
-        Eigen::Matrix3d rotOld = geo::gGeometry().rotationMatrixFromAngles(_sensorIDVec[ipl]);
-        Eigen::Matrix3d rotInv = rotOld.transpose();
-        Eigen::MatrixXd aliToLoc = rotInv*drdm*alDer6;
-        point.addGlobals( globalLabels, aliToLoc );
+        point.addGlobals( globalLabels, alDer6 );
 	      }
 	    }
 	  }
