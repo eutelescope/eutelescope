@@ -194,26 +194,16 @@ bool EUTelTripletGBLUtility::AttachDUT(EUTelTripletGBLUtility::triplet & triplet
 
 	auto trX = triplet.getx_at(zPos);
 	auto trY = triplet.gety_at(zPos);
-	double trglpos[3] = {trX,trY,zPos};
-	double trlocpos[3];
-    geo::gGeometry().master2Local(dutID,trglpos,trlocpos);
-    
 	size_t ix = 0;	
 	for(auto& hit: hits) {
 		if(hit.plane == dutID) {
 			auto hitX = hit.x;
 			auto hitY = hit.y;
-			//track and DUT hit positions are transformed in the local coordinate frame of the DUT, where the cuts are applied
-			//it is horrible to convert the hits from global to local, where the latter is actually basically the input of the hitmaker
-			//this is a first step toward a more general refactoring to work mainly in local coordinate systems 
-			double hitglpos[3] = {hitX,hitY,zPos};
-	        double hitlocpos[3];
-            geo::gGeometry().master2Local(dutID,hitglpos,hitlocpos);
-			auto distX = fabs(trlocpos[0]-hitlocpos[0]);
-			auto distY = fabs(trlocpos[1]-hitlocpos[1]);
+			auto distX = fabs(trX-hitX);
+			auto distY = fabs(trY-hitY);
             double dist = distX*distX + distY*distY;
-			DUTMatchingResidualX->fill(trlocpos[0]-hitlocpos[0]);
-			DUTMatchingResidualY->fill(trlocpos[1]-hitlocpos[1]);
+			DUTMatchingResidualX->fill(trX-hitX);
+			DUTMatchingResidualY->fill(trY-hitY);
 			if(distX <= dist_cuts.at(0) && distY <= dist_cuts.at(1) && dist < minDist ){
 				minHitIx = static_cast<int>(ix);
 				DUTHitNumber->fill(dutID);
@@ -345,14 +335,6 @@ EUTelTripletGBLUtility::triplet& EUTelTripletGBLUtility::track::get_upstream() {
 EUTelTripletGBLUtility::triplet& EUTelTripletGBLUtility::track::get_downstream() {
   return downstream;
 }
-
-EUTelTripletGBLUtility::hit const & EUTelTripletGBLUtility::track::gethit(int plane) {
-  // Edo: to be fixed! it won't work if somehow a plane > 3 is upstream or if a plane < 3 is downstream
-  if(plane < 3) return upstream.gethit(plane);
-  else return downstream.gethit(plane);
-}
-
-
 
 EUTelTripletGBLUtility::triplet::triplet() : linked_dut(false), hits() {
   // Empty default constructor
