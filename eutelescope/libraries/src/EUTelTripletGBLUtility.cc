@@ -347,6 +347,7 @@ EUTelTripletGBLUtility::triplet& EUTelTripletGBLUtility::track::get_downstream()
 }
 
 EUTelTripletGBLUtility::hit const & EUTelTripletGBLUtility::track::gethit(int plane) {
+  // Edo: to be fixed! it won't work if somehow a plane > 3 is upstream or if a plane < 3 is downstream
   if(plane < 3) return upstream.gethit(plane);
   else return downstream.gethit(plane);
 }
