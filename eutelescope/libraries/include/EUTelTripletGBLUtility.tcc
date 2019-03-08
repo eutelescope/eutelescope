@@ -3,7 +3,7 @@
 namespace eutelescope {
 
 template<typename T>
-void EUTelTripletGBLUtility::FindTriplets(std::vector<EUTelTripletGBLUtility::hit> const & hits, T const & triplet_sensor_ids, double trip_res_cut, double slope_cut, std::vector<EUTelTripletGBLUtility::triplet> & found_triplets, bool only_best_triplet) {
+void EUTelTripletGBLUtility::FindTriplets(std::vector<EUTelTripletGBLUtility::hit> const & hits, T const & triplet_sensor_ids, double trip_res_cut, double slope_cut, std::vector<EUTelTripletGBLUtility::triplet> & found_triplets, bool only_best_triplet, bool upstream) {
 
   if(triplet_sensor_ids.size() != 3){
     throw std::runtime_error("EUTelTripletGBLUtility::FindTriplets called with an invalid set of triplet_sensor_ids (size should be three entries)");
@@ -29,14 +29,31 @@ void EUTelTripletGBLUtility::FindTriplets(std::vector<EUTelTripletGBLUtility::hi
 	// Create new preliminary triplet from the three hits:
 	EUTelTripletGBLUtility::triplet new_triplet(ihit,khit,jhit);
 
+    //Create triplet slope plots
+    if(upstream == 1){
+		upstreamTripletSlopeX->fill(new_triplet.getdx()*1E3/new_triplet.getdz()); //factor 1E3 to convert from rad to mrad. To be checked
+		upstreamTripletSlopeY->fill(new_triplet.getdy()*1E3/new_triplet.getdz());
+	} else {
+		downstreamTripletSlopeX->fill(new_triplet.getdx()*1E3/new_triplet.getdz());
+		downstreamTripletSlopeY->fill(new_triplet.getdy()*1E3/new_triplet.getdz());
+	}
 	// Setting cuts on the triplet track angle:
 	if( fabs(new_triplet.getdx()) > slope_cut * new_triplet.getdz()) continue;
 	if( fabs(new_triplet.getdy()) > slope_cut * new_triplet.getdz()) continue;
-
+    
+    //Create triplet residual plots
+    if(upstream == 1){
+		upstreamTripletResidualX->fill(new_triplet.getdx(plane1));
+		upstreamTripletResidualY->fill(new_triplet.getdy(plane1));
+	} else {
+		downstreamTripletResidualX->fill(new_triplet.getdx(plane1));
+		downstreamTripletResidualY->fill(new_triplet.getdy(plane1));
+	}
 	// Setting cuts on the triplet residual on the middle plane
 	if( fabs(new_triplet.getdx(plane1)) > trip_res_cut) continue;
 	if( fabs(new_triplet.getdy(plane1)) > trip_res_cut) continue;
 
+    // Edo: This (best triplets) is hardcoded as false in EUTelAlignGBL. Is this really useful?
     if(only_best_triplet) {
 		// For low threshold (high noise) and/or high occupancy, use only the triplet with the smallest sum of residuals on plane1
 		double sum_res = sqrt(new_triplet.getdx(plane1)*new_triplet.getdx(plane1) + new_triplet.getdy(plane1)*new_triplet.getdy(plane1));

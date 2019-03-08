@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="us-ascii"?>
+
+<marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
+
+   <execute>
+      <processor name="AIDA"/>
+      <processor name="HitLocalToGlobal"/>
+      <processor name="DafFitter"/>
+      <processor name="HitGlobalToLocal"/>
+      <processor name="TrackDumper"/>
+      <processor name="SaveLCIO"/>
+      <processor name="EventNumber"/>
+   </execute>
+
+   <global>
+      <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-hitmaker.slcio </parameter>
+      <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
+      <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
+      <parameter name="SkipNEvents" value="@SkipNEvents@"/>
+      <parameter name="SupressCheck" value="false"/>
+      <parameter name="Verbosity" value="@Verbosity@"/>
+   </global>
+
+ <processor name="AIDA" type="AIDAProcessor">
+ <!--Processor that handles AIDA files. Creates on directory per processor.  Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
+  <!-- compression of output file 0: false >0: true (default) -->
+  <parameter name="Compress" type="int" value="1"/>
+  <!-- filename without extension-->
+  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-fitDAF"/>
+  <!-- type of output file root (default) or xml )-->
+  <parameter name="FileType" type="string" value="root"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+</processor>
+
+ <processor name="HitLocalToGlobal" type="EUTelHitCoordinateTransformer">
+ <!--EUTelHitCoordinateTransformer is responsible to change local coordinates to global using the EUTelGeometryClass.-->
+  <!--Input hit collection name-->
+  <parameter name="hitCollectionNameInput" type="string" lcioInType="TrackerHit"> local_hit </parameter>
+  <!--Output hit collection name-->
+  <parameter name="hitCollectionNameOutput" type="string" lcioOutType="TrackerHit"> hit </parameter>
+  <!--Set to true to undo the alignment instead-->
+  <!--parameter name="UndoAlignment" type="bool" value="false"/-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+</processor>
+
+ <processor name="DafFitter" type="EUTelDafFitter">
+ <!--EUTelDafFitter performs track reconstruction. The tracks are as final track fit for analysis.-->
+  <!--Collection name for fitted tracks-->
+  <parameter name="TrackCollectionName" type="string" lcioOutType="Track"> track </parameter>
+  <!--Should plots be made and filled?-->
+  <!--parameter name="AddToLCIO" type="bool" value="true"/-->
+  <!--Names of alignment collections, should be in same order as application-->
+  <!--parameter name="AlignmentCollectionNames" type="StringVec"> </parameter-->
+  <!--DAF fitter: The cutoff value for a measurement to be included in the fit.-->
+  <parameter name="Chi2Cutoff" type="float" value="@MeasChi2@"/>
+  <!--List of sensor IDs for the DUT planes. Used to make the decision on whether to accept the track or not. These planes are not used in track finder, and not in the track fitter.-->
+  <parameter name="DutPlanes" type="IntVec" value="@DUTPlanes@"/>
+  <!--Sigma of telescope resolution in the global X plane,-->
+  <parameter name="DutResolutionX" type="float" value="@DUTResolutionX@"/>
+  <!--Sigma of telescope resolution in the global Y plane,-->
+  <parameter name="DutResolutionY" type="float" value="@DUTResolutionY@"/>
+  <!--Beam energy [GeV], used to calculate amount of scatter-->
+  <parameter name="Ebeam" type="float" value="@BeamEnergy@"/>
+  <!--Track finding: The maximum allowed normalized distance between to hits in the xy plane for inclusion in track candidate.-->
+  <parameter name="FinderRadius" type="float" value="@FinderRadius@"/>
+  <!--Set this to true if you want DUTs to be included in the track fit.-->
+  <parameter name="FitDuts" type="bool" value="false"/>
+  <!--Names of input hit collections-->
+  <parameter name="HitCollectionName" type="StringVec" value="hit"/>
+  <!--Should plots be made and filled?-->
+  <parameter name="MakePlots" type="bool" value="true"/>
+  <!--Maximum allowed global chi2/ndof-->
+  <parameter name="MaxChi2OverNdof" type="float" value="@GlobalChi2@"/>
+  <!--Maximum deviance for dx/dz in CKF track finder-->
+  <!--parameter name="MaxXdxDeviance" type="float" value="0.01"/-->
+  <!--Maximum deviance for dy/dz in CKF track finder-->
+  <!--parameter name="MaxYdxDeviance" type="float" value="0.01"/-->
+  <!--How many DUT hits do we need in order to accept track?-->
+  <!--parameter name="NDutHits" type="int" value="0"/-->
+  <!--dx/dz assumed by track finder-->
+  <parameter name="NominalDxdz" type="float" value="0"/>
+  <!--dy/dz assumed by track finder-->
+  <parameter name="NominalDydz" type="float" value="0"/>
+  <!--Radiation lengths of planes, ordered by z-pos..-->
+  <!--parameter name="RadiationLengths" type="FloatVec"> </parameter-->
+  <!--How many telescope planes do we require to be included in the fit?-->
+  <parameter name="RequireNTelPlanes" type="float" value="5"/>
+  <!--Sigma resolution of planes, ordered by z-pos.-->
+  <!--parameter name="ResolutionX" type="FloatVec"> </parameter-->
+  <!--Sigma resolution of planes, ordered by z-pos.-->
+  <!--parameter name="ResolutionY" type="FloatVec"> </parameter-->
+  <!--Sigma of telescope resolution in the global X plane,-->
+  <parameter name="TelResolutionX" type="float" value="@TelResolution@"/>
+  <!--Sigma of telescope resolution in the global Y plane,-->
+  <parameter name="TelResolutionY" type="float" value="@TelResolution@"/>
+  <!--List of sensor IDs for the telescope planes. These planes are used for the track finder, and track fitter.-->
+  <parameter name="TelescopePlanes" type="IntVec" value="@TelPlanes@"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+  <!--Name of the clusterfinder which should be used, available are: simpleCluster and combinatorialKF-->
+  <parameter name="clusterfinder" type="string" value="@ClusterFinder@"/>
+  <!--List of hit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
+  <!--parameter name="mccollections" type="StringVec"> </parameter-->
+</processor>
+
+ <processor name="HitGlobalToLocal" type="EUTelCoordinateTransformer">
+ <!--This processor is NOT installed in your Marlin binary: parameter descriptions and types lost!!-->
+  <parameter name="hitCollectionNameInput" type="string" lcioInType="TrackerHit"> fitpoints </parameter>
+  <parameter name="hitCollectionNameOutput" type="string" lcioOutType="TrackerHit"> fitpoints_local </parameter>
+  <parameter name="Undo Alignment (boolean)" value="true"/>
+</processor>
+
+ <processor name="TrackDumper" type="EUTelAPIXTbTrackTuple">
+ <!--Prepare tbtrack style n-tuple with track fit results-->
+  <!--Name of the input Track collection-->
+  <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> track </parameter>
+  <!--Name of the plane-wide hit-data hit collection-->
+  <parameter name="InputTrackerHitCollectionName" type="string" lcioInType="TrackerHit"> fitpoints_local </parameter>
+  <!--Int std::vector containing the IDs of the DUTs-->
+  <parameter name="DUTIDs" type="IntVec"> 20 21 </parameter>
+  <!--DUT zero surpressed data colection name-->
+  <parameter name="DutZsColName" type="string" value="zsdata_apix"/>
+  <!--Path/File where root-file should be stored-->
+  <parameter name="OutputPath" type="string" value="@FilePrefix@_output.root"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+</processor>
+
+ <processor name="SaveLCIO" type="EUTelOutputSaver">
+ <!--EUTelOutputSaver writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing. Needs to be the last ActiveProcessor.-->
+  <!--drops the named collections from the event-->
+  <parameter name="DropCollectionNames" type="StringVec" value="hit"/>
+  <!--drops all collections of the given type from the event-->
+  <!--parameter name="DropCollectionTypes" type="StringVec"> SimTrackerHit SimCalorimeterHit </parameter-->
+  <!-- write complete objects in subset collections to the file (i.e. ignore subset flag)-->
+  <!--parameter name="FullSubsetCollections" type="StringVec" value="MCParticlesSkimmed"/-->
+  <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
+  <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
+  <!-- name of output file -->
+  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@FilePrefix@-track.slcio"/>
+  <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
+  <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
+  <!--Set it to true to remove intermediate EORE in merged runs-->
+  <parameter name="SkipIntermediateEORE" type="bool" value="true"/>
+  <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
+  <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+</processor>
+
+ <processor name="EventNumber" type="EUTelEventNumberPrinter">
+ <!--EUTelEventNumberPrinter prints the event number to screen depending on the verbosity level.-->
+  <!--Print event number for every n-th event-->
+  <parameter name="EveryNEvents" type="int" value="2500"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+  <!--print the event timestamp as read from LCIO-->
+  <!--parameter name="printTimestamp" type="bool" value="false"/-->
+</processor>
+
+</marlin>

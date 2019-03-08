@@ -3,7 +3,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6 FATAL_ERROR)
 ########################################################
 
-
 # project name
 PROJECT( Eutelescope )
 
@@ -15,13 +14,13 @@ SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 # These switches activate/deactivate compiler switches such as the
 # inclusion of debugging symbols and code optimizations. For actual
 # data analysis we recommend setting CMAKE_BUILD_TYPE to "Release"
-# while for developement "RelWithDebInfo" is best used. For actual
+# while for development "RelWithDebInfo" is best used. For actual
 # debugging e.g. using gdb, please consider "Debug" which will turn
 # off all (!) optimizations but will be "gdb-friendlier"
 # !RELEASE: comment out the following line and comment in either one of the release ones
-# SET(CMAKE_BUILD_TYPE Debug) # use for debugging with e.g. gdb: add. warnings, no optimizations, debug symbols
-SET(CMAKE_BUILD_TYPE RelWithDebInfo) # useful for normal development, runs faster but compilation takes longer: gcc optimizations (-O2) with debug symbols and add. warnings
-#SET(CMAKE_BUILD_TYPE Release) # for production: full gcc optimization (-O3), no debug symbols, no debug messages
+# SET( CMAKE_BUILD_TYPE Debug ) # use for debugging with e.g. gdb: add. warnings, no optimizations, debug symbols
+SET( CMAKE_BUILD_TYPE RelWithDebInfo ) # useful for normal development, runs faster but compilation takes longer: gcc optimizations (-O2) with debug symbols and add. warnings
+#SET( CMAKE_BUILD_TYPE Release ) # for production: full gcc optimization (-O3), no debug symbols, no debug messages
 
 
 ### DEPENDENCIES ############################################################
@@ -36,40 +35,27 @@ LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 
 
 FIND_PACKAGE( Marlin 1.0 REQUIRED )
-#FIND_PACKAGE( MarlinUtil 1.2 REQUIRED )
 FIND_PACKAGE( GSL )
 FIND_PACKAGE( AIDA )
 FIND_PACKAGE( ROOT COMPONENTS Minuit Geom )
 FIND_PACKAGE( LCCD  REQUIRED )               
 
 # search for Eigen (linear algebra) library
-FIND_PACKAGE( Eigen3 REQUIRED)
+FIND_PACKAGE( Eigen3 REQUIRED )
 # include them as SYSTEM include directories, this will supress all warnings from them
 INCLUDE_DIRECTORIES( SYSTEM ${EIGEN3_INCLUDE_DIR} )
 
-# development mode:
-
-# the Geant4 be compiled with SoXt and Coin3D and Xerces-C libraries
-# Geant4 environment loaded as 
-# $ILCSOFT/geant4/build-9.5.p02/geant4make.sh
-# now the allpix lib can be loaded as well 
-# allpix lib if checkout and compiled here:
-# export ALLPIX="/home/ilcsoft/v01-16-02/Eutelescope/HEAD/external/allpix"
-# the library is placed by default to
-# GBL if checkout and compiled as shared lib:
-# export GBL="/home/ilcsoft/v01-16-02/Eutelescope/HEAD/external/gbl/cpp"
-# the libs is here
-#
- FIND_PACKAGE( XERCESC )               
- FIND_PACKAGE( G4 )               
- FIND_PACKAGE( ALLPIX )               
-# 
+# Geant4 and dependencies + Allpix
+FIND_PACKAGE( XERCESC )               
+FIND_PACKAGE( G4 )               
+FIND_PACKAGE( ALLPIX )               
 # General Broken Line track fitter as shared lib:
- FIND_PACKAGE( GBL )
+FIND_PACKAGE( GBL )
+
 FOREACH( pkg Marlin MarlinUtil GSL AIDA ROOT LCCD GBL XERCESC G4 ALLPIX )
     IF( ${pkg}_FOUND )
         # include as "system" libraries: gcc will be less verbose w.r.t. warnings
-        INCLUDE_DIRECTORIES(SYSTEM ${${pkg}_INCLUDE_DIRS} )
+        INCLUDE_DIRECTORIES( SYSTEM ${${pkg}_INCLUDE_DIRS} )
         LINK_LIBRARIES( ${${pkg}_LIBRARIES} )
         ADD_DEFINITIONS ( ${${pkg}_DEFINITIONS} )
     ELSE()
@@ -77,71 +63,67 @@ FOREACH( pkg Marlin MarlinUtil GSL AIDA ROOT LCCD GBL XERCESC G4 ALLPIX )
     ENDIF()
 ENDFOREACH()
 
-#MESSAGE (STATUS "${XERCESC_LIBRARIES}" )
-#MESSAGE (STATUS "${XERCESC_INCLUDE_DIRS}" )
-
 
 ### LIBRARY #################################################################
 
+#GBL
 IF( GBL_FOUND )
-    ADD_DEFINITIONS( "-DUSE_GBL " )
+    ADD_DEFINITIONS( "-DUSE_GBL" )
     GET_FILENAME_COMPONENT( GBL_LIBRARY_FULL_PATH ${GBL_GBL_LIBRARY} REALPATH )
-    INSTALL( FILES ${GBL_LIBRARY_FULL_PATH} DESTINATION lib ) # PROGRAMS is like FILES but sets executable permissions
+    INSTALL( FILES ${GBL_LIBRARY_FULL_PATH} DESTINATION lib )
 ELSE()
     MESSAGE( STATUS "WARNING: failed to configure Eutelescope with GBL!!" )
 ENDIF()
 
+#Allpix
 IF( ALLPIX_FOUND )
-    ADD_DEFINITIONS( "-DUSE_ALLPIX " )
+    ADD_DEFINITIONS( "-DUSE_ALLPIX" )
     GET_FILENAME_COMPONENT( ALLPIX_LIBRARY_FULL_PATH ${ALLPIX_ALLPIX_LIBRARY} REALPATH )
-    INSTALL( FILES ${ALLPIX_LIBRARY_FULL_PATH} DESTINATION lib ) # PROGRAMS is like FILES but sets executable permissions
+    INSTALL( FILES ${ALLPIX_LIBRARY_FULL_PATH} DESTINATION lib )
 
     # two ROOT libraries which are not always included in "root-config --glibs"
     find_library(
       LXMLPARSER
       NAMES XMLParser 
-      PATHS  ${ROOT_LIBRARY_FULL_PATH}
+      PATHS ${ROOT_LIBRARY_FULL_PATH}
       PATH_SUFFIXES lib64 lib32 lib
       NO_DEFAULT_PATH
     )
-  
-
     find_library(
       LGEOM
       NAMES Geom 
-      PATHS  ${ROOT_LIBRARY_FULL_PATH}
+      PATHS ${ROOT_LIBRARY_FULL_PATH}
       PATH_SUFFIXES lib64 lib32 lib
       NO_DEFAULT_PATH
     )
 
     LINK_LIBRARIES( ${LGEOM} )
     LINK_LIBRARIES( ${LXMLPARSER} )
- 
     MESSAGE ( STATUS "linking TGeom : ${LGEOM}" )
     MESSAGE ( STATUS "linking TXMLParser : ${LXMLPARSER}" )
-
 ELSE()
     IF( DEFINED "$ENV{ALLPIX}" )
       MESSAGE( STATUS "WARNING: failed to configure Eutelescope with ALLPIX!!" )
     ENDIF()
 ENDIF()
 
-
-IF ( AIDA_FOUND)
-  ADD_DEFINITIONS("-DUSE_AIDA")
+#AIDA
+IF( AIDA_FOUND )
+	 ADD_DEFINITIONS( "-DUSE_AIDA" )
 ENDIF()
 
-IF ( GSL_FOUND )
-  ADD_DEFINITIONS("-DUSE_GSL")
+#GSL
+IF( GSL_FOUND )
+  ADD_DEFINITIONS( "-DUSE_GSL" )
 ENDIF()
 
 # these are needed anyway...
-ADD_DEFINITIONS("-DUSE_MARLIN")
-ADD_DEFINITIONS("-DUSE_GEAR")
-ADD_DEFINITIONS("-DUSE_MARLINUTIL")
-ADD_DEFINITIONS("-DUSE_CLHEP")
-ADD_DEFINITIONS("-DUSE_CED")
-
+ADD_DEFINITIONS( "-DUSE_MARLIN" )
+ADD_DEFINITIONS( "-DUSE_GEAR" )
+ADD_DEFINITIONS( "-DUSE_MARLINUTIL" )
+ADD_DEFINITIONS( "-DUSE_CLHEP" )
+## remove CED installation in next release
+#ADD_DEFINITIONS( "-DUSE_CED" )
 
 # !RELEASE: switches on output parsed for automatic nightly tests
 # (only useful if using CDash web frontend to CTest otherwise produces superfluous output)
@@ -150,35 +132,31 @@ ADD_DEFINITIONS("-DDO_TESTING")
 
 # ---------------------------------------------------------------------------
 
-
 # include directories
-include_directories(SYSTEM ./external)
+INCLUDE_DIRECTORIES( SYSTEM ./external )
 INCLUDE_DIRECTORIES( ./eutelescope/libraries/include )
 INCLUDE_DIRECTORIES( ./eutelescope/interfaces/pixel/include )
 INCLUDE_DIRECTORIES( ./eutelescope/interfaces/cluster/include )
 INCLUDE_DIRECTORIES( ./processors/include )
-INCLUDE_DIRECTORIES( ./datasources/include )
+INCLUDE_DIRECTORIES( ./processors/include/legacy )
 INCLUDE_DIRECTORIES( ./processors/include/alibava )
 INCLUDE_DIRECTORIES( ./processors/include/cms )
 INCLUDE_DIRECTORIES( ./geometries/include/ )
 INCLUDE_DIRECTORIES( ./external/millepede2/$ENV{MILLEPEDEII_VERSION} )
 
-# set(CMAKE_CXX_STANDARD 14)
-# set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# set(CMAKE_CXX_EXTENSIONS OFF)
-
 # definitions to pass to the compiler
 ADD_DEFINITIONS( "-Wno-effc++ -std=c++14 -Wno-shadow -Wall -Wdisabled-optimization -Wold-style-cast -pedantic -Wextra -Wcast-align -Wcast-qual -Wuseless-cast -Wzero-as-null-pointer-constant -Wundef -Wctor-dtor-privacy -Wredundant-decls -Wdeprecated -Wformat-security -Wmissing-declarations -Wmissing-include-dirs -Wmissing-include-dirs -Wswitch-default -Wno-sign-promo -Werror" )
 
 # debuging warnings and switches - only active if  CMAKE_BUILD_TYPE  is set to debug
-SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -fno-inline -fdiagnostics-show-option -Weffc++ -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef"  CACHE STRING "Debug options." FORCE )
-SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -fdiagnostics-show-option -Weffc++ -Wcast-align -Wcast-qual -Wdisabled-optimization -Winit-self -Wmissing-include-dirs -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef"  CACHE STRING "Debug options." FORCE )
+SET( CMAKE_CXX_FLAGS_DEBUG "-O0 -g -fno-inline -fdiagnostics-show-option -Weffc++ -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef"  CACHE STRING "Debug options." FORCE )
+SET( CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -fdiagnostics-show-option -Weffc++ -Wcast-align -Wcast-qual -Wdisabled-optimization -Winit-self -Wmissing-include-dirs -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef"  CACHE STRING "Debug options." FORCE )
 # also useful: -Wshadow (however, GCC 4.1 uses this even for system libraries, causing many warnings from Marlin & co)
+
 
 ############ Add libraries ########################################
 
 # Main EUTelescope Library
-SET( libname ${PROJECT_NAME})
+SET( libname ${PROJECT_NAME} )
 AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/eutelescope/libraries/src library_sources )
 AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/eutelescope/interfaces/pixel/src library_sources )
 AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/eutelescope/interfaces/cluster/src library_sources )
@@ -186,22 +164,20 @@ AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/eutelescope/interfaces/cluster
 ADD_SHARED_LIBRARY( ${libname} ${library_sources} ${CMAKE_CURRENT_SOURCE_DIR}/external/millepede2/$ENV{MILLEPEDEII_VERSION}/Mille.cc )
 INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
 
-OPTION(BUILD_PROCESSORS "Build the EUTelescope Marlin Processors" ON)
-
-IF(BUILD_PROCESSORS)
-  # Datasource Processor Library
-  SET( readers EutelReaders )
-  AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/datasources/src reader_sources )
-  ADD_SHARED_LIBRARY( ${readers} ${reader_sources} )
-  INSTALL_SHARED_LIBRARY( ${readers} DESTINATION lib )
-
+OPTION( BUILD_PROCESSORS "Build the EUTelescope Marlin Processors" ON )
+IF( BUILD_PROCESSORS )
   # Processor Library
   SET( processors EutelProcessors )
   AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/processors/src processor_sources )
+  AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/processors/src/legacy processor_sources )
   AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/processors/src/alibava processor_sources )
   AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/processors/src/cms processor_sources )
   ADD_SHARED_LIBRARY( ${processors} ${processor_sources} )
   INSTALL_SHARED_LIBRARY( ${processors} DESTINATION lib )
+
+  # FIXME: making here a copy of shared library because MARLIN_DLL expects libEutelReaders.so; this hack is here only for backward compatibility
+  ADD_SHARED_LIBRARY( EutelReaders ${processor_sources} )
+  INSTALL_SHARED_LIBRARY( EutelReaders DESTINATION lib )
 ENDIF(BUILD_PROCESSORS)
 
 # Pixel Geometry Shared Libraries
@@ -223,21 +199,19 @@ IF( ROOT_FOUND AND ROOT_GEOM_FOUND )
     TARGET_LINK_LIBRARIES( ${libname} ${ROOT_GEOM_LIBRARY} )
 ENDIF()
 
+#add tools
 MACRO( ADD_EUTELESCOPE_TOOL _name )
     ADD_EXECUTABLE( ${_name} eutelescope/tools/${_name}.cxx )
     TARGET_LINK_LIBRARIES( ${_name} ${libname} )
     INSTALL( TARGETS ${_name} DESTINATION bin )
 ENDMACRO()
-
 ADD_EUTELESCOPE_TOOL( pede2lcio )
 ADD_EUTELESCOPE_TOOL( pedestalmerge )
 
 
-
-# !RELEASE: REMOVE FOR RELEASE VERSIONS
 # electric fence
-OPTION( USE_EFENCE "Use the Electric Fence linrary" OFF)
- FIND_LIBRARY(EFENCE_LIBRARY
+OPTION( USE_EFENCE "Use the Electric Fence library" OFF)
+FIND_LIBRARY(EFENCE_LIBRARY
      NAMES efence
      DOC "The electric fence library"
      PATHS
@@ -246,9 +220,9 @@ OPTION( USE_EFENCE "Use the Electric Fence linrary" OFF)
          /usr/efence/lib
          /usr/share/efence/lib
      )
- IF(EFENCE_LIBRARY AND USE_EFENCE)
-   MESSAGE("Electric Fence library was found and will be linked against ${PROJECT_NAME}")
-   target_link_libraries(${libname} ${EFENCE_LIBRARY})
+IF( EFENCE_LIBRARY AND USE_EFENCE )
+   MESSAGE( "Electric Fence library was found and will be linked against ${PROJECT_NAME}" )
+   TARGET_LINK_LIBRARIES( ${libname} ${EFENCE_LIBRARY} )
 ELSE()
    MESSAGE(STATUS "Not linking Electric Fence library.")
 ENDIF()
@@ -257,30 +231,26 @@ ENDIF()
 DISPLAY_STD_VARIABLES()
 
 # create some useful symbolic links in bin directory at install time
-install (CODE
-    "EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/jobsub/jobsub.py ${PROJECT_SOURCE_DIR}/bin/jobsub)
-    EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/jobsub/jobsub.py ${PROJECT_SOURCE_DIR}/bin/jobsub.py)
-    EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/pyroplot/pyroplot.py ${PROJECT_SOURCE_DIR}/bin/pyroplot.py)
-    EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/pyroplot/pyroplot.py ${PROJECT_SOURCE_DIR}/bin/pyroplot)
-    EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/parsepede/parsemilleout.sh ${PROJECT_SOURCE_DIR}/bin/parsemilleout.sh)
-    EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/resIntoSteer.py ${PROJECT_SOURCE_DIR}/bin/resIntoSteer.py)
-    EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/iterAlign.py ${PROJECT_SOURCE_DIR}/bin/iterAlign )"
-
-
-
+INSTALL( CODE
+    	 "EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/jobsub/jobsub.py ${PROJECT_SOURCE_DIR}/bin/jobsub)
+     	  EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/jobsub/jobsub.py ${PROJECT_SOURCE_DIR}/bin/jobsub.py)
+     	  EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/pyroplot/pyroplot.py ${PROJECT_SOURCE_DIR}/bin/pyroplot.py)
+     	  EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/pyroplot/pyroplot.py ${PROJECT_SOURCE_DIR}/bin/pyroplot)"
 )
 
 # Enable testing
 ENABLE_TESTING()
 
 # Include example configurations:
-ADD_SUBDIRECTORY(ctest)
+OPTION( ctestFlag "Build all ctests." OFF )
+IF( ctestFlag )
+  ADD_SUBDIRECTORY( ctest )
+ENDIF()
 
-
-option(utest "Build all tests." OFF)
-if(utest)
-  add_subdirectory(unittests)
-endif()
+OPTION( utest "Build all tests." OFF )
+IF(utest)
+  ADD_SUBDIRECTORY( unittests )
+ENDIF()
   
 #  _            _       
 # | |_ ___  ___| |_ ___ 
@@ -315,21 +285,22 @@ INCLUDE(CTest)
 # TEST IF ENVIRONMENT IS OK FOR RUNNING TESTS
 # ----------------------------------------------------------------------------
 
-IF( NOT DEFINED ENV{EUTELESCOPE} OR NOT DEFINED ENV{MARLIN})
-      MESSAGE( "trying to load build and run environment for EUTelescope" )
+IF( NOT DEFINED ENV{EUTELESCOPE} OR NOT DEFINED ENV{MARLIN} )
+	MESSAGE( "trying to load build and run environment for EUTelescope" )
 
-  IF( DEFINED ENV{ILCSOFT})
+  	IF( DEFINED ENV{ILCSOFT} )
         EXECUTE_PROCESS( COMMAND sh -c " [ -f $ILCSOFT/Eutelscope/trunk/build_env.sh ] && . $ILCSOFT/Eutelescope/trunk/build_env.sh" )
 
-	IF( NOT DEFINED ENV{EUTELESCOPE} OR NOT DEFINED ENV{MARLIN} )
-        # try to load build_env.sh environment - if running 'make' from 'build' directory, it should be located in '../'
-        EXECUTE_PROCESS( COMMAND sh -c " [ -f '../build_env.sh' ] && . ../build_env.sh" )
-	IF( DEFINED ENV{EUTELESCOPE} AND DEFINED ENV{MARLIN} )
-	    MESSAGE( "EUTELESCOPE environment automatically loaded from ../build_env.sh" )
+		IF( NOT DEFINED ENV{EUTELESCOPE} OR NOT DEFINED ENV{MARLIN} )
+        	# try to load build_env.sh environment - if running 'make' from 'build' directory, it should be located in '../'
+        	EXECUTE_PROCESS( COMMAND sh -c " [ -f '../build_env.sh' ] && . ../build_env.sh" )
+	
+			IF( DEFINED ENV{EUTELESCOPE} AND DEFINED ENV{MARLIN} )
+	    		MESSAGE( "EUTELESCOPE environment automatically loaded from ../build_env.sh" )
+			ENDIF()
+			
+     	ENDIF()
 	ENDIF()
-     ENDIF()
-  ENDIF()
-
 ENDIF()
 
 # ----------------------------------------------------------------------------
@@ -354,11 +325,9 @@ find_program(CPPCHECK cppcheck /scratch/local/bin) # hint at path /scratch/... u
 if(CPPCHECK)
   MESSAGE("cppcheck was found and will be made available as test.")
   ADD_TEST( TestCppcheckSources sh -c "${CPPCHECK} --enable=all -I $ENV{EUTELESCOPE}/include -q -rp=$ENV{EUTELESCOPE} --std=c99 --std=posix $ENV{EUTELESCOPE}/src" )
-  SET_TESTS_PROPERTIES (TestCppcheckSources PROPERTIES
-    FAIL_REGULAR_EXPRESSION "(error)"
-    )
-#else()
-#  MESSAGE("cppcheck was not found - omitting cppcheck static code analysis test.")
+  SET_TESTS_PROPERTIES( TestCppcheckSources PROPERTIES
+    					FAIL_REGULAR_EXPRESSION "(error)"
+    					)
 endif()
 
 # Developers: please consider using these tests to verify your code!
@@ -367,16 +336,17 @@ endif()
 # software coordinators.
 # !RELEASE: the data-driven tests require DESY-AFS access and are not
 # useful for typical users (comment out the following lines)
-  INCLUDE(jobsub/examples/datura-noDUT/testing.cmake)
-  INCLUDE(jobsub/examples/datura-alone/testing.cmake)
-  INCLUDE(jobsub/examples/anemone-2FEI4/testing.cmake)
-  INCLUDE(jobsub/examples/aconite-4chip/testing.cmake)
-  INCLUDE(jobsub/examples/aconite-4chipLocal/testing.cmake)
 
-  configure_file (
-	       ./CTestCustom.cmake.in   # set custom settings (e.g. tests to be skipped for valgrind)
-	       ${PROJECT_BINARY_DIR}/CTestCustom.cmake
-	       )
+# for GBL release: legacy status for tests, commented out
+#  INCLUDE(jobsub/examples/datura-noDUT/testing.cmake)
+#  INCLUDE(jobsub/examples/datura-alone/testing.cmake)
+#  INCLUDE(jobsub/examples/anemone-2FEI4/testing.cmake)
+#  INCLUDE(jobsub/examples/aconite-4chip/testing.cmake)
+#  INCLUDE(jobsub/examples/aconite-4chipLocal/testing.cmake)
+
+  configure_file( ./CTestCustom.cmake.in   # set custom settings (e.g. tests to be skipped for valgrind)
+	       		  ${PROJECT_BINARY_DIR}/CTestCustom.cmake
+	       		  )
 # /!RELEASE
 
 ELSE()
