@@ -1,0 +1,144 @@
+<gear>
+  <!--GEAR file for DURANTA Telescope in DESY TB 02 October 2018 -->
+  <!-- TODO: Is this name needed, otherwise change it to MimosaTelescope -->
+  <global detectorName="EUTelescope"/>
+  <BField type="ConstantBField" x="0.0" y="0.0" z="0.0"/>
+  <detectors>
+    <detector name="SiPlanes" geartype="SiPlanesParameters">
+      <siplanesID ID="0"/>
+      <!-- TODO: Would be here TelescopeWithReference???? -->
+      <siplanesType type="TelescopeWithoutDUT"/>
+      <siplanesNumber number="7"/>
+      <layers>
+	<!--Duranta Plane 0 -->
+	<layer>
+	  <!-- TODO: Difference between thickness of ladder and sensitive -->
+	  <ladder 	ID="0"
+	    positionX="0.00"	positionY="0.00"	positionZ="0.00"
+	    rotationZY="0.00"	rotationZX="0.0"	rotationXY="0.0" 
+	    sizeX="21.2"		sizeY="10.6"		thickness="7.130000000e-02"
+	    radLength="93.660734"
+	    />
+	  <!-- TODO: Rotation -->
+	  <!-- TODO: sizeX vs. pitchX, if 18.4um then 21.1968   -->
+	  <sensitive 	ID="0"
+	    positionX="0.00"	positionY="0.00"	positionZ="0.00" 
+	    sizeX="21.2"		sizeY="10.6"		thickness="7.130000000e-02"
+	    npixelX="1152"		npixelY="576" 
+	    pitchX="0.018402778"	pitchY="0.018402778" 	resolution="0.0045" 
+	    rotation1="1.0" 	rotation2="0.0" 
+	    rotation3="0.0"		rotation4="1.0" 
+	    radLength="93.660734"
+	    />
+	</layer>
+	<!--Duranta Plane 1 -->
+	<layer>
+	  <ladder 	ID="1" 
+	    positionX="0.00"	positionY="0.00"	positionZ="152.0" 
+	    rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+	    sizeX="21.2"		sizeY="10.6"		thickness="7.130000000e-02" 
+	    radLength="93.660734"
+	    />
+	  <sensitive 	ID="1" 
+	    positionX="0.00"	positionY="0.00"	positionZ="152.0" 
+	    sizeX="21.2"		sizeY="10.6"		thickness="7.130000000e-02"
+	    npixelX="1152"		npixelY="576" 
+	    pitchX="0.018402778"	pitchY="0.018402778"	resolution="0.0045" 
+	    rotation1="1.0"	rotation2="0.0" 
+	    rotation3="0.0"		rotation4="1.0" 
+	    radLength="93.660734"
+	    />
+	</layer>
+	<!--Duranta Plane 2 -->
+	<layer>
+	  <ladder 	ID="2" 
+	    positionX="0.00"	positionY="0.00"	positionZ="302.0" 
+	    rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+	    sizeX="21.2"		sizeY="10.6"		thickness="7.130000000e-02" 
+	    radLength="93.660734"
+	    />
+	  <sensitive 	ID="2" 
+	    positionX="0.00"	positionY="0.00"	positionZ="302.0" 
+	    sizeX="21.2"		sizeY="10.6"		thickness="7.130000000e-02"
+	    npixelX="1152"		npixelY="576"
+	    pitchX="0.018402778" 	pitchY="0.018402778" 	resolution="0.0045"
+	    rotation1="1.0"	rotation2="0.0"
+	    rotation3="0.0" 	rotation4="1.0" 
+	    radLength="93.660734"
+	    />
+	</layer>
+	<!--Duranta Plane 3 -->
+	<layer>
+	  <ladder         ID="3"
+	    positionX="0.00"        positionY="0.00"        positionZ="596.00"
+	    rotationZY="0.00"       rotationZX="0.0"        rotationXY="0.0" 
+	    sizeX="21.2"            sizeY="10.6"            thickness="7.130000000e-02"
+	    radLength="93.660734"
+	    />
+	  <sensitive      ID="3"
+	    positionX="0.00"        positionY="0.00"        positionZ="596.00" 
+	    sizeX="21.2"            sizeY="10.6"            thickness="7.130000000e-02"
+	    npixelX="1152"          npixelY="576" 
+	    pitchX="0.018402778"    pitchY="0.018402778"    resolution="0.0045" 
+	    rotation1="1.0"        rotation2="0.0" 
+	    rotation3="0.0"         rotation4="1.0" 
+	    radLength="93.660734"
+	    />
+	</layer>
+	<!--Duranta Plane 4 -->
+	<layer>
+	  <ladder         ID="4"
+	    positionX="0.00"        positionY="0.00"        positionZ="733.00"
+	    rotationZY="0.00"       rotationZX="0.0"        rotationXY="0.0" 
+	    sizeX="21.2"            sizeY="10.6"            thickness="7.130000000e-02"
+	    radLength="93.660734"
+	    />
+	  <sensitive      ID="4"
+	    positionX="0.00"        positionY="0.00"        positionZ="733.00" 
+	    sizeX="21.2"            sizeY="10.6"            thickness="7.130000000e-02"
+	    npixelX="1152"          npixelY="576" 
+	    pitchX="0.018402778"    pitchY="0.018402778"    resolution="0.0045" 
+	    rotation1="1.0"        rotation2="0.0" 
+	    rotation3="0.0"         rotation4="1.0" 
+	    radLength="93.660734"
+	    />
+	</layer>
+	<!-- FEI4b 3D sensor, DESY system; copied and adjusted from ATLAS ITk -->
+	<layer>
+	  <ladder ID="10" 
+	    positionX="0.0" 	positionY="0.0" 	positionZ="812.35" 
+	    rotationXY="90" 	rotationZX="0" 		rotationZY="0" 
+	    sizeX="20.0" 	sizeY="16.8" 		thickness="0.300" 
+	    radLength="9.366073400e+01" 
+	    />
+	  <sensitive ID="10" 
+	    positionX="0.0" 	positionY="0.0" 	positionZ="812.35" 
+	    sizeX="20.0" 	sizeY="16.8" 		thickness="0.300" 
+	    npixelX="80" 	npixelY="336" 
+	    pitchX="0.250" 	pitchY="0.05" resolution="1.000000000e-01" 
+	    rotation1="1.0"	rotation2="0.0" 
+	    rotation3="0.0" 	rotation4="-1.0" 
+	    radLength="9.366073400e+01" />
+	</layer>
+	<!--Duranta Plane 5 -->
+	<layer>
+	  <ladder         ID="5"
+	    positionX="0.00"        positionY="0.00"        positionZ="865.00"
+	    rotationZY="0.00"       rotationZX="0.0"        rotationXY="0.0" 
+	    sizeX="21.2"            sizeY="10.6"            thickness="7.130000000e-02"
+	    radLength="93.660734"
+	    />
+	  <sensitive      ID="5"
+	    positionX="0.00"        positionY="0.00"        positionZ="865.00" 
+	    sizeX="21.2"            sizeY="10.6"            thickness="7.130000000e-02"
+	    npixelX="1152"          npixelY="576" 
+	    pitchX="0.018402778"    pitchY="0.018402778"    resolution="0.0045" 
+	    rotation1="1.0"        rotation2="0.0" 
+	    rotation3="0.0"         rotation4="1.0" 
+	    radLength="93.660734"
+	    />
+	</layer>
+      </layers>
+    </detector>
+  </detectors>
+</gear>

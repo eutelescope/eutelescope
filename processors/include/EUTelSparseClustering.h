@@ -1,0 +1,289 @@
+/*
+ *   This source code is part of the Eutelescope package of Marlin.
+ *   You are free to use this source files for your own development as
+ *   long as it stays in a public research context. You are not
+ *   allowed to use it for commercial purpose. You must put this
+ *   header with author names in all development based on this file.
+ *
+ */
+#ifndef EUTELSPARSECLUSTERING_H
+#define EUTELSPARSECLUSTERING_H
+
+// eutelescope includes ".h"
+#include "EUTELESCOPE.h"
+#include "EUTelExceptions.h"
+
+// marlin includes ".h"
+#include "marlin/EventModifier.h"
+#include "marlin/Exceptions.h"
+#include "marlin/Processor.h"
+
+// gear includes <.h>
+#include <gear/SiPlanesLayerLayout.h>
+#include <gear/SiPlanesParameters.h>
+
+// aida includes <.h>
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+#include <AIDA/IBaseHistogram.h>
+#endif
+
+// lcio includes <.h>
+#include <IMPL/LCCollectionVec.h>
+#include <IMPL/TrackerRawDataImpl.h>
+
+// system includes <>
+#include <cmath>
+#include <map>
+#include <string>
+#include <vector>
+
+namespace eutelescope {
+
+  //! Geometric clustering processor for EUTelescope
+  /*! This processor use the Extended Geometry Framework (EGF) for a
+   *  correct spatial clustering. This means that via the EGF the
+   *  geometrical positions as well as dimensions of the pixels are
+   *  read in and used.
+   *
+   *  The dimensions of the pixel are given by the surrounding rectangle.
+   *  For simple rectangular pixels this is a correct description,
+   *  deviations of that pixel shape have to either adapt this processor
+   *  or use it as an approximation.
+   *
+   *  Spatial proximity is simply defined as two rectangles touching.
+   *  Since the EGF uses TGeo and floating point numbers are only stored
+   *  in single precision, the code accounts for uncertainty by allowing
+   *  a 1% deviation.
+   *
+   *  Given that the proximity is well defined, no additional arguments
+   *  must be provided. If wanted, a time cut can be set. This will also
+   *  require hits to be temporally in proximity. If not set, no cut will
+   *  be applied.
+   *
+   *  This clustering processor uses the @class EUTelGenericSparseClusterImpl
+   *  which derives from the @class EUTelSimpleVirtualCluster base class.
+   *
+   *  The TrackerPulse cell ID encoding is very similar to the
+   *  EUTELESCOPE::CLUSTERDEFAULTENCODING but instead of having the
+   *  quality, it has another field named ClusterType used to identify
+   *  the class used to store the cluster information.
+   *
+   *  Data Collection: the input data TrackerData collection
+   *  name. This collection is containing the zero-suppressed hits from
+   *  previous analysis steps.
+   *
+   *  Pulse Collection: this is the TrackerPulse collection
+   *  containing all clusters found in the event.
+   *
+   *  @param ZSDataCollectionName The name of the input data collection.
+   *
+   *  @param PulseCollectionName The name of the output TrackerPulse collection.
+   *
+   */
+
+  class EUTelSparseClustering : public marlin::Processor,
+                                public marlin::EventModifier {
+
+  public:
+    //! Returns a new instance of EUTelSparseClustering
+    /*! This method returns an new instance of the this processor.  It
+     *  is called by Marlin execution framework and it shouldn't be
+     *  called/used by the final user.
+     *
+     *  @return a new EUTelSparseClustering.
+     */
+    virtual Processor *newProcessor() {
+      return new EUTelSparseClustering;
+    }
+
+    virtual const std::string &name() const { return Processor::name(); }
+
+    //! Default constructor
+    EUTelSparseClustering();
+
+    //! Called at the job beginning.
+    /*! This is executed only once in the whole execution. It prints
+     *  out the processor parameters and reset all needed data
+     *  members. In the case the user set the _fillDebugHisto then
+     *  she/he warned that the procedure is going to slow down
+     *  considerably
+     */
+    virtual void init();
+
+    //! Called for every run.
+    /*! It is called for every run, and consequently the run counter
+     *  is incremented. From the run header the number of detector is
+     *  retrieved.
+     *
+     *  @param run the LCRunHeader of the this current run
+     */
+    virtual void processRunHeader(LCRunHeader *run);
+
+    //! Called every event
+    /*! It looks for clusters in the current event using the selected
+     *  algorithm.
+     *
+     *  @see EUTelSparseClustering::fixedFrameClustering(LCEvent *)
+     *
+     *  @param evt the current LCEvent event as passed by the
+     *  ProcessMgr
+     */
+    virtual void processEvent(LCEvent *evt);
+
+    //! Modify event method
+    /*! Actually don't used
+     *
+     *  @param evt the current LCEvent event as passed by the ProcessMgr
+     */
+    virtual void modifyEvent(LCEvent*){};
+
+    //! Check event method
+    /*! This method is called by the Marlin execution framework as
+     *  soon as the processEvent is over. It can be used to fill check
+     *  plots. For the time being there is nothing to check and do in
+     *  this slot.
+     *
+     *  @param evt The LCEvent event as passed by the ProcessMgr
+     */
+    virtual void check(LCEvent*){};
+
+    //! Called after data processing.
+    /*! This method is called when the loop on events is finished. It
+     *  prints only a goodbye message
+     */
+    virtual void end();
+
+    //! Book histograms
+    /*! This method is used to prepare the needed directory structure
+     *  within the current ITree folder and books all required
+     *  histograms. Histogram pointers are stored into
+     *  vectors for class-wide access
+     */
+    void bookHistos();
+
+    //! Fill histograms
+    /*! This method is called for each event and the cluster
+     *  information are inserted into specific AIDA histograms.
+     *
+     *  @param evt The current event object
+     */
+    void fillHistos(LCEvent *evt);
+
+    //! Initialize the geometry information
+    /*! This method is called to initialize the geometry information,
+     *  namely the total number of sensors to be used in the cluster
+     *  search.
+     *
+     *  @param evt The LCEvent to be used for geometry
+     *  initialization.
+     *
+     *  @throw In case the @event does not contain all the needed
+     *  information, a SkipEventException is thrown and the geometry
+     *  will be initialize with the following event.
+     */
+    void initializeGeometry(LCEvent *evt);
+
+  protected:
+    //! Method for geometric clsutering
+    /*! Algorithm which actually reads in teh collection of hit pixels
+     *  and groups them together.
+     *
+     *  @param evt The LCIO event has passed by processEvent(LCEvent*)
+     *  @param pulse The collection of pulses to append the found
+     *  clusters.
+     */
+    void sparseClustering(LCEvent *evt, LCCollectionVec *pulse);
+
+    //! Input collection name for ZS data
+    /*! The input collection is the calibrated data one coming from
+     *  the EUTelCalibrateEventProcessor. It is, usually, called
+     *  "zsdata" and it is a collection of TrackerData
+     */
+    std::string _zsDataCollectionName;
+
+    //! Pulse collection name.
+    /*! This is the name used to store the output cluster
+     *  collection.
+     */
+    std::string _pulseCollectionName;
+
+    //! Pulse collection size
+    size_t _initialPulseCollectionSize;
+
+    //! Current run number.
+    /*! This number is used to store the current run number
+     */
+    int _iRun;
+
+    //! Current event number.
+    /*! This number is used to store the current event number NOTE that
+     *  events are counted from 0 and on a run base
+     */
+    int _iEvt;
+
+    //! Fill histogram switch
+    /*! This boolean is used to switch on and off the filling of
+     *  histograms.
+     */
+    bool _fillHistos;
+
+  private:
+    DISALLOW_COPY_AND_ASSIGN(EUTelSparseClustering)
+
+    //! read secondary collections
+    void readCollections(LCEvent *evt);
+
+    //! Total cluster found
+    /*! This is a map correlating the sensorID number and the
+     *  total number of clusters found on that sensor.
+     *  The content of this map is show during end().
+     */
+    std::map<int, int> _totalClusterMap;
+
+    //! The number of detectors
+    /*! The number of sensors in the telescope. This is retrieve from
+     *  the run header
+     */
+    int _noOfDetector;
+
+    //! List of excluded planes.
+    /*! This vector contains a list of sensor ids for planes that have
+     *   to be excluded from the clustering.
+     */
+    std::vector<int> _excludedPlanes;
+
+    //! Histogram maps 
+    #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+    std::map<int, AIDA::IBaseHistogram *> _clusterSizeTotalHistos;
+    std::map<int, AIDA::IBaseHistogram *> _clusterSignalHistos;
+    std::map<int, AIDA::IBaseHistogram *> _clusterSizeXHistos;
+    std::map<int, AIDA::IBaseHistogram *> _clusterSizeYHistos;
+    std::map<int, AIDA::IBaseHistogram *> _hitMapHistos;
+    std::map<int, AIDA::IBaseHistogram *> _eventMultiplicityHistos;
+    #endif
+
+    //! Geometry ready switch
+    /*! This boolean reveals if the geometry has been properly
+     *  initialized or not.
+     */
+    bool _isGeometryReady;
+
+    //! SensorID vector
+    /*! This is a vector of sensorID
+     */
+    std::vector<int> _sensorIDVec;
+
+    //! Zero Suppressed Data Collection
+    LCCollectionVec *_zsInputDataCollectionVec;
+
+    //! pulse Collection
+    LCCollectionVec *_pulseCollectionVec;
+
+    //! Squared cut value for distance in pixel index count (integer!)
+    int _sparseMinDistanceSquared;
+  };
+
+  //! A global instance of the processor
+  EUTelSparseClustering gEUTelSparseClustering;
+}
+#endif
