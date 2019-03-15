@@ -145,7 +145,7 @@
   <!--Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file-->
   <parameter name="GEARSuffix" type="string"> @GEARSuffix@ </parameter>
   <!--Name of the steering file for the pede program.-->
-  <!--parameter name="PedeSteerfileName" type="string">steer_mille.txt </parameter-->ROR0-4,SILENT")-->
+  <!--parameter name="PedeSteerfileName" type="string">steer_mille.txt </parameter-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
 </processor>
  
