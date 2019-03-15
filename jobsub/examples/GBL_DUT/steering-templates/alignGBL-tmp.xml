@@ -145,10 +145,7 @@
   <!--Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file-->
   <parameter name="GEARSuffix" type="string"> @GEARSuffix@ </parameter>
   <!--Name of the steering file for the pede program.-->
-  <!--parameter name="PedeSteerfileName" type="string">steer_mille.txt </parameter-->
-  <!--Apply the obtained rotation to the preexisting offset vector or not..-->
-  <parameter name="RotateOffsetVec" type="bool">true</parameter>
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="PedeSteerfileName" type="string">steer_mille.txt </parameter-->ROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
 </processor>
  

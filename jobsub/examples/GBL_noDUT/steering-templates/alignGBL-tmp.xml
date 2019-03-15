@@ -55,8 +55,6 @@
   <parameter name="GEARSuffix" value="@GEARSuffix@"/>
   <!--Name of the steering file for the pede program.-->
   <parameter name="PedeSteerfileName" type="string" value="@PedeSteerFile@"/>
-  <!--Apply the obtained rotation to the preexisting offset vector or not..-->
-  <parameter name="RotateOffsetVec" type="bool" value="true"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
