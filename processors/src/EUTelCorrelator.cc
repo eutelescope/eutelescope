@@ -411,9 +411,9 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
               
               //input coordinates in correlation matrix (for X and Y)
               _clusterXCorrelationMatrix[externalSensorID][internalSensorID]
-                  ->fill(externalXCenter, internalXCenter);
+                  ->fill(internalXCenter, externalXCenter);
               _clusterYCorrelationMatrix[externalSensorID][internalSensorID]
-                  ->fill(externalYCenter, internalYCenter);    
+                  ->fill(internalYCenter, externalYCenter);    
               streamlog_out(MESSAGE1)
                   << " ex " << externalSensorID << " = [" << externalXCenter
                   << ":" << externalYCenter << "]"
@@ -553,9 +553,9 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
             if(i == indexPlane) continue; //skip as this one is not booked
             
             _hitXCorrelationMatrix[planeIDVec[indexPlane]][planeIDVec[i]]->fill(
-                trackXVec[indexPlane], trackXVec[i]);
+                trackXVec[i], trackXVec[indexPlane]);
             _hitYCorrelationMatrix[planeIDVec[indexPlane]][planeIDVec[i]]->fill(
-                trackYVec[indexPlane], trackYVec[i]);
+                trackYVec[i], trackYVec[indexPlane]);
             //assumption: all rotations were done in hitmaker processor
             _hitXCorrShiftMatrix[planeIDVec[indexPlane]][planeIDVec[i]]->fill(
                 trackXVec[indexPlane], trackXVec[indexPlane] - trackXVec[i]);
