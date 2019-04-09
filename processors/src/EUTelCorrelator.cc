@@ -411,9 +411,9 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
               
               //input coordinates in correlation matrix (for X and Y)
               _clusterXCorrelationMatrix[externalSensorID][internalSensorID]
-                  ->fill(internalXCenter, externalXCenter);
+                  ->fill(externalXCenter, internalXCenter);
               _clusterYCorrelationMatrix[externalSensorID][internalSensorID]
-                  ->fill(internalYCenter, externalYCenter);    
+                  ->fill(externalYCenter, internalYCenter);    
               streamlog_out(MESSAGE1)
                   << " ex " << externalSensorID << " = [" << externalXCenter
                   << ":" << externalYCenter << "]"
@@ -553,9 +553,9 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
             if(i == indexPlane) continue; //skip as this one is not booked
             
             _hitXCorrelationMatrix[planeIDVec[indexPlane]][planeIDVec[i]]->fill(
-                trackXVec[i], trackXVec[indexPlane]);
+                trackXVec[indexPlane], trackXVec[i]);
             _hitYCorrelationMatrix[planeIDVec[indexPlane]][planeIDVec[i]]->fill(
-                trackYVec[i], trackYVec[indexPlane]);
+                trackYVec[indexPlane], trackYVec[i]);
             //assumption: all rotations were done in hitmaker processor
             _hitXCorrShiftMatrix[planeIDVec[indexPlane]][planeIDVec[i]]->fill(
                 trackXVec[indexPlane], trackXVec[indexPlane] - trackXVec[i]);
@@ -611,20 +611,20 @@ void EUTelCorrelator::bookHistos() {
 	    std::string histName_clusterXCorr = "ClusterX/ClusterXCorrelation_d" +
 	      to_string(fromID) + "_d" + to_string(toID);
 
-            xBin = geo::gGeometry().getPlaneNumberOfPixelsX(toID);
+            xBin = geo::gGeometry().getPlaneNumberOfPixelsX(fromID);
             xMin = 0.;
-            xMax = geo::gGeometry().getPlaneNumberOfPixelsX(toID);
-            yBin = geo::gGeometry().getPlaneNumberOfPixelsX(fromID);
+            xMax = geo::gGeometry().getPlaneNumberOfPixelsX(fromID);
+            yBin = geo::gGeometry().getPlaneNumberOfPixelsX(toID);
             yMin = 0.;
-            yMax = geo::gGeometry().getPlaneNumberOfPixelsX(fromID);
+            yMax = geo::gGeometry().getPlaneNumberOfPixelsX(toID);
 	    
             AIDA::IHistogram2D *hist2D_clusterXCorr =
 	      marlin::AIDAProcessor::histogramFactory(this)->createHistogram2D(
 		 histName_clusterXCorr, xBin, xMin, xMax, yBin, yMin, yMax);
 	    
             hist2D_clusterXCorr->setTitle("Cluster correlation in X (d" + std::to_string(fromID) 
-					  +"->d" + std::to_string(toID)+"); X_d"+std::to_string(toID)
-					  +" [mm]; X_d"+std::to_string(fromID)+" [mm]");
+					  +"->d" + std::to_string(toID)+"); X_d"+std::to_string(fromID)
+					  +" [mm]; X_d"+std::to_string(toID)+" [mm]");
             
             innerMapXCluster[toID] = hist2D_clusterXCorr;
             
@@ -632,20 +632,20 @@ void EUTelCorrelator::bookHistos() {
             std::string histName_clusterYCorr = "ClusterY/ClusterYCorrelation_d" +
 	      to_string(fromID) + "_d" + to_string(toID);
 
-            xBin = geo::gGeometry().getPlaneNumberOfPixelsY(toID);
+            xBin = geo::gGeometry().getPlaneNumberOfPixelsY(fromID);
             xMin = 0.;
-            xMax = geo::gGeometry().getPlaneNumberOfPixelsY(toID);
-            yBin = geo::gGeometry().getPlaneNumberOfPixelsY(fromID);
+            xMax = geo::gGeometry().getPlaneNumberOfPixelsY(fromID);
+            yBin = geo::gGeometry().getPlaneNumberOfPixelsY(toID);
             yMin = 0.;
-            yMax = geo::gGeometry().getPlaneNumberOfPixelsY(fromID);
+            yMax = geo::gGeometry().getPlaneNumberOfPixelsY(toID);
 	    
             AIDA::IHistogram2D *hist2D_clusterYCorr =
                 marlin::AIDAProcessor::histogramFactory(this)->createHistogram2D(
                     histName_clusterYCorr, xBin, xMin, xMax, yBin, yMin, yMax);
 
             hist2D_clusterYCorr->setTitle("Cluster correlation in Y (d" + std::to_string(fromID)
-					  +"->d" + std::to_string(toID)+"); Y_d"+std::to_string(toID)
-					  +" [mm]; Y_d"+std::to_string(fromID)+" [mm]");
+					  +"->d" + std::to_string(toID)+"); Y_d"+std::to_string(fromID)
+					  +" [mm]; Y_d"+std::to_string(toID)+" [mm]");
             
             innerMapYCluster[toID] = hist2D_clusterYCorr;
           } else {
@@ -686,19 +686,19 @@ void EUTelCorrelator::bookHistos() {
 	      to_string(fromID) + "_d" + to_string(toID);
 
             xBin = 100;
-            xMin = -0.5 * geo::gGeometry().getPlaneXSize(toID);
-            xMax = 0.5 * geo::gGeometry().getPlaneXSize(toID);
+            xMin = -0.5 * geo::gGeometry().getPlaneXSize(fromID);
+            xMax = 0.5 * geo::gGeometry().getPlaneXSize(fromID);
 	    yBin = 100;
-            yMin = -0.5 * geo::gGeometry().getPlaneXSize(fromID);
-            yMax = 0.5 * geo::gGeometry().getPlaneXSize(fromID);
+            yMin = -0.5 * geo::gGeometry().getPlaneXSize(toID);
+            yMax = 0.5 * geo::gGeometry().getPlaneXSize(toID);
 
 	    AIDA::IHistogram2D *hist2D_hitXCorr =
 	      marlin::AIDAProcessor::histogramFactory(this)->createHistogram2D(
 		 histName_hitXCorr, xBin, xMin, xMax, yBin, yMin, yMax);
             
             hist2D_hitXCorr->setTitle("Hit correlation in X (d"+std::to_string(fromID)
-				      +"->d"+std::to_string(toID)+"); X_d"+std::to_string(toID)
-				      +" [mm]; X_d"+std::to_string(fromID)+" [mm]");
+				      +"->d"+std::to_string(toID)+"); X_d"+std::to_string(fromID)
+				      +" [mm]; X_d"+std::to_string(toID)+" [mm]");
             
             innerMapXHit[toID] = hist2D_hitXCorr;
             
@@ -711,8 +711,8 @@ void EUTelCorrelator::bookHistos() {
 		 histName_hitXCorrShift, xBin, xMin, xMax, yBin, yMin, yMax);
             
             hist2D_hitXCorrShift->setTitle("Hit correlation shift in X (d"+std::to_string(fromID)
-					   +"->d"+std::to_string(toID)+"); X_d"+std::to_string(toID)
-					   +" [mm]; X_d"+std::to_string(fromID)+" [mm]");
+					   +"->d"+std::to_string(toID)+"); X_d"+std::to_string(fromID)
+					   +" [mm]; X_d"+std::to_string(fromID)+"-X_d"+std::to_string(toID)+" [mm]");
             
             innerMapXHitShift[toID] = hist2D_hitXCorrShift;         
 
@@ -720,19 +720,19 @@ void EUTelCorrelator::bookHistos() {
 	    std::string histName_hitYCorr = "HitY/HitYCorrelation_d" +
 	      to_string(fromID) + "_d" + to_string(toID);
 	    xBin = 100;
-            xMin = -0.5 * geo::gGeometry().getPlaneYSize(toID);
-            xMax = 0.5 * geo::gGeometry().getPlaneYSize(toID);
+            xMin = -0.5 * geo::gGeometry().getPlaneYSize(fromID);
+            xMax = 0.5 * geo::gGeometry().getPlaneYSize(fromID);
 	    yBin = 100;
-            yMin = -0.5 * geo::gGeometry().getPlaneYSize(fromID);
-            yMax = 0.5 * geo::gGeometry().getPlaneYSize(fromID);
+            yMin = -0.5 * geo::gGeometry().getPlaneYSize(toID);
+            yMax = 0.5 * geo::gGeometry().getPlaneYSize(toID);
             
             AIDA::IHistogram2D *hist2D_hitYCorr =
 	      marlin::AIDAProcessor::histogramFactory(this)->createHistogram2D(
 		 histName_hitYCorr, xBin, xMin, xMax, yBin, yMin, yMax);
             
             hist2D_hitYCorr->setTitle("Hit correlation in Y (d"+std::to_string(fromID)
-				      +"->d"+std::to_string(toID)+"); Y_d"+std::to_string(toID)
-				      +" [mm]; Y_d"+std::to_string(fromID)+" [mm]");
+				      +"->d"+std::to_string(toID)+"); Y_d"+std::to_string(fromID)
+				      +" [mm]; Y_d"+std::to_string(toID)+" [mm]");
             
             innerMapYHit[toID] = hist2D_hitYCorr;
 
@@ -745,8 +745,8 @@ void EUTelCorrelator::bookHistos() {
                  histName_hitYCorrShift, xBin, xMin, xMax, yBin, yMin, yMax);
             
             hist2D_hitYCorrShift->setTitle("Hit correlation shift in Y (d"+std::to_string(fromID)
-					   +"->d"+std::to_string(toID)+"); Y_d"+std::to_string(toID)
-					   +" [mm]; Y_d"+std::to_string(fromID)+" [mm]");
+					   +"->d"+std::to_string(toID)+"); Y_d"+std::to_string(fromID)
+					   +" [mm]; Y_d"+std::to_string(fromID)+"-Y_d"+std::to_string(toID)+" [mm]");
             
             innerMapYHitShift[toID] = hist2D_hitYCorrShift;             
           } else {
