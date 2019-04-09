@@ -396,8 +396,8 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
 
             if((internalSensorID != getFixedPlaneID() &&
                 externalSensorID == getFixedPlaneID()) ||
-	       (_sensorIDtoZ.at(internalSensorID) ==
-		_sensorIDtoZ.at(externalSensorID) + 1)) {
+	       (_sensorIDtoZ.at(internalSensorID) >
+		_sensorIDtoZ.at(externalSensorID))) {
 	      
 	      //get coordinates of internal seed
               float internalXCenter = 0.;
@@ -506,8 +506,8 @@ void EUTelCorrelator::processEvent(LCEvent *event) {
 	//[IF] check planes
 	if((internalSensorID != getFixedPlaneID() &&
 	    externalSensorID == getFixedPlaneID()) ||
-	   (_sensorIDtoZ.at(internalSensorID) ==
-	    _sensorIDtoZ.at(externalSensorID) + 1)) {
+	   (_sensorIDtoZ.at(internalSensorID) >
+	    _sensorIDtoZ.at(externalSensorID))) {
 
           int iz = _sensorIDtoZ.at(internalSensorID);
 
@@ -605,7 +605,7 @@ void EUTelCorrelator::bookHistos() {
 	for(auto toID : _sensorIDVec) {
       
 	  if((toID != getFixedPlaneID() && fromID == getFixedPlaneID()) ||
-	     (_sensorIDtoZ.at(toID) == _sensorIDtoZ.at(fromID) + 1)) {
+	     (_sensorIDtoZ.at(toID) > _sensorIDtoZ.at(fromID))) {
             
 	    //create 2D histogram: cluster correlation X
 	    std::string histName_clusterXCorr = "ClusterX/ClusterXCorrelation_d" +
@@ -679,7 +679,7 @@ void EUTelCorrelator::bookHistos() {
 	for(auto toID : _sensorIDVec) {
 	  
 	  if ((toID != getFixedPlaneID() && fromID == getFixedPlaneID()) ||
-	      (_sensorIDtoZ.at(toID) == _sensorIDtoZ.at(fromID) + 1)) {
+	      (_sensorIDtoZ.at(toID) > _sensorIDtoZ.at(fromID))) {
 	    
 	    //create 2D histogram: hit correlation X
 	    std::string histName_hitXCorr = "HitX/HitXCorrelation_d" +
