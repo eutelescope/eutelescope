@@ -118,7 +118,7 @@
   <!--Name of the steering file for the pede program.-->
   <parameter name="PedeSteerfileName" type="string" value="@DatabasePath@/@FilePrefix@-pede-steer.txt"/>
   <!--Conversion from um to mm. Not needed by GBL (set to 0), but needed by EUTelMille (set to 1).-->
-  <parameter name="UnitConversion" type="bool" value="true">
+  <parameter name="UnitConversion" type="bool" value="true"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
