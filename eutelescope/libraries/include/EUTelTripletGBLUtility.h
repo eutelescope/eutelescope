@@ -285,42 +285,7 @@ public:
     //! Check isolation of triplet within vector of triplets
     bool IsTripletIsolated(EUTelTripletGBLUtility::triplet const & it, std::vector<EUTelTripletGBLUtility::triplet> const &trip, double z_match, double isolation = 0.3);
 
-    //! Calculate efficiency of plane
-    /*! This creates non-standard triplets and driplets (use only 5 planes to contruct them) and looks for matching hit on plane under test
-     * Inputs:
-     * - triplet
-     * - driplet
-     * - plane under test (PUT)
-     * - z match position
-     * - isolation cut
-     * - track match cut
-     * - Profile that should be filled
-     *
-     * returns double average efficiency
-     */
-    double PlaneEfficiency(std::vector<EUTelTripletGBLUtility::triplet> &up, std::vector<EUTelTripletGBLUtility::triplet> &down, std::vector<EUTelTripletGBLUtility::hit> &hits, unsigned int PUT, double track_match_z, double DUT_z, double match_cut, double eff_radius, std::vector<AIDA::IProfile1D*> &profile);
-
 private:
-
-    //! Fill the telescope plane correlation plots:
-    //void TelescopeCorrelationPlots(std::vector<hit> &telescopehits);
-
-    //! Find hit triplets from three telescope planes
-    /*! This runs over all hits in the planes of the telescope and
-     * tries to match triplets by comparing with the middle planes.
-     * Two cut criteria can be set:
-     * @param triplet_residual_cut Cut on the hit residual in the middle plane with respect to the triplet defined by first and last plane
-     * @param triplet_angle_cut Cut on the triplet track angle
-     *
-     * @return a vector of found triplets among the given set of hits.
-     */
-    //void FindTriplets(std::vector<hit> &hits, unsigned int plane0, unsigned int plane1, unsigned int plane2, std::vector<triplet> &trip);
-
-    //! Match the upstream and downstream triplets to tracks
-    //void MatchTriplets(std::vector<triplet> &up, std::vector<triplet> &down, double z_match, std::vector<track> &track);
-
-    //! Check isolation of triplet within vector of triplets
-    //bool IsTripletIsolated(std::vector<triplet>::iterator it, std::vector<triplet> &trip, double z_match, double isolation = 0.3);
 
     //! store the parent, needed for having histograms in the same file as the processor that calls the util class
     marlin::Processor * parent;
