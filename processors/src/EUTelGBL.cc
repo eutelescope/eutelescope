@@ -894,8 +894,8 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 	  thisTrack->setFloatVal(1, uptriplet.getx_at(_planePosition[ix]) + localPar[3]); // x track position (global system)
 	  thisTrack->setFloatVal(2, uptriplet.gety_at(_planePosition[ix]) + localPar[4]); // y track position (global system)
 	  thisTrack->setFloatVal(3, _planePosition[ix]); // z of the plane, FIXME: we should use z hit position if possible
-	  thisTrack->setFloatVal(4, localPar[1]*1E3); // FIXME: this is not the incidence angle, just the angle correction to the seed
-	  thisTrack->setFloatVal(5, localPar[2]*1E3); // FIXME: this is not the incidence angle, just the angle correction to the seed
+	  thisTrack->setFloatVal(4, (tripletSlope.x + localPar[1])*1E3); // FIXME: check if the sign is right
+	  thisTrack->setFloatVal(5, (tripletSlope.x + localPar[2])*1E3); // FIXME: check if the sign is right
 	  
 	  if(_sensorIDVec[ix]!=_SUT_ID) {
 	    thisTrack->setFloatVal(6, (localPar[1] - prevAngleX)*1E3 ); // kink angle in x in mrad
