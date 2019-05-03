@@ -212,7 +212,7 @@ to the external frame of reference using the GEAR geometry description-->
   <!--Print event number for every n-th event-->
   <parameter name="EveryNEvents" type="int" value="@NEventsMessage@"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
+  <parameter name="Verbosity" type="string" value="@VerbosityEventNumber@"/>
   <!--print the event timestamp as read from LCIO-->
   <!--parameter name="printTimestamp" type="bool" value="false"/-->
 </processor>
