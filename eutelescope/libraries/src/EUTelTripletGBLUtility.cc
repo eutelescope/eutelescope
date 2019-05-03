@@ -423,12 +423,12 @@ void EUTelTripletGBLUtility::determineBestCuts() const {
     double tripletMatchingCut = std::max( fabs(res_tripletMatchingResidualX.first)+nb_sigma*res_tripletMatchingResidualX.second, 
 					  fabs(res_tripletMatchingResidualY.first)+nb_sigma*res_tripletMatchingResidualY.second );
 
-    streamlog_out (MESSAGE5) << "We recommend the following cuts, although they should be checked ! :" << std::endl;
-    streamlog_out (MESSAGE5) << "UpstreamTripletCut 	= " << upstreamTripletCut  << std::endl;
-    streamlog_out (MESSAGE5) << "DownstreamTripletCut 	= " << downstreamTripletCut << std::endl;
-    streamlog_out (MESSAGE5) << "UpstreamSlopeCut   	= " << upstreamSlopeCut << std::endl;
-    streamlog_out (MESSAGE5) << "DownstreamSlopeCut 	= " << downstreamSlopeCut << std::endl;
-    streamlog_out (MESSAGE5) << "TripletMatchingCut 	= " << tripletMatchingCut << std::endl;
+    streamlog_out (MESSAGE8) << "We recommend the following cuts, although they should be checked ! :" << std::endl;
+    streamlog_out (MESSAGE8) << "UpstreamTripletCut 	= " << upstreamTripletCut  << std::endl;
+    streamlog_out (MESSAGE8) << "DownstreamTripletCut 	= " << downstreamTripletCut << std::endl;
+    streamlog_out (MESSAGE8) << "UpstreamSlopeCut   	= " << upstreamSlopeCut << std::endl;
+    streamlog_out (MESSAGE8) << "DownstreamSlopeCut 	= " << downstreamSlopeCut << std::endl;
+    streamlog_out (MESSAGE8) << "TripletMatchingCut 	= " << tripletMatchingCut << std::endl;
     //we may have no DUT hits
     if(DUTMatchingResidualX->allEntries() > 0  && DUTMatchingResidualY->allEntries() > 0){
       std::pair<double, double> res_DUTMatchingResidualX = doIterativeGaussianFit(DUTMatchingResidualX, 1);
@@ -437,9 +437,9 @@ void EUTelTripletGBLUtility::determineBestCuts() const {
       streamlog_out (DEBUG5) << "DUTMatchingResidualY --- Mean = " << res_DUTMatchingResidualY.first << " ; Sigma = " << res_DUTMatchingResidualY.second << std::endl;
       double dutXCut = fabs(res_DUTMatchingResidualX.first)+nb_sigma*res_DUTMatchingResidualX.second;
       double dutYCut = fabs(res_DUTMatchingResidualY.first)+nb_sigma*res_DUTMatchingResidualY.second;
-      streamlog_out (MESSAGE5) << "DUTCuts 		= " << dutXCut << " " << dutYCut << std::endl; 
+      streamlog_out (MESSAGE8) << "DUTCuts 		= " << dutXCut << " " << dutYCut << std::endl; 
     } else {
-      streamlog_out (MESSAGE5) << "The DUT is propably not an active device - no hits detected" << std::endl;	
+      streamlog_out (MESSAGE8) << "The DUT is propably not an active device - no hits detected" << std::endl;	
     }
 }
 
