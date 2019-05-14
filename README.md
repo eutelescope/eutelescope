@@ -1,3 +1,5 @@
+WIP change
+
 # EUTelescope - a generic pixel telescope data analysis framework
 
 You can find documentation online: 
