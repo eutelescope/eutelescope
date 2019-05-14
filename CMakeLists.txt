@@ -33,7 +33,6 @@ INCLUDE( ilcsoft_default_settings )
 # additional packages to be searched for by cmake
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 
-
 FIND_PACKAGE( Marlin 1.0 REQUIRED )
 FIND_PACKAGE( GSL )
 FIND_PACKAGE( AIDA )
@@ -45,14 +44,10 @@ FIND_PACKAGE( Eigen3 REQUIRED )
 # include them as SYSTEM include directories, this will supress all warnings from them
 INCLUDE_DIRECTORIES( SYSTEM ${EIGEN3_INCLUDE_DIR} )
 
-# Geant4 and dependencies + Allpix
-FIND_PACKAGE( XERCESC )               
-FIND_PACKAGE( G4 )               
-FIND_PACKAGE( ALLPIX )               
-# General Broken Line track fitter as shared lib:
+# General Broken Line track fitter as shared lib
 FIND_PACKAGE( GBL )
 
-FOREACH( pkg Marlin MarlinUtil GSL AIDA ROOT LCCD GBL XERCESC G4 ALLPIX )
+FOREACH( pkg Marlin MarlinUtil GSL AIDA ROOT LCCD GBL )
     IF( ${pkg}_FOUND )
         # include as "system" libraries: gcc will be less verbose w.r.t. warnings
         INCLUDE_DIRECTORIES( SYSTEM ${${pkg}_INCLUDE_DIRS} )
@@ -75,41 +70,9 @@ ELSE()
     MESSAGE( STATUS "WARNING: failed to configure Eutelescope with GBL!!" )
 ENDIF()
 
-#Allpix
-IF( ALLPIX_FOUND )
-    ADD_DEFINITIONS( "-DUSE_ALLPIX" )
-    GET_FILENAME_COMPONENT( ALLPIX_LIBRARY_FULL_PATH ${ALLPIX_ALLPIX_LIBRARY} REALPATH )
-    INSTALL( FILES ${ALLPIX_LIBRARY_FULL_PATH} DESTINATION lib )
-
-    # two ROOT libraries which are not always included in "root-config --glibs"
-    find_library(
-      LXMLPARSER
-      NAMES XMLParser 
-      PATHS ${ROOT_LIBRARY_FULL_PATH}
-      PATH_SUFFIXES lib64 lib32 lib
-      NO_DEFAULT_PATH
-    )
-    find_library(
-      LGEOM
-      NAMES Geom 
-      PATHS ${ROOT_LIBRARY_FULL_PATH}
-      PATH_SUFFIXES lib64 lib32 lib
-      NO_DEFAULT_PATH
-    )
-
-    LINK_LIBRARIES( ${LGEOM} )
-    LINK_LIBRARIES( ${LXMLPARSER} )
-    MESSAGE ( STATUS "linking TGeom : ${LGEOM}" )
-    MESSAGE ( STATUS "linking TXMLParser : ${LXMLPARSER}" )
-ELSE()
-    IF( DEFINED "$ENV{ALLPIX}" )
-      MESSAGE( STATUS "WARNING: failed to configure Eutelescope with ALLPIX!!" )
-    ENDIF()
-ENDIF()
-
 #AIDA
 IF( AIDA_FOUND )
-	 ADD_DEFINITIONS( "-DUSE_AIDA" )
+    ADD_DEFINITIONS( "-DUSE_AIDA" )
 ENDIF()
 
 #GSL
@@ -117,18 +80,10 @@ IF( GSL_FOUND )
   ADD_DEFINITIONS( "-DUSE_GSL" )
 ENDIF()
 
-# these are needed anyway...
+#non-optional dependencies
 ADD_DEFINITIONS( "-DUSE_MARLIN" )
 ADD_DEFINITIONS( "-DUSE_GEAR" )
-ADD_DEFINITIONS( "-DUSE_MARLINUTIL" )
 ADD_DEFINITIONS( "-DUSE_CLHEP" )
-## remove CED installation in next release
-#ADD_DEFINITIONS( "-DUSE_CED" )
-
-# !RELEASE: switches on output parsed for automatic nightly tests
-# (only useful if using CDash web frontend to CTest otherwise produces superfluous output)
-ADD_DEFINITIONS("-DDO_TESTING")
-
 
 # ---------------------------------------------------------------------------
 
@@ -145,12 +100,24 @@ INCLUDE_DIRECTORIES( ./geometries/include/ )
 INCLUDE_DIRECTORIES( ./external/millepede2/$ENV{MILLEPEDEII_VERSION} )
 
 # definitions to pass to the compiler
-ADD_DEFINITIONS( "-Wno-effc++ -std=c++14 -Wno-shadow -Wall -Wdisabled-optimization -Wold-style-cast -pedantic -Wextra -Wcast-align -Wcast-qual -Wuseless-cast -Wzero-as-null-pointer-constant -Wundef -Wctor-dtor-privacy -Wredundant-decls -Wdeprecated -Wformat-security -Wmissing-declarations -Wmissing-include-dirs -Wmissing-include-dirs -Wswitch-default -Wno-sign-promo -Werror" )
+ADD_DEFINITIONS( "-Wno-effc++ -std=c++14 -Wno-shadow -Wall -Wdisabled-optimization \
+		 -Wold-style-cast -pedantic -Wextra -Wcast-align -Wcast-qual \
+		 -Wuseless-cast -Wzero-as-null-pointer-constant -Wundef \
+		 -Wctor-dtor-privacy -Wredundant-decls -Wdeprecated -Wformat-security \
+		 -Wmissing-declarations -Wmissing-include-dirs -Wmissing-include-dirs \
+		 -Wswitch-default -Wno-sign-promo -Werror" )
 
-# debuging warnings and switches - only active if  CMAKE_BUILD_TYPE  is set to debug
-SET( CMAKE_CXX_FLAGS_DEBUG "-O0 -g -fno-inline -fdiagnostics-show-option -Weffc++ -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef"  CACHE STRING "Debug options." FORCE )
-SET( CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -fdiagnostics-show-option -Weffc++ -Wcast-align -Wcast-qual -Wdisabled-optimization -Winit-self -Wmissing-include-dirs -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef"  CACHE STRING "Debug options." FORCE )
-# also useful: -Wshadow (however, GCC 4.1 uses this even for system libraries, causing many warnings from Marlin & co)
+# debuging warnings and switches for CMAKE_BUILD_TYPE=DEBUG
+SET( CMAKE_CXX_FLAGS_DEBUG "-O0 -g -fno-inline -fdiagnostics-show-option -Weffc++ \
+     -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 \
+     -Winit-self -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual \
+     -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef"
+     CACHE STRING "Debug options." FORCE )
+# debuging warnings and switches for CMAKE_BUILD_TYPE=RELWITHDEBINFO
+SET( CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -fdiagnostics-show-option -Weffc++ \
+     -Wcast-align -Wcast-qual -Wdisabled-optimization -Winit-self -Wmissing-include-dirs \
+     -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef"
+     CACHE STRING "Debug options." FORCE )
 
 
 ############ Add libraries ########################################
@@ -176,9 +143,10 @@ IF( BUILD_PROCESSORS )
   INSTALL_SHARED_LIBRARY( ${processors} DESTINATION lib )
 
   # FIXME: making here a copy of shared library because MARLIN_DLL expects libEutelReaders.so; this hack is here only for backward compatibility
-  ADD_SHARED_LIBRARY( EutelReaders ${processor_sources} )
+  AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/processors/src/legacy dummy_sources )
+  ADD_SHARED_LIBRARY( EutelReaders  ${dummy_sources} )
   INSTALL_SHARED_LIBRARY( EutelReaders DESTINATION lib )
-ENDIF(BUILD_PROCESSORS)
+ENDIF()
 
 # Pixel Geometry Shared Libraries
 FILE(GLOB IMPL_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/geometries/src/*.cc)
@@ -207,25 +175,6 @@ MACRO( ADD_EUTELESCOPE_TOOL _name )
 ENDMACRO()
 ADD_EUTELESCOPE_TOOL( pede2lcio )
 ADD_EUTELESCOPE_TOOL( pedestalmerge )
-
-
-# electric fence
-OPTION( USE_EFENCE "Use the Electric Fence library" OFF)
-FIND_LIBRARY(EFENCE_LIBRARY
-     NAMES efence
-     DOC "The electric fence library"
-     PATHS
-         /usr/lib
-         /usr/local/lib
-         /usr/efence/lib
-         /usr/share/efence/lib
-     )
-IF( EFENCE_LIBRARY AND USE_EFENCE )
-   MESSAGE( "Electric Fence library was found and will be linked against ${PROJECT_NAME}" )
-   TARGET_LINK_LIBRARIES( ${libname} ${EFENCE_LIBRARY} )
-ELSE()
-   MESSAGE(STATUS "Not linking Electric Fence library.")
-ENDIF()
 
 # display some variables and write them to cache
 DISPLAY_STD_VARIABLES()
@@ -278,7 +227,7 @@ ENDIF()
 #web page (http://www.cmake.org/Wiki/CMake/Testing_With_CTest).
 
 ENABLE_TESTING()
-INCLUDE(CTest)
+INCLUDE( CTest )
 
 
 # ----------------------------------------------------------------------------
@@ -298,8 +247,7 @@ IF( NOT DEFINED ENV{EUTELESCOPE} OR NOT DEFINED ENV{MARLIN} )
 			IF( DEFINED ENV{EUTELESCOPE} AND DEFINED ENV{MARLIN} )
 	    		MESSAGE( "EUTELESCOPE environment automatically loaded from ../build_env.sh" )
 			ENDIF()
-			
-     	ENDIF()
+   		ENDIF()
 	ENDIF()
 ENDIF()
 
@@ -311,24 +259,15 @@ ENDIF()
 IF( DEFINED ENV{EUTELESCOPE} AND DEFINED ENV{MARLIN})
 
 # use valgrind for dynamic analysis
-set (CTEST_MEMORYCHECK_COMMAND "/usr/bin/valgrind")
-set (CTEST_MEMORYCHECK_COMMAND_OPTIONS "-q --num-callers=50 --tool=memcheck --track-origins=yes --trace-children=yes --leak-check=full --leak-resolution=low --suppressions=$ENV{ROOTSYS}/etc/valgrind-root.supp --suppressions=$ENV{EUTELESCOPE}/test/valgrind/valgrind-python.supp")
+SET( CTEST_MEMORYCHECK_COMMAND "/usr/bin/valgrind")
+SET( CTEST_MEMORYCHECK_COMMAND_OPTIONS "-q --num-callers=50 --tool=memcheck \
+     --track-origins=yes --trace-children=yes --leak-check=full --leak-resolution=low \
+     --suppressions=$ENV{ROOTSYS}/etc/valgrind-root.supp \
+     --suppressions=$ENV{EUTELESCOPE}/test/valgrind/valgrind-python.supp")
 
 # User Options to be included in DartConfiguration.tcl
-set(MEMORYCHECK_COMMAND ${CTEST_MEMORYCHECK_COMMAND} CACHE STRING "" FORCE)
-set(MEMORYCHECK_COMMAND_OPTIONS ${CTEST_MEMORYCHECK_COMMAND_OPTIONS} CACHE STRING "" FORCE)
-
-
-# cppcheck should be a useful check for developers to test their code against
-# if cppcheck is installed, offer static code analysis test
-find_program(CPPCHECK cppcheck /scratch/local/bin) # hint at path /scratch/... used on EUTelTesting server; will also parse $PATH
-if(CPPCHECK)
-  MESSAGE("cppcheck was found and will be made available as test.")
-  ADD_TEST( TestCppcheckSources sh -c "${CPPCHECK} --enable=all -I $ENV{EUTELESCOPE}/include -q -rp=$ENV{EUTELESCOPE} --std=c99 --std=posix $ENV{EUTELESCOPE}/src" )
-  SET_TESTS_PROPERTIES( TestCppcheckSources PROPERTIES
-    					FAIL_REGULAR_EXPRESSION "(error)"
-    					)
-endif()
+SET( MEMORYCHECK_COMMAND ${CTEST_MEMORYCHECK_COMMAND} CACHE STRING "" FORCE)
+SET( MEMORYCHECK_COMMAND_OPTIONS ${CTEST_MEMORYCHECK_COMMAND_OPTIONS} CACHE STRING "" FORCE)
 
 # Developers: please consider using these tests to verify your code!
 # to obtain the necessary data files, please check the corresponding
@@ -344,12 +283,10 @@ endif()
 #  INCLUDE(jobsub/examples/aconite-4chip/testing.cmake)
 #  INCLUDE(jobsub/examples/aconite-4chipLocal/testing.cmake)
 
-  configure_file( ./CTestCustom.cmake.in   # set custom settings (e.g. tests to be skipped for valgrind)
-	       		  ${PROJECT_BINARY_DIR}/CTestCustom.cmake
-	       		  )
-# /!RELEASE
-
+configure_file( ./CTestCustom.cmake.in   # set custom settings (e.g. tests to be skipped for valgrind)
+	       	${PROJECT_BINARY_DIR}/CTestCustom.cmake
+	      )
 ELSE()
-    MESSAGE( "EUTELESCOPE environment variable not defined, cannot run tests - please run 'source build_env.sh' in the EUTel root directory first." )
+    MESSAGE( "EUTELESCOPE environment variable not defined, cannot run tests \
+    	     - please run 'source build_env.sh' in the EUTel root directory first." )
 ENDIF()
-
