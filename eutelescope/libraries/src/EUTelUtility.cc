@@ -154,7 +154,7 @@ namespace eutelescope {
            it != noisyPixelMap.end(); ++it) {
         // Sort the noisy pixel maps
         std::sort((it->second).begin(), (it->second).end());
-        streamlog_out(MESSAGE4) << "Read in " << (it->second).size()
+        streamlog_out(MESSAGE5) << "Read in " << (it->second).size()
                                 << " noisy pixels on plane " << (it->first)
                                 << std::endl;
       }

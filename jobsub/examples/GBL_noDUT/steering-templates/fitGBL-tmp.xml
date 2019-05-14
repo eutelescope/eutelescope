@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="us-ascii"?>
+
+<marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
+
+   <execute>
+      <processor name="AIDA"/>
+      <processor name="HitLocalToGlobal"/>
+      <processor name="GBLFit"/>
+      <processor name="GBLOutput"/>
+      <processor name="EventNumber"/>
+   </execute>
+
+   <global>
+      <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-hitmaker.slcio </parameter>
+      <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
+      <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
+      <parameter name="SkipNEvents" value="@SkipNEvents@"/>
+      <parameter name="SupressCheck" value="false"/>
+      <parameter name="Verbosity" value="@Verbosity@"/>
+   </global>
+
+ <processor name="AIDA" type="AIDAProcessor">
+ <!--Processor that handles AIDA files. Creates on directory per processor. Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor.-->
+  <!-- compression of output file 0: false >0: true (default) -->
+  <parameter name="Compress" type="int" value="1"/>
+  <!-- filename without extension-->
+  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-fitGBL"/>
+  <!-- type of output file root (default) or xml )-->
+  <parameter name="FileType" type="string" value="root"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+</processor>
+
+ <processor name="HitLocalToGlobal" type="EUTelHitCoordinateTransformer">
+ <!--EUTelHitCoordinateTransformer is responsible to change local coordinates to global using the EUTelGeometryClass.-->
+  <!--Input hit collection name-->
+  <parameter name="hitCollectionNameInput" type="string" lcioInType="TrackerHit"> local_hit </parameter>
+  <!--Output hit collection name-->
+  <parameter name="hitCollectionNameOutput" type="string" lcioOutType="TrackerHit"> hit </parameter>
+  <!--Set to true to undo the alignment instead-->
+  <!--parameter name="UndoAlignment" type="bool" value="false"/-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+</processor>
+
+ <processor name="GBLFit" type="EUTelGBL">
+ <!--EUTelGBL uses the MILLE program to write data files for MILLEPEDE II.-->
+  <!--Input hit collections name-->
+  <parameter name="hitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
+  <!--Cuts in x and y for matching DUT hits [mm]-->
+  <!--parameter name="DUTCuts" type="FloatVec"> 1 1 </parameter-->
+  <!--ID of the plane whose scattering should be investigated (negative for none)-->
+  <parameter name="SUT_ID" type="int" value="-1"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+  <!--Number of alignment constants used. Available mode are:
+		XYShifts - shifts in X and Y
+		XYShiftsRotZ - shifts in X and Y and rotation around the Z axis,
+		XYZShiftsRotZ - shifts in X,Y and Z and rotation around the Z axis
+		XYZShiftsRotXYZ - all shifts and rotations allowed-->
+  <parameter name="alignMode" type="string" value="@AlignMode@"/>
+  <!--Cut on the chi2 for the tracks to be passed to Millepede-->
+  <parameter name="chi2Cut" type="double" value="@Chi2Cut@"/>
+  <!--The three sensors used as the downstream triplet-->
+  <parameter name="downstreamTriplet" type="IntVec" value="@DownstreamTriplet@"/>
+  <!--Downstream triplet residual cut [mm]-->
+  <parameter name="downstreamTripletResidualCut" type="double" value="@DownstreamTripletResidualCut@"/>
+  <!--Downstream triplet slope cut [mrad]-->
+  <parameter name="downstreamTripletSlopeCut" type="double" value="@DownstreamSlopeCut@"/>
+  <!--Set to 0 if you do not want to dump tracks in an lcio collection (necessary to dump in an NTuple)-->
+  <parameter name="dumpTracks" type="int" value="@dumpTracks@"/>
+  <!--Beam energy [GeV]-->
+  <parameter name="eBeam" type="double" value="@BeamEnergy@"/>
+  <!--Exclude planes from fit (their scattering budget is considered)-->
+  <parameter name="excludedPlanes" type="IntVec" value="@ExcludedPlanes@"/>
+  <!--Fix sensor planes in the fit according to their sensor ids (it is recommended to fix two telescope planes)-->
+  <parameter name="fixedPlanes" type="IntVec" value="@FixedPlanes@"/>
+  <!--List of planes which should have a fixed X rotation-->
+  <parameter name="fixedXRot" type="IntVec" value="@FixedXRot@"/>
+  <!--List of planes which should be fixed in X direction-->
+  <parameter name="fixedXShift" type="IntVec" value="@FixedXShift@"/>
+  <!--List of planes which should have a fixed Y rotation-->
+  <parameter name="fixedYRot" type="IntVec" value="@FixedYRot@"/>
+  <!--List of planes which should be fixed in Y direction-->
+  <parameter name="fixedYShift" type="IntVec" value="@FixedYShift@"/>
+  <!--List of planes which should have a fixed Z rotation-->
+  <parameter name="fixedZRot" type="IntVec" value="@FixedZRot@"/>
+  <!--List of planes which should be fixed in Z direction-->
+  <parameter name="fixedZShift" type="IntVec" value="@FixedZShift@"/>
+  <!--Global factor to Highland formula, 1.0 means HL as is, 1.2 means 20/% additional scattering-->
+  <parameter name="kappa" type="double" value="@kappa@"/>
+  <!--The last plane (z-ordered) which still should be attached to the upstream triplet-->
+  <parameter name="lastUpstreamSensor" type="int" value="@LastUpstreamSensor@"/>
+  <!--Maximal number of track candidates (Total)-->
+  <!--parameter name="maxTrackCandidatesTotal" type="int" value="10000000"/-->
+  <!--Name of the Millepede binary file-->
+  <!--parameter name="milleBinaryFilename" type="string" value="mille.bin"/-->
+  <!--Name of the steering file for the pede program-->
+  <!--parameter name="pedeSteerfileName" type="string" value="steer_mille.txt"/-->
+  <!--Set to 0 if you do not want to perform the alignment-->
+  <parameter name="performAlignment" type="int" value="@performAlignment@"/>
+  <!--Only tracks with a hit on selected plane are considered-->
+  <!--parameter name="requiredPlane" type="int" value="-1"/-->
+  <!--x-resolution of sensors (z-ordered) [mm]-->
+  <parameter name="resolutionX" type="FloatVec" value="@ResolutionX@"/>
+  <!--y-resolution of sensors (z-ordered) [mm]-->
+  <parameter name="resolutionY" type="FloatVec" value="@ResolutionY@"/>
+  <!--Set to 1 if you want suggestions of which cuts to use on the tracks slope/residual to be print out during the alignment-->
+  <!--parameter name="suggestAlignmentCuts" type="int" value="0"/-->
+  <!--Upstream-downstream triplet matching cut [mm]-->
+  <parameter name="tripletsMatchingCut" type="double" value="@TripletMatchingCut@"/>
+  <!--The three sensors used as the upstream triplet-->
+  <parameter name="upstreamTriplet" type="IntVec" value="@UpstreamTriplet@"/>
+  <!--Upstream triplet residual cut [mm]-->
+  <parameter name="upstreamTripletResidualCut" type="double" value="@UpstreamTripletResidualCut@"/>
+  <!--Upstream triplet slope cut [mrad]-->
+  <parameter name="upstreamTripletSlopeCut" type="double" value="@UpstreamSlopeCut@"/>
+  <!--Z Position used for triplet matching (default to center between end of first triplet and start of second triplet)-->
+  <!--parameter name="zMid" type="double" value="-1"/-->
+</processor>
+
+ <processor name="GBLOutput" type="EUTelGBLOutput">
+ <!--EUTelGBLOutput generates NTuple containing hits, zero suppressed data and track position from GBL processor-->
+  <!--Vector with the names of the hit collections (use the right coordinate system)-->
+  <parameter name="InputHitCollections" type="string" lcioInType="TrackerHit"> @HitCollections@ </parameter>
+  <!--Vector with the names of the zs collections-->
+  <parameter name="InputZsCollections" type="string" lcioInType="TrackerHit"> @ZSCollections@ </parameter>
+  <!--Path/File where root-file should be stored-->
+  <parameter name="OutputPath" type="string" value="@OutputPath@"/>
+  <!--IDs for which the information should be dumped (leave empty for all the planes)-->
+  <parameter name="OutputPlanes" type="IntVec" value="@OutputPlanes@"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+  <!--Decide whether to apply shift in x/y to move sensor center from (0|0) to left corner of sensor (default: false)-->
+  <parameter name="applyCenterShift" type="bool" value="false"/>
+  <!--Decide whether to dump the event header information (default: false)-->
+  <parameter name="dumpHeader" type="bool" value="false"/>
+  <!--Decide whether to dump hits and zs data only for events with a track (default: true)-->
+  <parameter name="onlyEventsWithTracks" type="bool" value="true"/>
+  <!--Decide whether to dump track positions in local coordinate system (default: true)-->
+  <parameter name="tracksLocalSystem" type="bool" value="true"/>
+</processor>
+
+ <processor name="EventNumber" type="EUTelEventNumberPrinter">
+ <!--EUTelEventNumberPrinter prints the event number to screen depending on the verbosity level.-->
+  <!--Print event number for every n-th event-->
+  <parameter name="EveryNEvents" type="int" value="2500"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <parameter name="Verbosity" type="string" value="@VerbosityEventNumber@"/>
+  <!--print the event timestamp as read from LCIO-->
+  <!--parameter name="printTimestamp" type="bool" value="false"/-->
+</processor>
+
+</marlin>

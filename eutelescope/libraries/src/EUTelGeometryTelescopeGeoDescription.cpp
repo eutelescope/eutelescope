@@ -220,12 +220,12 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 	}); 
 
 	for(auto& layer: _telescopeLayers){
-		std::cout << "Si Layer: " << layer->getID() << '\n';
+		streamlog_out(MESSAGE5) << "Si Layer: " << layer->getID() << '\n';
 		for(auto& active: layer->getActivePlanes()) {
-			std::cout << "\t\t -- active: " << active->getID() << '\n';
+			streamlog_out(MESSAGE5) << "\t\t -- active: " << active->getID() << '\n';
 		}
 		for(auto& passive: layer->getPassivePlanes()) {
-			std::cout << "\t\t -- passive: " << passive->getID() << '\n';
+			streamlog_out(MESSAGE5) << "\t\t -- passive: " << passive->getID() << '\n';
 		}
 	}
 
@@ -248,16 +248,16 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
 	_sensorIDVec.clear();
 	
 	auto matNameVec = _gearManager->getMaterialNames();
-	std::cout << "Known materials: " << std::endl;
+	streamlog_out(MESSAGE5) << "Known materials: " << std::endl;
 	for(auto& matName: matNameVec) {
-		std::cout << "-> " << matName << std::endl;
+		streamlog_out(MESSAGE5) << "-> " << matName << std::endl;
 		auto const & GEARMat = _gearManager->getSimpleMaterial(matName);
 		auto mat = EUTelMaterial(GEARMat.getA(), GEARMat.getZ(), GEARMat.getDensity());
 
 		if(GEARMat.getRadLength() == 0) {
 			mat._radLength = getRadLength(mat._A,mat._Z)/GEARMat.getDensity()*10;
-			std::cout << "Radiation length computed to be: " <<  getRadLength(mat._A,mat._Z) << " g*cm^-2" << '\n';
-			std::cout << "Yielding: " <<  getRadLength(mat._A,mat._Z)/GEARMat.getDensity()*10 << " mm" << std::endl;
+			streamlog_out(MESSAGE5) << "Radiation length computed to be: " <<  getRadLength(mat._A,mat._Z) << " g*cm^-2" << '\n';
+			streamlog_out(MESSAGE5) << "Yielding: " <<  getRadLength(mat._A,mat._Z)/GEARMat.getDensity()*10 << " mm" << std::endl;
 		} else {
 			mat._radLength = GEARMat.getRadLength();
 		}
@@ -373,12 +373,12 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
 	}
 
 	for(auto& layer: _telescopeLayers){
-		std::cout << "Tracker Layer: " << layer->getID() << '\n';
+		streamlog_out(MESSAGE5) << "Tracker Layer: " << layer->getID() << '\n';
 		for(auto& active: layer->getActivePlanes()) {
-			std::cout << "\t\t -- active: " << active->getID() << '\n';
+			streamlog_out(MESSAGE5) << "\t\t -- active: " << active->getID() << '\n';
 		}
 		for(auto& passive: layer->getPassivePlanes()) {
-			std::cout << "\t\t -- passive: " << passive->getID() << '\n';
+			streamlog_out(MESSAGE5) << "\t\t -- passive: " << passive->getID() << '\n';
 		}
 	}
 
@@ -387,11 +387,11 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
 		return getPlaneZPosition(a) < getPlaneZPosition(b);
 	}); 
 
-	std::cout << "Sensor IDs ordered by Z: \n";
+	streamlog_out(MESSAGE5) << "Sensor IDs ordered by Z: \n";
 	for(auto& ID: _sensorIDVec) {
-		std::cout << ID << '\n';
+		streamlog_out(MESSAGE5) << ID << '\n';
 	}
-	std::cout << std::endl;
+	streamlog_out(MESSAGE5) << std::endl;
 	
 	writeGEARFile("test.xml");
 }
@@ -518,7 +518,7 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
                                                            static_cast<double>(rotRef3), static_cast<double>(rotRef4), 0.,
                                                            0.                   , 0. , static_cast<double>(determinant)   };
 	pMatrixRotRefCombined->SetMatrix(integerRotationsAndReflections.data());
-	std::cout << "Rotating plane " << SensorId << " to gamma: " << gamma << std::endl;
+	streamlog_out(MESSAGE6) << "Rotating plane " << SensorId << " to gamma: " << gamma << std::endl;
 	pMatrixRotRefCombined->RotateZ(gamma);//Z Rotation (degrees)//This will again rotate a vector around z axis usign the right hand rule.  
 	pMatrixRotRefCombined->RotateX(alpha);//X Rotations (degrees)//This will rotate a vector usign the right hand rule round the x-axis
 	pMatrixRotRefCombined->RotateY(beta);//Y Rotations (degrees)//Same again for Y axis
@@ -526,19 +526,19 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	// Combined translation and orientation
 	TGeoCombiTrans* combi = new TGeoCombiTrans( *pMatrixTrans, *pMatrixRotRefCombined );
 	//This is to print to screen the rotation and translation matrices used to transform from local to global frame.
-	streamlog_out(MESSAGE9) << "THESE MATRICES ARE USED TO TAKE A POINT IN THE LOCAL FRAME AND MOVE IT TO THE GLOBAL FRAME."  << std::endl;   
-	streamlog_out(MESSAGE9) << "SensorID: " << SensorId << " Rotation/Reflection matrix for this object."  << std::endl;   
+	streamlog_out(MESSAGE7) << "THESE MATRICES ARE USED TO TAKE A POINT IN THE LOCAL FRAME AND MOVE IT TO THE GLOBAL FRAME."  << std::endl;   
+	streamlog_out(MESSAGE7) << "SensorID: " << SensorId << " Rotation/Reflection matrix for this object."  << std::endl;   
 	const double* rotationMatrix =  combi->GetRotationMatrix();	
-	streamlog_out(MESSAGE9) << std::setw(10) <<rotationMatrix[0]<<"  "<<rotationMatrix[1]<<"   "<<rotationMatrix[2]<< std::endl;
-	streamlog_out(MESSAGE9) << std::setw(10) <<rotationMatrix[3]<<"  "<<rotationMatrix[4]<<"   "<<rotationMatrix[5]<< std::endl;
-	streamlog_out(MESSAGE9) << std::setw(10) <<rotationMatrix[6]<<"  "<<rotationMatrix[7]<<"   "<<rotationMatrix[8]<< std::endl;
+	streamlog_out(MESSAGE7) << std::setw(10) <<rotationMatrix[0]<<"  "<<rotationMatrix[1]<<"   "<<rotationMatrix[2]<< std::endl;
+	streamlog_out(MESSAGE7) << std::setw(10) <<rotationMatrix[3]<<"  "<<rotationMatrix[4]<<"   "<<rotationMatrix[5]<< std::endl;
+	streamlog_out(MESSAGE7) << std::setw(10) <<rotationMatrix[6]<<"  "<<rotationMatrix[7]<<"   "<<rotationMatrix[8]<< std::endl;
 
 	//streamlog_out(MESSAGE9) << std::setw(10) <<rotationMatrix[0] << std::setw(10) <<rotationMatrix[1]<< std::setw(10) <<rotationMatrix[2]<< std::setw(10)<< std::endl<< std::endl; 
 	//streamlog_out(MESSAGE9) << std::setw(10) <<rotationMatrix[3] << std::setw(10) <<rotationMatrix[4]<< std::setw(10) <<rotationMatrix[5]<< std::setw(10)<< std::endl<< std::endl; 
 	//streamlog_out(MESSAGE9) << std::setw(10) <<rotationMatrix[6] << std::setw(10) <<rotationMatrix[7]<< std::setw(10) <<rotationMatrix[8]<< std::setw(10)<< std::endl<< std::endl; 
 	const double* translationMatrix =  combi->GetTranslation();	
-	streamlog_out(MESSAGE9) << "SensorID: " << SensorId << " Translation vector for this object."  << std::endl;   
-	streamlog_out(MESSAGE9) << std::setw(10) <<translationMatrix[0] << std::setw(10) <<translationMatrix[1]<< std::setw(10) <<translationMatrix[2]<< std::setw(10)<< std::endl; 
+	streamlog_out(MESSAGE7) << "SensorID: " << SensorId << " Translation vector for this object."  << std::endl;   
+	streamlog_out(MESSAGE7) << std::setw(10) <<translationMatrix[0] << std::setw(10) <<translationMatrix[1]<< std::setw(10) <<translationMatrix[2]<< std::setw(10)<< std::endl; 
 
 	combi->RegisterYourself();   
 	
@@ -576,7 +576,7 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	Double_t dz = getPlaneZSize( SensorId ) / 2.;
 	TGeoShape *pBoxSensor = new TGeoBBox( "BoxSensor", dx, dy, dz );
 
-	std::cout << "Box for sensor: " << SensorId << " is: " << dx << "|" << dy  << "|" << dz << '\n';
+	streamlog_out(MESSAGE5) << "Box for sensor: " << SensorId << " is: " << dx << "|" << dy  << "|" << dz << '\n';
 
 	// Geometry navigation package requires following names for objects that have an ID  name:ID
 	std::string stVolName = "volume_SensorID:";
@@ -613,7 +613,7 @@ void EUTelGeometryTelescopeGeoDescription::updatePlaneInfo(int sensorID) {
 	int noX = maxX - minX + 1;
 	int noY = maxY - minY + 1;
 
-	std::cout << "Sensor " << sensorID << " has pitch: " << sizeX/noX << "|" << sizeY/noY << std::endl;
+	streamlog_out(MESSAGE5) << "Sensor " << sensorID << " has pitch: " << sizeX/noX << "|" << sizeY/noY << std::endl;
 
 	setPlanePitch(sensorID, sizeX/noX, sizeY/noY);
 	setPlaneNoPixels(sensorID, noX, noY);
@@ -885,7 +885,7 @@ void EUTelGeometryTelescopeGeoDescription::updateSiPlanesLayout() {
     auto iPlane = static_cast<int>(iPlane_sz);
 		int sensorID =  _sensorIDVec.at(iPlane);
 
-		std::cout << "Set layer " << sensorID << " gamma to: " <<  getPlaneZRotationDegrees(sensorID) << std::endl;
+		streamlog_out(MESSAGE5) << "Set layer " << sensorID << " gamma to: " <<  getPlaneZRotationDegrees(sensorID) << std::endl;
 
 		siplanesLayerLayout->setLayerPositionX( iPlane, getPlaneXPosition(sensorID) );
 		siplanesLayerLayout->setLayerPositionY(  iPlane, getPlaneYPosition(sensorID) );
@@ -909,7 +909,7 @@ void EUTelGeometryTelescopeGeoDescription::updateTrackerPlanesLayout() {
 		auto layerPosUnc = layer->getPosUncVec();
 		auto layerAngle = layer->getAngleVec();
 
-		std::cout << "Writing back position: " << layerPos << std::endl;
+		streamlog_out(MESSAGE5) << "Writing back position: " << layerPos << std::endl;
 
 		GEARLayerPtr->setPositionX(layerPos.coeff(0));
 		GEARLayerPtr->setPositionY(layerPos.coeff(1));

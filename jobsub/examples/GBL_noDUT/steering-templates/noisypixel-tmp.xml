@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="us-ascii"?>
+
+<marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
+
+   <execute>
+      <processor name="AIDA"/>
+      <processor name="HotPixelMasker"/>
+      <processor name="EventNumber"/>
+   </execute>
+
+   <global>
+      <parameter name="LCIOInputFiles"> @NativePath@/@FilePrefix@.slcio </parameter>
+      <!--parameter name="LCIOInputFiles"> @LcioPath@/run@RunNumber@-converter.slcio </parameter-->
+      <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
+      <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
+      <parameter name="SkipNEvents" value="@SkipNEvents@"/>
+      <parameter name="SupressCheck" value="false"/>
+      <parameter name="Verbosity" value="@Verbosity@"/>
+   </global>
+
+ <processor name="AIDA" type="AIDAProcessor">
+ <!--Processor that handles AIDA files. Creates on directory per processor. Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor.-->
+  <!-- compression of output file 0: false >0: true (default) -->
+  <parameter name="Compress" type="int" value="1"/>
+  <!-- filename without extension-->
+  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-noisypixel"/>
+  <!-- type of output file root (default) or xml )-->
+  <parameter name="FileType" type="string" value="root"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+</processor>
+
+ <processor name="HotPixelMasker" type="EUTelNoisyPixelFinder">
+ <!--EUTelNoisyPixelFinder computes the firing frequency of pixels and applies a cut on this value to mask (NOT remove) noisy pixels.-->
+  <!--Input of Zero Suppressed data-->
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
+  <!--The list of sensor IDs that shall be excluded.-->
+  <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
+  <!--This is the name of the hot pixel collection to be saved into the output slcio file-->
+  <parameter name="HotPixelCollectionName" type="string" value="hotpixel_m26"/>
+  <!--This is the name of the LCIO file name with the output noisyPixel db (add .slcio)-->
+  <parameter name="HotPixelDBFile" type="string" value="@DatabasePath@/run@HotPixelRunNumber@-hotpixel-m26-db.slcio"/>
+  <!--This float number [0,1] represents the maximum allowed firing frequency within the selected number of event per cycle-->
+  <parameter name="MaxAllowedFiringFreq" type="float" value="@FiringFreqCutM26@"/>
+  <!--The number of events to be considered for each update cycle-->
+  <parameter name="NoOfEvents" type="int" value="@NoOfEvents@"/>
+  <!--The sensorID for the generated collection (one per detector)-->
+  <parameter name="SensorIDVec" type="IntVec" value="@SensorVecM26@"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+</processor>
+
+ <processor name="EventNumber" type="EUTelEventNumberPrinter">
+ <!--EUTelEventNumberPrinter prints the event number to screen depending on the verbosity level.-->
+  <!--Print event number for every n-th event-->
+  <parameter name="EveryNEvents" type="int" value="2500"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <parameter name="Verbosity" type="string" value="@VerbosityEventNumber@"/>
+  <!--print the event timestamp as read from LCIO-->
+  <!--parameter name="printTimestamp" type="bool" value="false"/-->
+</processor>
+
+</marlin>

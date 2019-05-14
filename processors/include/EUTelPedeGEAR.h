@@ -88,31 +88,14 @@ namespace eutelescope {
     virtual void end();
 
   protected:
-    //! Ordered sensor ID
-    /*! Within the processor all the loops are done up to _nPlanes and
-     *  according to their position along the Z axis (beam axis).
-     *
-     *  This vector is containing the sensorID sorted according to the
-     *  same rule.
-     */
-    std::vector<int> _orderedSensorID;
-    std::vector<int> _orderedSensorID_wo_excluded;
 
     Utility::alignMode _alignMode;
-	std::string _alignModeString;
-    std::vector<double> _siPlaneZPosition;
+    std::string _alignModeString;
 
-    // parameters
-    std::vector<unsigned int> _excludePlanes; // only for internal usage
-    std::vector<int> _excludePlanes_sensorIDs;          // this is going to be
-    // set by the user.
-    std::vector<int> _FixedPlanes;           // only for internal usage
-    std::vector<int> _FixedPlanes_sensorIDs; // this is going to be
-    // set by the user.
+    //! Name of pede steering file
     std::string _pedeSteerfileName;
 
-	int _offsetScaleFactor;
-	bool _rotateOldOffsetVec;
+	bool _unitConversion;
 
   private:
     //! Run number
@@ -121,12 +104,7 @@ namespace eutelescope {
     //! Event number
     int _iEvt;
 
-    // Excluded planes
-    int _nExcludePlanes;
-
     std::string _GEARFileSuffix;
-
-    size_t _nPlanes;
   };
 
   //! A global instance of the processor
