@@ -28,7 +28,8 @@ RUN ["/bin/bash", "-c", "cd /data/TestExampleAconiteQuadFEI4 && wget -O run00108
 RUN sed -i 's@NativePath.*= \/afs\/desy\.de\/group\/telescopes\/EutelTestData\/TestExampleAconiteQuadFEI4@NativePath = \/data\/TestExampleAconiteQuadFEI4@g' $EUTELESCOPE/jobsub/examples/aconite-4chipLocal/config.cfg
 
 RUN mkdir -p /data/TestExampleGBLLocal
-RUN ["/bin/bash", "-c", "cd /data/TestExampleGBLLocal && wget -O run000117.raw https://cernbox.cern.ch/index.php/s/U68owtYMk7pdjcg/download && ls -l && cd -"]
+#RUN ["/bin/bash", "-c", "cd /data/TestExampleGBLLocal && wget -O run000117.raw https://cernbox.cern.ch/index.php/s/U68owtYMk7pdjcg/download && ls -l && cd -"]
+RUN ["/bin/bash", "-c", "cd /data/TestExampleGBLLocal && wget -O run000117.raw https://desycloud.desy.de/index.php/s/tSqPCcFFMJWaaFJ/download?path=%2FTestExampleGBL_noDUT/run000117.raw && ls -l && cd -"]
 RUN sed -i 's@NativePath.*= \/afs\/desy\.de\/group\/telescopes\/EutelTestData\/TestExampleDaturaNoDUT_GBL@NativePath = \/data\/TestExampleGBLLocal@g' $EUTELESCOPE/jobsub/examples/gbl_local/config.cfg
 
 WORKDIR ${EUTELESCOPE}/build/

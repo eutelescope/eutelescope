@@ -15,8 +15,9 @@ env:
 # - DOCKER_IMG=merualhemio/eutel-fedora26
 # - DOCKER_IMG=merualhemio/eutel-fedora28
 # - DOCKER_IMG=merualhemio/eutel-debian9
+  
   - DOCKER_IMG=eutelescope/eutel-ubuntu16
- 
+
 script:
  - docker pull $DOCKER_IMG
  - echo "TRAVIS_PULL_REQUEST $TRAVIS_PULL_REQUEST"
