@@ -16,7 +16,8 @@ env:
 # - DOCKER_IMG=merualhemio/eutel-fedora28
 # - DOCKER_IMG=merualhemio/eutel-debian9
 
-- DOCKER_IMG=eutelescope/eutel-ubuntu16
+#- DOCKER_IMG=eutelescope/eutel-ubuntu16
+ - DOCKER_IMG=eutelescope/eutel-ubuntu18_new
 
 script:
  - docker pull $DOCKER_IMG
