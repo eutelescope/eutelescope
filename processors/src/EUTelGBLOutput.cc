@@ -61,7 +61,7 @@ EUTelGBLOutput::EUTelGBLOutput() : Processor("EUTelGBLOutput") {
   registerProcessorParameter("dumpHeader",
 			     "Decide whether to dump the event header information (default: false)",
 			     _dumpHeader,
-			     true); //Temporarly switch on by default
+			     false); 
   
   registerProcessorParameter("applyCenterShift",
 			     "Decide whether to apply shift in x/y to move sensor center from (0|0) to "
@@ -365,6 +365,7 @@ void EUTelGBLOutput::processEvent(LCEvent *event) {
     if(_inputHitCollections.size() != 0) _euhits->Fill();
     if(_inputZsCollections.size() != 0) _zstree->Fill();
   }
+  if(_dumpHeader) _evtHeader->Fill();
 }
 
 void EUTelGBLOutput::end() {
