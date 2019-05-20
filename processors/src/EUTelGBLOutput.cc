@@ -61,7 +61,7 @@ EUTelGBLOutput::EUTelGBLOutput() : Processor("EUTelGBLOutput") {
   registerProcessorParameter("dumpHeader",
 			     "Decide whether to dump the event header information (default: false)",
 			     _dumpHeader,
-			     false);
+			     true); //Temporarly switch on by default
   
   registerProcessorParameter("applyCenterShift",
 			     "Decide whether to apply shift in x/y to move sensor center from (0|0) to "
@@ -160,6 +160,15 @@ void EUTelGBLOutput::init() {
     _zstree->Branch("yPos", &_zsY);
     _zstree->Branch("Signal", &_zsSignal);
     _zstree->Branch("Time", &_zsTime);
+  }
+  
+  //Tree for storing the event header 
+  if(_dumpHeader) {
+      _evtHeader = new TTree("EventHeader","EventHeader");
+      _evtHeader->SetAutoSave(1000000000);
+      _evtHeader->Branch("StringHeaders",&_strHeaders);
+      _evtHeader->Branch("FloatHeaders",&_floatHeaders);
+      _evtHeader->Branch("IntHeaders",&_intHeaders);
   }
 
   //initialize geometry
@@ -335,7 +344,18 @@ void EUTelGBLOutput::processEvent(LCEvent *event) {
   
   //fill event header TTree
   if(_dumpHeader) {
-    //FIXME: include here
+      std::vector<std::string> dummy;
+      std::vector<std::string> strHeaderKeys = event->getParameters().getStringKeys(dummy);
+      for(size_t id = 0 ; id < strHeaderKeys.size() ; id++) 
+          _strHeaders[strHeaderKeys.at(id)] = event->getParameters().getStringVal(strHeaderKeys.at(id));
+      
+      std::vector<std::string> intHeaderKeys = event->getParameters().getIntKeys(dummy);
+      for(size_t id = 0 ; id < intHeaderKeys.size() ; id++) 
+          _intHeaders[intHeaderKeys.at(id)] = event->getParameters().getIntVal(intHeaderKeys.at(id));
+      
+      std::vector<std::string> floatHeaderKeys = event->getParameters().getFloatKeys(dummy);
+      for(size_t id = 0 ; id < floatHeaderKeys.size() ; id++) 
+          _floatHeaders[floatHeaderKeys.at(id)] = event->getParameters().getFloatVal(floatHeaderKeys.at(id));
   }
   
   //fill the TTrees
@@ -378,4 +398,7 @@ void EUTelGBLOutput::clear() {
   _zsSignal->clear();
   _zsTime->clear();
   _nPixHits = 0;
+  _strHeaders.clear();
+  _intHeaders.clear();
+  _floatHeaders.clear();
 }

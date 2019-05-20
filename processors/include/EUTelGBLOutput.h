@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <limits>
+#include <map>
 
 // ROOT includes
 #include <TFile.h>
@@ -91,6 +92,11 @@ namespace eutelescope {
 
     TTree *_versionTree;
     std::vector<double> *_versionNo;
+    
+    TTree *_evtHeader;
+    std::map<std::string, std::string> _strHeaders;
+    std::map<std::string, int> _intHeaders;
+    std::map<std::string, float> _floatHeaders;
   };
 
   //! A global instance of the processor.
