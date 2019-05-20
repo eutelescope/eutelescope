@@ -349,10 +349,12 @@ void EUTelGBLOutput::processEvent(LCEvent *event) {
       for(size_t id = 0 ; id < strHeaderKeys.size() ; id++) 
           _strHeaders[strHeaderKeys.at(id)] = event->getParameters().getStringVal(strHeaderKeys.at(id));
       
+      dummy.clear();
       std::vector<std::string> intHeaderKeys = event->getParameters().getIntKeys(dummy);
       for(size_t id = 0 ; id < intHeaderKeys.size() ; id++) 
           _intHeaders[intHeaderKeys.at(id)] = event->getParameters().getIntVal(intHeaderKeys.at(id));
       
+      dummy.clear();
       std::vector<std::string> floatHeaderKeys = event->getParameters().getFloatKeys(dummy);
       for(size_t id = 0 ; id < floatHeaderKeys.size() ; id++) 
           _floatHeaders[floatHeaderKeys.at(id)] = event->getParameters().getFloatVal(floatHeaderKeys.at(id));
