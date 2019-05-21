@@ -59,7 +59,7 @@ EUTelGBLOutput::EUTelGBLOutput() : Processor("EUTelGBLOutput") {
 			     true);
   
   registerProcessorParameter("dumpHeader",
-			     "Decide whether to dump the event header information (default: false)",
+			     "Decide whether to dump the event header information. Requires ROOT6 (default: false)",
 			     _dumpHeader,
 			     false); 
   

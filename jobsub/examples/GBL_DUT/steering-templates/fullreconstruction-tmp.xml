@@ -361,8 +361,8 @@ to the external frame of reference using the GEAR geometry description-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
   <!--Decide whether to apply shift in x/y to move sensor center from (0|0) to left corner of sensor (default: false)-->
   <parameter name="applyCenterShift" type="bool" value="@ApplyCenterShift@"/>
-  <!--Decide whether to dump the event header information (default: false)-->
-  <parameter name="dumpHeader" type="bool" value="false"/>
+  <!--Decide whether to dump the event header information. Requires ROOT6 (default: false)-->
+  <parameter name="dumpHeader" type="bool" value="@dumpHeader@"/>
   <!--Decide whether to dump hits and zs data only for events with a track (default: true)-->
   <parameter name="onlyEventsWithTracks" type="bool" value="true"/>
   <!--Decide whether to dump track positions in local coordinate system (default: true)-->
