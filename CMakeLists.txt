@@ -170,6 +170,8 @@ ENDIF()
 # display some variables and write them to cache
 DISPLAY_STD_VARIABLES()
 
+INSTALL (DIRECTORY DESTINATION bin)
+
 # create some useful symbolic links in bin directory at install time
 INSTALL( CODE
     	 "EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/jobsub/jobsub.py ${PROJECT_SOURCE_DIR}/bin/jobsub)
