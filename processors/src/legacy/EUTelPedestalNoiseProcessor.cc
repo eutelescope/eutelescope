@@ -436,11 +436,19 @@ void EUTelPedestalNoiseProcessor::initializeGeometry(LCEvent *evt) {
 
 void EUTelPedestalNoiseProcessor::processEvent(LCEvent *evt) {
 
-  //EUTelEventImpl *eutelEvent = static_cast<EUTelEventImpl *>(evt);
-  //EventType type = eutelEvent->getEventType();
+  EUTelEventImpl *eutelEvent = static_cast<EUTelEventImpl *>(evt);
+  EventType type = eutelEvent->getEventType();
 
   if (!_isGeometryReady) {
     initializeGeometry(evt);
+  }
+
+  if (type == kUNKNOWN) {
+    streamlog_out(WARNING2) << "Event number " << evt->getEventNumber()
+                            << " in run " << evt->getRunNumber()
+                            << " is of unknown type. Continue considering it "
+                               "as a normal Data Event."
+                            << endl;
   }
 
   if (_iLoop == -1)

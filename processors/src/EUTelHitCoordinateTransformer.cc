@@ -29,175 +29,145 @@
 
 using namespace eutelescope;
 
-EUTelHitCoordinateTransformer::EUTelHitCoordinateTransformer ():Processor ("EUTelHitCoordinateTransformer"),
-_hitCollectionNameInput (), _hitCollectionNameOutput (),
-_undoAlignment (false)
-{
+EUTelHitCoordinateTransformer::EUTelHitCoordinateTransformer()
+  :Processor("EUTelHitCoordinateTransformer"),
+   _hitCollectionNameInput(), _hitCollectionNameOutput(), _undoAlignment(false) {
 
-  _description =
-    "EUTelHitCoordinateTransformer is responsible to change local "
-    "coordinates to global using the EUTelGeometryClass.";
+  _description = "EUTelHitCoordinateTransformer is responsible to change local "
+                 "coordinates to global using the EUTelGeometryClass.";
 
-  registerInputCollection (LCIO::TRACKERHIT,
-			   "hitCollectionNameInput",
-			   "Input hit collection name",
-			   _hitCollectionNameInput,
-			   std::string ("local_hit"));
-
-  registerOutputCollection (LCIO::TRACKERHIT,
-			    "hitCollectionNameOutput",
-			    "Output hit collection name",
-			    _hitCollectionNameOutput,
-			    std::string ("global_hit"));
-
-  registerOptionalParameter ("UndoAlignment",
-			     "Set to true to undo the alignment instead",
-			     _undoAlignment, false);
+  registerInputCollection(LCIO::TRACKERHIT, 
+			  "hitCollectionNameInput", 
+			  "Input hit collection name",
+			  _hitCollectionNameInput,
+			  std::string("local_hit"));
+  
+  registerOutputCollection(LCIO::TRACKERHIT,
+			   "hitCollectionNameOutput",
+			   "Output hit collection name",
+			   _hitCollectionNameOutput,
+			   std::string ("global_hit"));
+  
+  registerOptionalParameter("UndoAlignment",
+			    "Set to true to undo the alignment instead",
+			    _undoAlignment,
+			    false);
 }
 
-void
-EUTelHitCoordinateTransformer::init ()
-{
-  //initialize geometry 
-  geo::gGeometry ().initializeTGeoDescription (EUTELESCOPE::GEOFILENAME,
-					       EUTELESCOPE::DUMPGEOROOT);
+void EUTelHitCoordinateTransformer::init() {
+  //initialize geometry	
+  geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME, 
+					     EUTELESCOPE::DUMPGEOROOT);
 }
 
-void
-EUTelHitCoordinateTransformer::processEvent (LCEvent * event)
+void EUTelHitCoordinateTransformer::processEvent(LCEvent* event)
 {
   //check event type and if it is the last event
-  EUTelEventImpl *evt = static_cast < EUTelEventImpl * >(event);
-  if (evt->getEventType () == kEORE)
-    {
-      streamlog_out (MESSAGE5) << "EORE found: nothing else to do." << std::
-	endl;
-      return;
-    }
+  EUTelEventImpl* evt	= static_cast<EUTelEventImpl*>(event);				
+  if( evt->getEventType() == kEORE ) {
+    streamlog_out( MESSAGE5 ) << "EORE found: nothing else to do." << std::endl;
+    return;
+  } else if( evt->getEventType() == kUNKNOWN) {
+    streamlog_out( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " 
+			      << evt->getRunNumber() << " is of unknown type." 
+			      << " Continue considering it as a normal Data Event." 
+			      << std::endl;
+  }
 
   //opens collection for input
-  LCCollection *inputCollection = nullptr;
-  try
-  {
-    inputCollection = evt->getCollection (_hitCollectionNameInput);
-  }
-  catch (DataNotAvailableException & e)
-  {
-    streamlog_out (WARNING2) << _hitCollectionNameInput
-      << " collection not available" << std::endl;
+  LCCollection* inputCollection = nullptr;
+  try {
+    inputCollection = evt->getCollection(_hitCollectionNameInput);
+  } catch(DataNotAvailableException& e) {
+    streamlog_out( WARNING2 ) << _hitCollectionNameInput 
+			      << " collection not available" << std::endl;
     return;
   }
 
   //opens collection for output
-  LCCollectionVec *outputCollection = nullptr;
-  try
-  {
-    outputCollection =
-      static_cast <
-      LCCollectionVec * >(event->getCollection (_hitCollectionNameOutput));
-  }
-  catch ( ...)
-  {
-    outputCollection = new LCCollectionVec (LCIO::TRACKERHIT);
+  LCCollectionVec* outputCollection = nullptr;
+  try {
+    outputCollection = static_cast<LCCollectionVec*> (event->getCollection(_hitCollectionNameOutput));
+  } catch(...) {
+    outputCollection = new LCCollectionVec(LCIO::TRACKERHIT);
   }
 
   //get encoding from input
-  std::string encoding =
-    inputCollection->getParameters ().getStringVal (LCIO::CellIDEncoding);
-  if (encoding.empty ())
-    {
-      encoding = EUTELESCOPE::HITENCODING;
-    }
+  std::string encoding = inputCollection->getParameters().getStringVal( LCIO::CellIDEncoding );
+  if(encoding.empty()) {
+    encoding = EUTELESCOPE::HITENCODING;
+  }
 
   //get decoder
-  lcio::CellIDDecoder < TrackerHitImpl > hitDecoder (encoding);
-  lcio::UTIL::CellIDReencoder < TrackerHitImpl > cellReencoder (encoding,
-								outputCollection);
-
+  lcio::CellIDDecoder<TrackerHitImpl> hitDecoder(encoding);
+  lcio::UTIL::CellIDReencoder<TrackerHitImpl> cellReencoder(encoding, outputCollection);
+  
   //[START] loop over hits
-  for (int iHit = 0; iHit < inputCollection->getNumberOfElements (); ++iHit)
-    {
+  for(int iHit = 0; iHit < inputCollection->getNumberOfElements(); ++iHit) {  
+    
+    TrackerHitImpl* inputHit = static_cast<TrackerHitImpl*>(inputCollection->getElementAt(iHit));
+    TrackerHitImpl* outputHit = new IMPL::TrackerHitImpl(); 
+    
+    //get some basic information
+    int properties = hitDecoder(inputHit)["properties"];
+    int sensorID = hitDecoder(inputHit)["sensorID"];
+				
+    //use local2masterHit/master2localHit function in EUTelGeometryTelescopeDescription
+    //to translate input/output position		
+    const double* inputPos = inputHit->getPosition();
+    double outputPos[3];
+    
+    //transform local->global
+    if(!(properties & kHitInGlobalCoord) && !_undoAlignment) {
+      streamlog_out(DEBUG0) << "Transforming hit from local to global!" << std::endl;
+      geo::gGeometry().local2Master(sensorID, inputPos, outputPos);
+    } 
+    //transform global->local
+    else if((properties & kHitInGlobalCoord) && _undoAlignment) {
+      streamlog_out(DEBUG0) << "Transforming hit from global to local!" << std::endl;
+      geo::gGeometry().master2Local(sensorID, inputPos, outputPos);
+    } 
+    //error case
+    else {
+      std::cout << "Properties: " << properties << std::endl;
+      std::string errMsg;
+      if(!_undoAlignment) {
+	errMsg = "Provided global hit, but trying to transform into global. Something is wrong!";
+      } else {
+	errMsg = "Provided local hit, but trying to transform into local. Something is wrong!";
+      }
+      throw InvalidGeometryException(errMsg);
+    }
+	
+    //fill new outputHit with information
+    outputHit->setPosition(outputPos);
+    outputHit->setCovMatrix( inputHit->getCovMatrix());
+    outputHit->setType( inputHit->getType() );
+    outputHit->setTime( inputHit->getTime() );
+    outputHit->setCellID0( inputHit->getCellID0() );
+    outputHit->setCellID1( inputHit->getCellID1() );
+    outputHit->setQuality( inputHit->getQuality() );
+    outputHit->rawHits() = inputHit->getRawHits();
+    
+    //and reencode hit
+    cellReencoder.readValues(outputHit);
+    //^= is a bitwise XOR i.e. will switch the coordinate system
+    cellReencoder["properties"] = properties ^= kHitInGlobalCoord;
+    cellReencoder.setCellID(outputHit);
+    //finally store it in collection
+    outputCollection->push_back(outputHit);
 
-      TrackerHitImpl *inputHit =
-	static_cast <
-	TrackerHitImpl * >(inputCollection->getElementAt (iHit));
-      TrackerHitImpl *outputHit = new IMPL::TrackerHitImpl ();
-
-      //get some basic information
-      int properties = hitDecoder (inputHit)["properties"];
-      int sensorID = hitDecoder (inputHit)["sensorID"];
-
-      //use local2masterHit/master2localHit function in EUTelGeometryTelescopeDescription
-      //to translate input/output position                
-      const double *inputPos = inputHit->getPosition ();
-      double outputPos[3];
-
-      //transform local->global
-      if (!(properties & kHitInGlobalCoord) && !_undoAlignment)
-	{
-	  streamlog_out (DEBUG0) << "Transforming hit from local to global!"
-	    << std::endl;
-	  geo::gGeometry ().local2Master (sensorID, inputPos, outputPos);
-	}
-      //transform global->local
-      else if ((properties & kHitInGlobalCoord) && _undoAlignment)
-	{
-	  streamlog_out (DEBUG0) << "Transforming hit from global to local!"
-	    << std::endl;
-	  geo::gGeometry ().master2Local (sensorID, inputPos, outputPos);
-	}
-      //error case
-      else
-	{
-	  std::cout << "Properties: " << properties << std::endl;
-	  std::string errMsg;
-	  if (!_undoAlignment)
-	    {
-	      errMsg =
-		"Provided global hit, but trying to transform into global. Something is wrong!";
-	    }
-	  else
-	    {
-	      errMsg =
-		"Provided local hit, but trying to transform into local. Something is wrong!";
-	    }
-	  throw InvalidGeometryException (errMsg);
-	}
-
-      //fill new outputHit with information
-      outputHit->setPosition (outputPos);
-      outputHit->setCovMatrix (inputHit->getCovMatrix ());
-      outputHit->setType (inputHit->getType ());
-      outputHit->setTime (inputHit->getTime ());
-      outputHit->setCellID0 (inputHit->getCellID0 ());
-      outputHit->setCellID1 (inputHit->getCellID1 ());
-      outputHit->setQuality (inputHit->getQuality ());
-      outputHit->rawHits () = inputHit->getRawHits ();
-
-      //and reencode hit
-      cellReencoder.readValues (outputHit);
-      //^= is a bitwise XOR i.e. will switch the coordinate system
-      cellReencoder["properties"] = properties ^= kHitInGlobalCoord;
-      cellReencoder.setCellID (outputHit);
-      //finally store it in collection
-      outputCollection->push_back (outputHit);
-
-    }				//[END] loop over hits
-
+  }//[END] loop over hits
+	
   //push the hit for this event onto the collection
-  try
-  {
-    event->addCollection (outputCollection, _hitCollectionNameOutput);
-  }
-  catch ( ...)
-  {
-    streamlog_out (WARNING5) << "Problem with pushing collection onto event"
-      << std::endl;
+  try {	
+    event->addCollection(outputCollection, _hitCollectionNameOutput );
+  } catch(...) {
+    streamlog_out ( WARNING5 )  << "Problem with pushing collection onto event" << std::endl;
   }
 }
 
-void
-EUTelHitCoordinateTransformer::end ()
+void EUTelHitCoordinateTransformer::end()
 {
-  streamlog_out (MESSAGE4) << "Successfully finished" << std::endl;
+  streamlog_out(MESSAGE4) << "Successfully finished" << std::endl;
 }
