@@ -145,7 +145,7 @@
   <!--PreAlignment constant from the condition file-->
   <parameter name="PreAlignmentConstantName" type="string" lcioInType="LCGenericObject"> prealign </parameter>
   <!--Input of Zero Suppressed data-->
-  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> original_zsdata </parameter>
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> @zsdataName@ </parameter>
     <!--Switch on or off the histogram filling-->
   <parameter name="HistogramFilling" type="bool" value="true"/>
   <!--This is the name of the histogram information file-->

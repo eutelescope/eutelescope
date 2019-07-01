@@ -24,7 +24,7 @@
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @LcioPath@/run@RunNumber@-clustering.slcio </parameter>
+      <parameter name="LCIOInputFiles" value="@clusteringName@"/>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -78,7 +78,7 @@
 
 <processor name="clusterAnalysis" type="EUTelProcessorClusterAnalysis">
    <!--parameter name="NZSDataCollectionName" type="string" lcioInType="TrackerData"> data </parameter-->
-  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> original_zsdata </parameter>
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData" value="@zsdataName@" />
    <!--Switch on or off the histogram filling-->
   <parameter name="HistogramFilling" type="bool" value="true"/>
   <!--This is the name of the histogram information file-->
