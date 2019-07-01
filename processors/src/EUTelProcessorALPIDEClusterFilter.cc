@@ -229,7 +229,7 @@ void EUTelProcessorALPIDEClusterFilter::processEvent (LCEvent * evt) {
                        TrackerDataImpl * data = dynamic_cast< TrackerDataImpl * > ( zsInputDataCollectionVec->getElementAt( i ) ) ;
                        _totClusterMap.insert( make_pair( cellDecoder( data )[ "sensorID" ] , 0 ));
                 }
-  	} catch ( lcio::DataNotAvailableException ) {
+  	} catch ( lcio::DataNotAvailableException& e) {
 	        _clusterAvailable = false;
   	}
 
