@@ -215,7 +215,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
-<processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+<processor name="MyEUTelUtilityPrintEventNumber" type="EUTelEventNumberPrinter">
   <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
   <!--Print event number for every n-th event-->
   <parameter name="EveryNEvents" type="int" value="10000"/>
