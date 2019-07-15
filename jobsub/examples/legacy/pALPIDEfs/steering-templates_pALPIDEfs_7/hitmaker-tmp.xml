@@ -44,41 +44,16 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="HitMakerPALPIDEfs" type="EUTelProcessorHitMaker">
+ <processor name="HitMakerPALPIDEfs" type="EUTelHitMaker">
  <!--EUTelHitMaker is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
   <!--Cluster (pulse) collection name-->
   <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> @pulseCollName@ </parameter>
   <!--Hit collection name-->
   <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
-  <!--Hit collection name used for alignment-->
-  <parameter name="HitCollectionNameForAlign" type="string" lcioOutType="TrackerHit"> hitAlign </parameter>
-  <!--Select here how the center of gravity should be calculated.
-FULL: using the full cluster
-NPixel: using only the first N most significant pixels (set NPixel too)
-NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-->
-  <parameter name="CoGAlgorithm" type="string" value="FULL"/>
-  <!--If true a 3D histo will be filled. It may require large memory-->
-  <parameter name="Enable3DHisto" type="bool" value="false"/>
-  <!--The name of the collections containing the eta function (x and y respectively)-->
-  <!--parameter name="EtaCollectionName" type="StringVec"> xEta yEta </parameter-->
-  <!--Enable or disable eta correction-->
-  <parameter name="EtaSwitch" type="bool" value="false"/>
-  <!--The number of most significant pixels to be used if CoGAlgorithm is "NPixel"-->
-  <!--parameter name="NPixel" type="int" value="9"/-->
-  <!--The submatrix size to be used for CoGAlgorithm = "NxMPixel"-->
-  <parameter name="NxMPixel" type="IntVec"> 3 3 </parameter>
-  <!--This is the name of the preAligment collection stored in the offset-db.slcio file-->
-  <!--parameter name="OffsetCollection" type="string" value="preAlignment"/-->
-  <!--This is the name of the LCIO file name with the output offset db (add .slcio)-->
-  <!--parameter name="OffsetDBFile" type="string" value="offset-db.slcio"/-->
-  <!--This is the name of the reference it collection (init at 0,0,0)-->
-  <!--parameter name="ReferenceCollection" type="string" value="reference"/-->
   <!--This big part is exluded from the DUT for the alignment in the x direction on both edges -->
-  <parameter name="LimitX" type="double" value="0"/>
+  <!--parameter name="LimitX" type="double" value="0"/-->
   <!--This big part is exluded from the DUT for the alignment in the y direction on both edges -->
-  <parameter name="LimitY" type="double" value="0"/>
-  <!--This is the name of the reference it collection (init at 0,0,0)-->
-  <parameter name="ReferenceHitFile" type="string" value="@DatabasePath@/@FilePrefix@-referencehit.slcio"/>
+  <!--parameter name="LimitY" type="double" value="0"/-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -119,7 +94,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <parameter name="Verbosity" type="string" value="SILENT"/>
 </processor>
 
- <processor name="Save" type="EUTelOutputProcessor">
+ <processor name="Save" type="EUTelOutputSaver">
  <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
   <!--drops the named collections from the event-->
   <parameter name="DropCollectionNames" type="StringVec"> filteredcluster zsdata refilteredcluster hitAlign </parameter>
@@ -141,7 +116,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+ <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelEventNumberPrinter">
    <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
   <!--Print event number for every n-th event-->
   <parameter name="EveryNEvents" type="int" value="10000"/>
