@@ -9,8 +9,8 @@
  *   header with author names in all development based on this file.
  *
  */
-// built only if GEAR and MARLINUTIL are used
-#if defined(USE_GEAR) && defined(USE_MARLINUTIL)
+// built only if GEAR is used
+#if defined(USE_GEAR)
 
 // eutelescope includes ".h"
 #include "EUTelMille.h"
