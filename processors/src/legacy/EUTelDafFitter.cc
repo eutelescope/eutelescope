@@ -41,7 +41,7 @@
  * If your cpu supports it, you could try -msse4 or -msse3 as well.
  */
 
-// built only if GEAR and MARLINUTIL are used
+// built only if GEAR is used
 #if defined(USE_GEAR)
 
 // eutelescope includes ".h"
