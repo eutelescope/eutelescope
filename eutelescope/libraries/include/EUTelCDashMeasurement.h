@@ -121,7 +121,7 @@ public:
   }
 #else
   // no output case (if testing precompiler flag is not set:)
-  friend ostream &operator<<(ostream &os, const CDashMeasurement &) {
+  friend std::ostream &operator<<(std::ostream &os, const CDashMeasurement &) {
     return os;
   }
 
