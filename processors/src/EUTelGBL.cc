@@ -887,13 +887,23 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 	}
 	
 	if(_dumpTracks) { //CHECK ME CAREFULLY
+ 	  auto hit_a = uptriplet.getpoint_at(0);
+ 	  auto hit_b = uptriplet.getpoint_at(_planePosition[ix]);
+ 	  Eigen::Vector3d a(hit_a.x,hit_a.y,hit_a.z);
+ 	  Eigen::Vector3d b(hit_b.x,hit_b.y,hit_b.z);
+ 	  Eigen::Vector3d normal = geo::gGeometry().getPlaneNormalVector(_sensorIDVec[ix]);
+ 	  Eigen::Hyperplane<double,3> pl(normal,Eigen::Vector3d(0.0,0.0,_planePosition[ix]));
+ 	  Eigen::ParametrizedLine<double,3> line = Eigen::ParametrizedLine<double,3>::Through(a,b);
+ 	  Eigen::Vector3d point = line.intersectionPoint(pl);
+ 	  double zz = point[2];
+
 	  thisTrack->setIntVal(0, _sensorIDVec[ix]); //sensor ID is an int
 	  thisTrack->setIntVal(1, Ndf); //Ndf is an int
 	  thisTrack->setIntVal(2, numbertracks);
 	  thisTrack->setFloatVal(0, Chi2); //chi2
-	  thisTrack->setFloatVal(1, uptriplet.getx_at(_planePosition[ix]) + localPar[3]); // x track position (global system)
-	  thisTrack->setFloatVal(2, uptriplet.gety_at(_planePosition[ix]) + localPar[4]); // y track position (global system)
-	  thisTrack->setFloatVal(3, _planePosition[ix]); // z of the plane, FIXME: we should use z hit position if possible
+	  thisTrack->setFloatVal(1, uptriplet.getx_at(zz) + localPar[3]); // x track position (global system)
+	  thisTrack->setFloatVal(2, uptriplet.gety_at(zz) + localPar[4]); // y track position (global system)
+	  thisTrack->setFloatVal(3, zz); // z of the intersection of the plane with the uptriplet
 	  thisTrack->setFloatVal(4, (tripletSlope.x + localPar[1])*1E3); // FIXME: check if the sign is right
 	  thisTrack->setFloatVal(5, (tripletSlope.x + localPar[2])*1E3); // FIXME: check if the sign is right
 	  
