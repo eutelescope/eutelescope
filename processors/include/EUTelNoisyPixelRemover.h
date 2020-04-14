@@ -6,8 +6,8 @@
  *   header with author names in all development based on this file.
  *
  */
-#ifndef EUTELPROCESSORNOISYPIXELREMOVER_H
-#define EUTELPROCESSORNOISYPIXELREMOVER_H
+#ifndef EUTELNOISYPIXELREMOVER_H
+#define EUTELNOISYPIXELREMOVER_H
 
 // eutelescope includes ".h"
 #include "EUTelEventImpl.h"
@@ -32,22 +32,22 @@ namespace eutelescope {
    *  If so, they are removed from the output collection.
    */
 
-  class EUTelProcessorNoisyPixelRemover : public marlin::Processor {
+  class EUTelNoisyPixelRemover : public marlin::Processor {
 
   public:
-    //! Returns a new instance of EUTelProcessorNoisyPixelRemover
+    //! Returns a new instance of EUTelNoisyPixelRemover
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
      *
-     *  @return a new EUTelProcessorNoisyPixelRemover.
+     *  @return a new EUTelNoisyPixelRemover.
      */
     virtual Processor *newProcessor() {
-      return new EUTelProcessorNoisyPixelRemover;
+      return new EUTelNoisyPixelRemover;
     }
 
     //! Default constructor
-    EUTelProcessorNoisyPixelRemover();
+    EUTelNoisyPixelRemover();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -100,8 +100,8 @@ namespace eutelescope {
   };
 
   //! A global instance of the processor
-  EUTelProcessorNoisyPixelRemover gEUTelProcessorNoisyPixelRemover;
+  EUTelNoisyPixelRemover gEUTelNoisyPixelRemover;
 
 } // namespace eutelescope
 
-#endif // EUTelProcessorNoisyPixelRemover_H
+#endif // EUTelNoisyPixelRemover_H
