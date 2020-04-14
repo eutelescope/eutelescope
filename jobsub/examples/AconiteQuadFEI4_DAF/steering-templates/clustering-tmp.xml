@@ -69,7 +69,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="ClusteringAPIX" type="EUTelSparseClustering">
+ <processor name="ClusteringAPIX" type="EUTelGeometricClustering">
  <!--EUTelSparseClustering is looking for clusters into a calibrated pixel matrix.-->
   <!--Input of Zero Suppressed data-->
   <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_apix </parameter>
@@ -79,8 +79,6 @@
   <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
   <!--Switch on or off the histogram filling-->
   <parameter name="HistogramFilling" type="bool" value="true"/>
-  <!--Minimum distance squared between sparsified pixel ( touching == 2) [integer]-->
-  <parameter name="SparseMinDistanceSquared" type="int" value="2"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
