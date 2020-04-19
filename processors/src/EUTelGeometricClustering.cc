@@ -11,7 +11,7 @@
  */
 
 // eutelescope includes
-#include "EUTelProcessorGeometricClustering.h"
+#include "EUTelGeometricClustering.h"
 
 #include "EUTELESCOPE.h"
 #include "EUTelEventImpl.h"
@@ -64,8 +64,8 @@ using namespace lcio;
 using namespace marlin;
 using namespace eutelescope;
 
-EUTelProcessorGeometricClustering::EUTelProcessorGeometricClustering()
-    : Processor("EUTelProcessorGeometricClustering"), _zsDataCollectionName(""),
+EUTelGeometricClustering::EUTelGeometricClustering()
+    : Processor("EUTelGeometricClustering"), _zsDataCollectionName(""),
       _pulseCollectionName(""), _initialPulseCollectionSize(0), _iRun(0),
       _iEvt(0), _fillHistos(false), _histoInfoFileName(""), _cutT(0.0),
       _totClusterMap(), _noOfDetector(0), _ExcludedPlanes(),
@@ -75,7 +75,7 @@ EUTelProcessorGeometricClustering::EUTelProcessorGeometricClustering()
       _pulseCollectionVec(nullptr) {
 
   // modify processor description
-  _description = "EUTelProcessorGeometricClustering is looking for clusters "
+  _description = "EUTelGeometricClustering is looking for clusters "
                  "into a calibrated pixel matrix.";
 
   // first of all we need to register the input collection
@@ -108,7 +108,7 @@ EUTelProcessorGeometricClustering::EUTelProcessorGeometricClustering()
   _isFirstEvent = true;
 }
 
-void EUTelProcessorGeometricClustering::init() {
+void EUTelGeometricClustering::init() {
   // this method is called only once even when the rewind is active, it is
   // usually a good idea to
   printParameters();
@@ -126,14 +126,14 @@ void EUTelProcessorGeometricClustering::init() {
   _isGeometryReady = false;
 }
 
-void EUTelProcessorGeometricClustering::processRunHeader(LCRunHeader *rdr) {
+void EUTelGeometricClustering::processRunHeader(LCRunHeader *rdr) {
   std::unique_ptr<EUTelRunHeaderImpl> runHeader(new EUTelRunHeaderImpl(rdr));
   runHeader->addProcessor(type());
   // increment the run counter
   ++_iRun;
 }
 
-void EUTelProcessorGeometricClustering::initializeGeometry(
+void EUTelGeometricClustering::initializeGeometry(
     LCEvent *event) {
   // set the total number of detector to zero. This number can be different from
   // the one written in the gear description because
@@ -162,7 +162,7 @@ void EUTelProcessorGeometricClustering::initializeGeometry(
   _isGeometryReady = true;
 }
 
-void EUTelProcessorGeometricClustering::readCollections(LCEvent *event) {
+void EUTelGeometricClustering::readCollections(LCEvent *event) {
   try {
     _zsInputDataCollectionVec = dynamic_cast<LCCollectionVec *>(
         event->getCollection(_zsDataCollectionName));
@@ -179,7 +179,7 @@ void EUTelProcessorGeometricClustering::readCollections(LCEvent *event) {
   }
 }
 
-void EUTelProcessorGeometricClustering::processEvent(LCEvent *event) {
+void EUTelGeometricClustering::processEvent(LCEvent *event) {
 
   ++_iEvt;
 
@@ -247,7 +247,7 @@ void EUTelProcessorGeometricClustering::processEvent(LCEvent *event) {
   _isFirstEvent = false;
 }
 
-void EUTelProcessorGeometricClustering::geometricClustering(
+void EUTelGeometricClustering::geometricClustering(
     LCEvent *evt, LCCollectionVec *pulseCollection) {
   // prepare some decoders
   CellIDDecoder<TrackerDataImpl> cellDecoder(_zsInputDataCollectionVec);
@@ -498,7 +498,7 @@ void EUTelProcessorGeometricClustering::geometricClustering(
   }
 }
 
-void EUTelProcessorGeometricClustering::end() {
+void EUTelGeometricClustering::end() {
 
   streamlog_out(MESSAGE4) << "Successfully finished" << std::endl;
 
@@ -511,7 +511,7 @@ void EUTelProcessorGeometricClustering::end() {
   }
 }
 
-void EUTelProcessorGeometricClustering::fillHistos(LCEvent *evt) {
+void EUTelGeometricClustering::fillHistos(LCEvent *evt) {
   EUTelEventImpl *eutelEvent = static_cast<EUTelEventImpl *>(evt);
   EventType type = eutelEvent->getEventType();
 
@@ -605,7 +605,7 @@ void EUTelProcessorGeometricClustering::fillHistos(LCEvent *evt) {
   }
 }
 
-void EUTelProcessorGeometricClustering::bookHistos() {
+void EUTelGeometricClustering::bookHistos() {
 
   // histograms are grouped in loops and detectors
   streamlog_out(DEBUG5) << "Booking histograms " << std::endl;

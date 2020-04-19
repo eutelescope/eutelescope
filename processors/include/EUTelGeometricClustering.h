@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef EUTelProcessorGeometricClustering_H
-#define EUTelProcessorGeometricClustering_H 1
+#ifndef EUTelGeometricClustering_H
+#define EUTelGeometricClustering_H 1
 
 // eutelescope includes ".h"
 #include "EUTELESCOPE.h"
@@ -91,25 +91,25 @@ namespace eutelescope {
    *
    */
 
-  class EUTelProcessorGeometricClustering : public marlin::Processor,
+  class EUTelGeometricClustering : public marlin::Processor,
                                             public marlin::EventModifier {
 
   public:
-    //! Returns a new instance of EUTelProcessorGeometricClustering
+    //! Returns a new instance of EUTelGeometricClustering
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
      *
-     *  @return a new EUTelProcessorGeometricClustering.
+     *  @return a new EUTelGeometricClustering.
      */
     virtual Processor *newProcessor() {
-      return new EUTelProcessorGeometricClustering;
+      return new EUTelGeometricClustering;
     }
 
     virtual const std::string &name() const { return Processor::name(); }
 
     //! Default constructor
-    EUTelProcessorGeometricClustering();
+    EUTelGeometricClustering();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -133,7 +133,7 @@ namespace eutelescope {
     /*! It looks for clusters in the current event using the selected
      *  algorithm.
      *
-     *  @see EUTelProcessorGeometricClustering::fixedFrameClustering(LCEvent *)
+     *  @see EUTelGeometricClustering::fixedFrameClustering(LCEvent *)
      *
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
@@ -271,7 +271,7 @@ namespace eutelescope {
     float _cutT;
 
   private:
-    DISALLOW_COPY_AND_ASSIGN(EUTelProcessorGeometricClustering)
+    DISALLOW_COPY_AND_ASSIGN(EUTelGeometricClustering)
 
     //! read secondary collections
     void readCollections(LCEvent *evt);
@@ -343,6 +343,6 @@ namespace eutelescope {
   };
 
   //! A global instance of the processor
-  EUTelProcessorGeometricClustering gEUTelProcessorGeometricClustering;
+  EUTelGeometricClustering gEUTelGeometricClustering;
 }
 #endif

@@ -11,7 +11,7 @@
  */
 
 // eutelescope includes ".h"
-#include "EUTelProcessorNoisyPixelRemover.h"
+#include "EUTelNoisyPixelRemover.h"
 #include "EUTELESCOPE.h"
 #include "EUTelTrackerDataInterfacerImpl.h"
 #include "EUTelUtility.h"
@@ -38,10 +38,10 @@
 
 namespace eutelescope {
 
-  EUTelProcessorNoisyPixelRemover::EUTelProcessorNoisyPixelRemover()
-      : Processor("EUTelProcessorNoisyPixelRemover"), _inputCollectionName(""),
+  EUTelNoisyPixelRemover::EUTelNoisyPixelRemover()
+      : Processor("EUTelNoisyPixelRemover"), _inputCollectionName(""),
         _outputCollectionName(""), _noisyPixelCollectionName("") {
-    _description = "EUTelProcessorNoisyPixelRemover removes noisy pixels "
+    _description = "EUTelNoisyPixelRemover removes noisy pixels "
                    "(TrackerData) from a collection. This processor requires a "
                    "noisy pixel collection.";
 
@@ -58,18 +58,18 @@ namespace eutelescope {
         _noisyPixelCollectionName, std::string("noisypixel"));
   }
 
-  void EUTelProcessorNoisyPixelRemover::init() {
+  void EUTelNoisyPixelRemover::init() {
     // this method is called only once even when the rewind is active
     // usually a good idea to
     printParameters();
   }
 
-  void EUTelProcessorNoisyPixelRemover::processRunHeader(LCRunHeader *rdr) {
+  void EUTelNoisyPixelRemover::processRunHeader(LCRunHeader *rdr) {
     auto runHeader = std::make_unique<EUTelRunHeaderImpl>(rdr);
     runHeader->addProcessor(type());
   }
 
-  void EUTelProcessorNoisyPixelRemover::processEvent(LCEvent *event) {
+  void EUTelNoisyPixelRemover::processEvent(LCEvent *event) {
 
     if (_firstEvent) {
       // The noisy pixel collection stores all thot pixels in event #1
@@ -163,5 +163,5 @@ namespace eutelescope {
     }
   }
 
-  void EUTelProcessorNoisyPixelRemover::end() {}
+  void EUTelNoisyPixelRemover::end() {}
 }
