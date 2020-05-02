@@ -1,10 +1,12 @@
 #!/bin/sh
 
-################################
-#                              #
-# ALiBaVa Analysis - Pedestal  #
-#                              #
-################################
+##################################
+#                                #
+# ALiBaVa Analysis - Pedestal    #
+#                                #
+# Use for off-beam pedestal runs #
+#                                #
+##################################
 
 # usage: sh x_pedestal.sh runnumber
 

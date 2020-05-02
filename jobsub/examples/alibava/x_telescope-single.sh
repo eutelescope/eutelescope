@@ -1,12 +1,12 @@
 #!/bin/sh
 
-################################
-#                              #
-# ALiBaVa Analysis - Telescope #
-#                              #
-# for single telescope runs    #
-#                              #
-################################
+##################################
+#                                #
+# ALiBaVa Analysis - Telescope   #
+#                                #
+# for single telescope runs      #
+#                                #
+##################################
 
 # usage: sh x_telescope-single.sh runnumber
 

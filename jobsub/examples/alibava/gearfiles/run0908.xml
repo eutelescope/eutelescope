@@ -1,15 +1,16 @@
+<!-- GEAR file for a Telescope in the DESY TB - simulated in AllPix -->
+<!-- A strip sensor DUT read out by an ALiBaVa system was placed in the center -->
+<!-- The strip sensor unsensitive coordinate is x -->
+<!-- The strip sensor is 100um thick and not rotated -->
 <gear>
-	<!-- GEAR file for a Telescope in the DESY TB - Nov. 2013 -->
-	<!-- A strip sensor DUT read out by an ALiBaVa system was placed in the center -->
-	<!-- The strip sensor unsensitive coordinate is x -->
-	<!-- The strip sensor is 100um thick and not rotated -->
-	<!--global detectorName=" "/-->
-	<BField type="ConstantBField" x="0.0" y="0.0" z="0.0"/>
-	<detectors>
-		<detector name="SiPlanes" geartype="SiPlanesParameters">
-			<siplanesID ID="0"/>
-			<siplanesType type="TelescopeWithoutDUT"/>
-			<siplanesNumber number="7"/>
+    <global detectorName="EUTelescope" />
+    <!--Gear XML file automatically created with GearXML::createXMLFile ....-->
+    <BField type="ConstantBField" x="0.000000000e+00" y="0.000000000e+00" z="0.000000000e+00" />
+    <detectors>
+        <detector name="SiPlanes" geartype="SiPlanesParameters">
+            <siplanesID ID="0" />
+            <siplanesType type="TelescopeWithoutDUT" />
+            <siplanesNumber number="7" />
 			<!-- z along beam -->
 			<layers>
 				<!--Datura Plane 0 -->
@@ -70,15 +71,15 @@
 				<layer>
 					<ladder ID="6"
 						positionX="0.00"	positionY="0.00"		positionZ="270.00"
-						rotationZY="0.00"	rotationZX="0.0"		rotationXY="0.0"
-						sizeX="21.2"		sizeY="10.24"			thickness="0.22"
+						rotationZY="0.01"	rotationZX="0.0"		rotationXY="0.0"
+						sizeX="50.0"		sizeY="10.24"			thickness="0.22"
 						radLength="93.660734"
 					/>
 					<sensitive ID="6"
 						positionX="0.00"	positionY="0.00"		positionZ="270.00"
-						sizeX="21.2"		sizeY="10.24"			thickness="0.1"
-						npixelX="1152"		npixelY="128"
-						pitchX="0.018402778"	pitchY="0.08"			resolution="0.0045"
+						sizeX="50.0"		sizeY="10.24"			thickness="0.1"
+						npixelX="1"		npixelY="128"
+						pitchX="50.0"		pitchY="0.08"			resolution="0.0045"
 						rotation1="-1.0"	rotation2="0.0"
 						rotation3="0.0"		rotation4="-1.0"
 						radLength="93.660734"
