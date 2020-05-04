@@ -1,10 +1,13 @@
 #!/bin/sh
 
-###################################
-#                                 #
-# ALiBaVa Analysis - Sim Pedestal #
-#                                 #
-###################################
+##################################
+#                                #
+# ALiBaVa Analysis - Simulated   #
+# Pedestals                      #
+#                                #
+# Use for AllPix pedestal runs   #
+#                                #
+##################################
 
 # usage: sh x_sim_pedestal.sh runnumber
 

@@ -182,8 +182,7 @@ void AlibavaConverter::readDataSource ( int /* numEvents */ )
     LCRunHeaderImpl * arunHeader = new LCRunHeaderImpl ( );
     AlibavaRunHeaderImpl* runHeader = new AlibavaRunHeaderImpl ( arunHeader );
 
-    // this can lead to multiple gear files not working
-    // runHeader -> setDetectorName ( Global::GEAR -> getDetectorName ( ) );
+    runHeader -> setDetectorName ( Global::GEAR -> getDetectorName ( ) );
     runHeader -> setHeader ( header );
     runHeader -> setHeaderVersion ( version );
     runHeader -> setDataType ( type );

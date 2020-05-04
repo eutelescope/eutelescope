@@ -1,13 +1,13 @@
 #!/bin/sh
 
-################################
-#                              #
-# ALiBaVa Analysis - Telescope #
-#                              #
-# for concatenated telescope   #
-# runs                         #
-#                              #
-################################
+##################################
+#                                #
+# ALiBaVa Analysis - Telescope   #
+#                                #
+# for 3 concatenated telescope   #
+# runs                           #
+#                                #
+##################################
 
 # usage: sh x_telescope-multi.sh runnumber
 
@@ -20,7 +20,7 @@ jobsub.py -c config.cfg -csv runlist.csv telescope-converter $(($1+3))
 minussign='-'
 end=$(($1+3))
 range=$1$minussign$end
-jobsub -c config.cfg --concatenate --option concatinput=output/lcio/run@RunRange@-converter.slcio -csv runlist.csv telescope-clustering-concat $range
+jobsub -c config.cfg --concatenate --option concatinput=output/lcio/run@RunRange@-telescope-converter.slcio -csv runlist.csv telescope-clustering-concat $range
 jobsub.py -c config.cfg -csv runlist.csv telescope-filter $1
 
 #

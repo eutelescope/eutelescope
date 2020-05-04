@@ -2,21 +2,24 @@
 
 ##################################
 #                                #
-# ALiBaVa Analysis - Simulation  #
+# ALiBaVa Analysis - Data        #
 #                                #
-# GBL alignment - AllPix data    #
+# GBL alignment - n-type sensors #
 # This runs the analysis chain   #
 #                                #
-# x_sim_pedestal.sh and          #
-# x_sim_tel should be called     #
-# before...                      #
+# x_pedestal.sh and x_telescope- #
+# <multi/single>.sh should be    #
+# called before...               #
 #                                #
 ##################################
 
-jobsub.py -c config.cfg -csv runlist.csv simconverter $1
+# usage: sh x_n_dut.sh runnumber
+
+jobsub.py -c config.cfg -csv runlist.csv converter $1
 jobsub.py -c config.cfg -csv runlist.csv reco $1
-jobsub.py -c config.cfg -csv runlist.csv clustering-1 $1
-jobsub.py -c config.cfg -csv runlist.csv clustering-2 $1
+jobsub.py -c config.cfg -csv runlist.csv rghfilter $1
+jobsub.py -c config.cfg -csv runlist.csv clustering-1-afterrgh $1
+jobsub.py -c config.cfg -csv runlist.csv clustering-2-afterrgh $1
 jobsub.py -c config.cfg -csv runlist.csv datahisto $1
 jobsub.py -c config.cfg -csv runlist.csv merge $1
 jobsub.py -c config.cfg -csv runlist.csv hitmaker $1

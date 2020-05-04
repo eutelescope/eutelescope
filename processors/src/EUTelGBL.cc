@@ -905,7 +905,7 @@ void EUTelGBL::processEvent( LCEvent * event ) {
 	  thisTrack->setFloatVal(2, uptriplet.gety_at(zz) + localPar[4]); // y track position (global system)
 	  thisTrack->setFloatVal(3, zz); // z of the intersection of the plane with the uptriplet
 	  thisTrack->setFloatVal(4, (tripletSlope.x + localPar[1])*1E3); // FIXME: check if the sign is right
-	  thisTrack->setFloatVal(5, (tripletSlope.x + localPar[2])*1E3); // FIXME: check if the sign is right
+	  thisTrack->setFloatVal(5, (tripletSlope.y + localPar[2])*1E3); // FIXME: check if the sign is right
 	  
 	  if(_sensorIDVec[ix]!=_SUT_ID) {
 	    thisTrack->setFloatVal(6, (localPar[1] - prevAngleX)*1E3 ); // kink angle in x in mrad
